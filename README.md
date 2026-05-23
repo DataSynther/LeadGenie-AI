@@ -1,0 +1,2 @@
+# LeadGenie
+GenAI Ideathon Repo
