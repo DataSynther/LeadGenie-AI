@@ -1,0 +1,42 @@
+[
+  {
+    "id": "t001",
+    "title": "AI Governance Concerns Increasing",
+    "category": "regulatory",
+    "relevance_tags": ["ai", "governance", "compliance", "risk"],
+    "source": "curated",
+    "date": "2026-05-01"
+  },
+  {
+    "id": "t002",
+    "title": "AI Agents Adoption Growing Rapidly",
+    "category": "technology",
+    "relevance_tags": ["ai", "agents", "automation", "llm"],
+    "source": "curated",
+    "date": "2026-05-10"
+  },
+  {
+    "id": "t003",
+    "title": "Snowflake AI Usage Accelerating",
+    "category": "technology",
+    "relevance_tags": ["snowflake", "data", "ai", "analytics"],
+    "source": "curated",
+    "date": "2026-05-12"
+  },
+  {
+    "id": "t004",
+    "title": "Cost Optimization Trend in Enterprise Tech",
+    "category": "business",
+    "relevance_tags": ["cost", "efficiency", "enterprise", "saas"],
+    "source": "curated",
+    "date": "2026-05-15"
+  },
+  {
+    "id": "t005",
+    "title": "Funding Activity Picking Up in AI Infrastructure",
+    "category": "funding",
+    "relevance_tags": ["funding", "investment", "ai", "infrastructure"],
+    "source": "curated",
+    "date": "2026-05-20"
+  }
+]

@@ -1,0 +1,11 @@
+{
+  "id": "lead_001",
+  "name": "Sarah Chen",
+  "title": "VP of Revenue Operations",
+  "seniority": "vp",
+  "department": "sales",
+  "email": "sarah.chen@acme-corp.com",
+  "linkedin_url": "https://linkedin.com/in/sarahchen",
+  "organization_id": "org_acme_001",
+  "company": "Acme Corp"
+}
