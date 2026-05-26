@@ -14,19 +14,19 @@ Existing SDR workflows force teams to choose between slow manual prospecting and
 
 ## What This System Does
 
-| Capability | Description |
-|---|---|
-| Lead Intelligence | Fetch and enrich leads via Apollo |
-| Company Intelligence | Industry, funding, tech stack, description |
-| Signal Intelligence | Hiring trends, AI expansion, scaling signals |
-| Trend Intelligence | Market trends, RSS news, curated AI signals |
-| Semantic Relevance | Embedding-based trend ranking per lead context |
-| Adaptive Outreach | Claude-powered personalized email generation |
-| Conversation Agent | Autonomous multi-turn reply and objection handling |
-| Governance Engine | Tone validation, hallucination checks, risk scoring |
-| Audit Lineage | Immutable per-lead audit trail for all decisions |
-| Continuous Learning | Feedback-driven pattern analysis and prompt improvement |
-| Meeting Scheduling | Calendly integration for one-click booking |
+| Capability           | Description                                             |
+| -------------------- | ------------------------------------------------------- |
+| Lead Intelligence    | Fetch and enrich leads via Apollo                       |
+| Company Intelligence | Industry, funding, tech stack, description              |
+| Signal Intelligence  | Hiring trends, AI expansion, scaling signals            |
+| Trend Intelligence   | Market trends, RSS news, curated AI signals             |
+| Semantic Relevance   | Embedding-based trend ranking per lead context          |
+| Adaptive Outreach    | Claude-powered personalized email generation            |
+| Conversation Agent   | Autonomous multi-turn reply and objection handling      |
+| Governance Engine    | Tone validation, hallucination checks, risk scoring     |
+| Audit Lineage        | Immutable per-lead audit trail for all decisions        |
+| Continuous Learning  | Feedback-driven pattern analysis and prompt improvement |
+| Meeting Scheduling   | Calendly integration for one-click booking              |
 
 ---
 
@@ -98,6 +98,7 @@ cp .env.example .env
 
 # 4. Run the backend
 uvicorn backend.main:app --reload --port 8000
+# uvicorn main:app --reload --port 8000
 
 # 5. (Optional) Run with Docker
 docker-compose up --build
@@ -107,16 +108,16 @@ docker-compose up --build
 
 ## API Endpoints
 
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/leads/search` | Search leads by domain + persona |
-| GET | `/company/enrich?domain=` | Enrich company data |
-| POST | `/outreach/generate` | Full pipeline → governed email |
-| POST | `/conversation/reply` | Handle inbound reply |
-| POST | `/feedback/record` | Record outcome |
-| GET | `/learning/analytics` | View performance metrics |
-| GET | `/trends` | Get current market trends |
-| GET | `/audit/{lead_id}` | View audit trail for a lead |
+| Method | Endpoint                  | Description                      |
+| ------ | ------------------------- | -------------------------------- |
+| POST   | `/leads/search`           | Search leads by domain + persona |
+| GET    | `/company/enrich?domain=` | Enrich company data              |
+| POST   | `/outreach/generate`      | Full pipeline → governed email   |
+| POST   | `/conversation/reply`     | Handle inbound reply             |
+| POST   | `/feedback/record`        | Record outcome                   |
+| GET    | `/learning/analytics`     | View performance metrics         |
+| GET    | `/trends`                 | Get current market trends        |
+| GET    | `/audit/{lead_id}`        | View audit trail for a lead      |
 
 ---
 

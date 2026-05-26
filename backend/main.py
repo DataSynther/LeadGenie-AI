@@ -2,17 +2,17 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 
-from backend.services.apollo import ApolloPeopleService, ApolloCompanyService, ApolloSignalsService
-from backend.agents.research.research_agent import ResearchAgent
-from backend.agents.research.context_builder import ContextBuilder
-from backend.agents.trends.trend_agent import TrendAgent
-from backend.agents.relevance.relevance_engine import RelevanceEngine
-from backend.agents.outreach.outreach_agent import OutreachAgent
-from backend.agents.conversation.conversation_agent import ConversationAgent
-from backend.governance.risk_engine import RiskEngine
-from backend.learning.feedback_collector import FeedbackCollector
-from backend.learning.learning_engine import LearningEngine
-from backend.scheduling.scheduler import Scheduler
+from services.apollo import ApolloPeopleService, ApolloCompanyService, ApolloSignalsService
+from agents.research.research_agent import ResearchAgent
+from agents.research.context_builder import ContextBuilder
+from agents.trends.trend_agent import TrendAgent
+from agents.relevance.relevance_engine import RelevanceEngine
+from agents.outreach.outreach_agent import OutreachAgent
+from agents.conversation.conversation_agent import ConversationAgent
+from governance.risk_engine import RiskEngine
+from learning.feedback_collector import FeedbackCollector
+from learning.learning_engine import LearningEngine
+from scheduling.scheduler import Scheduler
 
 app = FastAPI(
     title="LeadGenie AI — Governed Adaptive SDR Platform",
@@ -128,5 +128,5 @@ async def get_trends():
 
 @app.get("/audit/{lead_id}")
 async def get_audit_trail(lead_id: str):
-    from backend.governance.audit_logger import AuditLogger
+    from governance.audit_logger import AuditLogger
     return AuditLogger().get_audit_trail(lead_id)

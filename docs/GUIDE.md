@@ -36,7 +36,7 @@
 # Create virtual environment
 python3 -m venv venv
 source venv/bin/activate        # Mac/Linux
-# venv\Scripts\activate         # Windows
+# source venv/Scripts/activate       # Windows
 
 # Install packages
 pip install -r requirements.txt
@@ -82,7 +82,7 @@ Open `.env` and fill in your keys:
 #### Usage
 
 ```python
-from backend.services.apollo import ApolloPeopleService, ApolloCompanyService, ApolloSignalsService
+from services.apollo import ApolloPeopleService, ApolloCompanyService, ApolloSignalsService
 
 # Search leads
 people = ApolloPeopleService()

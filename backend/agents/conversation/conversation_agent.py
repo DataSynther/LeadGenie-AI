@@ -36,7 +36,7 @@ class ConversationAgent:
 
     def handle_objection(self, lead_id: str, objection: str, context: dict) -> dict:
         """Specifically handle a detected objection with empathy and reframing."""
-        from backend.agents.outreach.outreach_agent import OutreachAgent
+        from agents.outreach.outreach_agent import OutreachAgent
         outreach = OutreachAgent()
         result = outreach.respond_to_objection(context, objection)
         self.memory.store_message(lead_id, "sdr", result.get("response_text", ""))
