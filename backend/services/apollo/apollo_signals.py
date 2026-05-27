@@ -2,8 +2,7 @@ import os
 import requests
 from collections import Counter
 
-APOLLO_API_KEY = os.getenv("APOLLO_API_KEY")
-APOLLO_BASE_URL = "https://api.apollo.io/v1"
+APOLLO_BASE_URL = "https://api.apollo.io/api/v1"
 
 AI_KEYWORDS = {"machine learning", "ai", "llm", "data science", "mlops", "nlp", "deep learning"}
 ENGINEERING_KEYWORDS = {"software engineer", "backend", "frontend", "platform", "infrastructure", "devops"}
@@ -14,7 +13,7 @@ class ApolloSignalsService:
         self.headers = {
             "Content-Type": "application/json",
             "Cache-Control": "no-cache",
-            "X-Api-Key": APOLLO_API_KEY,
+            "X-Api-Key": os.getenv("APOLLO_API_KEY"),
         }
 
     def get_job_postings(self, org_id: str) -> list[dict]:

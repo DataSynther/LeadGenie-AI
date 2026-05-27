@@ -2,8 +2,7 @@ import os
 import requests
 from typing import Optional
 
-APOLLO_API_KEY = os.getenv("APOLLO_API_KEY")
-APOLLO_BASE_URL = "https://api.apollo.io/v1"
+APOLLO_BASE_URL = "https://api.apollo.io/api/v1"
 
 
 class ApolloCompanyService:
@@ -11,7 +10,7 @@ class ApolloCompanyService:
         self.headers = {
             "Content-Type": "application/json",
             "Cache-Control": "no-cache",
-            "X-Api-Key": APOLLO_API_KEY,
+            "X-Api-Key": os.getenv("APOLLO_API_KEY"),
         }
 
     def enrich_company(self, domain: str) -> Optional[dict]:

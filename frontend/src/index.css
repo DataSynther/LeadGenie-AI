@@ -1,0 +1,59 @@
+@import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@300;400;500;600&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-canvas text-ink font-sans antialiased;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: theme("colors.line.DEFAULT");
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: theme("colors.ink.mute");
+  }
+}
+
+@layer components {
+  /* Reusable component classes */
+  .card-base {
+    @apply bg-surface border border-line-soft rounded-[10px] shadow-card overflow-hidden;
+  }
+
+  .btn-primary {
+    @apply bg-brand text-white px-3.5 py-2 rounded-md text-xs font-semibold cursor-pointer transition-all border-0;
+  }
+  .btn-primary:hover {
+    @apply -translate-y-px shadow-btn-brand;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent text-ink-2 border border-line px-3.5 py-2 rounded-md text-xs font-semibold cursor-pointer transition-colors;
+  }
+  .btn-ghost:hover {
+    @apply bg-surface-2 text-ink;
+  }
+
+  .label-mono {
+    @apply font-mono text-label uppercase text-ink-mute;
+  }
+}

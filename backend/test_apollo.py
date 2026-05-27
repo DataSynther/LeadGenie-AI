@@ -12,7 +12,7 @@ HEADERS = {
     "Cache-Control": "no-cache",
     "X-Api-Key": APOLLO_API_KEY,
 }
-BASE_URL = "https://api.apollo.io/v1"
+BASE_URL = "https://api.apollo.io/api/v1"
 OUTPUT_DIR = Path("sample_data")
 OUTPUT_DIR.mkdir(exist_ok=True)
 
