@@ -2,14 +2,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import json
-from backend.agents.research.research_agent import ResearchAgent
-from backend.agents.research.context_builder import ContextBuilder
-from backend.agents.trends.trend_agent import TrendAgent
-from backend.agents.relevance.relevance_engine import RelevanceEngine
-from backend.agents.outreach.outreach_agent import OutreachAgent
-from backend.governance.risk_engine import RiskEngine
-from backend.learning.feedback_collector import FeedbackCollector
-from backend.services.email_sender import EmailSender
+from agents.research.research_agent import ResearchAgent
+from agents.research.context_builder import ContextBuilder
+from agents.trends.trend_agent import TrendAgent
+from agents.relevance.relevance_engine import RelevanceEngine
+from agents.outreach.outreach_agent import OutreachAgent
+from governance.risk_engine import RiskEngine
+from learning.feedback_collector import FeedbackCollector
+from services.email_sender import EmailSender
 
 # Load demo data
 with open("sample_data/demo_leads.json") as f:
