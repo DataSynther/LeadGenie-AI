@@ -36,8 +36,11 @@ Respond with valid JSON only.
             max_tokens=1024,
             messages=[{"role": "user", "content": prompt}],
         )
-        import json
-        return json.loads(response.content[0].text)
+        import json, re
+        text = response.content[0].text.strip()
+        text = re.sub(r"^```(?:json)?\s*", "", text)
+        text = re.sub(r"\s*```$", "", text)
+        return json.loads(text)
 
     def detect_pain_points(self, context: dict) -> list[str]:
         """Extract likely pain points from company context."""

@@ -82,24 +82,106 @@ LeadGenie-AI/
 
 ---
 
-## Quickstart
+## End-to-End Setup & Demo
+
+### Prerequisites
+
+| Requirement | Mac | Windows |
+|---|---|---|
+| Python 3.9+ | `brew install python` | Download from [python.org](https://python.org) |
+| Git | `brew install git` | Download from [git-scm.com](https://git-scm.com) |
+| pip | Included with Python | Included with Python |
+
+---
+
+### Mac
 
 ```bash
-# 1. Clone
+# 1. Clone the repo
 git clone https://github.com/DataSynther/LeadGenie-AI.git
 cd LeadGenie-AI
 
-# 2. Install dependencies
+# 2. Create and activate a virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# 3. Install dependencies
 pip install -r requirements.txt
 
-# 3. Configure environment
+# 4. Configure environment
 cp .env.example .env
-# Fill in your API keys in .env
+# Open .env and fill in your API keys (see API Keys section below)
 
-# 4. Run the backend
+# 5. Run the end-to-end demo
+python3 run_demo.py
+
+# 6. (Optional) Start the backend API
 uvicorn backend.main:app --reload --port 8000
+```
 
-# 5. (Optional) Run with Docker
+---
+
+### Windows
+
+```powershell
+# 1. Clone the repo
+git clone https://github.com/DataSynther/LeadGenie-AI.git
+cd LeadGenie-AI
+
+# 2. Create and activate a virtual environment
+python -m venv venv
+venv\Scripts\activate
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Configure environment
+copy .env.example .env
+# Open .env in Notepad or VS Code and fill in your API keys
+
+# 5. Run the end-to-end demo
+python run_demo.py
+
+# 6. (Optional) Start the backend API
+uvicorn backend.main:app --reload --port 8000
+```
+
+---
+
+### API Keys Required
+
+Open `.env` and fill in the following:
+
+| Key | Where to get it |
+|---|---|
+| `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) |
+| `APOLLO_API_KEY` | [apollo.io](https://app.apollo.io) → Settings → API Keys |
+| `VOYAGE_API_KEY` | [voyageai.com](https://voyageai.com) |
+| `RESEND_API_KEY` | [resend.com](https://resend.com) → API Keys |
+| `FROM_EMAIL` | Your verified sender email (use `onboarding@resend.dev` for testing) |
+
+---
+
+### What the Demo Does
+
+Running `run_demo.py` executes the full 8-step pipeline against the first lead in `sample_data/demo_leads.json`:
+
+```
+Step 1 — Research Agent       → Company intelligence + pain points
+Step 2 — Context Builder      → Unified lead + company context
+Step 3 — Trend Intelligence   → Load current market trends
+Step 4 — Relevance Engine     → Rank trends by semantic similarity
+Step 5 — Outreach Generation  → Personalized email via Claude
+Step 6 — Governance Check     → Hallucination + risk scoring
+Step 7 — Feedback             → Record outcome
+Step 8 — Send Email           → Deliver via Resend API
+```
+
+---
+
+### (Optional) Run with Docker
+
+```bash
 docker-compose up --build
 ```
 

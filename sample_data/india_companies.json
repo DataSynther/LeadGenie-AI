@@ -1,0 +1,446 @@
+[
+  {
+    "id": "5e58ef7352ecec0001c24f65",
+    "name": "Traya",
+    "website_url": "http://www.traya.health",
+    "angellist_url": null,
+    "linkedin_url": "http://www.linkedin.com/company/trayahealth",
+    "twitter_url": "https://twitter.com/TrayaHealth",
+    "facebook_url": "https://facebook.com/traya.health/",
+    "primary_phone": {
+      "number": "+91 78757 03483",
+      "source": "Owler",
+      "sanitized_number": "+917875703483"
+    },
+    "languages": [],
+    "alexa_ranking": 63553,
+    "phone": "+91 78757 03483",
+    "linkedin_uid": "26662654",
+    "founded_year": 2019,
+    "publicly_traded_symbol": null,
+    "publicly_traded_exchange": null,
+    "logo_url": "https://zenprospect-production.s3.amazonaws.com/uploads/pictures/6958f650063e300001b258fe/picture",
+    "crunchbase_url": null,
+    "primary_domain": "traya.health",
+    "sic_codes": [
+      "8731"
+    ],
+    "naics_codes": [
+      "62139"
+    ],
+    "sanitized_phone": "+917875703483",
+    "owned_by_organization_id": null,
+    "organization_revenue_printed": "40M",
+    "organization_revenue": 40000000.0,
+    "intent_strength": null,
+    "show_intent": true,
+    "has_intent_signal_account": false,
+    "intent_signal_account": null,
+    "organization_headcount_six_month_growth": 0.08222222222222222,
+    "organization_headcount_twelve_month_growth": 0.1540284360189574,
+    "organization_headcount_twenty_four_month_growth": 0.5509554140127388
+  },
+  {
+    "id": "5b83830ef874f7099ca26b61",
+    "name": "The Economic Times",
+    "website_url": "http://www.economictimes.com",
+    "angellist_url": null,
+    "linkedin_url": "http://www.linkedin.com/company/economictimes",
+    "twitter_url": "https://twitter.com/timesofindia",
+    "facebook_url": "https://www.facebook.com/TimesofIndia/",
+    "primary_phone": {
+      "number": "+1 760-412-0990",
+      "sanitized_number": "+17604120990",
+      "source": "Scraped"
+    },
+    "languages": [
+      "English",
+      "English"
+    ],
+    "alexa_ranking": 20305,
+    "phone": "+1 760-412-0990",
+    "linkedin_uid": "3968",
+    "founded_year": 1961,
+    "publicly_traded_symbol": null,
+    "publicly_traded_exchange": null,
+    "logo_url": "https://zenprospect-production.s3.amazonaws.com/uploads/pictures/69b0eb04369ffb00014b9546/picture",
+    "crunchbase_url": null,
+    "primary_domain": "economictimes.com",
+    "sic_codes": [
+      "2711"
+    ],
+    "naics_codes": [
+      "519"
+    ],
+    "sanitized_phone": "+17604120990",
+    "owned_by_organization_id": "5ed1964e846a9f00014fb90a",
+    "owned_by_organization": {
+      "id": "5ed1964e846a9f00014fb90a",
+      "name": "Times Internet",
+      "website_url": "http://www.timesinternet.in"
+    },
+    "organization_revenue_printed": null,
+    "organization_revenue": 0.0,
+    "intent_strength": null,
+    "show_intent": true,
+    "has_intent_signal_account": false,
+    "intent_signal_account": null,
+    "organization_headcount_six_month_growth": 0.08270676691729323,
+    "organization_headcount_twelve_month_growth": 0.1787175989085948,
+    "organization_headcount_twenty_four_month_growth": 0.3312788906009245
+  },
+  {
+    "id": "54a1a1827468695475292d03",
+    "name": "GeeksforGeeks",
+    "website_url": "http://www.geeksforgeeks.org",
+    "angellist_url": null,
+    "linkedin_url": "http://www.linkedin.com/company/geeksforgeeks-learn-to-code",
+    "twitter_url": "https://twitter.com/geeksforgeeks",
+    "facebook_url": "https://www.facebook.com/geeksforgeeks.org/",
+    "primary_phone": {
+      "number": "+91 80692 89001",
+      "source": "Owler",
+      "sanitized_number": "+918069289001"
+    },
+    "languages": [
+      "English"
+    ],
+    "alexa_ranking": 316,
+    "phone": "+91 80692 89001",
+    "linkedin_uid": "1299009",
+    "founded_year": 2009,
+    "publicly_traded_symbol": null,
+    "publicly_traded_exchange": null,
+    "logo_url": "https://zenprospect-production.s3.amazonaws.com/uploads/pictures/69acad96b2fed90001b4c159/picture",
+    "crunchbase_url": null,
+    "primary_domain": "geeksforgeeks.org",
+    "sic_codes": [
+      "8299"
+    ],
+    "naics_codes": [
+      "519"
+    ],
+    "sanitized_phone": "+918069289001",
+    "owned_by_organization_id": null,
+    "organization_revenue_printed": "75M",
+    "organization_revenue": 75000000.0,
+    "intent_strength": null,
+    "show_intent": true,
+    "has_intent_signal_account": false,
+    "intent_signal_account": null,
+    "organization_headcount_six_month_growth": 0.4474393530997305,
+    "organization_headcount_twelve_month_growth": 0.4986046511627907,
+    "organization_headcount_twenty_four_month_growth": 0.231651376146789
+  },
+  {
+    "id": "613096e7cedb2c00da6f55c4",
+    "name": "Swiggy",
+    "website_url": "http://www.swiggy.com",
+    "angellist_url": "http://angel.co/dineout-1",
+    "linkedin_url": "http://www.linkedin.com/company/swiggy-in",
+    "twitter_url": "https://twitter.com/swiggy_in",
+    "facebook_url": "https://facebook.com/swiggy.in",
+    "primary_phone": {
+      "number": "+91 80674 66791",
+      "source": "Owler",
+      "sanitized_number": "+918067466791"
+    },
+    "languages": [],
+    "alexa_ranking": 3050,
+    "phone": "+91 80674 66791",
+    "linkedin_uid": "9252341",
+    "founded_year": 2014,
+    "publicly_traded_symbol": "SWIGGY.NS",
+    "publicly_traded_exchange": "nse",
+    "logo_url": "https://zenprospect-production.s3.amazonaws.com/uploads/pictures/69b502398eed05000134b991/picture",
+    "crunchbase_url": null,
+    "primary_domain": "swiggy.com",
+    "sic_codes": [
+      "5812"
+    ],
+    "naics_codes": [
+      "72233"
+    ],
+    "sanitized_phone": "+918067466791",
+    "owned_by_organization_id": null,
+    "organization_revenue_printed": "1.8B",
+    "organization_revenue": 1782440000.0,
+    "intent_strength": null,
+    "show_intent": true,
+    "has_intent_signal_account": false,
+    "intent_signal_account": null,
+    "organization_headcount_six_month_growth": 0.02402210884353741,
+    "organization_headcount_twelve_month_growth": 0.08308038223721191,
+    "organization_headcount_twenty_four_month_growth": 0.2429363953038318
+  },
+  {
+    "id": "5d094373f65125e4b397ef21",
+    "name": "Zomato",
+    "website_url": "http://www.zomato.com",
+    "angellist_url": "http://angel.co/zomato",
+    "linkedin_url": "http://www.linkedin.com/company/zomato",
+    "twitter_url": "http://twitter.com/zomato",
+    "facebook_url": "https://www.facebook.com/zomato",
+    "primary_phone": {
+      "number": "+91 11308 06376",
+      "source": "Owler",
+      "sanitized_number": "+911130806376"
+    },
+    "languages": [],
+    "alexa_ranking": 2163,
+    "phone": "+91 11308 06376",
+    "linkedin_uid": "422813",
+    "founded_year": 2008,
+    "publicly_traded_symbol": "ZOMATO.NS",
+    "publicly_traded_exchange": "nse",
+    "logo_url": "https://zenprospect-production.s3.amazonaws.com/uploads/pictures/69ad276193713900019408f5/picture",
+    "crunchbase_url": null,
+    "primary_domain": "zomato.com",
+    "sic_codes": [
+      "5812"
+    ],
+    "naics_codes": [
+      "54151",
+      "519290",
+      "492110"
+    ],
+    "sanitized_phone": "+911130806376",
+    "owned_by_organization_id": "6599fa752f8f7f0001c3825e",
+    "owned_by_organization": {
+      "id": "6599fa752f8f7f0001c3825e",
+      "name": "Eternal",
+      "website_url": "http://www.eternal.com"
+    },
+    "organization_revenue_printed": "1.5B",
+    "organization_revenue": 1452926000.0,
+    "intent_strength": null,
+    "show_intent": true,
+    "has_intent_signal_account": false,
+    "intent_signal_account": null,
+    "organization_headcount_six_month_growth": -0.0001330671989354624,
+    "organization_headcount_twelve_month_growth": -0.01014359109471743,
+    "organization_headcount_twenty_four_month_growth": 0.318476925776452
+  },
+  {
+    "id": "5569cecd7369642525a89600",
+    "name": "Britannia Industries Limited",
+    "website_url": "http://www.britannia.co.in",
+    "angellist_url": null,
+    "linkedin_url": "http://www.linkedin.com/company/britannia-industries-limited",
+    "twitter_url": "https://twitter.com/BritanniaIndLtd",
+    "facebook_url": "https://facebook.com/BritanniaIndustriesLimited",
+    "primary_phone": {
+      "number": "+91 33228 72439",
+      "source": "Owler",
+      "sanitized_number": "+913322872439"
+    },
+    "languages": [
+      "English"
+    ],
+    "alexa_ranking": null,
+    "phone": "+91 33228 72439",
+    "linkedin_uid": "16271",
+    "founded_year": 1892,
+    "publicly_traded_symbol": "BRITANNIA.BO",
+    "publicly_traded_exchange": "bse",
+    "logo_url": "https://zenprospect-production.s3.amazonaws.com/uploads/pictures/69c489aed1ac910001d06669/picture",
+    "crunchbase_url": null,
+    "primary_domain": "britannia.co.in",
+    "sic_codes": [
+      "2092"
+    ],
+    "naics_codes": [
+      "311"
+    ],
+    "sanitized_phone": "+913322872439",
+    "owned_by_organization_id": null,
+    "organization_revenue_printed": "2.1B",
+    "organization_revenue": 2093665000.0,
+    "intent_strength": null,
+    "show_intent": true,
+    "has_intent_signal_account": false,
+    "intent_signal_account": null,
+    "organization_headcount_six_month_growth": -0.001456664238892935,
+    "organization_headcount_twelve_month_growth": 0.02313432835820895,
+    "organization_headcount_twenty_four_month_growth": 0.07193119624706802
+  },
+  {
+    "id": "5f489c7360adea0001462bec",
+    "name": "Mechanical Engineering World",
+    "website_url": "http://www.engineeringlearner.com",
+    "angellist_url": null,
+    "linkedin_url": "http://www.linkedin.com/company/mechanical-engineering-worlds",
+    "twitter_url": null,
+    "facebook_url": null,
+    "primary_phone": {},
+    "languages": [],
+    "alexa_ranking": 669659,
+    "phone": null,
+    "linkedin_uid": "43239614",
+    "founded_year": null,
+    "publicly_traded_symbol": null,
+    "publicly_traded_exchange": null,
+    "logo_url": "https://zenprospect-production.s3.amazonaws.com/uploads/pictures/66df7874ac1db20001369902/picture",
+    "crunchbase_url": null,
+    "primary_domain": "engineeringlearner.com",
+    "sic_codes": [
+      "8299"
+    ],
+    "naics_codes": [
+      "61161"
+    ],
+    "owned_by_organization_id": null,
+    "organization_revenue_printed": null,
+    "organization_revenue": 0.0,
+    "intent_strength": null,
+    "show_intent": true,
+    "has_intent_signal_account": false,
+    "intent_signal_account": null,
+    "organization_headcount_six_month_growth": -0.01818181818181818,
+    "organization_headcount_twelve_month_growth": -0.01279707495429616,
+    "organization_headcount_twenty_four_month_growth": 0.001855287569573284
+  },
+  {
+    "id": "5d099c0180f93e7a3371fecf",
+    "name": "Hyundai Motor India Ltd.",
+    "website_url": "http://www.hyundaiusa.com",
+    "angellist_url": "http://angel.co/hyundai",
+    "linkedin_url": "http://www.linkedin.com/company/hyundai-motor-india-ltd",
+    "twitter_url": "https://twitter.com/hyundaiindia",
+    "facebook_url": "https://www.facebook.com/HyundaiIndia",
+    "primary_phone": {
+      "number": "+91 62328 75508",
+      "source": "Scraped",
+      "sanitized_number": "+916232875508"
+    },
+    "languages": [
+      "English",
+      "Spanish",
+      "Russian"
+    ],
+    "alexa_ranking": 11314,
+    "phone": "+91 62328 75508",
+    "linkedin_uid": "36062",
+    "founded_year": 1996,
+    "publicly_traded_symbol": null,
+    "publicly_traded_exchange": null,
+    "logo_url": "https://zenprospect-production.s3.amazonaws.com/uploads/pictures/68c619cfda5a650001c1aeef/picture",
+    "crunchbase_url": null,
+    "primary_domain": "hyundaiusa.com",
+    "sic_codes": [
+      "3711"
+    ],
+    "naics_codes": [
+      "33611"
+    ],
+    "sanitized_phone": "+916232875508",
+    "owned_by_organization_id": "5dd8ea21116686008c7fb4e1",
+    "owned_by_organization": {
+      "id": "5dd8ea21116686008c7fb4e1",
+      "name": "Hyundai Motor Group",
+      "website_url": "http://www.hyundaimotorgroup.com"
+    },
+    "organization_revenue_printed": "8.1B",
+    "organization_revenue": 8100000000.0,
+    "intent_strength": null,
+    "show_intent": true,
+    "has_intent_signal_account": false,
+    "intent_signal_account": null,
+    "organization_headcount_six_month_growth": -0.01483679525222552,
+    "organization_headcount_twelve_month_growth": -0.01483679525222552,
+    "organization_headcount_twenty_four_month_growth": -0.04597701149425287
+  },
+  {
+    "id": "637b23ca0583c7000148792a",
+    "name": "World of Electrical",
+    "website_url": "http://www.mechzo.com",
+    "angellist_url": null,
+    "linkedin_url": "http://www.linkedin.com/company/worldofelectrical",
+    "twitter_url": null,
+    "facebook_url": null,
+    "primary_phone": {
+      "number": "+91 81686 94999",
+      "sanitized_number": "+918168694999",
+      "source": "Scraped"
+    },
+    "languages": [],
+    "alexa_ranking": null,
+    "phone": "+91 81686 94999",
+    "linkedin_uid": "77732480",
+    "founded_year": null,
+    "publicly_traded_symbol": null,
+    "publicly_traded_exchange": null,
+    "logo_url": "https://zenprospect-production.s3.amazonaws.com/uploads/pictures/670641e6c3a75d0001837eb3/picture",
+    "crunchbase_url": null,
+    "primary_domain": "mechzo.com",
+    "sic_codes": [
+      "3621",
+      "5063",
+      "7371"
+    ],
+    "naics_codes": [
+      "33599",
+      "423610",
+      "541512"
+    ],
+    "sanitized_phone": "+918168694999",
+    "owned_by_organization_id": null,
+    "organization_revenue_printed": null,
+    "organization_revenue": 0.0,
+    "intent_strength": null,
+    "show_intent": true,
+    "has_intent_signal_account": false,
+    "intent_signal_account": null,
+    "organization_headcount_six_month_growth": 0.04651162790697674,
+    "organization_headcount_twelve_month_growth": 0.1538461538461539,
+    "organization_headcount_twenty_four_month_growth": 0.3235294117647059
+  },
+  {
+    "id": "54a22fb07468693fda834c14",
+    "name": "Dabur India Limited",
+    "website_url": "http://www.dabur.com",
+    "angellist_url": null,
+    "linkedin_url": "http://www.linkedin.com/company/dabur-india-limited",
+    "twitter_url": "https://twitter.com/DaburIndia",
+    "facebook_url": "https://facebook.com/DaburIndia",
+    "primary_phone": {
+      "number": "+91 12039 62100",
+      "source": "Owler",
+      "sanitized_number": "+911203962100"
+    },
+    "languages": [
+      "English"
+    ],
+    "alexa_ranking": 92217,
+    "phone": "+91 12039 62100",
+    "linkedin_uid": "7203",
+    "founded_year": 1884,
+    "publicly_traded_symbol": "DABUR.NS",
+    "publicly_traded_exchange": "nse",
+    "logo_url": "https://zenprospect-production.s3.amazonaws.com/uploads/pictures/69c3da855da02f0001c2c44f/picture",
+    "crunchbase_url": null,
+    "primary_domain": "dabur.com",
+    "sic_codes": [
+      "2041"
+    ],
+    "naics_codes": [
+      "31211"
+    ],
+    "sanitized_phone": "+911203962100",
+    "owned_by_organization_id": "5e2964d99577ad00985e681f",
+    "owned_by_organization": {
+      "id": "5e2964d99577ad00985e681f",
+      "name": "Dabur International Ltd",
+      "website_url": "http://www.daburinternational.com"
+    },
+    "organization_revenue_printed": "1.5B",
+    "organization_revenue": 1470632000.0,
+    "intent_strength": null,
+    "show_intent": true,
+    "has_intent_signal_account": false,
+    "intent_signal_account": null,
+    "organization_headcount_six_month_growth": -0.0005132152938157557,
+    "organization_headcount_twelve_month_growth": 0.02257810448936729,
+    "organization_headcount_twenty_four_month_growth": 0.06508066721356302
+  }
+]

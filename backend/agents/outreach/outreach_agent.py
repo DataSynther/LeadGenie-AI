@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from anthropic import Anthropic
 from .prompt_templates import INITIAL_EMAIL_TEMPLATE, FOLLOW_UP_TEMPLATE, OBJECTION_RESPONSE_TEMPLATE
 
@@ -33,7 +34,9 @@ class OutreachAgent:
             system="You are a senior SDR. Always respond with valid JSON.",
             messages=[{"role": "user", "content": prompt}],
         )
-        return json.loads(response.content[0].text)
+        text = re.sub(r"^```(?:json)?\s*", "", response.content[0].text.strip())
+        text = re.sub(r"\s*```$", "", text)
+        return json.loads(text)
 
     def generate_follow_up(self, context: dict, conversation_summary: str) -> dict:
         """Generate a follow-up email based on prior conversation history."""
@@ -53,7 +56,9 @@ class OutreachAgent:
             system="You are a senior SDR. Always respond with valid JSON.",
             messages=[{"role": "user", "content": prompt}],
         )
-        return json.loads(response.content[0].text)
+        text = re.sub(r"^```(?:json)?\s*", "", response.content[0].text.strip())
+        text = re.sub(r"\s*```$", "", text)
+        return json.loads(text)
 
     def respond_to_objection(self, context: dict, objection: str) -> dict:
         """Generate a response to a lead's objection."""
@@ -75,4 +80,6 @@ class OutreachAgent:
             system="You are a senior SDR. Always respond with valid JSON.",
             messages=[{"role": "user", "content": prompt}],
         )
-        return json.loads(response.content[0].text)
+        text = re.sub(r"^```(?:json)?\s*", "", response.content[0].text.strip())
+        text = re.sub(r"\s*```$", "", text)
+        return json.loads(text)

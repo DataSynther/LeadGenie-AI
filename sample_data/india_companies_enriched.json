@@ -1,0 +1,5594 @@
+[
+  {
+    "id": "5e58ef7352ecec0001c24f65",
+    "name": "Traya",
+    "website_url": "http://www.traya.health",
+    "angellist_url": null,
+    "linkedin_url": "http://www.linkedin.com/company/trayahealth",
+    "twitter_url": "https://twitter.com/TrayaHealth",
+    "facebook_url": "https://facebook.com/traya.health/",
+    "primary_phone": {
+      "number": "+91 78757 03483",
+      "source": "Owler",
+      "sanitized_number": "+917875703483"
+    },
+    "languages": [],
+    "alexa_ranking": 63553,
+    "phone": "+91 78757 03483",
+    "linkedin_uid": "26662654",
+    "founded_year": 2019,
+    "publicly_traded_symbol": null,
+    "publicly_traded_exchange": null,
+    "logo_url": "https://zenprospect-production.s3.amazonaws.com/uploads/pictures/6958f650063e300001b258fe/picture",
+    "crunchbase_url": null,
+    "primary_domain": "traya.health",
+    "sic_codes": [
+      "8731"
+    ],
+    "naics_codes": [
+      "62139"
+    ],
+    "sanitized_phone": "+917875703483",
+    "owned_by_organization_id": null,
+    "organization_revenue_printed": "40M",
+    "organization_revenue": 40000000.0,
+    "intent_strength": null,
+    "show_intent": true,
+    "has_intent_signal_account": false,
+    "intent_signal_account": null,
+    "organization_headcount_six_month_growth": 0.08222222222222222,
+    "organization_headcount_twelve_month_growth": 0.1540284360189574,
+    "organization_headcount_twenty_four_month_growth": 0.5509554140127388,
+    "industry": "health, wellness & fitness",
+    "estimated_num_employees": 760,
+    "keywords": [
+      "food & beverage services",
+      "public health",
+      "e-commerce",
+      "customer success stories",
+      "long-term hair regrowth",
+      "environmental impact on hair",
+      "scalp health products",
+      "hair fall management",
+      "natural hair oils",
+      "healthcare",
+      "hair growth supplements",
+      "scalp nourishment",
+      "hormonal imbalance treatment",
+      "ai-based hair testing",
+      "customized herbal formulations",
+      "customer engagement",
+      "customized hair regimens",
+      "ayurveda and modern science",
+      "hair fall control",
+      "nutritional hair support",
+      "natural herbal formulations",
+      "ayush certified products",
+      "holistic hair solutions",
+      "ayush certified herbal products",
+      "personalized wellness",
+      "expert hair coaches",
+      "services",
+      "ai-driven hair analysis",
+      "non-invasive hair treatment",
+      "root cause analysis",
+      "nutritional deficiencies and hair",
+      "natural dht blockers",
+      "personalized wellness plans",
+      "hair diagnosis algorithm",
+      "men and women hair solutions",
+      "nutrition",
+      "proprietary algorithm",
+      "hair health monitoring",
+      "scalp health",
+      "internal health and hair",
+      "long-lasting hair growth",
+      "stress and hair fall",
+      "scalp analysis",
+      "expert-guided hair care",
+      "internal root cause analysis",
+      "natural supplements",
+      "metabolism and hair health",
+      "ayurvedic hair supplements",
+      "hair growth serum",
+      "ai-powered hair diagnosis",
+      "herbal hair products",
+      "non-invasive diagnosis",
+      "custom treatment plans",
+      "d2c",
+      "scientific hair care",
+      "integrated ayurveda and modern science",
+      "internal health focus",
+      "internal root cause diagnosis",
+      "ayurveda and dermatology",
+      "personalized hair loss",
+      "scalp wellness technology",
+      "internal health for hair",
+      "personal care products",
+      "personalized hair care",
+      "holistic hair treatment",
+      "nutritional support for hair",
+      "hair growth coaching",
+      "offices of all other health practitioners",
+      "india hair health market",
+      "ayurveda dermatology integration",
+      "venture-backed health startup",
+      "hair loss treatment",
+      "customized hair plan",
+      "root cause hair loss",
+      "hair growth solutions",
+      "b2c",
+      "holistic hair regrowth",
+      "holistic health",
+      "safe hair supplements",
+      "dermatology and ayurveda",
+      "herbal hair oils",
+      "dermatology",
+      "hair diagnosis",
+      "hormonal balance",
+      "digital health platform",
+      "natural hair care",
+      "innovative hair diagnosis",
+      "root cause hair therapy",
+      "dht blocker",
+      "minoxidil",
+      "hair vitamins",
+      "ayurvedic supplements",
+      "holistic hair solution",
+      "scalp oil",
+      "anti-dandruff shampoo",
+      "biotin shampoo",
+      "gut health",
+      "stress management",
+      "nutrient absorption",
+      "hair follicle health",
+      "doctor recommended",
+      "natural ingredients",
+      "health tatva",
+      "dandruff control",
+      "protein-rich diet",
+      "damaged hair repair",
+      "healthy hair growth",
+      "monthly subscription",
+      "ph balance",
+      "nutritional deficiencies",
+      "energy boost",
+      "metabolism support",
+      "vegan-friendly products",
+      "hair vitamins for women",
+      "hair supplements",
+      "ayurvedic formulation",
+      "healthy scalp",
+      "immunity booster",
+      "postpartum hair care",
+      "thyroid health",
+      "hormone-related hair loss",
+      "personalized diet",
+      "no side effects",
+      "easy online consultation",
+      "feedback and support",
+      "customer testimonials",
+      "consumer products & retail",
+      "food & beverages",
+      "consumer goods",
+      "consumers",
+      "health, wellness & fitness",
+      "consumer internet",
+      "internet",
+      "information technology & services",
+      "health care",
+      "hospital & health care"
+    ],
+    "industries": [
+      "health, wellness & fitness",
+      "food & beverages"
+    ],
+    "secondary_industries": [
+      "food & beverages"
+    ],
+    "snippets_loaded": true,
+    "industry_tag_id": "5567cddb7369644d250c0000",
+    "industry_tag_hash": {
+      "health, wellness & fitness": "5567cddb7369644d250c0000",
+      "food & beverages": "5567ce1e7369643b806a0000"
+    },
+    "retail_location_count": 0,
+    "raw_address": "Unit no - 101, B wing, Building - 16, Interface, Off Link Road, Malad (West),\u00a0Mumbai\u00a0-\u00a0400064, Mumbai, Maharashtra 400064, IN",
+    "street_address": "B102 Link Road",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "postal_code": "400064",
+    "country": "India",
+    "short_description": "Nestl\u00e9 S.A. is the world's largest food and beverage company, based in Vevey, Switzerland. Established in 1905 from the merger of the Anglo-Swiss Condensed Milk Company and Farine Lact\u00e9e Henri Nestl\u00e9, the company has a rich history rooted in food preservation and nutrition. Nestl\u00e9 operates in nearly 200 countries, with hundreds of factories producing a wide range of products.\n\nThe company offers a diverse portfolio that includes infant nutrition, dairy products, chocolate, beverages, frozen and prepared foods, cereals, and pet food. Notable brands include Nescaf\u00e9, KitKat, and Stouffer\u2019s. Nestl\u00e9 emphasizes convenience and nutrition, continually investing in research and development to enhance its offerings. With a strong global presence, Nestl\u00e9 remains committed to providing quality food and beverage options to consumers worldwide.",
+    "suborganizations": [],
+    "num_suborganizations": 0,
+    "annual_revenue_printed": "40M",
+    "annual_revenue": 40000000.0,
+    "total_funding": 11810000,
+    "total_funding_printed": "11.8M",
+    "latest_funding_round_date": "2024-04-01T00:00:00.000+00:00",
+    "latest_funding_stage": "Private Equity",
+    "funding_events": [
+      {
+        "id": "6939188ed931cc0001a2560a",
+        "date": "2024-04-01T00:00:00.000+00:00",
+        "news_url": "https://inc42.com/buzz/traya-pockets-inr-75-cr-to-offer-customised-haircare-solutions/",
+        "type": "Private Equity",
+        "investors": "Xponentia Capital Partners",
+        "amount": "9M",
+        "currency": "$"
+      },
+      {
+        "id": "6939188ed931cc0001a2560c",
+        "date": "2023-05-01T00:00:00.000+00:00",
+        "news_url": "https://www.barandbench.com/law-firms/dealstreet/khaitan-legal-associates-acts-on-alteria-capital-venture-debt-investment-in-traya",
+        "type": "Debt Financing",
+        "investors": "Alteria Capital",
+        "amount": null,
+        "currency": "$"
+      },
+      {
+        "id": "6939188ed931cc0001a2560e",
+        "date": "2022-01-01T00:00:00.000+00:00",
+        "news_url": "https://yourstory.com/2022/01/funding-roundup-deals-early-stage-startups-lendingkart-muvin-freadom-praan-traya/amp",
+        "type": "Seed",
+        "investors": "Whiteboard Capital, Kae Capital, Fireside Ventures, Kannan Sitaram",
+        "amount": "2.2M",
+        "currency": "$"
+      },
+      {
+        "id": "6939188ed931cc0001a25610",
+        "date": "2020-11-01T00:00:00.000+00:00",
+        "news_url": null,
+        "type": "Seed",
+        "investors": "Whiteboard Capital, Suhail Sameer, Kae Capital, Puneet Kumar.",
+        "amount": "610K",
+        "currency": "$"
+      }
+    ],
+    "technology_names": [
+      "AI",
+      "API Gateway",
+      "AWS CloudFormation",
+      "AWS CodeBuild",
+      "AWS CodeDeploy",
+      "AWS CodePipeline",
+      "AWS Step Functions",
+      "Adobe Photoshop",
+      "Adobe Premiere Pro",
+      "Amazon CloudFront",
+      "Amazon CloudWatch",
+      "Amazon DynamoDB",
+      "Amazon S3",
+      "Ansible",
+      "Apple Final Cut Pro X",
+      "Bootstrap Framework",
+      "CAT",
+      "Canal",
+      "CapCut",
+      "ChatGPT",
+      "Cisco Secure Firewall Management Center",
+      "DaVinci Resolve",
+      "Datadog",
+      "Docker",
+      "Facebook",
+      "Facebook Custom Audiences",
+      "Facebook Login (Connect)",
+      "Gemini",
+      "GitHub Actions",
+      "GitLab",
+      "Gmail",
+      "Google",
+      "Google AdWords Conversion",
+      "Google Ads",
+      "Google Analytics",
+      "Google Apps",
+      "Google Business Profile",
+      "Google Dynamic Remarketing",
+      "Google My Business",
+      "Google Search Console",
+      "Google Sheets",
+      "Google Tag Manager",
+      "HELM",
+      "Harmony Email & Collaboration",
+      "Hugging Face",
+      "Inkling",
+      "Instagram",
+      "Javascript",
+      "Jenkins",
+      "Kubernetes",
+      "Lambda Cloud",
+      "Lexity",
+      "Linkedin Marketing Solutions",
+      "Looker",
+      "Looker Studio",
+      "Meta Ads Manager",
+      "Metabase",
+      "Micro",
+      "Microsoft Excel",
+      "Midjourney",
+      "Mobile Friendly",
+      "MongoDB",
+      "MySQL",
+      "Nestjs",
+      "NumPy",
+      "PostgreSQL",
+      "Postman",
+      "Python",
+      "Reddit for business",
+      "Route 53",
+      "SSMS Tools Pack",
+      "Seaborn Health Care",
+      "Sezzle",
+      "Shopify",
+      "Shopify Plus",
+      "Shutterstock",
+      "Sizmek (MediaMind)",
+      "Splunk",
+      "Strato",
+      "Terraform",
+      "Visual Website Optimizer",
+      "WhatsApp",
+      "YouTube",
+      "da Vinci Surgical System",
+      "dynaTrace",
+      "pandas"
+    ],
+    "current_technologies": [
+      {
+        "uid": "ai",
+        "name": "AI",
+        "category": "Other"
+      },
+      {
+        "uid": "api_gateway",
+        "name": "API Gateway",
+        "category": "Cloud Services"
+      },
+      {
+        "uid": "aws_cloudformation",
+        "name": "AWS CloudFormation",
+        "category": "Cloud Services"
+      },
+      {
+        "uid": "aws_codebuild",
+        "name": "AWS CodeBuild",
+        "category": "Cloud Services"
+      },
+      {
+        "uid": "aws_codedeploy",
+        "name": "AWS CodeDeploy",
+        "category": "Deployment Tools"
+      },
+      {
+        "uid": "aws_codepipeline",
+        "name": "AWS CodePipeline",
+        "category": "Cloud Services"
+      },
+      {
+        "uid": "aws_step_functions",
+        "name": "AWS Step Functions",
+        "category": "Cloud Services"
+      },
+      {
+        "uid": "adobe_photoshop",
+        "name": "Adobe Photoshop",
+        "category": "Other"
+      },
+      {
+        "uid": "adobe_premiere_pro",
+        "name": "Adobe Premiere Pro",
+        "category": "Video Advertising Networks"
+      },
+      {
+        "uid": "amazon_cloudfront",
+        "name": "Amazon CloudFront",
+        "category": "Content Delivery Networks"
+      },
+      {
+        "uid": "amazon_cloudwatch",
+        "name": "Amazon CloudWatch",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "amazon_dynamodb",
+        "name": "Amazon DynamoDB",
+        "category": "Database"
+      },
+      {
+        "uid": "amazon_s3",
+        "name": "Amazon S3",
+        "category": "Content Delivery Networks"
+      },
+      {
+        "uid": "ansible",
+        "name": "Ansible",
+        "category": "Other"
+      },
+      {
+        "uid": "apple_final_cut_pro_x",
+        "name": "Apple Final Cut Pro X",
+        "category": "Video Advertising Networks"
+      },
+      {
+        "uid": "bootstrap_framework",
+        "name": "Bootstrap Framework",
+        "category": "CSS and JavaScript Libraries"
+      },
+      {
+        "uid": "cat",
+        "name": "CAT",
+        "category": "ERP"
+      },
+      {
+        "uid": "canal",
+        "name": "Canal",
+        "category": "E-commerce Platforms"
+      },
+      {
+        "uid": "capcut",
+        "name": "CapCut",
+        "category": "Online Video Platforms"
+      },
+      {
+        "uid": "chatgpt",
+        "name": "ChatGPT",
+        "category": "Chats"
+      },
+      {
+        "uid": "cisco_secure_firewall_management_center",
+        "name": "Cisco Secure Firewall Management Center",
+        "category": "Cloud Services"
+      },
+      {
+        "uid": "davinci_resolve",
+        "name": "DaVinci Resolve",
+        "category": "Video Advertising Networks"
+      },
+      {
+        "uid": "datadog",
+        "name": "Datadog",
+        "category": "Web Performance Monitoring"
+      },
+      {
+        "uid": "docker",
+        "name": "Docker",
+        "category": "Other"
+      },
+      {
+        "uid": "facebook",
+        "name": "Facebook",
+        "category": "Social Media Marketing"
+      },
+      {
+        "uid": "facebook_web_custom_audiences",
+        "name": "Facebook Custom Audiences",
+        "category": "Retargeting"
+      },
+      {
+        "uid": "facebook_login",
+        "name": "Facebook Login (Connect)",
+        "category": "Social Login"
+      },
+      {
+        "uid": "gemini",
+        "name": "Gemini",
+        "category": "Other"
+      },
+      {
+        "uid": "github_actions",
+        "name": "GitHub Actions",
+        "category": "Deployment Tools"
+      },
+      {
+        "uid": "gitlab",
+        "name": "GitLab",
+        "category": "CMS"
+      },
+      {
+        "uid": "gmail",
+        "name": "Gmail",
+        "category": "Email Providers"
+      },
+      {
+        "uid": "google",
+        "name": "Google",
+        "category": "Other"
+      },
+      {
+        "uid": "google_adwords_conversion",
+        "name": "Google AdWords Conversion",
+        "category": "Advertising Networks"
+      },
+      {
+        "uid": "google_ads",
+        "name": "Google Ads",
+        "category": "Advertising Networks"
+      },
+      {
+        "uid": "google_analytics",
+        "name": "Google Analytics",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "google_apps",
+        "name": "Google Apps",
+        "category": "Other"
+      },
+      {
+        "uid": "google_business_profile",
+        "name": "Google Business Profile",
+        "category": "Customer Reviews"
+      },
+      {
+        "uid": "google_dynamic_remarketing",
+        "name": "Google Dynamic Remarketing",
+        "category": "Retargeting"
+      },
+      {
+        "uid": "google_my_business",
+        "name": "Google My Business",
+        "category": "Customer Reviews"
+      },
+      {
+        "uid": "google_search_console",
+        "name": "Google Search Console",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "google_sheets",
+        "name": "Google Sheets",
+        "category": "Communication and Collaboration"
+      },
+      {
+        "uid": "google_tag_manager",
+        "name": "Google Tag Manager",
+        "category": "Tag Management"
+      },
+      {
+        "uid": "helm",
+        "name": "HELM",
+        "category": "Deployment Tools"
+      },
+      {
+        "uid": "harmony_email_collaboration",
+        "name": "Harmony Email & Collaboration",
+        "category": "Cloud Services"
+      },
+      {
+        "uid": "hugging_face",
+        "name": "Hugging Face",
+        "category": "Other"
+      },
+      {
+        "uid": "inkling",
+        "name": "Inkling",
+        "category": "Other"
+      },
+      {
+        "uid": "instagram",
+        "name": "Instagram",
+        "category": "Social Sharing"
+      },
+      {
+        "uid": "javascript",
+        "name": "Javascript",
+        "category": "Other"
+      },
+      {
+        "uid": "jenkins",
+        "name": "Jenkins",
+        "category": "Frameworks and Programming Languages"
+      },
+      {
+        "uid": "kubernetes",
+        "name": "Kubernetes",
+        "category": "Other"
+      },
+      {
+        "uid": "lambda_cloud",
+        "name": "Lambda Cloud",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "lexity",
+        "name": "Lexity",
+        "category": "E-commerce Tools"
+      },
+      {
+        "uid": "linkedin_display_ads__formerly_bizo",
+        "name": "Linkedin Marketing Solutions",
+        "category": "Advertising Networks"
+      },
+      {
+        "uid": "looker",
+        "name": "Looker",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "looker_studio",
+        "name": "Looker Studio",
+        "category": "Business Intelligence"
+      },
+      {
+        "uid": "meta ads manager",
+        "name": "Meta Ads Manager",
+        "category": "Advertising Networks"
+      },
+      {
+        "uid": "metabase",
+        "name": "Metabase",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "micro",
+        "name": "Micro",
+        "category": "Other"
+      },
+      {
+        "uid": "microsoft_excel",
+        "name": "Microsoft Excel",
+        "category": "Business Intelligence"
+      },
+      {
+        "uid": "midjourney",
+        "name": "Midjourney",
+        "category": "Other"
+      },
+      {
+        "uid": "mobile_friendly",
+        "name": "Mobile Friendly",
+        "category": "Other"
+      },
+      {
+        "uid": "mongodb",
+        "name": "MongoDB",
+        "category": "Database"
+      },
+      {
+        "uid": "mysql",
+        "name": "MySQL",
+        "category": "Database"
+      },
+      {
+        "uid": "nestjs",
+        "name": "Nestjs",
+        "category": "Frameworks and Programming Languages"
+      },
+      {
+        "uid": "numpy",
+        "name": "NumPy",
+        "category": "Frameworks and Programming Languages"
+      },
+      {
+        "uid": "postgresql",
+        "name": "PostgreSQL",
+        "category": "Database"
+      },
+      {
+        "uid": "postman",
+        "name": "Postman",
+        "category": "Other"
+      },
+      {
+        "uid": "python",
+        "name": "Python",
+        "category": "Frameworks and Programming Languages"
+      },
+      {
+        "uid": "reddit_for_business",
+        "name": "Reddit for business",
+        "category": "Social Media Marketing"
+      },
+      {
+        "uid": "route_53",
+        "name": "Route 53",
+        "category": "Domain Name Services"
+      },
+      {
+        "uid": "ssms_tools_pack",
+        "name": "SSMS Tools Pack",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "seaborn_health_care",
+        "name": "Seaborn Health Care",
+        "category": "Other"
+      },
+      {
+        "uid": "sezzle",
+        "name": "Sezzle",
+        "category": "Payments"
+      },
+      {
+        "uid": "shopify",
+        "name": "Shopify",
+        "category": "E-commerce Platforms"
+      },
+      {
+        "uid": "shopify_plus",
+        "name": "Shopify Plus",
+        "category": "E-commerce Platforms"
+      },
+      {
+        "uid": "shutterstock",
+        "name": "Shutterstock",
+        "category": "Other"
+      },
+      {
+        "uid": "sizmek_mediamind",
+        "name": "Sizmek (MediaMind)",
+        "category": "Ad Servers"
+      },
+      {
+        "uid": "splunk",
+        "name": "Splunk",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "strato",
+        "name": "Strato",
+        "category": "Hosting"
+      },
+      {
+        "uid": "terraform",
+        "name": "Terraform",
+        "category": "Deployment Tools"
+      },
+      {
+        "uid": "visual_website_optimizer",
+        "name": "Visual Website Optimizer",
+        "category": "Online Testing Platforms"
+      },
+      {
+        "uid": "whatsapp",
+        "name": "WhatsApp",
+        "category": "Communication and Collaboration"
+      },
+      {
+        "uid": "youtube",
+        "name": "YouTube",
+        "category": "Online Video Platforms"
+      },
+      {
+        "uid": "da_vinci_surgical_system",
+        "name": "da Vinci Surgical System",
+        "category": "Other"
+      },
+      {
+        "uid": "dynatrace",
+        "name": "dynaTrace",
+        "category": "Web Performance Monitoring"
+      },
+      {
+        "uid": "pandas",
+        "name": "pandas",
+        "category": "Frameworks and Programming Languages"
+      }
+    ],
+    "org_chart_root_people_ids": [],
+    "departmental_head_count": {
+      "finance": 10,
+      "marketing": 73,
+      "engineering": 51,
+      "business_development": 34,
+      "information_technology": 2,
+      "consulting": 32,
+      "support": 26,
+      "operations": 31,
+      "human_resources": 14,
+      "sales": 20,
+      "entrepreneurship": 6,
+      "data_science": 5,
+      "product_management": 8,
+      "arts_and_design": 31,
+      "media_and_commmunication": 12,
+      "accounting": 1,
+      "administrative": 1,
+      "legal": 0,
+      "education": 0
+    }
+  },
+  {
+    "id": "5b83830ef874f7099ca26b61",
+    "name": "The Economic Times",
+    "website_url": "http://www.economictimes.com",
+    "angellist_url": null,
+    "linkedin_url": "http://www.linkedin.com/company/economictimes",
+    "twitter_url": "https://twitter.com/timesofindia",
+    "facebook_url": "https://www.facebook.com/TimesofIndia/",
+    "primary_phone": {
+      "number": "+1 760-412-0990",
+      "sanitized_number": "+17604120990",
+      "source": "Scraped"
+    },
+    "languages": [
+      "English",
+      "English"
+    ],
+    "alexa_ranking": 20305,
+    "phone": "+1 760-412-0990",
+    "linkedin_uid": "3968",
+    "founded_year": 1961,
+    "publicly_traded_symbol": null,
+    "publicly_traded_exchange": null,
+    "logo_url": "https://zenprospect-production.s3.amazonaws.com/uploads/pictures/69b0eb04369ffb00014b9546/picture",
+    "crunchbase_url": null,
+    "primary_domain": "economictimes.com",
+    "sic_codes": [
+      "2711"
+    ],
+    "naics_codes": [
+      "519"
+    ],
+    "sanitized_phone": "+17604120990",
+    "owned_by_organization_id": "5ed1964e846a9f00014fb90a",
+    "owned_by_organization": {
+      "id": "5ed1964e846a9f00014fb90a",
+      "name": "Times Internet",
+      "website_url": "http://www.timesinternet.in"
+    },
+    "organization_revenue_printed": null,
+    "organization_revenue": 0.0,
+    "intent_strength": null,
+    "show_intent": true,
+    "has_intent_signal_account": false,
+    "intent_signal_account": null,
+    "organization_headcount_six_month_growth": 0.08270676691729323,
+    "organization_headcount_twelve_month_growth": 0.1787175989085948,
+    "organization_headcount_twenty_four_month_growth": 0.3312788906009245,
+    "industry": "publishing",
+    "estimated_num_employees": 1300,
+    "keywords": [
+      "newspaper publishing",
+      "market forecasting",
+      "market data analytics",
+      "market forecasting tools",
+      "portfolio management",
+      "digital publishing",
+      "news distribution",
+      "digital media",
+      "financial markets",
+      "industry events",
+      "editorial services",
+      "mobile news app",
+      "financial services",
+      "financial reporting",
+      "wealth management",
+      "market trends",
+      "business news digital",
+      "b2b",
+      "news platform",
+      "user experience",
+      "news aggregation",
+      "business news portal",
+      "media partnerships",
+      "online advertising",
+      "news app development",
+      "financial news india",
+      "corporate news india",
+      "social media marketing",
+      "digital advertising",
+      "market data feeds",
+      "media & entertainment",
+      "business news analytics",
+      "financial news updates",
+      "content monetization",
+      "market data feeds india",
+      "investment research india",
+      "market forecasts",
+      "industry analysis india",
+      "market commentary",
+      "news curation",
+      "business news app",
+      "market segmentation",
+      "financial data",
+      "digital subscriptions",
+      "information technology & services",
+      "market intelligence india",
+      "data analytics",
+      "stock market updates",
+      "web development",
+      "content personalization",
+      "financial data services",
+      "market intelligence tools",
+      "social media engagement",
+      "media technology",
+      "capital markets",
+      "investment news",
+      "india economy",
+      "premium content",
+      "video content",
+      "business news subscription",
+      "financial market insights",
+      "stock market analysis",
+      "mobile app development",
+      "media company",
+      "market research",
+      "industry news india",
+      "content management",
+      "services",
+      "business intelligence",
+      "market data",
+      "financial news platform",
+      "market analysis",
+      "market analysis tools",
+      "industry reports",
+      "stock quotes",
+      "stock market data",
+      "stock market news india",
+      "digital transformation",
+      "news analytics",
+      "financial analysis",
+      "stock quotes india",
+      "customer service",
+      "business analysis",
+      "risk management",
+      "audience engagement",
+      "market data platform",
+      "data visualization",
+      "digital news platform",
+      "business news",
+      "web search portals, libraries, archives, and other information services",
+      "corporate trends",
+      "market research tools",
+      "corporate news",
+      "business intelligence platform",
+      "economic news",
+      "industry insights",
+      "investment insights",
+      "economic analysis",
+      "market trend analysis",
+      "web analytics",
+      "news subscription",
+      "real-time updates",
+      "business news india",
+      "business journalism",
+      "stock market",
+      "investment ideas",
+      "nifty 50",
+      "financial news",
+      "market performance",
+      "equity trading",
+      "mutual funds",
+      "economic insights",
+      "technical analysis",
+      "investment opportunities",
+      "financial indices",
+      "personal finance",
+      "economic trends",
+      "investing strategies",
+      "market volatility",
+      "stock recommendations",
+      "market benchmarks",
+      "real-time data",
+      "investment tools",
+      "financial education",
+      "daily market updates",
+      "investment returns",
+      "trading signals",
+      "financial market trends",
+      "long-term investing",
+      "market metrics",
+      "technical indicators",
+      "stock valuations",
+      "financial health",
+      "dividend stocks",
+      "growth stocks",
+      "value investing",
+      "short selling",
+      "trend analysis",
+      "market corrections",
+      "economic outlook",
+      "global markets",
+      "day trading",
+      "retail investors",
+      "technical patterns",
+      "sector performance",
+      "saas",
+      "finance",
+      "media",
+      "investment management",
+      "ux",
+      "marketing & advertising",
+      "consumer internet",
+      "consumers",
+      "internet",
+      "software development",
+      "analytics",
+      "computer software"
+    ],
+    "industries": [
+      "publishing"
+    ],
+    "secondary_industries": [],
+    "snippets_loaded": true,
+    "industry_tag_id": "5567ce5b73696439a17a0000",
+    "industry_tag_hash": {
+      "publishing": "5567ce5b73696439a17a0000"
+    },
+    "retail_location_count": 0,
+    "raw_address": "FC-6, FILM CITY, 2nd Floor, Tower B, NOIDA, UTTAR PRADESH 201301, IN",
+    "street_address": "",
+    "city": "Noida",
+    "state": "Uttar Pradesh",
+    "postal_code": "201301",
+    "country": "India",
+    "short_description": "The Economic Times (ET) is a prominent Indian English-language daily newspaper that focuses on business, financial, and economic news. Launched on March 5, 1961, by Bennett, Coleman & Co. Ltd. (The Times Group), it has established itself as India's leading business publication. With a history spanning over six decades, ET has documented significant economic developments in India, adapting to various challenges and changes in the political landscape.\n\nET offers a range of products and services, including a daily print edition, a digital news platform, and six associated magazines that cover specialized business topics. The newspaper also organizes live business events and provides multimedia content. Headquartered in Noida, Uttar Pradesh, with additional offices in Mumbai and Delhi, ET employs around 1,000-1,400 staff and attracts approximately 157 million monthly visits to its online platform, making it a key resource for business professionals and the Indian economic community.",
+    "suborganizations": [],
+    "num_suborganizations": 0,
+    "total_funding": 17000000,
+    "total_funding_printed": "17M",
+    "latest_funding_round_date": "2006-06-01T00:00:00.000+00:00",
+    "latest_funding_stage": "Venture (Round not Specified)",
+    "funding_events": [
+      {
+        "id": "696602ea1bb259000186a194",
+        "date": "2006-06-01T00:00:00.000+00:00",
+        "news_url": null,
+        "type": "Venture (Round not Specified)",
+        "investors": "Sequoia",
+        "amount": "10M",
+        "currency": "$"
+      },
+      {
+        "id": "696602ea1bb259000186a190",
+        "date": "2004-09-01T00:00:00.000+00:00",
+        "news_url": null,
+        "type": "Series A",
+        "investors": "Sequoia",
+        "amount": "7M",
+        "currency": "$"
+      }
+    ],
+    "technology_names": [
+      "33Across",
+      "AT Internet",
+      "Ad Unit 160 x 600",
+      "Ad Unit 300 x 250",
+      "Ad Unit 300 x 600",
+      "Ad Unit 320 x 50",
+      "Ad Unit 728 x 90",
+      "Adara",
+      "AddThis",
+      "Adloox",
+      "Adobe Media Optimizer",
+      "Akamai",
+      "Akamai DNS",
+      "Akamai RUM",
+      "Amadesa",
+      "Amazon Associates",
+      "AppNexus",
+      "Bing Ads",
+      "Bootstrap Framework",
+      "Cedexis Radar",
+      "Chartbeat",
+      "Cision",
+      "Conversant (ValueClick)",
+      "Criteo",
+      "DoubleClick",
+      "DoubleClick Conversion",
+      "DoubleVerify",
+      "Drawbridge",
+      "Effective Measure",
+      "Facebook Custom Audiences",
+      "Facebook Login (Connect)",
+      "Facebook Widget",
+      "FedEx",
+      "Flashtalking",
+      "Freshdesk",
+      "Gmail",
+      "Google AdSense",
+      "Google Analytics",
+      "Google Apps",
+      "Google Dynamic Remarketing",
+      "Google Font API",
+      "Google Play",
+      "Google Plus",
+      "Google Tag Manager",
+      "Highcharts JS Library",
+      "Hubspot",
+      "Integral Ad Science",
+      "Linkedin Login",
+      "Linkedin Marketing Solutions",
+      "Linkedin Widget",
+      "Lotame",
+      "Media.net",
+      "Mobile Friendly",
+      "MouseFlow",
+      "New Relic",
+      "OpenX - Exchange",
+      "Optimizely",
+      "PubMatic",
+      "Quantcast",
+      "RTB House",
+      "Remote",
+      "Rubicon Project",
+      "SOASTA",
+      "Sizmek (MediaMind)",
+      "Slack",
+      "Taboola",
+      "Taboola Newsroom",
+      "Twitter Advertising",
+      "Typekit",
+      "Vimeo",
+      "WordPress.org",
+      "YouTube",
+      "comScore",
+      "greyscale - grey",
+      "iTunes",
+      "reCAPTCHA"
+    ],
+    "current_technologies": [
+      {
+        "uid": "33across",
+        "name": "33Across",
+        "category": "Demand Side Platforms"
+      },
+      {
+        "uid": "at_internet",
+        "name": "AT Internet",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "ad_unit_160_x_600",
+        "name": "Ad Unit 160 x 600",
+        "category": "Publisher Advertising Tools"
+      },
+      {
+        "uid": "ad_unit_300_x_250",
+        "name": "Ad Unit 300 x 250",
+        "category": "Publisher Advertising Tools"
+      },
+      {
+        "uid": "ad_unit_300_x_600",
+        "name": "Ad Unit 300 x 600",
+        "category": "Publisher Advertising Tools"
+      },
+      {
+        "uid": "ad_unit_320_x_50",
+        "name": "Ad Unit 320 x 50",
+        "category": "Advertising Networks"
+      },
+      {
+        "uid": "ad_unit_728_x_90",
+        "name": "Ad Unit 728 x 90",
+        "category": "Publisher Advertising Tools"
+      },
+      {
+        "uid": "adara",
+        "name": "Adara",
+        "category": "Advertising Networks"
+      },
+      {
+        "uid": "addthis",
+        "name": "AddThis",
+        "category": "Social Sharing"
+      },
+      {
+        "uid": "adloox",
+        "name": "Adloox",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "adobe_media_optimizer",
+        "name": "Adobe Media Optimizer",
+        "category": "Search Marketing"
+      },
+      {
+        "uid": "akamai",
+        "name": "Akamai",
+        "category": "Content Delivery Networks"
+      },
+      {
+        "uid": "akamai_dns",
+        "name": "Akamai DNS",
+        "category": "Domain Name Services"
+      },
+      {
+        "uid": "akamai_rum",
+        "name": "Akamai RUM",
+        "category": "Web Performance Monitoring"
+      },
+      {
+        "uid": "amadesa",
+        "name": "Amadesa",
+        "category": "Personalization"
+      },
+      {
+        "uid": "amazon_associates",
+        "name": "Amazon Associates",
+        "category": "Affiliate Advertising Network"
+      },
+      {
+        "uid": "appnexus",
+        "name": "AppNexus",
+        "category": "Demand Side Platforms"
+      },
+      {
+        "uid": "bing_ads",
+        "name": "Bing Ads",
+        "category": "Advertising Networks"
+      },
+      {
+        "uid": "bootstrap_framework",
+        "name": "Bootstrap Framework",
+        "category": "CSS and JavaScript Libraries"
+      },
+      {
+        "uid": "cedexis_radar",
+        "name": "Cedexis Radar",
+        "category": "Web Performance Monitoring"
+      },
+      {
+        "uid": "chartbeat",
+        "name": "Chartbeat",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "cision",
+        "name": "Cision",
+        "category": "Other"
+      },
+      {
+        "uid": "conversant_valueclick",
+        "name": "Conversant (ValueClick)",
+        "category": "Advertising Networks"
+      },
+      {
+        "uid": "criteo",
+        "name": "Criteo",
+        "category": "Retargeting"
+      },
+      {
+        "uid": "doubleclick",
+        "name": "DoubleClick",
+        "category": "Ad Servers"
+      },
+      {
+        "uid": "doubleclick_conversion",
+        "name": "DoubleClick Conversion",
+        "category": "Advertising Networks"
+      },
+      {
+        "uid": "doubleverify",
+        "name": "DoubleVerify",
+        "category": "Other"
+      },
+      {
+        "uid": "drawbridge",
+        "name": "Drawbridge",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "effective_measure",
+        "name": "Effective Measure",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "facebook_web_custom_audiences",
+        "name": "Facebook Custom Audiences",
+        "category": "Retargeting"
+      },
+      {
+        "uid": "facebook_login",
+        "name": "Facebook Login (Connect)",
+        "category": "Social Login"
+      },
+      {
+        "uid": "facebook_widget",
+        "name": "Facebook Widget",
+        "category": "Widgets"
+      },
+      {
+        "uid": "fedex",
+        "name": "FedEx",
+        "category": "Shipping"
+      },
+      {
+        "uid": "flashtalking",
+        "name": "Flashtalking",
+        "category": "Advertising Networks"
+      },
+      {
+        "uid": "freshdesk",
+        "name": "Freshdesk",
+        "category": "Support and Feedback"
+      },
+      {
+        "uid": "gmail",
+        "name": "Gmail",
+        "category": "Email Providers"
+      },
+      {
+        "uid": "google_adsense",
+        "name": "Google AdSense",
+        "category": "Advertising Networks"
+      },
+      {
+        "uid": "google_analytics",
+        "name": "Google Analytics",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "google_apps",
+        "name": "Google Apps",
+        "category": "Other"
+      },
+      {
+        "uid": "google_dynamic_remarketing",
+        "name": "Google Dynamic Remarketing",
+        "category": "Retargeting"
+      },
+      {
+        "uid": "google_font_api",
+        "name": "Google Font API",
+        "category": "Fonts"
+      },
+      {
+        "uid": "google_play",
+        "name": "Google Play",
+        "category": "Widgets"
+      },
+      {
+        "uid": "google_plus_login",
+        "name": "Google Plus",
+        "category": "Social Login"
+      },
+      {
+        "uid": "google_tag_manager",
+        "name": "Google Tag Manager",
+        "category": "Tag Management"
+      },
+      {
+        "uid": "highcharts_js_library",
+        "name": "Highcharts JS Library",
+        "category": "CSS and JavaScript Libraries"
+      },
+      {
+        "uid": "hubspot",
+        "name": "Hubspot",
+        "category": "Marketing Automation"
+      },
+      {
+        "uid": "integral_ad_science",
+        "name": "Integral Ad Science",
+        "category": "Advertising Networks"
+      },
+      {
+        "uid": "linkedin_login",
+        "name": "Linkedin Login",
+        "category": "Social Login"
+      },
+      {
+        "uid": "linkedin_display_ads__formerly_bizo",
+        "name": "Linkedin Marketing Solutions",
+        "category": "Advertising Networks"
+      },
+      {
+        "uid": "linkedin_widget",
+        "name": "Linkedin Widget",
+        "category": "Other"
+      },
+      {
+        "uid": "lotame",
+        "name": "Lotame",
+        "category": "Data Management Platform"
+      },
+      {
+        "uid": "media_net",
+        "name": "Media.net",
+        "category": "Publisher Advertising Tools"
+      },
+      {
+        "uid": "mobile_friendly",
+        "name": "Mobile Friendly",
+        "category": "Other"
+      },
+      {
+        "uid": "mouseflow",
+        "name": "MouseFlow",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "new_relic",
+        "name": "New Relic",
+        "category": "Web Performance Monitoring"
+      },
+      {
+        "uid": "openx_-_exchange",
+        "name": "OpenX - Exchange",
+        "category": "Publisher Advertising Tools"
+      },
+      {
+        "uid": "optimizely",
+        "name": "Optimizely",
+        "category": "Online Testing Platforms"
+      },
+      {
+        "uid": "pubmatic",
+        "name": "PubMatic",
+        "category": "Supply Side Platforms"
+      },
+      {
+        "uid": "quantcast",
+        "name": "Quantcast",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "rtb_house",
+        "name": "RTB House",
+        "category": "Retargeting"
+      },
+      {
+        "uid": "remote",
+        "name": "Remote",
+        "category": "Other"
+      },
+      {
+        "uid": "rubicon_project",
+        "name": "Rubicon Project",
+        "category": "Supply Side Platforms"
+      },
+      {
+        "uid": "soasta",
+        "name": "SOASTA",
+        "category": "Web Performance Monitoring"
+      },
+      {
+        "uid": "sizmek_mediamind",
+        "name": "Sizmek (MediaMind)",
+        "category": "Ad Servers"
+      },
+      {
+        "uid": "slack",
+        "name": "Slack",
+        "category": "Chats"
+      },
+      {
+        "uid": "taboola",
+        "name": "Taboola",
+        "category": "Content Syndication Networks"
+      },
+      {
+        "uid": "taboola_newsroom",
+        "name": "Taboola Newsroom",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "twitter_advertising",
+        "name": "Twitter Advertising",
+        "category": "Advertising Networks"
+      },
+      {
+        "uid": "typekit",
+        "name": "Typekit",
+        "category": "Fonts"
+      },
+      {
+        "uid": "vimeo",
+        "name": "Vimeo",
+        "category": "Online Video Platforms"
+      },
+      {
+        "uid": "wordpress_org",
+        "name": "WordPress.org",
+        "category": "CMS"
+      },
+      {
+        "uid": "youtube",
+        "name": "YouTube",
+        "category": "Online Video Platforms"
+      },
+      {
+        "uid": "comscore",
+        "name": "comScore",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "greyscale_-_grey",
+        "name": "greyscale - grey",
+        "category": "Other"
+      },
+      {
+        "uid": "itunes",
+        "name": "iTunes",
+        "category": "Widgets"
+      },
+      {
+        "uid": "recaptcha",
+        "name": "reCAPTCHA",
+        "category": "Captcha"
+      }
+    ],
+    "org_chart_root_people_ids": [],
+    "departmental_head_count": {
+      "marketing": 353,
+      "operations": 29,
+      "legal": 2,
+      "engineering": 10,
+      "human_resources": 8,
+      "business_development": 46,
+      "sales": 16,
+      "arts_and_design": 32,
+      "finance": 12,
+      "consulting": 17,
+      "support": 3,
+      "media_and_commmunication": 107,
+      "information_technology": 8,
+      "product_management": 12,
+      "administrative": 2,
+      "data_science": 1,
+      "education": 1,
+      "accounting": 2,
+      "entrepreneurship": 0
+    }
+  },
+  {
+    "id": "54a1a1827468695475292d03",
+    "name": "GeeksforGeeks",
+    "website_url": "http://www.geeksforgeeks.org",
+    "angellist_url": null,
+    "linkedin_url": "http://www.linkedin.com/company/geeksforgeeks-learn-to-code",
+    "twitter_url": "https://twitter.com/geeksforgeeks",
+    "facebook_url": "https://www.facebook.com/geeksforgeeks.org/",
+    "primary_phone": {
+      "number": "+91 80692 89001",
+      "source": "Owler",
+      "sanitized_number": "+918069289001"
+    },
+    "languages": [
+      "English"
+    ],
+    "alexa_ranking": 316,
+    "phone": "+91 80692 89001",
+    "linkedin_uid": "1299009",
+    "founded_year": 2009,
+    "publicly_traded_symbol": null,
+    "publicly_traded_exchange": null,
+    "logo_url": "https://zenprospect-production.s3.amazonaws.com/uploads/pictures/69acad96b2fed90001b4c159/picture",
+    "crunchbase_url": null,
+    "primary_domain": "geeksforgeeks.org",
+    "sic_codes": [
+      "8299"
+    ],
+    "naics_codes": [
+      "519"
+    ],
+    "sanitized_phone": "+918069289001",
+    "owned_by_organization_id": null,
+    "organization_revenue_printed": "75M",
+    "organization_revenue": 75000000.0,
+    "intent_strength": null,
+    "show_intent": true,
+    "has_intent_signal_account": false,
+    "intent_signal_account": null,
+    "organization_headcount_six_month_growth": 0.4474393530997305,
+    "organization_headcount_twelve_month_growth": 0.4986046511627907,
+    "organization_headcount_twenty_four_month_growth": 0.231651376146789,
+    "industry": "education management",
+    "estimated_num_employees": 310,
+    "keywords": [
+      "coding jobs",
+      "computer science",
+      "jobs",
+      "programming jobs",
+      "technical blogs",
+      "internship opportunities",
+      "interview preparation",
+      "job portal",
+      "find a job",
+      "tech jobs",
+      "coding platform",
+      "job search",
+      "coding",
+      "free technical content",
+      "learn coding",
+      "data structures & algorithms",
+      "premium courses",
+      "sde job help",
+      "programming resources",
+      "cs it",
+      "education",
+      "algorithms",
+      "services",
+      "competitive exams",
+      "community contributions",
+      "skill development",
+      "coding practice problems",
+      "practice tests",
+      "placement preparation",
+      "software development",
+      "tech skills",
+      "cloud computing",
+      "video tutorials",
+      "software engineering",
+      "programming practice",
+      "information technology",
+      "coding practice",
+      "interview question bank",
+      "educational content",
+      "educational platform",
+      "career growth",
+      "campus ambassadors",
+      "job preparation",
+      "machine learning",
+      "educational services",
+      "mock interviews",
+      "interview experiences",
+      "community learning",
+      "online courses",
+      "coding tutorials for placements",
+      "technical courses",
+      "technical interview prep",
+      "b2c",
+      "coding content",
+      "tech community",
+      "online learning",
+      "learning resources",
+      "skill enhancement",
+      "career resources",
+      "coding problems",
+      "online coding challenges",
+      "community driven content",
+      "web search portals, libraries, archives, and other information services",
+      "programming languages",
+      "web development",
+      "system design",
+      "practice problems",
+      "career development",
+      "community contributors",
+      "coding challenges",
+      "coding community",
+      "online coding platform",
+      "cybersecurity",
+      "data structures",
+      "data science",
+      "coding community engagement",
+      "tech tutorials",
+      "coding practice resources",
+      "programming tutorials",
+      "tech education",
+      "devops",
+      "coding contests",
+      "coding practice portal",
+      "placement support",
+      "coding practice platform",
+      "coding bootcamp",
+      "coding tutorials",
+      "learning portal",
+      "innovation",
+      "e-learning",
+      "tech interview",
+      "interview guides",
+      "online education",
+      "product management",
+      "product lifecycle",
+      "market research",
+      "cross-functional teams",
+      "user experience",
+      "agile methodology",
+      "data analytics",
+      "product strategy",
+      "go-to-market strategy",
+      "performance metrics",
+      "customer feedback",
+      "competitor analysis",
+      "digital transformation",
+      "product roadmap",
+      "strategic decision making",
+      "organizational function",
+      "feature prioritization",
+      "stakeholder engagement",
+      "innovation management",
+      "risk management",
+      "product launch",
+      "value proposition",
+      "market trends",
+      "customer needs",
+      "project management",
+      "product differentiation",
+      "technical feasibility",
+      "business analysis",
+      "iterative development",
+      "product development lifecycle",
+      "product requirements",
+      "product vision",
+      "team collaboration",
+      "quality assurance",
+      "product testing",
+      "retention strategies",
+      "customer acquisition cost",
+      "product positioning",
+      "user satisfaction",
+      "product iteration",
+      "agile frameworks",
+      "product metrics",
+      "data-driven decisions",
+      "lifecycle management",
+      "resource allocation",
+      "cross-functional leadership",
+      "product development goals",
+      "strategic alignment",
+      "saas",
+      "information technology & services",
+      "enterprise software",
+      "enterprises",
+      "computer software",
+      "b2b",
+      "artificial intelligence",
+      "internet",
+      "education management",
+      "ux",
+      "productivity"
+    ],
+    "industries": [
+      "education management"
+    ],
+    "secondary_industries": [],
+    "snippets_loaded": true,
+    "industry_tag_id": "5567ce9e736964540d540000",
+    "industry_tag_hash": {
+      "education management": "5567ce9e736964540d540000"
+    },
+    "retail_location_count": 0,
+    "raw_address": "7th Floor, Sovereign Corporate Tower, A-143, Sector 136, Noida, Uttar Pradesh, NOIDA, G. B. Nagar, Uttar Pradesh 201305, IN",
+    "street_address": "",
+    "city": "Noida",
+    "state": "Uttar Pradesh",
+    "postal_code": "201305",
+    "country": "India",
+    "short_description": "GeeksforGeeks (GfG) is an EdTech company founded in 2008 by Sandeep Jain, an IIT Roorkee alumnus. Headquartered in Noida, India, it has grown to over 300 employees and offers offline classes in Noida, Pune, and Bangalore. The platform serves millions of users worldwide, providing resources to simplify coding concepts and support engineering students in their career preparations.\n\nGeeksforGeeks offers a variety of free and premium resources focused on computer science and technology skills. These include articles and tutorials on programming languages, data structures, and exam preparation, as well as a practice platform for coding problems. The company also provides affordable self-paced courses, interview preparation resources, and a job portal featuring monthly contests and job listings tailored for engineers. Additionally, it offers B2B services with curated courses and practice problems for businesses and educational institutions. The content is crowdsourced and reviewed to ensure quality.",
+    "suborganizations": [],
+    "num_suborganizations": 0,
+    "annual_revenue_printed": "75M",
+    "annual_revenue": 75000000.0,
+    "funding_events": [],
+    "technology_names": [
+      "AI",
+      "Amazon Associates",
+      "Amazon CloudFront",
+      "Amazon SES",
+      "AngularJS",
+      "Apache",
+      "AppNexus",
+      "Bootstrap Framework",
+      "Conversant (ValueClick)",
+      "DoubleClick",
+      "DoubleClick Conversion",
+      "EPiServer",
+      "Facebook Custom Audiences",
+      "Facebook Login (Connect)",
+      "Facebook Widget",
+      "Gmail",
+      "Google AdSense",
+      "Google Apps",
+      "Google Dynamic Remarketing",
+      "Google Font API",
+      "Google Play",
+      "Google Plus",
+      "Google Tag Manager",
+      "Google translate API",
+      "Google translate widget",
+      "Lotame",
+      "Media.net",
+      "Mobile Friendly",
+      "Nginx",
+      "OpenX - Exchange",
+      "PubMatic",
+      "React Redux",
+      "Route 53",
+      "TripleLift",
+      "TubeMogul",
+      "Typekit",
+      "Woo Commerce",
+      "WordPress.org",
+      "Workday",
+      "YouTube",
+      "greyscale - grey",
+      "reCAPTCHA"
+    ],
+    "current_technologies": [
+      {
+        "uid": "ai",
+        "name": "AI",
+        "category": "Other"
+      },
+      {
+        "uid": "amazon_associates",
+        "name": "Amazon Associates",
+        "category": "Affiliate Advertising Network"
+      },
+      {
+        "uid": "amazon_cloudfront",
+        "name": "Amazon CloudFront",
+        "category": "Content Delivery Networks"
+      },
+      {
+        "uid": "amazon_ses",
+        "name": "Amazon SES",
+        "category": "Email Delivery"
+      },
+      {
+        "uid": "angularjs",
+        "name": "AngularJS",
+        "category": "Frameworks and Programming Languages"
+      },
+      {
+        "uid": "apache",
+        "name": "Apache",
+        "category": "Load Balancers"
+      },
+      {
+        "uid": "appnexus",
+        "name": "AppNexus",
+        "category": "Demand Side Platforms"
+      },
+      {
+        "uid": "bootstrap_framework",
+        "name": "Bootstrap Framework",
+        "category": "CSS and JavaScript Libraries"
+      },
+      {
+        "uid": "conversant_valueclick",
+        "name": "Conversant (ValueClick)",
+        "category": "Advertising Networks"
+      },
+      {
+        "uid": "doubleclick",
+        "name": "DoubleClick",
+        "category": "Ad Servers"
+      },
+      {
+        "uid": "doubleclick_conversion",
+        "name": "DoubleClick Conversion",
+        "category": "Advertising Networks"
+      },
+      {
+        "uid": "episerver",
+        "name": "EPiServer",
+        "category": "CMS"
+      },
+      {
+        "uid": "facebook_web_custom_audiences",
+        "name": "Facebook Custom Audiences",
+        "category": "Retargeting"
+      },
+      {
+        "uid": "facebook_login",
+        "name": "Facebook Login (Connect)",
+        "category": "Social Login"
+      },
+      {
+        "uid": "facebook_widget",
+        "name": "Facebook Widget",
+        "category": "Widgets"
+      },
+      {
+        "uid": "gmail",
+        "name": "Gmail",
+        "category": "Email Providers"
+      },
+      {
+        "uid": "google_adsense",
+        "name": "Google AdSense",
+        "category": "Advertising Networks"
+      },
+      {
+        "uid": "google_apps",
+        "name": "Google Apps",
+        "category": "Other"
+      },
+      {
+        "uid": "google_dynamic_remarketing",
+        "name": "Google Dynamic Remarketing",
+        "category": "Retargeting"
+      },
+      {
+        "uid": "google_font_api",
+        "name": "Google Font API",
+        "category": "Fonts"
+      },
+      {
+        "uid": "google_play",
+        "name": "Google Play",
+        "category": "Widgets"
+      },
+      {
+        "uid": "google_plus_login",
+        "name": "Google Plus",
+        "category": "Social Login"
+      },
+      {
+        "uid": "google_tag_manager",
+        "name": "Google Tag Manager",
+        "category": "Tag Management"
+      },
+      {
+        "uid": "google_translate_api",
+        "name": "Google translate API",
+        "category": "Widgets"
+      },
+      {
+        "uid": "google_translate_widget",
+        "name": "Google translate widget",
+        "category": "Widgets"
+      },
+      {
+        "uid": "lotame",
+        "name": "Lotame",
+        "category": "Data Management Platform"
+      },
+      {
+        "uid": "media_net",
+        "name": "Media.net",
+        "category": "Publisher Advertising Tools"
+      },
+      {
+        "uid": "mobile_friendly",
+        "name": "Mobile Friendly",
+        "category": "Other"
+      },
+      {
+        "uid": "nginx",
+        "name": "Nginx",
+        "category": "Load Balancers"
+      },
+      {
+        "uid": "openx_-_exchange",
+        "name": "OpenX - Exchange",
+        "category": "Publisher Advertising Tools"
+      },
+      {
+        "uid": "pubmatic",
+        "name": "PubMatic",
+        "category": "Supply Side Platforms"
+      },
+      {
+        "uid": "react_redux",
+        "name": "React Redux",
+        "category": "CSS and JavaScript Libraries"
+      },
+      {
+        "uid": "route_53",
+        "name": "Route 53",
+        "category": "Domain Name Services"
+      },
+      {
+        "uid": "triplelift",
+        "name": "TripleLift",
+        "category": "Advertising Networks"
+      },
+      {
+        "uid": "tubemogul",
+        "name": "TubeMogul",
+        "category": "Video Advertising Networks"
+      },
+      {
+        "uid": "typekit",
+        "name": "Typekit",
+        "category": "Fonts"
+      },
+      {
+        "uid": "woo_commerce",
+        "name": "Woo Commerce",
+        "category": "E-commerce Platforms"
+      },
+      {
+        "uid": "wordpress_org",
+        "name": "WordPress.org",
+        "category": "CMS"
+      },
+      {
+        "uid": "workday",
+        "name": "Workday",
+        "category": "CMS"
+      },
+      {
+        "uid": "youtube",
+        "name": "YouTube",
+        "category": "Online Video Platforms"
+      },
+      {
+        "uid": "greyscale_-_grey",
+        "name": "greyscale - grey",
+        "category": "Other"
+      },
+      {
+        "uid": "recaptcha",
+        "name": "reCAPTCHA",
+        "category": "Captcha"
+      }
+    ],
+    "org_chart_root_people_ids": [
+      "5d55288880f93eaf6b9b8187"
+    ],
+    "departmental_head_count": {
+      "marketing": 222,
+      "data_science": 68,
+      "arts_and_design": 34,
+      "engineering": 164,
+      "media_and_commmunication": 33,
+      "consulting": 25,
+      "entrepreneurship": 2,
+      "operations": 12,
+      "information_technology": 7,
+      "support": 8,
+      "education": 11,
+      "business_development": 5,
+      "product_management": 4,
+      "human_resources": 260,
+      "sales": 7,
+      "administrative": 4,
+      "legal": 2,
+      "finance": 1,
+      "accounting": 0
+    }
+  },
+  {
+    "id": "613096e7cedb2c00da6f55c4",
+    "name": "Swiggy",
+    "website_url": "http://www.swiggy.com",
+    "angellist_url": "http://angel.co/dineout-1",
+    "linkedin_url": "http://www.linkedin.com/company/swiggy-in",
+    "twitter_url": "https://twitter.com/swiggy_in",
+    "facebook_url": "https://facebook.com/swiggy.in",
+    "primary_phone": {
+      "number": "+91 80674 66791",
+      "source": "Owler",
+      "sanitized_number": "+918067466791"
+    },
+    "languages": [],
+    "alexa_ranking": 3050,
+    "phone": "+91 80674 66791",
+    "linkedin_uid": "9252341",
+    "founded_year": 2014,
+    "publicly_traded_symbol": "SWIGGY.NS",
+    "publicly_traded_exchange": "nse",
+    "logo_url": "https://zenprospect-production.s3.amazonaws.com/uploads/pictures/69b502398eed05000134b991/picture",
+    "crunchbase_url": null,
+    "primary_domain": "swiggy.com",
+    "sic_codes": [
+      "5812"
+    ],
+    "naics_codes": [
+      "72233"
+    ],
+    "sanitized_phone": "+918067466791",
+    "owned_by_organization_id": null,
+    "organization_revenue_printed": "1.8B",
+    "organization_revenue": 1782440000.0,
+    "intent_strength": null,
+    "show_intent": true,
+    "has_intent_signal_account": false,
+    "intent_signal_account": null,
+    "organization_headcount_six_month_growth": 0.02402210884353741,
+    "organization_headcount_twelve_month_growth": 0.08308038223721191,
+    "organization_headcount_twenty_four_month_growth": 0.2429363953038318,
+    "industry": "information technology & services",
+    "estimated_num_employees": 5500,
+    "keywords": [
+      "food & beverages",
+      "logistics",
+      "technology, information & internet",
+      "food hygiene initiatives",
+      "market leader",
+      "food quality assurance",
+      "market expansion",
+      "digital food marketplace",
+      "customer support system",
+      "delivery management",
+      "urban consumers",
+      "digital platform",
+      "order fulfillment",
+      "multi-channel marketing",
+      "delivery route algorithms",
+      "fast grocery service",
+      "online ordering system",
+      "technology logistics",
+      "real-time order tracking",
+      "customer engagement",
+      "errand running service",
+      "app-based food ordering",
+      "real-time tracking",
+      "fast delivery",
+      "digital restaurant support",
+      "app development",
+      "app-based ordering",
+      "delivery fleet management",
+      "app notifications",
+      "urban logistics innovation",
+      "cost-effective food delivery",
+      "local restaurant support",
+      "fast grocery delivery",
+      "subscription service",
+      "restaurant commissions",
+      "order history tracking",
+      "restaurant aggregator",
+      "mobile food services",
+      "app security",
+      "multi-service platform",
+      "urban delivery network",
+      "customer loyalty program",
+      "cost-effective dining",
+      "food app",
+      "on-demand service",
+      "food and beverage retail",
+      "online food ordering",
+      "on-demand delivery",
+      "growth strategy",
+      "revenue growth",
+      "cloud computing",
+      "app updates",
+      "hyperlocal commerce",
+      "local cuisine promotion",
+      "food hygiene standards",
+      "order tracking",
+      "user experience design",
+      "food safety standards",
+      "data analytics",
+      "location tracking",
+      "services",
+      "food hygiene program",
+      "mobile payment",
+      "local food delivery",
+      "consumer services",
+      "order management system",
+      "digital payments",
+      "local eateries",
+      "hyperlocal logistics",
+      "logistics and transportation",
+      "on-demand grocery",
+      "local restaurant ecosystem",
+      "food safety policies",
+      "india startup",
+      "urban logistics",
+      "ai logistics optimization",
+      "food and grocery",
+      "food delivery platform",
+      "grocery delivery",
+      "retail",
+      "data security",
+      "food delivery",
+      "digital marketing",
+      "user interface",
+      "innovative logistics",
+      "consumer convenience",
+      "app interface",
+      "payment gateway integration",
+      "cloud kitchen network",
+      "errand running app",
+      "delivery partners",
+      "customer experience",
+      "urban consumer services",
+      "cloud kitchens",
+      "customer retention",
+      "mobile ordering app",
+      "consumer app",
+      "platform scalability",
+      "cost-saving dining deals",
+      "user experience",
+      "delivery ecosystem",
+      "customer feedback system",
+      "food tech",
+      "delivery partner network",
+      "hyperlocal delivery app",
+      "hyperlocal delivery",
+      "cloud kitchen infrastructure",
+      "platform integration",
+      "technology-driven",
+      "customer data analytics",
+      "digital commerce",
+      "quick commerce logistics",
+      "food and grocery services",
+      "local food promotion",
+      "urban food tech",
+      "delivery route optimization",
+      "restaurant marketing platform",
+      "multi-city presence",
+      "customer-centric",
+      "grocery and essentials",
+      "grocery quick commerce",
+      "hyperlocal logistics platform",
+      "logistics algorithms",
+      "market penetration",
+      "restaurant partnerships",
+      "restaurant visibility",
+      "mobile app",
+      "quick commerce",
+      "innovation",
+      "app performance",
+      "b2c",
+      "delivery network",
+      "digital infrastructure",
+      "e-commerce",
+      "urban food ecosystem",
+      "restaurant offers",
+      "order food online",
+      "instamart",
+      "dineout services",
+      "food marketplace",
+      "swiggy genie",
+      "meal subscriptions",
+      "local restaurants",
+      "discounted meals",
+      "app-based convenience",
+      "urban dining",
+      "customer support",
+      "cashless transactions",
+      "variety of cuisines",
+      "restaurant recommendations",
+      "live order tracking",
+      "meal kits",
+      "restaurant chains",
+      "catering services",
+      "custom meal plans",
+      "affordable dining",
+      "combination meals",
+      "frequent offers",
+      "delivery in cities",
+      "best restaurants nearby",
+      "food variety",
+      "food lifestyle",
+      "swiggy one membership",
+      "urban food services",
+      "food technology",
+      "meal delivery subscriptions",
+      "sustainable food options",
+      "food pricing deals",
+      "restaurant integration",
+      "user-friendly app",
+      "digital payment options",
+      "local food discovery",
+      "community-driven dining",
+      "b2b",
+      "distribution",
+      "consumer products & retail",
+      "transportation & logistics",
+      "consumer goods",
+      "consumers",
+      "information technology & services",
+      "apps",
+      "software development",
+      "food & beverage retail",
+      "enterprise software",
+      "enterprises",
+      "computer software",
+      "computer & network security",
+      "marketing & advertising",
+      "ux",
+      "consumer internet",
+      "internet"
+    ],
+    "industries": [
+      "information technology & services",
+      "internet"
+    ],
+    "secondary_industries": [
+      "internet"
+    ],
+    "snippets_loaded": true,
+    "industry_tag_id": "5567cd4773696439b10b0000",
+    "industry_tag_hash": {
+      "information technology & services": "5567cd4773696439b10b0000",
+      "internet": "5567cd4d736964397e020000"
+    },
+    "retail_location_count": 0,
+    "raw_address": "No.55 Sy No.8-14, Embassy Tech Village, Outer Ring Road, Tower D, 9th Floor, Bengaluru, Karnataka, India, 560103",
+    "street_address": "Gear Road",
+    "city": "Bengaluru",
+    "state": "Karnataka",
+    "postal_code": "560103",
+    "country": "India",
+    "short_description": "Swiggy is an on-demand convenience platform based in Bangalore, India, founded in 2014. It started as a hyperlocal food delivery service and has since expanded to serve approximately 13 million monthly users across 653 cities. With a network of around 196,000 restaurant partners, Swiggy connects consumers to a wide variety of dining options.\n\nThe company offers several services, including its flagship food delivery, Instamart for quick grocery delivery, Swiggy Stores for a range of goods, and Swiggy Genie for on-demand errands. In 2022, Swiggy acquired Dineout to enhance in-restaurant dining experiences. The platform is designed to provide urban consumers with unparalleled convenience, supported by a robust logistics network of over 600,000 delivery partners. Swiggy has achieved significant milestones, including EBITDA profitability in under nine years and one of India's largest IPOs.",
+    "suborganizations": [
+      {
+        "id": "54a1349269702d4494322900",
+        "name": "Steppin Out Magazine",
+        "website_url": "http://www.steppinoutmagazine.com"
+      },
+      {
+        "id": "5cb6a38df65125c617575c43",
+        "name": "48East",
+        "website_url": "http://www.fortyeighteast.com"
+      },
+      {
+        "id": "6745915d2081aa000161d314",
+        "name": "inResto Services Pvt Ltd",
+        "website_url": "http://www.inresto.com"
+      },
+      {
+        "id": "556e395d73696410e5574f01",
+        "name": "Scootsy Logistics Pvt Ltd",
+        "website_url": "http://www.scootsy.com"
+      },
+      {
+        "id": "68fa6e6dea9a58000127e455",
+        "name": "Supr Daily",
+        "website_url": "http://www.suprdaily.com"
+      },
+      {
+        "id": "55eda748f3e5bb38710035ad",
+        "name": "Torqus Systems Private Limited",
+        "website_url": "http://www.torqus.com"
+      },
+      {
+        "id": "5f0f0f09f23dbb00bea3352d",
+        "name": "Binge Digital",
+        "website_url": "http://www.binge.digital"
+      },
+      {
+        "id": "55ea586bf3e5bb598f0044fa",
+        "name": "LYNKS LOGISTICS LIMITED",
+        "website_url": "http://www.lynk.co.in"
+      },
+      {
+        "id": "55ec91c4f3e5bb129a000d6c",
+        "name": "Swiggy Scenes",
+        "website_url": "http://www.steppinout.in"
+      },
+      {
+        "id": "5da4778521b2aa0001365b38",
+        "name": "Supr Daily by Swiggy",
+        "website_url": null
+      },
+      {
+        "id": "54a12a5669702d8eeb915c02",
+        "name": "Swiggy Dineout",
+        "website_url": null
+      }
+    ],
+    "num_suborganizations": 11,
+    "annual_revenue_printed": "1.8B",
+    "annual_revenue": 1782440000.0,
+    "technology_names": [
+      "3M 360 Encompass - Health Analytics Suite",
+      "AI",
+      "AWS SDK for JavaScript",
+      "Amazon AWS",
+      "Amazon CloudFront",
+      "Amazon Elastic Load Balancer",
+      "Amazon SES",
+      "Anthropic Claude",
+      "Apache Kafka",
+      "Appcues",
+      "Appium",
+      "Atlassian Cloud",
+      "Azure Linux Virtual Machines",
+      "Bing Ads",
+      "Bitrise",
+      "Bootstrap Framework",
+      "CircleCI",
+      "CloudFlare",
+      "Cloudways",
+      "Cursor",
+      "Cypress",
+      "DatoCMS",
+      "Errorception",
+      "Espresso",
+      "Excel4Apps",
+      "Freshdesk",
+      "GitHub Actions",
+      "Gmail",
+      "Google Analytics",
+      "Google Apps",
+      "Google Play",
+      "Google Sheets",
+      "Google Tag Manager",
+      "Jenkins",
+      "Microsoft Excel",
+      "Microsoft Office 365",
+      "Midjourney",
+      "Mimecast",
+      "Mobile Friendly",
+      "MySQL",
+      "New Relic",
+      "Nginx",
+      "Ning",
+      "Playwright",
+      "Postman",
+      "PowerBI Tiles",
+      "Python",
+      "REST",
+      "React",
+      "React Redux",
+      "Route 53",
+      "Salesforce",
+      "Salesmate",
+      "Selenium WebDriver",
+      "Sendgrid",
+      "Slack",
+      "Sprinklr",
+      "Taboola Newsroom",
+      "Typeform",
+      "Ubuntu",
+      "WordPress.org",
+      "XCUITest",
+      "go+"
+    ],
+    "current_technologies": [
+      {
+        "uid": "3m_360_encompass_health_analytics_suite",
+        "name": "3M 360 Encompass - Health Analytics Suite",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "ai",
+        "name": "AI",
+        "category": "Other"
+      },
+      {
+        "uid": "aws_sdk_for_javascript",
+        "name": "AWS SDK for JavaScript",
+        "category": "CSS and JavaScript Libraries"
+      },
+      {
+        "uid": "amazon_aws",
+        "name": "Amazon AWS",
+        "category": "Hosting"
+      },
+      {
+        "uid": "amazon_cloudfront",
+        "name": "Amazon CloudFront",
+        "category": "Content Delivery Networks"
+      },
+      {
+        "uid": "amazon_elastic_load_balancer",
+        "name": "Amazon Elastic Load Balancer",
+        "category": "Load Balancers"
+      },
+      {
+        "uid": "amazon_ses",
+        "name": "Amazon SES",
+        "category": "Email Delivery"
+      },
+      {
+        "uid": "anthropic_claude",
+        "name": "Anthropic Claude",
+        "category": "Other"
+      },
+      {
+        "uid": "apache_kafka",
+        "name": "Apache Kafka",
+        "category": "Data Management Platform"
+      },
+      {
+        "uid": "appcues",
+        "name": "Appcues",
+        "category": "Widgets"
+      },
+      {
+        "uid": "appium",
+        "name": "Appium",
+        "category": "Frameworks and Programming Languages"
+      },
+      {
+        "uid": "atlassian_cloud",
+        "name": "Atlassian Cloud",
+        "category": "CMS"
+      },
+      {
+        "uid": "azure_linux_virtual_machines",
+        "name": "Azure Linux Virtual Machines",
+        "category": "Cloud Services"
+      },
+      {
+        "uid": "bing_ads",
+        "name": "Bing Ads",
+        "category": "Advertising Networks"
+      },
+      {
+        "uid": "bitrise",
+        "name": "Bitrise",
+        "category": "Deployment Tools"
+      },
+      {
+        "uid": "bootstrap_framework",
+        "name": "Bootstrap Framework",
+        "category": "CSS and JavaScript Libraries"
+      },
+      {
+        "uid": "circleci",
+        "name": "CircleCI",
+        "category": "Deployment Tools"
+      },
+      {
+        "uid": "cloudflare",
+        "name": "CloudFlare",
+        "category": "Web Accelerators"
+      },
+      {
+        "uid": "cloudways",
+        "name": "Cloudways",
+        "category": "Hosting"
+      },
+      {
+        "uid": "cursor",
+        "name": "Cursor",
+        "category": "Other"
+      },
+      {
+        "uid": "cypress",
+        "name": "Cypress",
+        "category": "Frameworks and Programming Languages"
+      },
+      {
+        "uid": "datocms",
+        "name": "DatoCMS",
+        "category": "CMS"
+      },
+      {
+        "uid": "errorception",
+        "name": "Errorception",
+        "category": "Widgets"
+      },
+      {
+        "uid": "espresso",
+        "name": "Espresso",
+        "category": "Frameworks and Programming Languages"
+      },
+      {
+        "uid": "excel4apps",
+        "name": "Excel4Apps",
+        "category": "Business Intelligence"
+      },
+      {
+        "uid": "freshdesk",
+        "name": "Freshdesk",
+        "category": "Support and Feedback"
+      },
+      {
+        "uid": "github_actions",
+        "name": "GitHub Actions",
+        "category": "Deployment Tools"
+      },
+      {
+        "uid": "gmail",
+        "name": "Gmail",
+        "category": "Email Providers"
+      },
+      {
+        "uid": "google_analytics",
+        "name": "Google Analytics",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "google_apps",
+        "name": "Google Apps",
+        "category": "Other"
+      },
+      {
+        "uid": "google_play",
+        "name": "Google Play",
+        "category": "Widgets"
+      },
+      {
+        "uid": "google_sheets",
+        "name": "Google Sheets",
+        "category": "Communication and Collaboration"
+      },
+      {
+        "uid": "google_tag_manager",
+        "name": "Google Tag Manager",
+        "category": "Tag Management"
+      },
+      {
+        "uid": "jenkins",
+        "name": "Jenkins",
+        "category": "Frameworks and Programming Languages"
+      },
+      {
+        "uid": "microsoft_excel",
+        "name": "Microsoft Excel",
+        "category": "Business Intelligence"
+      },
+      {
+        "uid": "office_365",
+        "name": "Microsoft Office 365",
+        "category": "Other"
+      },
+      {
+        "uid": "midjourney",
+        "name": "Midjourney",
+        "category": "Other"
+      },
+      {
+        "uid": "mimecast",
+        "name": "Mimecast",
+        "category": "Email Providers"
+      },
+      {
+        "uid": "mobile_friendly",
+        "name": "Mobile Friendly",
+        "category": "Other"
+      },
+      {
+        "uid": "mysql",
+        "name": "MySQL",
+        "category": "Database"
+      },
+      {
+        "uid": "new_relic",
+        "name": "New Relic",
+        "category": "Web Performance Monitoring"
+      },
+      {
+        "uid": "nginx",
+        "name": "Nginx",
+        "category": "Load Balancers"
+      },
+      {
+        "uid": "ning",
+        "name": "Ning",
+        "category": "CMS"
+      },
+      {
+        "uid": "playwright",
+        "name": "Playwright",
+        "category": "Frameworks and Programming Languages"
+      },
+      {
+        "uid": "postman",
+        "name": "Postman",
+        "category": "Other"
+      },
+      {
+        "uid": "powerbi_tiles",
+        "name": "PowerBI Tiles",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "python",
+        "name": "Python",
+        "category": "Frameworks and Programming Languages"
+      },
+      {
+        "uid": "rest",
+        "name": "REST",
+        "category": "Frameworks and Programming Languages"
+      },
+      {
+        "uid": "react",
+        "name": "React",
+        "category": "CSS and JavaScript Libraries"
+      },
+      {
+        "uid": "react_redux",
+        "name": "React Redux",
+        "category": "CSS and JavaScript Libraries"
+      },
+      {
+        "uid": "route_53",
+        "name": "Route 53",
+        "category": "Domain Name Services"
+      },
+      {
+        "uid": "salesforce",
+        "name": "Salesforce",
+        "category": "Customer Relationship Management"
+      },
+      {
+        "uid": "salesmate",
+        "name": "Salesmate",
+        "category": "Customer Relationship Management"
+      },
+      {
+        "uid": "selenium_webdriver",
+        "name": "Selenium WebDriver",
+        "category": "Frameworks and Programming Languages"
+      },
+      {
+        "uid": "sendgrid",
+        "name": "Sendgrid",
+        "category": "Email Delivery"
+      },
+      {
+        "uid": "slack",
+        "name": "Slack",
+        "category": "Chats"
+      },
+      {
+        "uid": "sprinklr",
+        "name": "Sprinklr",
+        "category": "Social Media Marketing"
+      },
+      {
+        "uid": "taboola_newsroom",
+        "name": "Taboola Newsroom",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "typeform",
+        "name": "Typeform",
+        "category": "Widgets"
+      },
+      {
+        "uid": "ubuntu",
+        "name": "Ubuntu",
+        "category": "Load Balancers"
+      },
+      {
+        "uid": "wordpress_org",
+        "name": "WordPress.org",
+        "category": "CMS"
+      },
+      {
+        "uid": "xcuitest",
+        "name": "XCUITest",
+        "category": "Frameworks and Programming Languages"
+      },
+      {
+        "uid": "go",
+        "name": "go+",
+        "category": "Frameworks and Programming Languages"
+      }
+    ],
+    "org_chart_root_people_ids": [
+      "681e72681ccfd00001cc3250"
+    ],
+    "org_chart_sector": "OrgChart::SectorHierarchy::Rules::IT",
+    "org_chart_removed": false,
+    "org_chart_show_department_filter": true,
+    "departmental_head_count": {
+      "sales": 1107,
+      "operations": 1473,
+      "marketing": 357,
+      "business_development": 587,
+      "support": 380,
+      "finance": 383,
+      "arts_and_design": 229,
+      "data_science": 160,
+      "human_resources": 546,
+      "engineering": 1041,
+      "administrative": 22,
+      "media_and_commmunication": 53,
+      "legal": 38,
+      "consulting": 48,
+      "information_technology": 190,
+      "product_management": 94,
+      "education": 13,
+      "entrepreneurship": 5,
+      "accounting": 34
+    }
+  },
+  {
+    "id": "5d094373f65125e4b397ef21",
+    "name": "Zomato",
+    "website_url": "http://www.zomato.com",
+    "angellist_url": "http://angel.co/zomato",
+    "linkedin_url": "http://www.linkedin.com/company/zomato",
+    "twitter_url": "http://twitter.com/zomato",
+    "facebook_url": "https://www.facebook.com/zomato",
+    "primary_phone": {
+      "number": "+91 11308 06376",
+      "source": "Owler",
+      "sanitized_number": "+911130806376"
+    },
+    "languages": [],
+    "alexa_ranking": 2163,
+    "phone": "+91 11308 06376",
+    "linkedin_uid": "422813",
+    "founded_year": 2008,
+    "publicly_traded_symbol": "ZOMATO.NS",
+    "publicly_traded_exchange": "nse",
+    "logo_url": "https://zenprospect-production.s3.amazonaws.com/uploads/pictures/69ad276193713900019408f5/picture",
+    "crunchbase_url": null,
+    "primary_domain": "zomato.com",
+    "sic_codes": [
+      "5812"
+    ],
+    "naics_codes": [
+      "54151",
+      "519290",
+      "492110"
+    ],
+    "sanitized_phone": "+911130806376",
+    "owned_by_organization_id": "6599fa752f8f7f0001c3825e",
+    "owned_by_organization": {
+      "id": "6599fa752f8f7f0001c3825e",
+      "name": "Eternal",
+      "website_url": "http://www.eternal.com"
+    },
+    "organization_revenue_printed": "1.5B",
+    "organization_revenue": 1452926000.0,
+    "intent_strength": null,
+    "show_intent": true,
+    "has_intent_signal_account": false,
+    "intent_signal_account": null,
+    "organization_headcount_six_month_growth": -0.0001330671989354624,
+    "organization_headcount_twelve_month_growth": -0.01014359109471743,
+    "organization_headcount_twenty_four_month_growth": 0.318476925776452,
+    "industry": "information technology & services",
+    "estimated_num_employees": 4000,
+    "keywords": [
+      "table reservations",
+      "engineering",
+      "technology",
+      "sales",
+      "logistics",
+      "internet services",
+      "restaurant search discovery",
+      "restaurant pos system",
+      "digital advertising",
+      "food",
+      "sustainability",
+      "restaurant rating & reviews",
+      "ecommerce",
+      "ingredients supply",
+      "online ordering",
+      "online classifieds",
+      "operations",
+      "delivery",
+      "startups",
+      "online consumer insights",
+      "food ordering online",
+      "farming",
+      "new business development",
+      "restaurant search amp discovery",
+      "cashless payments",
+      "restaurants",
+      "content discovery",
+      "reviews & recommendations",
+      "local search",
+      "technology, information & internet",
+      "food industry supply services",
+      "food delivery platform",
+      "services",
+      "international expansion",
+      "food industry analytics tools",
+      "restaurant marketing solutions",
+      "restaurant data verification",
+      "digital food marketing",
+      "food ordering app",
+      "zomato pro",
+      "customer loyalty programs",
+      "delivery logistics",
+      "restaurant partnerships",
+      "food platform",
+      "food industry technology",
+      "food supply services",
+      "data analytics",
+      "subscription dining",
+      "subscription benefits",
+      "food and drink",
+      "food industry software",
+      "restaurant marketing tools",
+      "grocery delivery",
+      "digital marketing",
+      "foodtech solutions",
+      "food and entertainment carnival",
+      "food industry innovation",
+      "restaurant discovery app",
+      "food industry data",
+      "international foodtech",
+      "restaurant supply services",
+      "supply chain management",
+      "food discovery platform",
+      "b2b supply services",
+      "hyperpure",
+      "food and entertainment events",
+      "food marketing",
+      "information technology",
+      "food reviews",
+      "marketplace",
+      "food delivery app",
+      "food safety technology",
+      "zomaland",
+      "digital marketing tools",
+      "app development",
+      "delivery platform",
+      "consumer platform",
+      "digital transformation",
+      "food and beverage industry",
+      "grocery logistics",
+      "acquisition strategy",
+      "customer engagement",
+      "food service technology",
+      "food industry analytics",
+      "b2c",
+      "grocery delivery services",
+      "food industry data insights",
+      "food supply chain",
+      "table booking",
+      "food industry supply chain management",
+      "restaurant management tools",
+      "food industry digital platform",
+      "e-commerce",
+      "food industry data analytics",
+      "last-mile delivery",
+      "digital food services",
+      "digital restaurant services",
+      "restaurant partnership platform",
+      "analytics tools",
+      "food delivery logistics optimization",
+      "food delivery logistics",
+      "food industry growth",
+      "food and beverage industry solutions",
+      "mobile app",
+      "restaurant verification",
+      "market expansion",
+      "food industry solutions",
+      "food industry",
+      "food industry platform",
+      "food industry digitalization",
+      "food delivery",
+      "logistics optimization",
+      "restaurant discovery",
+      "food industry growth strategies",
+      "food service platform",
+      "b2b supply chain",
+      "foodtech",
+      "computer systems design and related services",
+      "food and beverage subscription",
+      "restaurant marketing",
+      "food and beverage",
+      "b2b food supply",
+      "innovation",
+      "restaurant management software",
+      "b2b",
+      "distribution",
+      "consumer products & retail",
+      "transportation & logistics",
+      "marketing & advertising",
+      "consumer goods",
+      "consumers",
+      "environmental services",
+      "renewables & environment",
+      "consumer internet",
+      "internet",
+      "information technology & services",
+      "agriculture",
+      "logistics & supply chain",
+      "apps",
+      "software development",
+      "food & beverages"
+    ],
+    "industries": [
+      "information technology & services",
+      "food & beverages",
+      "logistics & supply chain",
+      "internet",
+      "restaurants"
+    ],
+    "secondary_industries": [
+      "food & beverages",
+      "logistics & supply chain",
+      "internet",
+      "restaurants"
+    ],
+    "snippets_loaded": true,
+    "industry_tag_id": "5567cd4773696439b10b0000",
+    "industry_tag_hash": {
+      "information technology & services": "5567cd4773696439b10b0000",
+      "food & beverages": "5567ce1e7369643b806a0000",
+      "logistics & supply chain": "5567cd4973696439b9010000",
+      "internet": "5567cd4d736964397e020000",
+      "restaurants": "5567e0e0736964198de70700"
+    },
+    "retail_location_count": 0,
+    "raw_address": "Pioneer Square, Sector 62, Golf Course Extension Road, Gurugram, Haryana 122101, IN",
+    "street_address": "Mianwali Colony Road",
+    "city": "Gurugram",
+    "state": "Haryana",
+    "postal_code": "122001",
+    "country": "India",
+    "short_description": "Zomato is a multi-service food platform operating in over 19 countries, specializing in restaurant discovery, online food delivery, dining reservations, and supply chain solutions for the food industry. Initially established as a restaurant review platform, Zomato has evolved to include a robust food delivery service, which is its primary revenue driver. The platform delivers approximately 1.3 million orders daily from over 150,000 restaurants across 556+ Indian cities and has expanded to around 700 cities globally.\n\nIn addition to food delivery, Zomato offers logistics services through its subsidiary Runnr, which fulfills around 300,000 orders monthly. The company also provides fresh ingredients to restaurants via its Hyperpure service, operating large warehouses in major cities. Zomato has embraced cloud kitchens to enhance service in specific areas, managing 663 kitchen units across 50 cities in India. Furthermore, Zomato utilizes its advertising platform, AdOnMo, to create value for its stakeholders.",
+    "suborganizations": [
+      {
+        "id": "5a9e2d90a6da98d9356a7c89",
+        "name": "TECHEAGLE",
+        "website_url": "http://www.techeagle.in"
+      },
+      {
+        "id": "57c4c07da6da983720ce9253",
+        "name": "Feeding India",
+        "website_url": "http://www.feedingindia.org"
+      },
+      {
+        "id": "54a11e2469702d77c2236701",
+        "name": "Cibando",
+        "website_url": "http://www.cibando.com"
+      },
+      {
+        "id": "54a11fa269702d918c9beb01",
+        "name": "Mekanist.net",
+        "website_url": "http://www.mekanist.net"
+      },
+      {
+        "id": "54a13c8f69702d231f953602",
+        "name": "Urbanspoon",
+        "website_url": "http://www.urbanspoon.com"
+      },
+      {
+        "id": "5569464673696421835a2700",
+        "name": "Gastronauci.pl",
+        "website_url": "http://www.gastronauci.pl"
+      },
+      {
+        "id": "55697a0073696425a9823900",
+        "name": "TongueStun Food Network Pvt Ltd",
+        "website_url": "http://www.tonguestun.com"
+      },
+      {
+        "id": "556cf28b7369641266d36800",
+        "name": "HG FOOD LIMITED",
+        "website_url": "http://www.menumania.co.nz"
+      },
+      {
+        "id": "6161c2b46d12e20001e5f2bc",
+        "name": "Nextable",
+        "website_url": "http://www.nextable.com"
+      },
+      {
+        "id": "673b734bcf965407f0b97377",
+        "name": "District",
+        "website_url": "http://www.district.in"
+      },
+      {
+        "id": "54a13c4669702db45dc6bc01",
+        "name": "Sparse Labs Private Limited",
+        "website_url": "http://www.sparselabs.com"
+      },
+      {
+        "id": "6393a1144c3bca0001272386",
+        "name": "Runnr",
+        "website_url": "http://www.runnr.in"
+      },
+      {
+        "id": "64b3b9be750d8a0001130d98",
+        "name": "Hyperpure by Zomato",
+        "website_url": "http://www.hyperpure.com"
+      }
+    ],
+    "num_suborganizations": 13,
+    "annual_revenue_printed": "1.5B",
+    "annual_revenue": 1452926000.0,
+    "technology_names": [
+      "AI",
+      "Akamai",
+      "Amazon AWS",
+      "Amazon SES",
+      "Atlassian Cloud",
+      "Gmail",
+      "Google Apps",
+      "Helpscout",
+      "Microsoft Office 365",
+      "MongoDB",
+      "Route 53",
+      "Salesforce",
+      "Slack",
+      "Zendesk"
+    ],
+    "current_technologies": [
+      {
+        "uid": "ai",
+        "name": "AI",
+        "category": "Other"
+      },
+      {
+        "uid": "akamai",
+        "name": "Akamai",
+        "category": "Content Delivery Networks"
+      },
+      {
+        "uid": "amazon_aws",
+        "name": "Amazon AWS",
+        "category": "Hosting"
+      },
+      {
+        "uid": "amazon_ses",
+        "name": "Amazon SES",
+        "category": "Email Delivery"
+      },
+      {
+        "uid": "atlassian_cloud",
+        "name": "Atlassian Cloud",
+        "category": "CMS"
+      },
+      {
+        "uid": "gmail",
+        "name": "Gmail",
+        "category": "Email Providers"
+      },
+      {
+        "uid": "google_apps",
+        "name": "Google Apps",
+        "category": "Other"
+      },
+      {
+        "uid": "helpscout",
+        "name": "Helpscout",
+        "category": "Support and Feedback"
+      },
+      {
+        "uid": "office_365",
+        "name": "Microsoft Office 365",
+        "category": "Other"
+      },
+      {
+        "uid": "mongodb",
+        "name": "MongoDB",
+        "category": "Database"
+      },
+      {
+        "uid": "route_53",
+        "name": "Route 53",
+        "category": "Domain Name Services"
+      },
+      {
+        "uid": "salesforce",
+        "name": "Salesforce",
+        "category": "Customer Relationship Management"
+      },
+      {
+        "uid": "slack",
+        "name": "Slack",
+        "category": "Chats"
+      },
+      {
+        "uid": "zendesk",
+        "name": "Zendesk",
+        "category": "Support and Feedback"
+      }
+    ],
+    "org_chart_root_people_ids": [
+      "57e150bba6da987d64974a5b"
+    ],
+    "org_chart_sector": "OrgChart::SectorHierarchy::Rules::IT",
+    "org_chart_removed": false,
+    "org_chart_show_department_filter": true,
+    "departmental_head_count": {
+      "marketing": 244,
+      "media_and_commmunication": 33,
+      "finance": 88,
+      "data_science": 104,
+      "engineering": 643,
+      "business_development": 242,
+      "operations": 1053,
+      "human_resources": 96,
+      "support": 343,
+      "arts_and_design": 135,
+      "education": 14,
+      "sales": 306,
+      "entrepreneurship": 11,
+      "consulting": 24,
+      "legal": 21,
+      "administrative": 23,
+      "information_technology": 62,
+      "accounting": 21,
+      "product_management": 56
+    }
+  },
+  {
+    "id": "5569cecd7369642525a89600",
+    "name": "Britannia Industries Limited",
+    "website_url": "http://www.britannia.co.in",
+    "angellist_url": null,
+    "linkedin_url": "http://www.linkedin.com/company/britannia-industries-limited",
+    "twitter_url": "https://twitter.com/BritanniaIndLtd",
+    "facebook_url": "https://facebook.com/BritanniaIndustriesLimited",
+    "primary_phone": {
+      "number": "+91 33228 72439",
+      "source": "Owler",
+      "sanitized_number": "+913322872439"
+    },
+    "languages": [
+      "English"
+    ],
+    "alexa_ranking": null,
+    "phone": "+91 33228 72439",
+    "linkedin_uid": "16271",
+    "founded_year": 1892,
+    "publicly_traded_symbol": "BRITANNIA.BO",
+    "publicly_traded_exchange": "bse",
+    "logo_url": "https://zenprospect-production.s3.amazonaws.com/uploads/pictures/69c489aed1ac910001d06669/picture",
+    "crunchbase_url": null,
+    "primary_domain": "britannia.co.in",
+    "sic_codes": [
+      "2092"
+    ],
+    "naics_codes": [
+      "311"
+    ],
+    "sanitized_phone": "+913322872439",
+    "owned_by_organization_id": null,
+    "organization_revenue_printed": "2.1B",
+    "organization_revenue": 2093665000.0,
+    "intent_strength": null,
+    "show_intent": true,
+    "has_intent_signal_account": false,
+    "intent_signal_account": null,
+    "organization_headcount_six_month_growth": -0.001456664238892935,
+    "organization_headcount_twelve_month_growth": 0.02313432835820895,
+    "organization_headcount_twenty_four_month_growth": 0.07193119624706802,
+    "industry": "food & beverages",
+    "estimated_num_employees": 5400,
+    "keywords": [
+      "cake rusk",
+      "breads",
+      "biscuits",
+      "dairy",
+      "cake amp rusk",
+      "food & beverage services",
+      "responsible growth",
+      "consumer goods",
+      "snacks",
+      "product research",
+      "dairy products",
+      "product portfolio",
+      "food processing technology",
+      "food manufacturing",
+      "food innovation labs",
+      "market trends",
+      "health-focused products",
+      "product development",
+      "transportation & logistics",
+      "digital marketing",
+      "nutritional science",
+      "nutrition",
+      "retail",
+      "sustainable sourcing",
+      "global exports",
+      "environmental footprint",
+      "innovative food formulations",
+      "product innovation technology",
+      "energy & utilities",
+      "water reuse",
+      "fmcg",
+      "plastic waste management",
+      "quality assurance",
+      "global presence",
+      "food value chain",
+      "health and wellness",
+      "food industry",
+      "food safety",
+      "e-commerce",
+      "supply chain",
+      "bakery products",
+      "bakery",
+      "d2c",
+      "b2c",
+      "food sustainability initiatives",
+      "distribution",
+      "innovation",
+      "product renovation",
+      "product intellectual property",
+      "sustainable growth strategies",
+      "sustainability",
+      "r&d",
+      "market trend adaptation",
+      "online shopping",
+      "farmer support",
+      "food safety standards",
+      "sustainable resource management",
+      "market expansion",
+      "food product r&d",
+      "food industry leadership",
+      "consumer satisfaction",
+      "generative ai",
+      "renewable energy",
+      "app development",
+      "plastic neutrality",
+      "product innovation",
+      "nutritional improvement",
+      "sustainable packaging",
+      "nutritional fortification",
+      "product lifecycle management",
+      "environmental impact reduction",
+      "sustainable packaging solutions",
+      "environmental responsibility",
+      "bread",
+      "cakes",
+      "rusk",
+      "nutritional bars",
+      "health wellness",
+      "diet planning",
+      "research and development",
+      "augmented reality",
+      "women empowerment",
+      "malnutrition",
+      "community support",
+      "environmental impact",
+      "clean fuel",
+      "water management",
+      "inclusive growth",
+      "healthy eating",
+      "natural ingredients",
+      "recipe creation",
+      "consumer engagement",
+      "health monitoring",
+      "food packaging",
+      "brand collaborations",
+      "consumer insights",
+      "cricket promotions",
+      "celebrity endorsements",
+      "social initiatives",
+      "ethical sourcing",
+      "healthy diets",
+      "fiber content",
+      "sugar reduction",
+      "dairy farming training",
+      "cooking classes",
+      "recipe customization",
+      "dietician consultation",
+      "manufacturing",
+      "consumer products & retail",
+      "food & beverages",
+      "consumers",
+      "marketing & advertising",
+      "health, wellness & fitness",
+      "consumer internet",
+      "internet",
+      "information technology & services",
+      "environmental services",
+      "renewables & environment",
+      "research & development",
+      "clean energy & technology",
+      "apps",
+      "software development",
+      "mechanical or industrial engineering"
+    ],
+    "industries": [
+      "food & beverages",
+      "dairy"
+    ],
+    "secondary_industries": [
+      "dairy"
+    ],
+    "snippets_loaded": true,
+    "industry_tag_id": "5567ce1e7369643b806a0000",
+    "industry_tag_hash": {
+      "food & beverages": "5567ce1e7369643b806a0000",
+      "dairy": "5567e8a27369646ddb0b0000"
+    },
+    "retail_location_count": 0,
+    "raw_address": "Whitefield Main Road, Bengaluru, Karnataka 560048, IN",
+    "street_address": "Whitefield Main Road",
+    "city": "Bengaluru",
+    "state": "Karnataka",
+    "postal_code": "560048",
+    "country": "India",
+    "short_description": "Britannia Industries Limited is a prominent Indian food and beverage company founded in 1892 in Kolkata. It specializes in bakery, dairy, and snacking products and operates in over 80 countries. As part of the Wadia Group, Britannia has grown to become a household name in India, employing over 4,500 people and achieving a market capitalization of \u20b91.08 trillion.\n\nThe company's diverse product portfolio includes a wide range of biscuits under popular brands like Good Day, NutriChoice, and Bourbon, as well as breads, cakes, and rusk products. In the dairy segment, Britannia produces milk, butter, cheese, ghee, and curd, with offerings like Winkin' Cow. With annual revenues exceeding \u20b99,000 crore, Britannia maintains a strong market presence in the food and beverage sector, focusing on providing tasty yet healthy products that fit into consumers' daily lives.",
+    "suborganizations": [
+      {
+        "id": "54a127e069702d93131ed100",
+        "name": "Kenafric Industries Ltd",
+        "website_url": "http://www.kenafricind.com"
+      }
+    ],
+    "num_suborganizations": 1,
+    "annual_revenue_printed": "2.1B",
+    "annual_revenue": 2093665000.0,
+    "technology_names": [
+      "AboveNet",
+      "Amazon AWS",
+      "Amazon CloudFront",
+      "Amazon Elastic Load Balancer",
+      "Blinkit",
+      "Bootstrap Framework",
+      "Cloudflare DNS",
+      "ExactTarget",
+      "Excel4Apps",
+      "GRIN",
+      "Gem",
+      "Gmail",
+      "Google AdWords Conversion",
+      "Google Analytics",
+      "Google Apps",
+      "Google Font API",
+      "Google Tag Manager",
+      "Hotjar",
+      "Inventor",
+      "Microsoft Excel",
+      "Microsoft PowerPoint",
+      "Mobile Friendly",
+      "Nginx",
+      "Nielsen Ad Intel",
+      "OneTrust Tech Risk & Compliance",
+      "Oracle Demantra",
+      "Piwik",
+      "Remote",
+      "SAP",
+      "Salesforce",
+      "Shopify",
+      "Shutterstock",
+      "Tor",
+      "WebSpectator",
+      "WordPress.org",
+      "reCAPTCHA"
+    ],
+    "current_technologies": [
+      {
+        "uid": "abovenet",
+        "name": "AboveNet",
+        "category": "Hosting"
+      },
+      {
+        "uid": "amazon_aws",
+        "name": "Amazon AWS",
+        "category": "Hosting"
+      },
+      {
+        "uid": "amazon_cloudfront",
+        "name": "Amazon CloudFront",
+        "category": "Content Delivery Networks"
+      },
+      {
+        "uid": "amazon_elastic_load_balancer",
+        "name": "Amazon Elastic Load Balancer",
+        "category": "Load Balancers"
+      },
+      {
+        "uid": "blinkit",
+        "name": "Blinkit",
+        "category": "Food Ordering Services"
+      },
+      {
+        "uid": "bootstrap_framework",
+        "name": "Bootstrap Framework",
+        "category": "CSS and JavaScript Libraries"
+      },
+      {
+        "uid": "cloudflare_dns",
+        "name": "Cloudflare DNS",
+        "category": "Domain Name Services"
+      },
+      {
+        "uid": "exacttarget",
+        "name": "ExactTarget",
+        "category": "Email Marketing"
+      },
+      {
+        "uid": "excel4apps",
+        "name": "Excel4Apps",
+        "category": "Business Intelligence"
+      },
+      {
+        "uid": "grin",
+        "name": "GRIN",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "gem",
+        "name": "Gem",
+        "category": "Frameworks and Programming Languages"
+      },
+      {
+        "uid": "gmail",
+        "name": "Gmail",
+        "category": "Email Providers"
+      },
+      {
+        "uid": "google_adwords_conversion",
+        "name": "Google AdWords Conversion",
+        "category": "Advertising Networks"
+      },
+      {
+        "uid": "google_analytics",
+        "name": "Google Analytics",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "google_apps",
+        "name": "Google Apps",
+        "category": "Other"
+      },
+      {
+        "uid": "google_font_api",
+        "name": "Google Font API",
+        "category": "Fonts"
+      },
+      {
+        "uid": "google_tag_manager",
+        "name": "Google Tag Manager",
+        "category": "Tag Management"
+      },
+      {
+        "uid": "hotjar",
+        "name": "Hotjar",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "inventor",
+        "name": "Inventor",
+        "category": "Other"
+      },
+      {
+        "uid": "microsoft_excel",
+        "name": "Microsoft Excel",
+        "category": "Business Intelligence"
+      },
+      {
+        "uid": "microsoft_powerpoint",
+        "name": "Microsoft PowerPoint",
+        "category": "Web Presentation Tools"
+      },
+      {
+        "uid": "mobile_friendly",
+        "name": "Mobile Friendly",
+        "category": "Other"
+      },
+      {
+        "uid": "nginx",
+        "name": "Nginx",
+        "category": "Load Balancers"
+      },
+      {
+        "uid": "nielsen_ad_intel",
+        "name": "Nielsen Ad Intel",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "onetrust_tech_risk_compliance",
+        "name": "OneTrust Tech Risk & Compliance",
+        "category": "ERP"
+      },
+      {
+        "uid": "oracle_demantra",
+        "name": "Oracle Demantra",
+        "category": "ERP"
+      },
+      {
+        "uid": "piwik",
+        "name": "Piwik",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "remote",
+        "name": "Remote",
+        "category": "Other"
+      },
+      {
+        "uid": "sap",
+        "name": "SAP",
+        "category": "Customer Relationship Management"
+      },
+      {
+        "uid": "salesforce",
+        "name": "Salesforce",
+        "category": "Customer Relationship Management"
+      },
+      {
+        "uid": "shopify",
+        "name": "Shopify",
+        "category": "E-commerce Platforms"
+      },
+      {
+        "uid": "shutterstock",
+        "name": "Shutterstock",
+        "category": "Other"
+      },
+      {
+        "uid": "tor",
+        "name": "Tor",
+        "category": "Security"
+      },
+      {
+        "uid": "webspectator",
+        "name": "WebSpectator",
+        "category": "Advertising Networks"
+      },
+      {
+        "uid": "wordpress_org",
+        "name": "WordPress.org",
+        "category": "CMS"
+      },
+      {
+        "uid": "recaptcha",
+        "name": "reCAPTCHA",
+        "category": "Captcha"
+      }
+    ],
+    "org_chart_root_people_ids": [
+      "66f675cec306eb0001fa302c"
+    ],
+    "departmental_head_count": {
+      "finance": 175,
+      "operations": 757,
+      "sales": 1310,
+      "legal": 30,
+      "engineering": 393,
+      "consulting": 16,
+      "marketing": 251,
+      "human_resources": 279,
+      "business_development": 76,
+      "information_technology": 221,
+      "data_science": 7,
+      "accounting": 95,
+      "administrative": 45,
+      "support": 50,
+      "product_management": 28,
+      "media_and_commmunication": 6,
+      "education": 2,
+      "entrepreneurship": 1,
+      "arts_and_design": 4
+    }
+  },
+  {
+    "id": "5f489c7360adea0001462bec",
+    "name": "Mechanical Engineering World",
+    "website_url": "http://www.engineeringlearner.com",
+    "angellist_url": null,
+    "linkedin_url": "http://www.linkedin.com/company/mechanical-engineering-worlds",
+    "twitter_url": null,
+    "facebook_url": null,
+    "primary_phone": {},
+    "languages": [],
+    "alexa_ranking": 669659,
+    "phone": null,
+    "linkedin_uid": "43239614",
+    "founded_year": null,
+    "publicly_traded_symbol": null,
+    "publicly_traded_exchange": null,
+    "logo_url": "https://zenprospect-production.s3.amazonaws.com/uploads/pictures/66df7874ac1db20001369902/picture",
+    "crunchbase_url": null,
+    "primary_domain": "engineeringlearner.com",
+    "sic_codes": [
+      "8299"
+    ],
+    "naics_codes": [
+      "61161"
+    ],
+    "owned_by_organization_id": null,
+    "organization_revenue_printed": null,
+    "organization_revenue": 0.0,
+    "intent_strength": null,
+    "show_intent": true,
+    "has_intent_signal_account": false,
+    "intent_signal_account": null,
+    "organization_headcount_six_month_growth": -0.01818181818181818,
+    "organization_headcount_twelve_month_growth": -0.01279707495429616,
+    "organization_headcount_twenty_four_month_growth": 0.001855287569573284,
+    "industry": "e-learning",
+    "estimated_num_employees": 6700,
+    "keywords": [
+      "e-learning providers",
+      "system valves",
+      "mechanical design",
+      "automobile parts",
+      "auger bit",
+      "allen key sizes",
+      "automobile engineering",
+      "engineering knowledge",
+      "chain drive mechanism",
+      "education",
+      "energy",
+      "technical content",
+      "adze tool design",
+      "technical illustrations",
+      "cabinet scraper techniques",
+      "production engineering",
+      "drill bit functions",
+      "e-learning",
+      "bradawl tips",
+      "production tools",
+      "system design",
+      "learning resources",
+      "solar panels",
+      "allen key types",
+      "dies types",
+      "fluid flow",
+      "pressure gauge",
+      "services",
+      "forging tools",
+      "robotics",
+      "valve types",
+      "mechanical devices",
+      "cabinet scraper types",
+      "screwdriver uses",
+      "forging tools uses",
+      "online learning platform",
+      "engineering diagrams",
+      "auger bit construction",
+      "auger bit applications",
+      "chain drive",
+      "product development",
+      "engineering mechanisms",
+      "bolt cutter",
+      "system diagrams",
+      "pressure measurement",
+      "fine arts schools",
+      "engineering applications",
+      "car door design",
+      "engineering concepts",
+      "dies working",
+      "engineering tools",
+      "screwdriver types",
+      "poppet valve types",
+      "bolt cutter uses",
+      "industrial engineering",
+      "technical descriptions",
+      "system analysis",
+      "engineering education",
+      "mechanical tools",
+      "brazing techniques",
+      "pressure gauge types",
+      "valves",
+      "dies",
+      "engineering devices",
+      "power transmission",
+      "drill bit varieties",
+      "bolt cutter parts",
+      "brazing methods",
+      "mechanical components",
+      "fluid dynamics",
+      "mechanical engineering",
+      "adze tool uses",
+      "industrial machinery",
+      "energy systems",
+      "bradawl tool tips",
+      "vernier caliper parts",
+      "engineering systems overview",
+      "engineering systems",
+      "process tools",
+      "pump operation",
+      "industrial tools",
+      "car doors",
+      "b2c",
+      "system components",
+      "visual aids",
+      "engineering tutorials",
+      "system operation",
+      "system mechanisms",
+      "power transmission systems",
+      "engineering principles",
+      "pressure gauges",
+      "energy management",
+      "renewable energy",
+      "automobile systems",
+      "engineering components",
+      "industrial dies",
+      "technical articles",
+      "automobile",
+      "process engineering",
+      "drilling tools",
+      "pneumatic systems",
+      "centifugal pumps",
+      "screw types",
+      "fasteners",
+      "gearbox types",
+      "turbine types",
+      "spark plugs",
+      "car door designs",
+      "car components",
+      "motor mounts",
+      "refrigeration systems",
+      "thermostatic expansion valves",
+      "poppet valves",
+      "valve operation",
+      "gas turbines",
+      "drill bits",
+      "cylinder heads",
+      "bradawl tool",
+      "allen keys",
+      "pulley systems",
+      "bearing types",
+      "compressor types",
+      "engine components",
+      "corrosion resistance",
+      "types of screws",
+      "dies and molds",
+      "overhauling engines",
+      "linear slides",
+      "valves in piping",
+      "production machinery",
+      "types of lathes",
+      "thermal efficiency",
+      "tool maintenance",
+      "smart manufacturing",
+      "internet",
+      "information technology & services",
+      "computer software",
+      "education management",
+      "mechanical or industrial engineering",
+      "professional training & coaching",
+      "oil & energy",
+      "clean energy & technology",
+      "environmental services",
+      "renewables & environment"
+    ],
+    "industries": [
+      "e-learning"
+    ],
+    "secondary_industries": [],
+    "snippets_loaded": true,
+    "industry_tag_id": "5567e19c7369641c48e70100",
+    "industry_tag_hash": {
+      "e-learning": "5567e19c7369641c48e70100"
+    },
+    "retail_location_count": 0,
+    "raw_address": "PND, IN",
+    "street_address": "",
+    "country": "India",
+    "short_description": "Mechanical Engineering World is an e-learning and educational resources platform based in India, focusing on mechanical engineering and related fields. With around 6,387 employees, it serves as a community knowledge hub for industries such as oil and gas, petrochemicals, refineries, power plants, and offshore operations.\n\nThe platform offers educational content, job listings, and knowledge resources tailored for engineering professionals. It emphasizes practical updates and learning materials to support skill development in core engineering disciplines, including mechanical, instrumentation, electrical, and chemical engineering. Mechanical Engineering World positions itself as a leader in providing updated knowledge and resources for the energy sector.",
+    "suborganizations": [],
+    "num_suborganizations": 0,
+    "funding_events": [],
+    "technology_names": [
+      "AddThis",
+      "CloudFlare Hosting",
+      "Cloudflare DNS",
+      "DoubleClick",
+      "Google AdSense",
+      "Google Analytics",
+      "Google Font API",
+      "Google Tag Manager",
+      "IoT",
+      "Media.net",
+      "Mobile Friendly",
+      "Remote",
+      "WordPress.org"
+    ],
+    "current_technologies": [
+      {
+        "uid": "addthis",
+        "name": "AddThis",
+        "category": "Social Sharing"
+      },
+      {
+        "uid": "cloudflare_hosting",
+        "name": "CloudFlare Hosting",
+        "category": "Hosting"
+      },
+      {
+        "uid": "cloudflare_dns",
+        "name": "Cloudflare DNS",
+        "category": "Domain Name Services"
+      },
+      {
+        "uid": "doubleclick",
+        "name": "DoubleClick",
+        "category": "Ad Servers"
+      },
+      {
+        "uid": "google_adsense",
+        "name": "Google AdSense",
+        "category": "Advertising Networks"
+      },
+      {
+        "uid": "google_analytics",
+        "name": "Google Analytics",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "google_font_api",
+        "name": "Google Font API",
+        "category": "Fonts"
+      },
+      {
+        "uid": "google_tag_manager",
+        "name": "Google Tag Manager",
+        "category": "Tag Management"
+      },
+      {
+        "uid": "iot",
+        "name": "IoT",
+        "category": "Other"
+      },
+      {
+        "uid": "media_net",
+        "name": "Media.net",
+        "category": "Publisher Advertising Tools"
+      },
+      {
+        "uid": "mobile_friendly",
+        "name": "Mobile Friendly",
+        "category": "Other"
+      },
+      {
+        "uid": "remote",
+        "name": "Remote",
+        "category": "Other"
+      },
+      {
+        "uid": "wordpress_org",
+        "name": "WordPress.org",
+        "category": "CMS"
+      }
+    ],
+    "org_chart_root_people_ids": [
+      "61ba2344460ed5000168b306"
+    ],
+    "departmental_head_count": {
+      "engineering": 1048,
+      "arts_and_design": 73,
+      "information_technology": 78,
+      "entrepreneurship": 3,
+      "operations": 54,
+      "product_management": 2,
+      "education": 23,
+      "consulting": 3,
+      "human_resources": 5,
+      "accounting": 2,
+      "sales": 27,
+      "support": 9,
+      "business_development": 5,
+      "administrative": 10,
+      "finance": 12,
+      "marketing": 8,
+      "legal": 0,
+      "media_and_commmunication": 0,
+      "data_science": 0
+    }
+  },
+  {
+    "id": "5d099c0180f93e7a3371fecf",
+    "name": "Hyundai Motor India Ltd.",
+    "website_url": "http://www.hyundaiusa.com",
+    "angellist_url": "http://angel.co/hyundai",
+    "linkedin_url": "http://www.linkedin.com/company/hyundai-motor-india-ltd",
+    "twitter_url": "https://twitter.com/hyundaiindia",
+    "facebook_url": "https://www.facebook.com/HyundaiIndia",
+    "primary_phone": {
+      "number": "+91 62328 75508",
+      "source": "Scraped",
+      "sanitized_number": "+916232875508"
+    },
+    "languages": [
+      "English",
+      "Spanish",
+      "Russian"
+    ],
+    "alexa_ranking": 11314,
+    "phone": "+91 62328 75508",
+    "linkedin_uid": "36062",
+    "founded_year": 1996,
+    "publicly_traded_symbol": null,
+    "publicly_traded_exchange": null,
+    "logo_url": "https://zenprospect-production.s3.amazonaws.com/uploads/pictures/68c619cfda5a650001c1aeef/picture",
+    "crunchbase_url": null,
+    "primary_domain": "hyundaiusa.com",
+    "sic_codes": [
+      "3711"
+    ],
+    "naics_codes": [
+      "33611"
+    ],
+    "sanitized_phone": "+916232875508",
+    "owned_by_organization_id": "5dd8ea21116686008c7fb4e1",
+    "owned_by_organization": {
+      "id": "5dd8ea21116686008c7fb4e1",
+      "name": "Hyundai Motor Group",
+      "website_url": "http://www.hyundaimotorgroup.com"
+    },
+    "organization_revenue_printed": "8.1B",
+    "organization_revenue": 8100000000.0,
+    "intent_strength": null,
+    "show_intent": true,
+    "has_intent_signal_account": false,
+    "intent_signal_account": null,
+    "organization_headcount_six_month_growth": -0.01483679525222552,
+    "organization_headcount_twelve_month_growth": -0.01483679525222552,
+    "organization_headcount_twenty_four_month_growth": -0.04597701149425287,
+    "industry": "automotive",
+    "estimated_num_employees": 6100,
+    "keywords": [
+      "passenger car manufacturing & selling innovation to customers",
+      "automotive",
+      "motor vehicle manufacturing",
+      "market expansion",
+      "electric vehicle technology",
+      "consumer retail",
+      "brand reputation",
+      "future mobility research",
+      "autonomous driving",
+      "automotive innovation",
+      "vehicle engineering",
+      "circular economy",
+      "emission reduction",
+      "automotive design",
+      "performance vehicles",
+      "sustainability",
+      "electric vehicle battery recycling",
+      "manufacturing bases",
+      "automotive software",
+      "safety awards",
+      "battery technology",
+      "automobile and light duty motor vehicle manufacturing",
+      "automotive ai",
+      "advanced driver-assistance systems (adas)",
+      "vehicle lineup",
+      "automotive innovation centers",
+      "safety standards",
+      "regional models",
+      "vehicle data analytics",
+      "electric powertrain",
+      "connected car ecosystems",
+      "electric vehicle charging",
+      "vehicle telematics",
+      "vehicle electrification",
+      "vehicle lifecycle management",
+      "automotive electronics",
+      "future mobility",
+      "fuel cell technology",
+      "global automotive",
+      "smart manufacturing",
+      "vehicle safety systems",
+      "hydrogen fuel cells",
+      "global manufacturing hubs",
+      "infotainment platforms",
+      "fleet vehicles",
+      "advanced battery technology",
+      "automotive safety innovations",
+      "customer segments",
+      "transportation & logistics",
+      "automotive industry global expansion",
+      "vehicle testing",
+      "electric vehicle fast-charging",
+      "adas",
+      "manufacturing efficiency",
+      "regional model tailoring",
+      "corporate social responsibility",
+      "automotive circular economy",
+      "vehicle production",
+      "automotive supply chain optimization",
+      "electrification",
+      "vehicle performance optimization",
+      "global supply chain",
+      "market diversification",
+      "vehicle diagnostics",
+      "connected vehicle services",
+      "hydrogen fuel cell vehicles",
+      "regional vehicle customization",
+      "innovation in mobility",
+      "mass production",
+      "automotive sustainability",
+      "powertrain technology",
+      "vehicle platforms",
+      "autonomous vehicle development",
+      "vehicle customization",
+      "advanced driver-assistance systems",
+      "vehicle connectivity",
+      "automotive industry digitalization",
+      "automotive industry standards",
+      "manufacturing automation",
+      "automotive sustainability initiatives",
+      "automotive innovation labs",
+      "electric commercial vehicles",
+      "warranty programs",
+      "electric vehicles",
+      "automotive technology",
+      "innovation",
+      "brand evolution",
+      "urban air mobility",
+      "automotive software development",
+      "connected cars",
+      "vehicle platform development",
+      "hydrogen infrastructure",
+      "automotive engineering",
+      "automotive r&d",
+      "connected vehicle technology",
+      "automotive robotics",
+      "quality and reliability",
+      "electric vehicle market",
+      "performance n brand",
+      "automotive industry sustainability",
+      "automotive r&d investment",
+      "smart factory automation",
+      "autonomous systems",
+      "automotive manufacturing",
+      "future mobility solutions",
+      "renewable energy",
+      "fleet and commercial vehicles",
+      "global presence",
+      "vehicle safety",
+      "hyundai",
+      "suvs",
+      "sedans",
+      "hyundai ioniq",
+      "nexo fuel cell",
+      "kona",
+      "tucson",
+      "santa fe",
+      "palisade",
+      "elantra",
+      "sonata",
+      "vehicle inventory",
+      "new vehicles",
+      "certified used vehicles",
+      "hybrid vehicles",
+      "plug-in hybrid vehicles",
+      "electric suvs",
+      "gasoline vehicles",
+      "car financing",
+      "car maintenance",
+      "warranty",
+      "safety technology",
+      "driver assistance",
+      "automotive sales",
+      "comparison tools",
+      "request a quote",
+      "test drive",
+      "online car purchase",
+      "flexible test drive",
+      "shopper assurance",
+      "blind-spot collision warning",
+      "android auto",
+      "apple carplay",
+      "navigation system",
+      "roadside assistance",
+      "vehicle service",
+      "eco-friendly vehicles",
+      "premium interior",
+      "performance enhancements",
+      "seating capacity",
+      "powertrain options",
+      "real-time inventory",
+      "customer support",
+      "future vehicles",
+      "nexo hydrogen fuel cell",
+      "ioniq 5",
+      "ioniq 6",
+      "ioniq 9",
+      "b2c",
+      "manufacturing",
+      "consumer products & retail",
+      "environmental services",
+      "renewables & environment",
+      "clean energy & technology",
+      "mechanical or industrial engineering"
+    ],
+    "industries": [
+      "automotive"
+    ],
+    "secondary_industries": [],
+    "snippets_loaded": true,
+    "industry_tag_id": "5567cdf27369644cfd800000",
+    "industry_tag_hash": {
+      "automotive": "5567cdf27369644cfd800000"
+    },
+    "retail_location_count": 0,
+    "raw_address": "2nd, 5th & 6th Floor, Corporate One (Baani Building), Plot No.5, Commercial Centre, Jasola, New Delhi 110025 New Delhi 110025 India",
+    "street_address": "",
+    "city": "New Delhi",
+    "postal_code": "110025",
+    "country": "India",
+    "short_description": "Hyundai Motor India Limited (HMIL) is a prominent automobile manufacturer in India and a subsidiary of Hyundai Motor Company. Established in May 1996, HMIL is part of the Hyundai Motor Group, which ranks as the third-largest auto original equipment manufacturer globally. The company produces a wide range of passenger vehicles and parts for both domestic and international markets, with a manufacturing facility located near Chennai.\n\nHMIL has sold nearly 12 million vehicles and is recognized as India's second-largest exporter from April 2021 to June 2024, serving markets in Africa, the Middle East, and South Asia. The company offers a diverse portfolio of 13 passenger vehicle models, including hatchbacks, sedans, SUVs, and electric vehicles. Notable models include the Grand i10 NIOS, AURA, and IONIQ 5. HMIL is committed to sustainable manufacturing practices and advanced mobility solutions, supported by a robust network of over 1,300 sales points and 1,500 service points across India.",
+    "suborganizations": [
+      {
+        "id": "663f7883e05c8d00016a264c",
+        "name": "Holler Hyundai",
+        "website_url": "http://www.hollerhyundai.com"
+      },
+      {
+        "id": "685230431601bb0001c53acc",
+        "name": "Genesis Of Austin",
+        "website_url": "http://www.genesisofaustin.com"
+      },
+      {
+        "id": "672d93a7287f3300018206eb",
+        "name": "GENESIS OF NORTH CHARLESTON",
+        "website_url": "http://www.genesisofnorthcharleston.com"
+      },
+      {
+        "id": "59bba37ba6da980efa39ec33",
+        "name": "Hyundai Motor UK",
+        "website_url": "http://www.dalysgarage.co.uk"
+      },
+      {
+        "id": "6726647f0b702b000148fdef",
+        "name": "Delray Genesis",
+        "website_url": "http://www.delraygenesis.com"
+      },
+      {
+        "id": "66783e2451e3a300018464e0",
+        "name": "Allen Turner Genesis",
+        "website_url": "http://www.allenturnergenesis.com"
+      },
+      {
+        "id": "66e56e41b52e9100011152da",
+        "name": "GENESIS OF GROVEPORT",
+        "website_url": "http://www.genesisgroveport.com"
+      },
+      {
+        "id": "603a466dcd399c00e79d5422",
+        "name": "Neo Genesis",
+        "website_url": "http://www.genesisvancouver.ca"
+      },
+      {
+        "id": "66f94aa227980600010e38f7",
+        "name": "GENESIS OF ROSEVILLE",
+        "website_url": "http://www.rosevillegenesis.com"
+      },
+      {
+        "id": "56dc8ab7f3e5bb35fb00098b",
+        "name": "Hyundai Singapore (Komoco Motors)",
+        "website_url": "http://www.hyundai.com.sg"
+      },
+      {
+        "id": "644f5ae9dbe4310001bcc832",
+        "name": "Genesis of Denton",
+        "website_url": "http://www.genesisofdenton.com"
+      },
+      {
+        "id": "670b6b899dc7fa0001170d89",
+        "name": "Genesis of Braintree",
+        "website_url": "http://www.genesisofbraintree.com"
+      },
+      {
+        "id": "6726d5a30b702b00014db834",
+        "name": "Genesis of Winston-Salem",
+        "website_url": "http://www.genesisofwinstonsalem.com"
+      }
+    ],
+    "num_suborganizations": 13,
+    "annual_revenue_printed": "8.1B",
+    "annual_revenue": 8100000000.0,
+    "funding_events": [],
+    "technology_names": [
+      ".NET",
+      "3M 360 Encompass - Health Analytics Suite",
+      "ADP",
+      "AI",
+      "ASP.NET",
+      "AVEVA PDMS",
+      "Act!",
+      "Adobe CQ",
+      "Adobe Marketing Cloud",
+      "Adobe Media Optimizer",
+      "Alteryx",
+      "Amazon AWS",
+      "Amazon SES",
+      "Apache",
+      "AudioEye",
+      "Awin",
+      "Bing Ads",
+      "Bootstrap Framework",
+      "CAT",
+      "ChatBot",
+      "Cisco VPN",
+      "Clientconnexion",
+      "CloudFlare Hosting",
+      "Concur",
+      "DatoCMS",
+      "Dealertrack",
+      "Delivra",
+      "DoubleClick",
+      "DoubleClick Conversion",
+      "DreamHost SSL",
+      "Electron",
+      "Eloqua",
+      "Etix",
+      "Excel4Apps",
+      "Facebook Conversion Tracking",
+      "Facebook Custom Audiences",
+      "Facebook Login (Connect)",
+      "Facebook Widget",
+      "Fonts.com",
+      "Gem",
+      "Genesys",
+      "Google Analytics",
+      "Google Analytics Ecommerce Tracking",
+      "Google Dynamic Remarketing",
+      "Google Font API",
+      "Google Hybrid Cloud",
+      "Google Maps",
+      "Google Maps (Non Paid Users)",
+      "Google Places",
+      "Google Tag Manager",
+      "Google translate API",
+      "Google translate widget",
+      "Hotjar",
+      "Hubspot",
+      "Hunter",
+      "IBM ILOG CPLEX Optimization Studio",
+      "IBM MarketScan Research Databases",
+      "ICONICS IoT",
+      "Incapsula",
+      "Jonas POS",
+      "LivePerson Monitor",
+      "LiveRamp",
+      "Marketo",
+      "Microsoft Excel",
+      "Microsoft Office",
+      "Microsoft Office 365",
+      "Microsoft PowerPoint",
+      "Microsoft Windows Server 2012",
+      "Microsoft-IIS",
+      "Mimecast",
+      "Mobile Friendly",
+      "MySQL",
+      "MySQL",
+      "Netlify",
+      "Olo",
+      "Omniture (Adobe)",
+      "OneTrust",
+      "Outlook",
+      "Pardot",
+      "Python",
+      "Quip",
+      "React Redux",
+      "Remote",
+      "SAP",
+      "SAP BusinessObjects Business Intelligence (BI)",
+      "Sage Fixed Assets",
+      "Salesforce",
+      "Salesforce CRM Analytics",
+      "Salesforce Live Agent",
+      "Scene7",
+      "SharpSpring",
+      "Siemens PROFIBUS",
+      "SignalR",
+      "Slack",
+      "Soda",
+      "SpingMetrics",
+      "SuccessFactors (SAP)",
+      "SysTools VBA Password Recovery",
+      "Tableau",
+      "Tampa AS400 Inc",
+      "Tealium",
+      "The Trade Desk",
+      "Thomson Reuters ONESOURCE",
+      "Twitter Advertising",
+      "Vimeo",
+      "VinSolutions",
+      "Visual Website Optimizer",
+      "VueJS",
+      "Wacom Tablet",
+      "WebOffice",
+      "WordPress.org",
+      "YouTube",
+      "comScore",
+      "iPerceptions",
+      "reCAPTCHA"
+    ],
+    "current_technologies": [
+      {
+        "uid": "net",
+        "name": ".NET",
+        "category": "Frameworks and Programming Languages"
+      },
+      {
+        "uid": "3m_360_encompass_health_analytics_suite",
+        "name": "3M 360 Encompass - Health Analytics Suite",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "adp",
+        "name": "ADP",
+        "category": "Recruitment"
+      },
+      {
+        "uid": "ai",
+        "name": "AI",
+        "category": "Other"
+      },
+      {
+        "uid": "asp_net",
+        "name": "ASP.NET",
+        "category": "Frameworks and Programming Languages"
+      },
+      {
+        "uid": "aveva_pdms",
+        "name": "AVEVA PDMS",
+        "category": "Cloud Services"
+      },
+      {
+        "uid": "act",
+        "name": "Act!",
+        "category": "Other"
+      },
+      {
+        "uid": "adobe_cq",
+        "name": "Adobe CQ",
+        "category": "CMS"
+      },
+      {
+        "uid": "adobe_marketing_cloud",
+        "name": "Adobe Marketing Cloud",
+        "category": "Search Marketing"
+      },
+      {
+        "uid": "adobe_media_optimizer",
+        "name": "Adobe Media Optimizer",
+        "category": "Search Marketing"
+      },
+      {
+        "uid": "alteryx",
+        "name": "Alteryx",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "amazon_aws",
+        "name": "Amazon AWS",
+        "category": "Hosting"
+      },
+      {
+        "uid": "amazon_ses",
+        "name": "Amazon SES",
+        "category": "Email Delivery"
+      },
+      {
+        "uid": "apache",
+        "name": "Apache",
+        "category": "Load Balancers"
+      },
+      {
+        "uid": "audioeye",
+        "name": "AudioEye",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "awin",
+        "name": "Awin",
+        "category": "Affiliate Advertising Network"
+      },
+      {
+        "uid": "bing_ads",
+        "name": "Bing Ads",
+        "category": "Advertising Networks"
+      },
+      {
+        "uid": "bootstrap_framework",
+        "name": "Bootstrap Framework",
+        "category": "CSS and JavaScript Libraries"
+      },
+      {
+        "uid": "cat",
+        "name": "CAT",
+        "category": "ERP"
+      },
+      {
+        "uid": "chatbot",
+        "name": "ChatBot",
+        "category": "Chats"
+      },
+      {
+        "uid": "cisco_vpn",
+        "name": "Cisco VPN",
+        "category": "Cloud Services"
+      },
+      {
+        "uid": "clientconnexion",
+        "name": "Clientconnexion",
+        "category": "Chats"
+      },
+      {
+        "uid": "cloudflare_hosting",
+        "name": "CloudFlare Hosting",
+        "category": "Hosting"
+      },
+      {
+        "uid": "concur",
+        "name": "Concur",
+        "category": "Other"
+      },
+      {
+        "uid": "datocms",
+        "name": "DatoCMS",
+        "category": "CMS"
+      },
+      {
+        "uid": "dealertrack",
+        "name": "Dealertrack",
+        "category": "Other"
+      },
+      {
+        "uid": "delivra",
+        "name": "Delivra",
+        "category": "Email Marketing"
+      },
+      {
+        "uid": "doubleclick",
+        "name": "DoubleClick",
+        "category": "Ad Servers"
+      },
+      {
+        "uid": "doubleclick_conversion",
+        "name": "DoubleClick Conversion",
+        "category": "Advertising Networks"
+      },
+      {
+        "uid": "dreamhost_ssl",
+        "name": "DreamHost SSL",
+        "category": "SSL Certificates"
+      },
+      {
+        "uid": "electron",
+        "name": "Electron",
+        "category": "Frameworks and Programming Languages"
+      },
+      {
+        "uid": "eloqua",
+        "name": "Eloqua",
+        "category": "Marketing Automation"
+      },
+      {
+        "uid": "etix",
+        "name": "Etix",
+        "category": "Event Management"
+      },
+      {
+        "uid": "excel4apps",
+        "name": "Excel4Apps",
+        "category": "Business Intelligence"
+      },
+      {
+        "uid": "facebook_conversion_tracking",
+        "name": "Facebook Conversion Tracking",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "facebook_web_custom_audiences",
+        "name": "Facebook Custom Audiences",
+        "category": "Retargeting"
+      },
+      {
+        "uid": "facebook_login",
+        "name": "Facebook Login (Connect)",
+        "category": "Social Login"
+      },
+      {
+        "uid": "facebook_widget",
+        "name": "Facebook Widget",
+        "category": "Widgets"
+      },
+      {
+        "uid": "fonts_com",
+        "name": "Fonts.com",
+        "category": "Fonts"
+      },
+      {
+        "uid": "gem",
+        "name": "Gem",
+        "category": "Frameworks and Programming Languages"
+      },
+      {
+        "uid": "genesys",
+        "name": "Genesys",
+        "category": "Widgets"
+      },
+      {
+        "uid": "google_analytics",
+        "name": "Google Analytics",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "google_analytics_ecommerce_tracking",
+        "name": "Google Analytics Ecommerce Tracking",
+        "category": "E-commerce Tools"
+      },
+      {
+        "uid": "google_dynamic_remarketing",
+        "name": "Google Dynamic Remarketing",
+        "category": "Retargeting"
+      },
+      {
+        "uid": "google_font_api",
+        "name": "Google Font API",
+        "category": "Fonts"
+      },
+      {
+        "uid": "google_hybrid_cloud",
+        "name": "Google Hybrid Cloud",
+        "category": "Cloud Services"
+      },
+      {
+        "uid": "google_maps",
+        "name": "Google Maps",
+        "category": "Other"
+      },
+      {
+        "uid": "google_maps_non_paid_users",
+        "name": "Google Maps (Non Paid Users)",
+        "category": "Other"
+      },
+      {
+        "uid": "google_places",
+        "name": "Google Places",
+        "category": "Other"
+      },
+      {
+        "uid": "google_tag_manager",
+        "name": "Google Tag Manager",
+        "category": "Tag Management"
+      },
+      {
+        "uid": "google_translate_api",
+        "name": "Google translate API",
+        "category": "Widgets"
+      },
+      {
+        "uid": "google_translate_widget",
+        "name": "Google translate widget",
+        "category": "Widgets"
+      },
+      {
+        "uid": "hotjar",
+        "name": "Hotjar",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "hubspot",
+        "name": "Hubspot",
+        "category": "Marketing Automation"
+      },
+      {
+        "uid": "hunter",
+        "name": "Hunter",
+        "category": "Lead Generation Software"
+      },
+      {
+        "uid": "ibm_ilog_cplex_optimization_studio",
+        "name": "IBM ILOG CPLEX Optimization Studio",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "ibm_marketscan_research_databases",
+        "name": "IBM MarketScan Research Databases",
+        "category": "Database"
+      },
+      {
+        "uid": "iconics_iot",
+        "name": "ICONICS IoT",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "incapsula",
+        "name": "Incapsula",
+        "category": "Web Accelerators"
+      },
+      {
+        "uid": "jonas_pos",
+        "name": "Jonas POS",
+        "category": "E-commerce Platforms"
+      },
+      {
+        "uid": "liveperson_monitor",
+        "name": "LivePerson Monitor",
+        "category": "Chats"
+      },
+      {
+        "uid": "liveramp",
+        "name": "LiveRamp",
+        "category": "Data Management Platform"
+      },
+      {
+        "uid": "marketo",
+        "name": "Marketo",
+        "category": "Marketing Automation"
+      },
+      {
+        "uid": "microsoft_excel",
+        "name": "Microsoft Excel",
+        "category": "Business Intelligence"
+      },
+      {
+        "uid": "microsoft_office",
+        "name": "Microsoft Office",
+        "category": "Communication and Collaboration"
+      },
+      {
+        "uid": "office_365",
+        "name": "Microsoft Office 365",
+        "category": "Other"
+      },
+      {
+        "uid": "microsoft_powerpoint",
+        "name": "Microsoft PowerPoint",
+        "category": "Web Presentation Tools"
+      },
+      {
+        "uid": "microsoft_windows_server_2012",
+        "name": "Microsoft Windows Server 2012",
+        "category": "Cloud Services"
+      },
+      {
+        "uid": "microsoft-iis",
+        "name": "Microsoft-IIS",
+        "category": "Load Balancers"
+      },
+      {
+        "uid": "mimecast",
+        "name": "Mimecast",
+        "category": "Email Providers"
+      },
+      {
+        "uid": "mobile_friendly",
+        "name": "Mobile Friendly",
+        "category": "Other"
+      },
+      {
+        "uid": "mysql",
+        "name": "MySQL",
+        "category": "Database"
+      },
+      {
+        "uid": "mysql",
+        "name": "MySQL",
+        "category": "Database"
+      },
+      {
+        "uid": "netlify",
+        "name": "Netlify",
+        "category": "CMS"
+      },
+      {
+        "uid": "olo",
+        "name": "Olo",
+        "category": "Food Ordering Services"
+      },
+      {
+        "uid": "omniture_adobe",
+        "name": "Omniture (Adobe)",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "onetrust",
+        "name": "OneTrust",
+        "category": "Widgets"
+      },
+      {
+        "uid": "outlook",
+        "name": "Outlook",
+        "category": "Email Providers"
+      },
+      {
+        "uid": "pardot",
+        "name": "Pardot",
+        "category": "Marketing Automation"
+      },
+      {
+        "uid": "python",
+        "name": "Python",
+        "category": "Frameworks and Programming Languages"
+      },
+      {
+        "uid": "quip",
+        "name": "Quip",
+        "category": "Communication and Collaboration"
+      },
+      {
+        "uid": "react_redux",
+        "name": "React Redux",
+        "category": "CSS and JavaScript Libraries"
+      },
+      {
+        "uid": "remote",
+        "name": "Remote",
+        "category": "Other"
+      },
+      {
+        "uid": "sap",
+        "name": "SAP",
+        "category": "Customer Relationship Management"
+      },
+      {
+        "uid": "sap_businessobjects_business_intelligence_bi",
+        "name": "SAP BusinessObjects Business Intelligence (BI)",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "sage_fixed_assets",
+        "name": "Sage Fixed Assets",
+        "category": "ERP"
+      },
+      {
+        "uid": "salesforce",
+        "name": "Salesforce",
+        "category": "Customer Relationship Management"
+      },
+      {
+        "uid": "salesforce crm analytics",
+        "name": "Salesforce CRM Analytics",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "salesforce_live_agent",
+        "name": "Salesforce Live Agent",
+        "category": "Chats"
+      },
+      {
+        "uid": "scene7",
+        "name": "Scene7",
+        "category": "E-commerce Tools"
+      },
+      {
+        "uid": "sharpspring",
+        "name": "SharpSpring",
+        "category": "Marketing Automation"
+      },
+      {
+        "uid": "siemens_profibus",
+        "name": "Siemens PROFIBUS",
+        "category": "Cloud Services"
+      },
+      {
+        "uid": "signalr",
+        "name": "SignalR",
+        "category": "CSS and JavaScript Libraries"
+      },
+      {
+        "uid": "slack",
+        "name": "Slack",
+        "category": "Chats"
+      },
+      {
+        "uid": "soda",
+        "name": "Soda",
+        "category": "Other"
+      },
+      {
+        "uid": "spingmetrics",
+        "name": "SpingMetrics",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "successfactors_sap",
+        "name": "SuccessFactors (SAP)",
+        "category": "Recruitment"
+      },
+      {
+        "uid": "systools_vba_password_recovery",
+        "name": "SysTools VBA Password Recovery",
+        "category": "Security"
+      },
+      {
+        "uid": "tableau",
+        "name": "Tableau",
+        "category": "Widgets"
+      },
+      {
+        "uid": "tampa_as400_inc",
+        "name": "Tampa AS400 Inc",
+        "category": "Security"
+      },
+      {
+        "uid": "tealium",
+        "name": "Tealium",
+        "category": "Tag Management"
+      },
+      {
+        "uid": "the_trade_desk",
+        "name": "The Trade Desk",
+        "category": "Demand Side Platforms"
+      },
+      {
+        "uid": "thomson_reuters_onesource",
+        "name": "Thomson Reuters ONESOURCE",
+        "category": "Business Intelligence"
+      },
+      {
+        "uid": "twitter_advertising",
+        "name": "Twitter Advertising",
+        "category": "Advertising Networks"
+      },
+      {
+        "uid": "vimeo",
+        "name": "Vimeo",
+        "category": "Online Video Platforms"
+      },
+      {
+        "uid": "vinsolutions",
+        "name": "VinSolutions",
+        "category": "Customer Relationship Management"
+      },
+      {
+        "uid": "visual_website_optimizer",
+        "name": "Visual Website Optimizer",
+        "category": "Online Testing Platforms"
+      },
+      {
+        "uid": "vue_js_library",
+        "name": "VueJS",
+        "category": "CSS and JavaScript Libraries"
+      },
+      {
+        "uid": "wacom_tablet",
+        "name": "Wacom Tablet",
+        "category": "Other"
+      },
+      {
+        "uid": "weboffice",
+        "name": "WebOffice",
+        "category": "CMS"
+      },
+      {
+        "uid": "wordpress_org",
+        "name": "WordPress.org",
+        "category": "CMS"
+      },
+      {
+        "uid": "youtube",
+        "name": "YouTube",
+        "category": "Online Video Platforms"
+      },
+      {
+        "uid": "comscore",
+        "name": "comScore",
+        "category": "Analytics and Tracking"
+      },
+      {
+        "uid": "iperceptions",
+        "name": "iPerceptions",
+        "category": "Support and Feedback"
+      },
+      {
+        "uid": "recaptcha",
+        "name": "reCAPTCHA",
+        "category": "Captcha"
+      }
+    ],
+    "org_chart_root_people_ids": [],
+    "departmental_head_count": {
+      "accounting": 7,
+      "marketing": 17,
+      "support": 20,
+      "sales": 53,
+      "operations": 36,
+      "engineering": 72,
+      "information_technology": 20,
+      "finance": 9,
+      "consulting": 15,
+      "business_development": 8,
+      "human_resources": 11,
+      "administrative": 3,
+      "product_management": 3,
+      "media_and_commmunication": 5,
+      "data_science": 3,
+      "legal": 0,
+      "education": 0,
+      "arts_and_design": 0,
+      "entrepreneurship": 0
+    }
+  },
+  {
+    "id": "637b23ca0583c7000148792a",
+    "name": "World of Electrical",
+    "website_url": "http://www.mechzo.com",
+    "angellist_url": null,
+    "linkedin_url": "http://www.linkedin.com/company/worldofelectrical",
+    "twitter_url": null,
+    "facebook_url": null,
+    "primary_phone": {
+      "number": "+91 81686 94999",
+      "sanitized_number": "+918168694999",
+      "source": "Scraped"
+    },
+    "languages": [],
+    "alexa_ranking": null,
+    "phone": "+91 81686 94999",
+    "linkedin_uid": "77732480",
+    "founded_year": null,
+    "publicly_traded_symbol": null,
+    "publicly_traded_exchange": null,
+    "logo_url": "https://zenprospect-production.s3.amazonaws.com/uploads/pictures/670641e6c3a75d0001837eb3/picture",
+    "crunchbase_url": null,
+    "primary_domain": "mechzo.com",
+    "sic_codes": [
+      "3621",
+      "5063",
+      "7371"
+    ],
+    "naics_codes": [
+      "33599",
+      "423610",
+      "541512"
+    ],
+    "sanitized_phone": "+918168694999",
+    "owned_by_organization_id": null,
+    "organization_revenue_printed": null,
+    "organization_revenue": 0.0,
+    "intent_strength": null,
+    "show_intent": true,
+    "has_intent_signal_account": false,
+    "intent_signal_account": null,
+    "organization_headcount_six_month_growth": 0.04651162790697674,
+    "organization_headcount_twelve_month_growth": 0.1538461538461539,
+    "organization_headcount_twenty_four_month_growth": 0.3235294117647059,
+    "industry": "government administration",
+    "estimated_num_employees": 890,
+    "keywords": [
+      "education administration programs",
+      "utility app development",
+      "search engine optimization",
+      "automation",
+      "electrical contracting",
+      "telecommunications equipment and infrastructure",
+      "electrical project consultancy",
+      "power transmission hardware",
+      "robotics",
+      "software solutions",
+      "power system software",
+      "software support",
+      "electrical equipment",
+      "mobile app development",
+      "telecom sector",
+      "power generation",
+      "electrical project supply",
+      "software for power plants",
+      "mobile applications",
+      "electrical solutions",
+      "software integration",
+      "website development",
+      "utilities",
+      "utility sector software",
+      "electrical equipment for oil & gas",
+      "electrical software",
+      "electrical industry",
+      "energy infrastructure solutions",
+      "electrical equipment and supplies manufacturing",
+      "power grid infrastructure",
+      "user interface",
+      "electrical hardware",
+      "telecom network support",
+      "telecom equipment",
+      "electrical engineering",
+      "power equipment",
+      "electrical infrastructure",
+      "power infrastructure",
+      "mechanical engineering",
+      "telecom project supply",
+      "telecom app development",
+      "hardware supply",
+      "email marketing",
+      "electrical project management",
+      "cloud services",
+      "software deployment",
+      "power and telecom infrastructure",
+      "electrical systems",
+      "renewable energy",
+      "south asia",
+      "mobile app solutions",
+      "regional infrastructure provider",
+      "telecommunications solutions",
+      "software for utilities",
+      "regional electrical supplier",
+      "power management software",
+      "telecom infrastructure",
+      "performance solutions",
+      "digital marketing",
+      "conversion rate optimization",
+      "power and telecom integration",
+      "electrical project solutions",
+      "power transmission equipment",
+      "b2c",
+      "electrical components",
+      "mobile performance tools",
+      "utility software solutions",
+      "oil & gas electrical solutions",
+      "telecom software",
+      "middle east",
+      "electrical services",
+      "digital solutions for utilities",
+      "telecom network hardware",
+      "regional presence",
+      "telecom infrastructure development",
+      "mobile application",
+      "energy efficiency",
+      "energy sector electrical solutions",
+      "all other electrical equipment and component manufacturing",
+      "power transmission",
+      "electrical project software",
+      "software for telecom",
+      "telecom hardware supply",
+      "software solutions for utilities",
+      "lead generation",
+      "telecom infrastructure solutions",
+      "consumer electronics",
+      "regional supplier",
+      "utility technology",
+      "user experience",
+      "critical infrastructure electrical supply",
+      "branding",
+      "telecom technology",
+      "electrical supply",
+      "large-scale contractors",
+      "telecom sector solutions",
+      "technology services",
+      "analytics",
+      "electrical power generation and transmission",
+      "regional operations",
+      "mobile app services",
+      "web design",
+      "power grid software",
+      "regional service provider",
+      "performance monitoring",
+      "energy sector",
+      "electrical products",
+      "electrical project services",
+      "online presence",
+      "customer relationship management",
+      "oil & gas industry",
+      "regional power solutions",
+      "critical infrastructure",
+      "public utilities",
+      "utility software",
+      "customer engagement",
+      "software maintenance",
+      "large industrial clients",
+      "telecom network software",
+      "power and telecom systems",
+      "regional electrical contractor",
+      "utilities sector",
+      "seo",
+      "power plant electrical equipment",
+      "electrical solutions provider",
+      "infrastructure solutions",
+      "power sector solutions",
+      "responsive design",
+      "under construction",
+      "maintenance mode",
+      "site optimization",
+      "digital strategy",
+      "content management",
+      "web hosting",
+      "e-commerce solutions",
+      "ui/ux design",
+      "website performance",
+      "site security",
+      "social media integration",
+      "mobile optimization",
+      "web applications",
+      "information architecture",
+      "website management",
+      "content strategy",
+      "performance tracking",
+      "website analytics",
+      "personalization",
+      "integrated marketing",
+      "website functionality",
+      "content delivery",
+      "multi-platform support",
+      "api integration",
+      "web accessibility",
+      "virtual services",
+      "site responsiveness",
+      "user feedback",
+      "site usability",
+      "website promotion",
+      "front-end development",
+      "back-end development",
+      "b2b",
+      "distribution",
+      "energy & utilities",
+      "government administration",
+      "information technology & services",
+      "search marketing",
+      "marketing",
+      "marketing & advertising",
+      "mechanical or industrial engineering",
+      "software development",
+      "mobile apps",
+      "web development",
+      "cloud computing",
+      "enterprise software",
+      "enterprises",
+      "computer software",
+      "clean energy & technology",
+      "environmental services",
+      "renewables & environment",
+      "internet",
+      "sales",
+      "consumers",
+      "hardware",
+      "ux",
+      "crm",
+      "consumer internet"
+    ],
+    "industries": [
+      "government administration",
+      "wholesale",
+      "information technology & services"
+    ],
+    "secondary_industries": [
+      "wholesale",
+      "information technology & services"
+    ],
+    "snippets_loaded": true,
+    "industry_tag_id": "5567cd527369643981050000",
+    "industry_tag_hash": {
+      "government administration": "5567cd527369643981050000",
+      "wholesale": "5567d01e73696457ee100000",
+      "information technology & services": "5567cd4773696439b10b0000"
+    },
+    "retail_location_count": 0,
+    "raw_address": "chennai, tamil nadu, india",
+    "street_address": "",
+    "city": "Chennai",
+    "state": "Tamil Nadu",
+    "country": "India",
+    "short_description": "World of Electricals, established in 1978 and formerly known as Al Hasher Traders, is based in the U.A.E. The company specializes in supplying products for the oil and gas, power generation, power transmission, and telecommunications sectors across the U.A.E., Oman, Kuwait, Saudi Arabia, Iraq, and India. It also offers software and mobile application performance solutions in the MENA region, focusing on public utilities, EPC contractors, and mobile app developers.\n\nThe company provides specialized products tailored to the energy and telecom industries, supporting power utilities and oil and gas operations. World of Electricals emphasizes ethical standards and long-term partnerships built on trust. Its key customers include major public utilities like Dubai Electricity & Water Authority, Abu Dhabi Water & Electricity Authority, and prominent organizations such as Dubai Petroleum Company and Emirates Telecommunication Corporation.",
+    "suborganizations": [],
+    "num_suborganizations": 0,
+    "funding_events": [],
+    "technology_names": [
+      "AddThis",
+      "Blogger",
+      "Bootstrap Framework",
+      "DoubleClick",
+      "Facebook Login (Connect)",
+      "Google AdSense",
+      "Google Font API",
+      "Google Plus",
+      "Google Tag Manager",
+      "Mobile Friendly",
+      "WordPress.org",
+      "YouTube"
+    ],
+    "current_technologies": [
+      {
+        "uid": "addthis",
+        "name": "AddThis",
+        "category": "Social Sharing"
+      },
+      {
+        "uid": "blogger",
+        "name": "Blogger",
+        "category": "CMS"
+      },
+      {
+        "uid": "bootstrap_framework",
+        "name": "Bootstrap Framework",
+        "category": "CSS and JavaScript Libraries"
+      },
+      {
+        "uid": "doubleclick",
+        "name": "DoubleClick",
+        "category": "Ad Servers"
+      },
+      {
+        "uid": "facebook_login",
+        "name": "Facebook Login (Connect)",
+        "category": "Social Login"
+      },
+      {
+        "uid": "google_adsense",
+        "name": "Google AdSense",
+        "category": "Advertising Networks"
+      },
+      {
+        "uid": "google_font_api",
+        "name": "Google Font API",
+        "category": "Fonts"
+      },
+      {
+        "uid": "google_plus_login",
+        "name": "Google Plus",
+        "category": "Social Login"
+      },
+      {
+        "uid": "google_tag_manager",
+        "name": "Google Tag Manager",
+        "category": "Tag Management"
+      },
+      {
+        "uid": "mobile_friendly",
+        "name": "Mobile Friendly",
+        "category": "Other"
+      },
+      {
+        "uid": "wordpress_org",
+        "name": "WordPress.org",
+        "category": "CMS"
+      },
+      {
+        "uid": "youtube",
+        "name": "YouTube",
+        "category": "Online Video Platforms"
+      }
+    ],
+    "org_chart_root_people_ids": [],
+    "org_chart_sector": "OrgChart::SectorHierarchy::Rules::IT",
+    "departmental_head_count": {
+      "operations": 2,
+      "information_technology": 24,
+      "finance": 1,
+      "sales": 4,
+      "engineering": 42,
+      "arts_and_design": 1,
+      "marketing": 1,
+      "accounting": 0,
+      "human_resources": 0,
+      "legal": 0,
+      "business_development": 0,
+      "product_management": 0,
+      "consulting": 0,
+      "education": 0,
+      "administrative": 0,
+      "media_and_commmunication": 0,
+      "entrepreneurship": 0,
+      "support": 0,
+      "data_science": 0
+    }
+  },
+  {
+    "id": "54a22fb07468693fda834c14",
+    "name": "Dabur India Limited",
+    "website_url": "http://www.dabur.com",
+    "angellist_url": null,
+    "linkedin_url": "http://www.linkedin.com/company/dabur-india-limited",
+    "twitter_url": "https://twitter.com/DaburIndia",
+    "facebook_url": "https://facebook.com/DaburIndia",
+    "primary_phone": {
+      "number": "+91 12039 62100",
+      "source": "Owler",
+      "sanitized_number": "+911203962100"
+    },
+    "languages": [
+      "English"
+    ],
+    "alexa_ranking": 92217,
+    "phone": "+91 12039 62100",
+    "linkedin_uid": "7203",
+    "founded_year": 1884,
+    "publicly_traded_symbol": "DABUR.NS",
+    "publicly_traded_exchange": "nse",
+    "logo_url": "https://zenprospect-production.s3.amazonaws.com/uploads/pictures/69c3da855da02f0001c2c44f/picture",
+    "crunchbase_url": null,
+    "primary_domain": "dabur.com",
+    "sic_codes": [
+      "2041"
+    ],
+    "naics_codes": [
+      "31211"
+    ],
+    "sanitized_phone": "+911203962100",
+    "owned_by_organization_id": "5e2964d99577ad00985e681f",
+    "owned_by_organization": {
+      "id": "5e2964d99577ad00985e681f",
+      "name": "Dabur International Ltd",
+      "website_url": "http://www.daburinternational.com"
+    },
+    "organization_revenue_printed": "1.5B",
+    "organization_revenue": 1470632000.0,
+    "intent_strength": null,
+    "show_intent": true,
+    "has_intent_signal_account": false,
+    "intent_signal_account": null,
+    "organization_headcount_six_month_growth": -0.0005132152938157557,
+    "organization_headcount_twelve_month_growth": 0.02257810448936729,
+    "organization_headcount_twenty_four_month_growth": 0.06508066721356302,
+    "industry": "mechanical or industrial engineering",
+    "estimated_num_employees": 5400,
+    "keywords": [
+      "ayurvedicnatural health personal care",
+      "skin care",
+      "hair care",
+      "ayurvedicnatural health amp personal care",
+      "healthcare",
+      "oral care",
+      "packaged juices",
+      "health supplements",
+      "ayurveda",
+      "home care",
+      "manufacturing",
+      "herbal product branding",
+      "sustainability",
+      "herbal product customization",
+      "research and development",
+      "herbal home care",
+      "soft drink and ice manufacturing",
+      "herbal product portfolio management",
+      "herbal product safety",
+      "herbal personal care",
+      "ayurvedic products",
+      "herbal marketing",
+      "retail",
+      "herbal innovation",
+      "herbal product research",
+      "herbal product consumer education",
+      "herbal consumer education",
+      "food products",
+      "food and beverages",
+      "herbal product marketing",
+      "herbal product supply chain",
+      "herbal market",
+      "herbal & natural products",
+      "herbal heritage",
+      "herbal industry",
+      "herbal medicine",
+      "herbal product innovation labs",
+      "healthcare solutions",
+      "herbal product development",
+      "product innovation",
+      "herbal product packaging",
+      "global presence",
+      "herbal certifications",
+      "natural ingredients",
+      "herbal product distribution channels",
+      "herbal health products",
+      "consumer goods",
+      "global distribution",
+      "herbal product efficacy testing",
+      "consumer health",
+      "herbal manufacturing",
+      "herbal market niche",
+      "fmcg",
+      "customer service",
+      "herbal skincare",
+      "natural remedies",
+      "herbal product market expansion",
+      "herbal ingredients",
+      "herbal product manufacturing",
+      "ayurveda research",
+      "herbal product quality control",
+      "herbal hair care",
+      "herbal food products",
+      "herbal supply chain",
+      "d2c",
+      "herbal brand",
+      "herbal wellness",
+      "herbal sustainability",
+      "holistic health",
+      "b2c",
+      "natural products",
+      "herbal extracts",
+      "herbal science",
+      "herbal product compliance",
+      "herbal product r&d",
+      "sustainable manufacturing",
+      "personal care",
+      "herbal product innovation",
+      "natural health care",
+      "herbal tradition",
+      "herbal medicines",
+      "herbal product efficacy",
+      "herbal therapy",
+      "wellness products",
+      "herbal distribution",
+      "herbal product sustainability",
+      "herbal formulations",
+      "food & beverage",
+      "herbal product portfolio",
+      "herbal product sales",
+      "herbal ingredient sourcing",
+      "herbal industry trends",
+      "international markets",
+      "herbal supplements",
+      "herbal product certifications",
+      "distribution network",
+      "wellness",
+      "herbal research",
+      "heritage brand",
+      "natural health solutions",
+      "e-commerce",
+      "food",
+      "personal_care",
+      "natural_products",
+      "consumer_goods",
+      "herbal",
+      "research_and_development",
+      "global",
+      "distribution",
+      "branding",
+      "product_innovation",
+      "market",
+      "product_development",
+      "product_marketing",
+      "product_sourcing",
+      "product_quality",
+      "product_certification",
+      "product_safety",
+      "product_efficacy",
+      "supply_chain",
+      "sustainability_practices",
+      "herbal_medicine",
+      "ayurvedic",
+      "natural_health",
+      "health care",
+      "health, wellness & fitness",
+      "hospital & health care",
+      "mechanical or industrial engineering",
+      "environmental services",
+      "renewables & environment",
+      "research & development",
+      "food & beverages",
+      "consumers",
+      "consumer internet",
+      "internet",
+      "information technology & services"
+    ],
+    "industries": [
+      "mechanical or industrial engineering"
+    ],
+    "secondary_industries": [],
+    "snippets_loaded": true,
+    "industry_tag_id": "5567ce2673696453d95c0000",
+    "industry_tag_hash": {
+      "mechanical or industrial engineering": "5567ce2673696453d95c0000"
+    },
+    "retail_location_count": 0,
+    "raw_address": "Kaushambi, Sahibabad, Ghaziabad, Uttar Pradesh 201010, IN",
+    "street_address": "Sahibabad Road",
+    "city": "Ghaziabad",
+    "state": "Uttar Pradesh",
+    "postal_code": "201010",
+    "country": "India",
+    "short_description": "Dabur India Limited is a leading Indian multinational consumer goods company, established in 1884 by Dr. S.K. Burman in Kolkata. The company specializes in Ayurvedic and natural health products, with its headquarters in Ghaziabad. Dabur operates across various sectors, including healthcare, personal care, and food, and is recognized as the world's largest Ayurvedic and natural health company.\n\nDabur offers a diverse range of products, including Ayurvedic medicines, personal care items, health supplements, oral care products, and natural consumer goods. Notable offerings include Chyawanprash, Amla Hair Oil, and Real fruit juices. The company emphasizes research and development, supported by dedicated centers and large manufacturing facilities. With a strong focus on growth, Dabur has expanded through joint ventures and acquisitions, serving a broad consumer market both in India and internationally.",
+    "suborganizations": [
+      {
+        "id": "5e2964d99577ad00985e681f",
+        "name": "Dabur International Ltd",
+        "website_url": "http://www.daburinternational.com"
+      },
+      {
+        "id": "66fba58bfaa9be00017f1aeb",
+        "name": "DABUR INC.,",
+        "website_url": "http://www.dabur-usa.com"
+      },
+      {
+        "id": "55699b4873696425d7b26400",
+        "name": "NewU (A Dabur Enterprise)",
+        "website_url": "http://www.newu.in"
+      },
+      {
+        "id": "68247a7dc54b900021d4bc5c",
+        "name": "Siens by Dabur",
+        "website_url": "http://www.daburshop.com"
+      },
+      {
+        "id": "5ed0e6505a56ca000123fbdc",
+        "name": "Badshah Masala",
+        "website_url": "http://www.badshahmasala.com"
+      }
+    ],
+    "num_suborganizations": 5,
+    "annual_revenue_printed": "1.5B",
+    "annual_revenue": 1470632000.0,
+    "technology_names": [
+      "CloudFlare Hosting",
+      "Cloudflare DNS",
+      "Outlook",
+      "SAP",
+      "SAP on AWS",
+      "Slack"
+    ],
+    "current_technologies": [
+      {
+        "uid": "cloudflare_hosting",
+        "name": "CloudFlare Hosting",
+        "category": "Hosting"
+      },
+      {
+        "uid": "cloudflare_dns",
+        "name": "Cloudflare DNS",
+        "category": "Domain Name Services"
+      },
+      {
+        "uid": "outlook",
+        "name": "Outlook",
+        "category": "Email Providers"
+      },
+      {
+        "uid": "sap",
+        "name": "SAP",
+        "category": "Customer Relationship Management"
+      },
+      {
+        "uid": "sap_on_aws",
+        "name": "SAP on AWS",
+        "category": "Cloud Services"
+      },
+      {
+        "uid": "slack",
+        "name": "Slack",
+        "category": "Chats"
+      }
+    ],
+    "org_chart_root_people_ids": [
+      "676e751dbd48320001bd4a10"
+    ],
+    "departmental_head_count": {
+      "information_technology": 145,
+      "operations": 418,
+      "sales": 2072,
+      "finance": 106,
+      "marketing": 407,
+      "engineering": 199,
+      "human_resources": 142,
+      "administrative": 25,
+      "support": 51,
+      "legal": 13,
+      "business_development": 157,
+      "accounting": 59,
+      "entrepreneurship": 1,
+      "arts_and_design": 17,
+      "media_and_commmunication": 9,
+      "consulting": 22,
+      "product_management": 19,
+      "education": 6,
+      "data_science": 7
+    }
+  }
+]

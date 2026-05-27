@@ -1,4 +1,5 @@
 import os
+import re
 from anthropic import Anthropic
 
 client = Anthropic()
@@ -40,4 +41,6 @@ Respond as JSON with:
             messages=[{"role": "user", "content": prompt}],
         )
         import json
-        return json.loads(response.content[0].text)
+        text = re.sub(r"^```(?:json)?\s*", "", response.content[0].text.strip())
+        text = re.sub(r"\s*```$", "", text)
+        return json.loads(text)
