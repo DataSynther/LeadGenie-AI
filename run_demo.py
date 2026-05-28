@@ -10,6 +10,7 @@ from backend.agents.outreach.outreach_agent import OutreachAgent
 from backend.governance.risk_engine import RiskEngine
 from backend.learning.feedback_collector import FeedbackCollector
 from backend.services.email_sender import EmailSender
+from backend.services.apollo.apollo_signals import ApolloSignalsService
 
 # Load demo data
 with open("sample_data/demo_leads.json") as f:
@@ -32,13 +33,8 @@ print(f"Company: {company['name']} | {company['industry']} | {company['employee_
 
 # Step 1 — Research
 print("\n--- Step 1: Research Agent ---")
-signals = {
-    "total_open_roles": 20,
-    "ai_hiring": 3,
-    "engineering_expansion": 5,
-    "scaling_signal": True,
-    "ai_signal": True,
-}
+signals = ApolloSignalsService().detect_hiring_trends(company.get("id"), company)
+print(f"  Signals (live)    : growth_6m={signals['headcount_growth_6m']}% | ai_tech={signals['ai_hiring']} | eng_tech={signals['engineering_expansion']} | scaling={signals['scaling_signal']} | ai={signals['ai_signal']}")
 research = ResearchAgent().research_company(company, signals)
 print(f"  Growth Stage      : {research.get('growth_stage')}")
 print(f"  AI Readiness Score: {research.get('ai_readiness_score')}/10")
