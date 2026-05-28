@@ -14,19 +14,19 @@ Existing SDR workflows force teams to choose between slow manual prospecting and
 
 ## What This System Does
 
-| Capability | Description |
-|---|---|
-| Lead Intelligence | Fetch and enrich leads via Apollo |
-| Company Intelligence | Industry, funding, tech stack, description |
-| Signal Intelligence | Hiring trends, AI expansion, scaling signals |
-| Trend Intelligence | Market trends, RSS news, curated AI signals |
-| Semantic Relevance | Embedding-based trend ranking per lead context |
-| Adaptive Outreach | Claude-powered personalized email generation |
-| Conversation Agent | Autonomous multi-turn reply and objection handling |
-| Governance Engine | Tone validation, hallucination checks, risk scoring |
-| Audit Lineage | Immutable per-lead audit trail for all decisions |
-| Continuous Learning | Feedback-driven pattern analysis and prompt improvement |
-| Meeting Scheduling | Calendly integration for one-click booking |
+| Capability           | Description                                             |
+| -------------------- | ------------------------------------------------------- |
+| Lead Intelligence    | Fetch and enrich leads via Apollo                       |
+| Company Intelligence | Industry, funding, tech stack, description              |
+| Signal Intelligence  | Hiring trends, AI expansion, scaling signals            |
+| Trend Intelligence   | Market trends, RSS news, curated AI signals             |
+| Semantic Relevance   | Embedding-based trend ranking per lead context          |
+| Adaptive Outreach    | Claude-powered personalized email generation            |
+| Conversation Agent   | Autonomous multi-turn reply and objection handling      |
+| Governance Engine    | Tone validation, hallucination checks, risk scoring     |
+| Audit Lineage        | Immutable per-lead audit trail for all decisions        |
+| Continuous Learning  | Feedback-driven pattern analysis and prompt improvement |
+| Meeting Scheduling   | Calendly integration for one-click booking              |
 
 ---
 
@@ -86,11 +86,11 @@ LeadGenie-AI/
 
 ### Prerequisites
 
-| Requirement | Mac | Windows |
-|---|---|---|
-| Python 3.9+ | `brew install python` | Download from [python.org](https://python.org) |
-| Git | `brew install git` | Download from [git-scm.com](https://git-scm.com) |
-| pip | Included with Python | Included with Python |
+| Requirement | Mac                   | Windows                                          |
+| ----------- | --------------------- | ------------------------------------------------ |
+| Python 3.9+ | `brew install python` | Download from [python.org](https://python.org)   |
+| Git         | `brew install git`    | Download from [git-scm.com](https://git-scm.com) |
+| pip         | Included with Python  | Included with Python                             |
 
 ---
 
@@ -146,19 +146,30 @@ python run_demo.py
 uvicorn backend.main:app --reload --port 8000
 ```
 
+```
+### FE Setup
+
+cd frontend
+
+npm i
+
+npm run dev
+
+```
+
 ---
 
 ### API Keys Required
 
 Open `.env` and fill in the following:
 
-| Key | Where to get it |
-|---|---|
-| `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) |
-| `APOLLO_API_KEY` | [apollo.io](https://app.apollo.io) → Settings → API Keys |
-| `VOYAGE_API_KEY` | [voyageai.com](https://voyageai.com) |
-| `RESEND_API_KEY` | [resend.com](https://resend.com) → API Keys |
-| `FROM_EMAIL` | Your verified sender email (use `onboarding@resend.dev` for testing) |
+| Key                 | Where to get it                                                      |
+| ------------------- | -------------------------------------------------------------------- |
+| `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com)               |
+| `APOLLO_API_KEY`    | [apollo.io](https://app.apollo.io) → Settings → API Keys             |
+| `VOYAGE_API_KEY`    | [voyageai.com](https://voyageai.com)                                 |
+| `RESEND_API_KEY`    | [resend.com](https://resend.com) → API Keys                          |
+| `FROM_EMAIL`        | Your verified sender email (use `onboarding@resend.dev` for testing) |
 
 ---
 
@@ -189,16 +200,16 @@ docker-compose up --build
 
 ## API Endpoints
 
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/leads/search` | Search leads by domain + persona |
-| GET | `/company/enrich?domain=` | Enrich company data |
-| POST | `/outreach/generate` | Full pipeline → governed email |
-| POST | `/conversation/reply` | Handle inbound reply |
-| POST | `/feedback/record` | Record outcome |
-| GET | `/learning/analytics` | View performance metrics |
-| GET | `/trends` | Get current market trends |
-| GET | `/audit/{lead_id}` | View audit trail for a lead |
+| Method | Endpoint                  | Description                      |
+| ------ | ------------------------- | -------------------------------- |
+| POST   | `/leads/search`           | Search leads by domain + persona |
+| GET    | `/company/enrich?domain=` | Enrich company data              |
+| POST   | `/outreach/generate`      | Full pipeline → governed email   |
+| POST   | `/conversation/reply`     | Handle inbound reply             |
+| POST   | `/feedback/record`        | Record outcome                   |
+| GET    | `/learning/analytics`     | View performance metrics         |
+| GET    | `/trends`                 | Get current market trends        |
+| GET    | `/audit/{lead_id}`        | View audit trail for a lead      |
 
 ---
 

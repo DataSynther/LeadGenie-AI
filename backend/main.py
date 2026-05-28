@@ -53,7 +53,7 @@ scheduler = Scheduler()
 
 
 class LeadSearchRequest(BaseModel):
-    domains: list[str]
+    company_names: list[str] = []
     titles: list[str] = []
     seniorities: list[str] = ["director", "vp", "c_suite"]
     per_page: int = 10

@@ -45,7 +45,7 @@ export function ResearchPanel({ lead, onClose }: ResearchPanelProps) {
             <div className="font-serif text-[20px] text-ink leading-tight">
               {lead?.name}
             </div>
-            <div className="font-mono text-[11px] text-ink-2 mt-0.5">
+            <div className="font-mono text-[11px] text-ink mt-0.5">
               {lead?.title}
             </div>
             <div className="font-mono text-[11px] text-brand mt-0.5 font-medium">
@@ -139,7 +139,7 @@ export function ResearchPanel({ lead, onClose }: ResearchPanelProps) {
                   <div className="label-mono text-ink mb-3 flex items-center gap-2">
                     <Cpu size={12} />
                     Tech Stack
-                    <span className="font-mono text-[10px] text-ink-mute">
+                    <span className="font-mono text-[10px] text-ink-2">
                       {company.technologies.length} tools
                     </span>
                   </div>
@@ -168,7 +168,7 @@ export function ResearchPanel({ lead, onClose }: ResearchPanelProps) {
               {company.description && (
                 <section>
                   <div className="label-mono text-ink mb-3">About</div>
-                  <p className="text-[12px] text-ink leading-relaxed line-clamp-6">
+                  <p className="text-[12px] text-ink leading-relaxed">
                     {company.description}
                   </p>
                 </section>
@@ -220,8 +220,8 @@ function StatTile({
   return (
     <div className="bg-surface-2 rounded-md p-3 border border-line-soft">
       <div className="flex items-center gap-1.5 mb-1">
-        <Icon size={11} className="text-ink-mute" />
-        <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-ink-mute">{label}</span>
+        <Icon size={11} className="text-ink-2" />
+        <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-ink-2">{label}</span>
       </div>
       <div className="text-[13px] font-medium text-ink truncate">{value}</div>
     </div>
@@ -249,7 +249,7 @@ function HeadcountBar({
 
   return (
     <div className="mt-3 bg-surface-2 rounded-md p-3 border border-line-soft">
-      <div className="label-mono text-ink-2 mb-2">Headcount growth</div>
+      <div className="label-mono text-ink mb-2">Headcount growth</div>
       <div className="flex gap-6">
         <GrowthStat label="6 months" value={growth6m} fmt={fmt} />
         <GrowthStat label="12 months" value={growth12m} fmt={fmt} />
@@ -271,7 +271,7 @@ function GrowthStat({
   const negative = (value ?? 0) < 0;
   return (
     <div>
-      <div className="font-mono text-[9px] text-ink-mute uppercase tracking-[0.08em]">{label}</div>
+      <div className="font-mono text-[9px] text-ink-2 uppercase tracking-[0.08em]">{label}</div>
       <div
         className={cn(
           "font-mono text-[16px] font-semibold mt-0.5",

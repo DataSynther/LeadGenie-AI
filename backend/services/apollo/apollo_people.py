@@ -73,9 +73,15 @@ class ApolloPeopleService:
     def _search_sample(self, filters: dict) -> list[dict]:
         results = list(_SAMPLE_LEADS)
 
+        company_names = [c.strip().lower() for c in filters.get("company_names", []) if c.strip()]
         titles = [t.strip().lower() for t in filters.get("titles", []) if t.strip()]
         seniorities = [s.strip().lower() for s in filters.get("seniorities", []) if s.strip()]
 
+        if company_names:
+            results = [
+                p for p in results
+                if any(c in p.get("company", "").lower() for c in company_names)
+            ]
         if titles:
             results = [
                 p for p in results

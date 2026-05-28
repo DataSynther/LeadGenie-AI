@@ -16,7 +16,7 @@ const SENIORITIES = [
 ];
 
 export function LeadDiscoveryPage() {
-  const [domains, setDomains] = useState("");
+  const [companyNames, setCompanyNames] = useState("");
   const [titles, setTitles] = useState("VP Data, VP Engineering, CTO, Head of Data");
   const [seniorities, setSeniorities] = useState<string[]>(["vp", "c_suite", "director"]);
   const [perPage, setPerPage] = useState(25);
@@ -25,7 +25,7 @@ export function LeadDiscoveryPage() {
   const search = useMutation({
     mutationFn: () =>
       api.leadSearch({
-        domains: domains.split(",").map((d) => d.trim()).filter(Boolean),
+        company_names: companyNames.split(",").map((c) => c.trim()).filter(Boolean),
         titles: titles.split(",").map((t) => t.trim()).filter(Boolean),
         seniorities,
         per_page: perPage,
@@ -57,11 +57,11 @@ export function LeadDiscoveryPage() {
           <div className="p-5">
             <div className="grid grid-cols-2 gap-6 mb-5">
               <div>
-                <label className="label-mono mb-2 block text-ink">Company Domains</label>
+                <label className="label-mono mb-2 block text-ink">Company Name</label>
                 <input
-                  value={domains}
-                  onChange={(e) => setDomains(e.target.value)}
-                  placeholder="acme.com, techcorp.io (leave blank for broad search)"
+                  value={companyNames}
+                  onChange={(e) => setCompanyNames(e.target.value)}
+                  placeholder="Acme Corp, TechCorp (leave blank for broad search)"
                   className="w-full bg-surface border border-line text-ink px-3 py-2.5 rounded-md text-[13px] placeholder:text-ink-2 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand-soft"
                 />
               </div>
