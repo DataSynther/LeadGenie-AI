@@ -30,6 +30,8 @@ ENV/
 backend/storage/audit_logs/
 backend/storage/feedback/
 backend/storage/conversations/
+backend/storage/lead_contexts/
+backend/storage/intent_analytics/
 backend/agents/trends/trend_store.json
 
 # IDE

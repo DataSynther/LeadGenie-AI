@@ -11,6 +11,8 @@ from backend.governance.risk_engine import RiskEngine
 from backend.learning.feedback_collector import FeedbackCollector
 from backend.services.email_sender import EmailSender
 from backend.services.apollo.apollo_signals import ApolloSignalsService
+from backend.agents.conversation.conversation_agent import ConversationAgent
+from backend.services.lead_context_store import LeadContextStore
 
 # Load demo data
 with open("sample_data/demo_leads.json") as f:
@@ -93,9 +95,13 @@ result = EmailSender().send(
 )
 if result["sent"]:
     print(f"  Email sent to : {result['to']}")
+    LeadContextStore().save(lead["email"], lead["id"], context)
+    print(f"  Context saved : reply from {lead['email']} will be auto-handled by webhook")
 else:
     print(f"  Failed        : {result['error']}")
 
 print("\n" + "=" * 60)
 print("PIPELINE COMPLETE")
 print("=" * 60)
+print("\nNote: Conversation agent (intent detection, multi-turn replies,")
+print("email send-back) is tested in tests/test_conversation_agent.py")
