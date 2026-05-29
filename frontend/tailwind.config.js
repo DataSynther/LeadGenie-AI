@@ -1,49 +1,46 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
-        // Brand & text
         brand: {
-          DEFAULT: "#6A327A",
-          soft: "#E8DFFF",
-          dark: "#4A2256",
+          DEFAULT: "rgb(var(--c-brand) / <alpha-value>)",
+          soft: "rgb(var(--c-brand-soft) / <alpha-value>)",
+          dark: "rgb(var(--c-brand-dark) / <alpha-value>)",
         },
         gold: {
-          DEFAULT: "#FAB818",
-          tint: "#FFF8E7",
-          dark: "#B07A00",
+          DEFAULT: "rgb(var(--c-gold) / <alpha-value>)",
+          tint: "rgb(var(--c-gold-tint) / <alpha-value>)",
+          dark: "rgb(var(--c-gold-dark) / <alpha-value>)",
         },
-        // Text scale
         ink: {
-          DEFAULT: "#333333",
-          2: "#808080",
-          mute: "#B0B0B0",
+          DEFAULT: "rgb(var(--c-ink) / <alpha-value>)",
+          2: "rgb(var(--c-ink-2) / <alpha-value>)",
+          mute: "rgb(var(--c-ink-mute) / <alpha-value>)",
         },
-        // Surfaces
-        canvas: "#FAFAFB",
+        canvas: "rgb(var(--c-canvas) / <alpha-value>)",
         surface: {
-          DEFAULT: "#FFFFFF",
-          2: "#F3EFF5",
-          hover: "#E2DFE4",
+          DEFAULT: "rgb(var(--c-surface) / <alpha-value>)",
+          2: "rgb(var(--c-surface-2) / <alpha-value>)",
+          hover: "rgb(var(--c-surface-hover) / <alpha-value>)",
         },
         line: {
-          DEFAULT: "#D0CAD4",
-          soft: "#EAE6EC",
+          DEFAULT: "rgb(var(--c-line) / <alpha-value>)",
+          soft: "rgb(var(--c-line-soft) / <alpha-value>)",
         },
-        // State accents
         info: {
-          DEFAULT: "#2B4CFF",
-          tint: "#E8DFFF",
+          DEFAULT: "rgb(var(--c-info) / <alpha-value>)",
+          tint: "rgb(var(--c-info-tint) / <alpha-value>)",
         },
         danger: {
-          DEFAULT: "#FF6F3D",
-          tint: "#FFEFE9",
+          DEFAULT: "rgb(var(--c-danger) / <alpha-value>)",
+          tint: "rgb(var(--c-danger-tint) / <alpha-value>)",
         },
         magenta: {
-          DEFAULT: "#EA66EE",
-          dark: "#A832A8",
+          DEFAULT: "rgb(var(--c-magenta) / <alpha-value>)",
+          dark: "rgb(var(--c-magenta-dark) / <alpha-value>)",
         },
       },
       fontFamily: {
@@ -52,15 +49,14 @@ export default {
         mono: ['"JetBrains Mono"', "monospace"],
       },
       fontSize: {
-        // Custom sizes used across the design
         "display-xl": ["38px", { lineHeight: "1", letterSpacing: "-0.02em" }],
         "display-lg": ["28px", { lineHeight: "1.1", letterSpacing: "-0.01em" }],
         "display-md": ["20px", { lineHeight: "1.2", letterSpacing: "-0.01em" }],
         label: ["10px", { lineHeight: "1.4", letterSpacing: "0.12em" }],
       },
       boxShadow: {
-        card: "0 1px 2px rgba(51, 51, 51, 0.03)",
-        "card-hover": "0 4px 12px rgba(51, 51, 51, 0.06)",
+        card: "0 1px 2px rgba(0, 0, 0, 0.05)",
+        "card-hover": "0 4px 12px rgba(0, 0, 0, 0.08)",
         "btn-brand": "0 8px 24px -8px rgba(106, 50, 122, 0.45)",
       },
       keyframes: {

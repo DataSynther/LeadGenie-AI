@@ -12,9 +12,9 @@ from learning.feedback_collector import FeedbackCollector
 from services.email_sender import EmailSender
 
 # Load demo data
-with open("sample_data/demo_leads.json") as f:
+with open("../sample_data/demo_leads.json") as f:
     leads = json.load(f)
-with open("sample_data/demo_companies.json") as f:
+with open("../sample_data/demo_companies.json") as f:
     companies = json.load(f)
 
 # Build a quick lookup: company name -> company dict

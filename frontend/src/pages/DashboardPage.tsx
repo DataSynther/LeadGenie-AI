@@ -26,17 +26,19 @@ export function DashboardPage() {
         }
         right={
           <>
-            <StatusPill>6 agents active</StatusPill>
-            <button className="btn-ghost">Export</button>
-            <button className="btn-primary">+ New Campaign</button>
+            <div className="hidden sm:flex items-center gap-2.5">
+              <StatusPill>6 agents active</StatusPill>
+              <button className="btn-ghost">Export</button>
+            </div>
+            <button className="btn-primary">+ Campaign</button>
           </>
         }
       />
 
-      <div className="p-8 pb-20">
+      <div className="p-4 sm:p-8 pb-20">
         {stats && (
           <>
-            <div className="grid grid-cols-4 gap-3.5 mb-7">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 mb-7">
               <KpiCard
                 label="Prospects Discovered"
                 value={formatNumber(stats.prospects_discovered.value)}
@@ -64,12 +66,12 @@ export function DashboardPage() {
               />
             </div>
 
-            <div className="grid grid-cols-[1.4fr_1fr] gap-5 mb-5">
+            <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-5 mb-5">
               <FunnelCard rows={stats.funnel} />
               <AgentFeedCard />
             </div>
 
-            <div className="grid grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <ApprovalPreviewCard />
               <RiskDistributionCard />
             </div>

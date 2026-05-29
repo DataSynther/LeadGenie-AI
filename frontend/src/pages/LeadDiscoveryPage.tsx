@@ -43,10 +43,10 @@ export function LeadDiscoveryPage() {
       <Topbar
         breadcrumb="Workspace / Discover"
         title={<>Lead <em className="text-brand italic">Discovery</em></>}
-        right={<span className="label-mono">Powered by Apollo.io</span>}
+        right={<span className="label-mono hidden sm:block">Powered by Apollo.io</span>}
       />
 
-      <div className="p-8 pb-20">
+      <div className="p-4 sm:p-8 pb-20">
         {/* Search parameters */}
         <div className="card-base mb-5">
           <div className="px-5 py-4 border-b border-line-soft">
@@ -55,7 +55,7 @@ export function LeadDiscoveryPage() {
             </div>
           </div>
           <div className="p-5">
-            <div className="grid grid-cols-2 gap-6 mb-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-5">
               <div>
                 <label className="label-mono mb-2 block text-ink">Company Name</label>
                 <input
@@ -76,7 +76,7 @@ export function LeadDiscoveryPage() {
               </div>
             </div>
 
-            <div className="flex items-end gap-6">
+            <div className="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-6">
               <div className="flex-1">
                 <label className="label-mono mb-2 block text-ink">Seniority</label>
                 <div className="flex gap-2 flex-wrap">
@@ -169,7 +169,8 @@ export function LeadDiscoveryPage() {
           )}
 
           {search.data && search.data.length > 0 && (
-            <table className="w-full text-xs">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[600px] text-xs">
               <thead>
                 <tr>
                   {["Name", "Title", "Company", "Seniority", "Email", ""].map((h) => (
@@ -227,6 +228,7 @@ export function LeadDiscoveryPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
           {selectedLead && (
             <ResearchPanel
