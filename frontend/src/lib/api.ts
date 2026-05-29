@@ -43,6 +43,15 @@ export const agentFeedRecent = () => get<{
   message: string;
 }[]>("/agent-feed/recent");
 
+// Alias used by AgentFeedCard component
+export const recentAgentEvents = agentFeedRecent;
+
+export type AgentFeedEvent = {
+  timestamp: string;
+  agent: "research" | "outreach" | "reply" | "gov" | "schedule";
+  message: string;
+};
+
 // ── Pipeline ─────────────────────────────────────────────────────────────────
 
 export const pipeline = () => get<{
@@ -133,6 +142,7 @@ export const healthCheck = () => get<{ status: string; version: string }>("/heal
 export const api = {
   dashboardStats,
   agentFeedRecent,
+  recentAgentEvents,
   pipeline,
   leadSearch,
   approvalQueue,
