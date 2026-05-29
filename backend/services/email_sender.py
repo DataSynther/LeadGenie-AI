@@ -1,33 +1,39 @@
 import os
-import resend
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 
 class EmailSender:
-    """Sends outreach emails via Resend API."""
+    """Sends outreach emails via Gmail SMTP using a dedicated LeadGenie Gmail account.
+
+    Configure in .env:
+        LEADGENIE_GMAIL=leadgenie@gmail.com
+        LEADGENIE_GMAIL_PASSWORD=xxxx xxxx xxxx xxxx   (Gmail app password)
+    Replies come back to the same address — no separate reply-to needed.
+    """
 
     def __init__(self):
-        resend.api_key = os.getenv("RESEND_API_KEY", "")
-        self.from_email = os.getenv("FROM_EMAIL", "onboarding@resend.dev")
+        self.user     = os.getenv("LEADGENIE_GMAIL", "")
+        self.password = os.getenv("LEADGENIE_GMAIL_PASSWORD", "")
 
-    def send(self, to_email: str, subject: str, body: str) -> dict:
-        """
-        Send a plain-text outreach email.
-        Returns {sent: bool, to: str, error: str|None}
-        """
-        if not resend.api_key:
-            return {
-                "sent": False,
-                "to": to_email,
-                "error": "RESEND_API_KEY not configured in .env",
-            }
+    def send(self, to_email: str, subject: str, body: str, reply_to: str = None) -> dict:
+        if not self.user or not self.password:
+            return {"sent": False, "to": to_email, "error": "LEADGENIE_GMAIL or LEADGENIE_GMAIL_PASSWORD not set in .env"}
 
         try:
-            response = resend.Emails.send({
-                "from": self.from_email,
-                "to": [to_email],
-                "subject": subject,
-                "text": body,
-            })
-            return {"sent": True, "to": to_email, "error": None, "id": response.get("id")}
+            msg = MIMEMultipart()
+            msg["From"]     = self.user
+            msg["To"]       = to_email
+            msg["Subject"]  = subject
+            msg["Reply-To"] = reply_to or self.user  # replies come back to same inbox
+
+            msg.attach(MIMEText(body, "plain"))
+
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+                server.login(self.user, self.password)
+                server.sendmail(self.user, to_email, msg.as_string())
+
+            return {"sent": True, "to": to_email, "error": None}
         except Exception as e:
             return {"sent": False, "to": to_email, "error": str(e)}

@@ -1,48 +1,55 @@
-import os
-import requests
-from collections import Counter
+AI_TECH_KEYWORDS = {
+    "ai", "machine learning", "llm", "data science", "mlops",
+    "nlp", "deep learning", "anthropic claude", "openai", "tensorflow",
+    "pytorch", "scikit-learn", "hugging face", "vertex ai", "sagemaker",
+}
 
-APOLLO_BASE_URL = "https://api.apollo.io/api/v1"
-
-AI_KEYWORDS = {"machine learning", "ai", "llm", "data science", "mlops", "nlp", "deep learning"}
-ENGINEERING_KEYWORDS = {"software engineer", "backend", "frontend", "platform", "infrastructure", "devops"}
+ENGINEERING_TECH_KEYWORDS = {
+    "kubernetes", "docker", "aws", "google cloud", "azure", "terraform",
+    "apache kafka", "spark", "airflow", "databricks", "snowflake",
+    "postgresql", "mongodb", "redis", "elasticsearch",
+}
 
 
 class ApolloSignalsService:
-    def __init__(self):
-        self.headers = {
-            "Content-Type": "application/json",
-            "Cache-Control": "no-cache",
-            "X-Api-Key": os.getenv("APOLLO_API_KEY"),
-        }
+    """
+    Derives hiring and growth signals from enriched company data.
+    Uses headcount growth rates and tech stack since Apollo job postings
+    require a higher API plan tier.
+    """
 
-    def get_job_postings(self, org_id: str) -> list[dict]:
-        """Fetch active job postings for an organization."""
-        response = requests.get(
-            f"{APOLLO_BASE_URL}/organizations/{org_id}/job_postings",
-            headers=self.headers,
-        )
-        response.raise_for_status()
-        return response.json().get("job_postings", [])
+    def detect_hiring_trends(self, org_id: str, company: dict = None) -> dict:
+        if not company:
+            return self._empty_signals()
 
-    def detect_hiring_trends(self, org_id: str) -> dict:
-        """Analyze job postings to surface hiring signals."""
-        postings = self.get_job_postings(org_id)
-        titles = [p.get("title", "").lower() for p in postings]
+        tech_stack = [t.lower() for t in company.get("technologies", [])]
+        growth_6m = company.get("headcount_growth_6m") or 0.0
+        growth_12m = company.get("headcount_growth_12m") or 0.0
+        employee_count = company.get("employee_count") or 0
 
-        ai_count = sum(
-            1 for t in titles if any(kw in t for kw in AI_KEYWORDS)
-        )
-        eng_count = sum(
-            1 for t in titles if any(kw in t for kw in ENGINEERING_KEYWORDS)
-        )
-        dept_counts = Counter(p.get("department", "unknown") for p in postings)
+        ai_tech_count = sum(1 for t in tech_stack if any(kw in t for kw in AI_TECH_KEYWORDS))
+        eng_tech_count = sum(1 for t in tech_stack if any(kw in t for kw in ENGINEERING_TECH_KEYWORDS))
+
+        estimated_new_hires_6m = int(employee_count * max(growth_6m, 0))
+        scaling_signal = growth_6m > 0.08 or growth_12m > 0.15
 
         return {
-            "total_open_roles": len(postings),
-            "ai_hiring": ai_count,
-            "engineering_expansion": eng_count,
-            "department_breakdown": dict(dept_counts),
-            "scaling_signal": len(postings) > 20,
-            "ai_signal": ai_count >= 3,
+            "total_open_roles": estimated_new_hires_6m,
+            "ai_hiring": ai_tech_count,
+            "engineering_expansion": eng_tech_count,
+            "headcount_growth_6m": round(growth_6m * 100, 1),
+            "headcount_growth_12m": round(growth_12m * 100, 1),
+            "scaling_signal": scaling_signal,
+            "ai_signal": ai_tech_count >= 2,
+        }
+
+    def _empty_signals(self) -> dict:
+        return {
+            "total_open_roles": 0,
+            "ai_hiring": 0,
+            "engineering_expansion": 0,
+            "headcount_growth_6m": 0.0,
+            "headcount_growth_12m": 0.0,
+            "scaling_signal": False,
+            "ai_signal": False,
         }

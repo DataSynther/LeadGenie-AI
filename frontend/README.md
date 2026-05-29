@@ -1,73 +1,99 @@
-# React + TypeScript + Vite
+# Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + TypeScript + Vite UI for LeadGenie AI.
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev       # http://localhost:5173
+npm run build     # production build → dist/
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Set `VITE_API_URL` to point at the backend (defaults to `http://localhost:8000` if not set):
+```bash
+# .env.local (inside frontend/)
+VITE_API_URL=http://localhost:8000
 ```
+
+---
+
+## Structure
+
+```
+frontend/src/
+├── lib/
+│   └── api.ts              # All backend API calls — single source of truth
+│
+├── pages/                  # One file per route
+│   ├── DashboardPage.tsx        → GET /dashboard/stats, GET /agent-feed/recent
+│   ├── PipelinePage.tsx         → GET /pipeline
+│   ├── LeadDiscoveryPage.tsx    → POST /leads/search
+│   ├── ApprovalQueuePage.tsx    → GET /approval-queue
+│   ├── ConversationsPage.tsx    → POST /conversation/reply
+│   ├── AuditTrailPage.tsx       → GET /audit/:lead_id
+│   └── CampaignsPage.tsx        → (in progress)
+│
+├── components/             # Reusable UI components, grouped by domain
+│   ├── dashboard/          # KpiCard, FunnelCard, AgentFeedCard, RiskDistributionCard
+│   ├── pipeline/           # SignalPill, StageChip
+│   ├── approval/           # ApprovalItem, GovStatCard
+│   ├── conversations/      # ConvListItem, ConvThread
+│   ├── research/           # ResearchPanel
+│   └── layout/             # AppShell, Sidebar, Topbar
+│
+├── context/
+│   ├── ThemeContext.tsx     # Light/dark mode
+│   └── SidebarContext.tsx  # Sidebar open/close state
+│
+└── data/
+    └── conversations.ts    # Static mock data (used until API is wired)
+```
+
+---
+
+## API layer — `src/lib/api.ts`
+
+All backend calls go through `src/lib/api.ts`. Never call `fetch()` directly in a page or component — add a function here and import it.
+
+```typescript
+import { api } from "../lib/api"
+import type { Lead } from "../lib/api"
+
+// Examples
+const stats = await api.dashboardStats()
+const leads = await api.leadSearch({ titles: ["CTO"], per_page: 10 })
+const queue = await api.approvalQueue()
+```
+
+**Available functions:**
+
+| Function | Method | Endpoint |
+|---|---|---|
+| `api.healthCheck()` | GET | `/health` |
+| `api.dashboardStats()` | GET | `/dashboard/stats` |
+| `api.agentFeedRecent()` | GET | `/agent-feed/recent` |
+| `api.pipeline()` | GET | `/pipeline` |
+| `api.leadSearch(params)` | POST | `/leads/search` |
+| `api.approvalQueue()` | GET | `/approval-queue` |
+| `api.companyList()` | GET | `/company/list` |
+| `api.companyResearch(name)` | GET | `/company/research/:name` |
+| `api.auditTrail(leadId)` | GET | `/audit/:lead_id` |
+| `api.conversationReply(leadId, reply, context)` | POST | `/conversation/reply` |
+| `api.generateOutreach(leadId, companyDomain)` | POST | `/outreach/generate` |
+
+---
+
+## Pages and what they show
+
+**DashboardPage** — Overview. KPI cards (prospects discovered, messages sent, reply rate, meetings booked), sales funnel chart, risk distribution, agent activity feed, approval queue preview.
+
+**PipelinePage** — All leads in the pipeline with their stage (new / sent / engaged / meeting booked) and reply probability score.
+
+**LeadDiscoveryPage** — Search leads by title, seniority, and company. Results come live from Apollo via the backend.
+
+**ApprovalQueuePage** — Emails held for human review (risk ≥ 0.4). Shows risk level, score, trigger reason, policy violated, and the flagged content snippet.
+
+**ConversationsPage** — Multi-turn conversation threads per lead. Shows the AI's detected intent and generated responses.
+
+**AuditTrailPage** — Full immutable decision log for any lead. Shows every governance decision, what was sent, and why.
+
+**CampaignsPage** — Campaign management view (in progress).

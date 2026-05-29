@@ -3,10 +3,13 @@ from dotenv import load_dotenv
 load_dotenv(dotenv_path=Path(__file__).parent.parent / ".env")
 
 import json
-from fastapi import FastAPI, HTTPException
+import logging
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 _COMPANIES_PATH = Path(__file__).parent.parent / "sample_data" / "demo_companies.json"
 _SAMPLE_COMPANIES: list[dict] = json.loads(_COMPANIES_PATH.read_text(encoding="utf-8")) if _COMPANIES_PATH.exists() else []
@@ -22,6 +25,7 @@ from governance.risk_engine import RiskEngine
 from learning.feedback_collector import FeedbackCollector
 from learning.learning_engine import LearningEngine
 from scheduling.scheduler import Scheduler
+from services.lead_context_store import LeadContextStore
 
 app = FastAPI(
     title="LeadGenie AI — Governed Adaptive SDR Platform",
@@ -50,6 +54,7 @@ risk_engine = RiskEngine()
 feedback_collector = FeedbackCollector()
 learning_engine = LearningEngine()
 scheduler = Scheduler()
+lead_context_store = LeadContextStore()
 
 
 class LeadSearchRequest(BaseModel):
@@ -320,3 +325,44 @@ async def company_research(company_name: str):
 async def company_list():
     """Return all sample companies."""
     return _SAMPLE_COMPANIES
+
+
+@app.post("/api/webhook/inbound-reply")
+async def inbound_email_reply(request: Request):
+    """Receives inbound email replies forwarded by Resend or any email routing service.
+
+    Resend POSTs: {type, data: {from, to, subject, text, html}}
+    Matches sender email → stored lead context → ConversationAgent → sends reply.
+    """
+    payload = await request.json()
+    data = payload.get("data", {})
+    sender_email = data.get("from", "").strip()
+    reply_body = (data.get("text") or data.get("html") or "").strip()
+
+    if not sender_email or not reply_body:
+        return {"status": "ignored", "reason": "missing sender or body"}
+
+    stored = lead_context_store.get_by_email(sender_email)
+    if not stored:
+        logger.warning("Inbound reply from unknown sender: %s", sender_email)
+        return {"status": "unknown_sender", "email": sender_email}
+
+    lead_id = stored["lead_id"]
+    context = stored["context"]
+
+    result = conversation_agent.handle_reply(
+        lead_id=lead_id,
+        reply=reply_body,
+        context=context,
+        lead_email=sender_email,
+    )
+
+    logger.info("Handled reply from %s — intent=%s", sender_email, result.get("intent"))
+    return {
+        "status": "processed",
+        "lead_id": lead_id,
+        "intent": result.get("intent"),
+        "intent_confidence": result.get("intent_confidence"),
+        "email_sent": result.get("email_sent", False),
+        "conversation_length": result.get("conversation_length"),
+    }
