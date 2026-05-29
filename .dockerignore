@@ -2,7 +2,6 @@
 .gitignore
 *.md
 docs/
-sample_data/
 frontend/
 __pycache__
 **/__pycache__
