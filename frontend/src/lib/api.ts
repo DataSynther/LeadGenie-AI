@@ -37,22 +37,26 @@ export const dashboardStats = () => get<{
   blocked_patterns: { label: string; count: number }[];
 }>("/dashboard/stats");
 
-export const agentFeedRecent = () => get<{
-  timestamp: string;
-  agent: string;
-  message: string;
-}[]>("/agent-feed/recent");
-
-// Alias used by AgentFeedCard component
-export const recentAgentEvents = agentFeedRecent;
-
 export type AgentFeedEvent = {
   timestamp: string;
   agent: "research" | "outreach" | "reply" | "gov" | "schedule";
   message: string;
 };
 
+export const agentFeedRecent = () => get<AgentFeedEvent[]>("/agent-feed/recent");
+
+// Alias used by AgentFeedCard component
+export const recentAgentEvents = agentFeedRecent;
+
 // ── Pipeline ─────────────────────────────────────────────────────────────────
+
+export type Signal = {
+  strength: string;
+  type: string;
+  label: string;
+};
+
+export type PipelineStage = "new" | "researching" | "sent" | "engaged" | "pending_approval" | "meeting_booked" | "closed_no_reply";
 
 export const pipeline = () => get<{
   lead_id: string;
@@ -62,8 +66,8 @@ export const pipeline = () => get<{
   email: string | null;
   linkedin_url: string | null;
   company: { name: string };
-  signals: unknown[];
-  stage: string;
+  signals: Signal[];
+  stage: PipelineStage;
   reply_probability: number;
 }[]>("/pipeline");
 
@@ -85,7 +89,7 @@ export const leadSearch = (params: {
 
 // ── Approval Queue ───────────────────────────────────────────────────────────
 
-export const approvalQueue = () => get<{
+export type ApprovalItem = {
   event_id: string;
   lead_id: string;
   lead_name: string;
@@ -98,14 +102,30 @@ export const approvalQueue = () => get<{
   trigger: string;
   policy: string;
   confidence: number;
-}[]>("/approval-queue");
+};
+
+export const approvalQueue = () => get<ApprovalItem[]>("/approval-queue");
 
 // ── Company ──────────────────────────────────────────────────────────────────
 
 export const companyList = () => get<unknown[]>("/company/list");
 
+export type CompanyResearch = {
+  industry?: string | null;
+  employee_count?: number | null;
+  revenue?: string | null;
+  founded_year?: number | null;
+  funding_stage?: string | null;
+  signals?: Signal[];
+  headcount_growth_6m?: number | null;
+  headcount_growth_12m?: number | null;
+  technologies?: string[];
+  description?: string | null;
+  linkedin_url?: string | null;
+};
+
 export const companyResearch = (name: string) =>
-  get<Record<string, unknown>>(`/company/research/${encodeURIComponent(name)}`);
+  get<CompanyResearch>(`/company/research/${encodeURIComponent(name)}`);
 
 // ── Audit ────────────────────────────────────────────────────────────────────
 

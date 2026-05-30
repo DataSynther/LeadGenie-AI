@@ -110,11 +110,11 @@ export function ResearchPanel({ lead, onClose }: ResearchPanelProps) {
               </section>
 
               {/* Hiring signals */}
-              {company.signals.length > 0 && (
+              {(company.signals ?? []).length > 0 && (
                 <section>
                   <div className="label-mono text-ink mb-3">Hiring Signals</div>
                   <div className="flex flex-col gap-2">
-                    {company.signals.map((sig, i) => (
+                    {(company.signals ?? []).map((sig, i) => (
                       <div
                         key={i}
                         className={cn(
@@ -129,22 +129,22 @@ export function ResearchPanel({ lead, onClose }: ResearchPanelProps) {
                   </div>
 
                   {/* Headcount growth bar */}
-                  <HeadcountBar growth6m={company.headcount_growth_6m} growth12m={company.headcount_growth_12m} />
+                  <HeadcountBar growth6m={company.headcount_growth_6m ?? null} growth12m={company.headcount_growth_12m ?? null} />
                 </section>
               )}
 
               {/* Tech stack */}
-              {company.technologies.length > 0 && (
+              {(company.technologies ?? []).length > 0 && (
                 <section>
                   <div className="label-mono text-ink mb-3 flex items-center gap-2">
                     <Cpu size={12} />
                     Tech Stack
                     <span className="font-mono text-[10px] text-ink-2">
-                      {company.technologies.length} tools
+                      {(company.technologies ?? []).length} tools
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    {company.technologies.map((tech) => {
+                    {(company.technologies ?? []).map((tech) => {
                       const isAI = TECH_AI_KEYWORDS.some(k => tech.toLowerCase().includes(k.toLowerCase()));
                       return (
                         <span
