@@ -17,6 +17,7 @@
    - [Governance Engine](#27-governance-engine)
    - [Learning Engine](#28-learning-engine)
    - [Scheduling Module](#29-scheduling-module)
+   - [Observability Layer (Phase 1)](#210-observability-layer-phase-1)
 3. [Running the API Server](#3-running-the-api-server)
 4. [API Endpoint Reference](#4-api-endpoint-reference)
 5. [End-to-End Pipeline Example](#5-end-to-end-pipeline-example)
@@ -420,6 +421,102 @@ if engine.should_escalate():
 
 ---
 
+## Running End-to-End (All Services)
+
+### 1. Start backend
+
+```bash
+cd backend
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+### 2. Start frontend
+
+```bash
+cd frontend
+npm run dev
+# Open http://localhost:5173
+```
+
+### 3. Start Gmail reply poller (optional — for live email loop)
+
+```bash
+python3 scripts/run_reply_poller.py
+```
+
+### 4. Seed observability data (optional — for dev dashboard)
+
+Run any conversation reply call to populate traces:
+
+```bash
+curl -s -X POST http://localhost:8000/conversation/reply \
+  -H "Content-Type: application/json" \
+  -d '{
+    "lead_id": "test-001",
+    "reply": "What results have you seen for companies at our scale?",
+    "context": {
+      "lead": {"name": "Ravi Kumar", "title": "VP Data", "email": "ravi@co.com"},
+      "company": {"name": "Acme Corp", "industry": "SaaS", "employee_count": 300},
+      "research": {
+        "summary": "Mid-stage SaaS scaling data function",
+        "pain_points": ["data pipeline latency", "ML deployment"],
+        "growth_stage": "growth",
+        "ai_readiness_score": 7
+      },
+      "signals": {"scaling": true}
+    }
+  }'
+```
+
+Then open `http://localhost:5173/dev` to see the live dashboard.
+
+### 5. Run existing tests
+
+```bash
+cd backend
+python3 -m pytest ../tests/ -v
+```
+
+### 6. Test observability layer in isolation
+
+```bash
+cd backend
+python3 -c "
+from observability.agent_tracer import AgentTracer, score_context_completeness, score_prompt_ambiguity
+from observability.validator import Validator
+from observability.diagnostic_store import get_diagnostics_summary, get_agent_metrics
+
+# Context scoring
+full_ctx = {
+    'lead': {'name': 'Ravi', 'title': 'VP', 'email': 'r@co.com'},
+    'company': {'name': 'Acme', 'industry': 'SaaS', 'employee_count': 200},
+    'research': {'summary': 'Fast growing', 'pain_points': ['latency'], 'growth_stage': 'growth'},
+    'signals': {'scaling': True},
+}
+print('Context score (full):', score_context_completeness(full_ctx))
+print('Context score (empty):', score_context_completeness({}))
+
+# Prompt ambiguity scoring
+print('Ambiguity (vague):', score_prompt_ambiguity('if appropriate maybe include something like a CTA'))
+print('Ambiguity (clear):', score_prompt_ambiguity('Generate a cold email for Ravi at Acme about data pipeline latency.'))
+
+# Validator
+v = Validator('outreach', lead_id='test', context=full_ctx)
+r1 = v.validate({'subject': 'Hey Ravi', 'body': 'We help Acme reduce data pipeline latency.'})
+r2 = v.validate({'subject': '', 'body': ''})
+print('Valid output:', r1['consequence'])   # allow
+print('Empty output:', r2['consequence'])   # block
+
+print('All checks passed')
+"
+```
+
+---
+
+## Storage Layout (updated)
+
+---
+
 ### 2.9 Scheduling Module
 
 **Location:** `backend/scheduling/`
@@ -454,6 +551,89 @@ cta = sched.suggest_meeting_copy("Sarah", link)
 details = sched.confirm_meeting(event_uri="event-uuid-here")
 print(details["start_time"], details["status"])
 ```
+
+---
+
+### 2.10 Observability Layer (Phase 1)
+
+**Location:** `backend/observability/`
+**Branch:** `feature/governed-dashboard-phase1`
+
+**What it does:** Wraps every Claude agent call to collect latency, context quality, prompt clarity, and validation outcomes — then surfaces everything on the developer dashboard at `/dev`.
+
+#### Files
+
+| File | Class / Functions | Purpose |
+|---|---|---|
+| `diagnostic_store.py` | `write_trace()`, `write_validation()`, `get_agent_metrics()`, `get_diagnostics_summary()` | JSONL persistence + query helpers |
+| `agent_tracer.py` | `AgentTracer` (context manager), `score_context_completeness()`, `score_prompt_ambiguity()` | Instruments every Claude call |
+| `validator.py` | `Validator` | Shape / context / policy / business rule checks → allow / block / defer |
+
+#### The 5 diagnostic categories
+
+| Category | Fires when |
+|---|---|
+| `retrieval_failure` | Retrieval score provided and `< 0.55` |
+| `insufficient_context` | Context completeness score `< 0.50` (required fields null or missing) |
+| `ambiguous_prompt` | Prompt ambiguity score `> 0.30` (vague language density) |
+| `validation_gap` | Validator was not called inside the tracer `with` block |
+| `task_model_mismatch` | Model confidence `< 0.65` |
+
+#### Usage pattern
+
+```python
+from observability.agent_tracer import AgentTracer
+from observability.validator import Validator
+
+tracer = AgentTracer(
+    agent="my_agent",
+    lead_id=lead_id,
+    context=context,
+    retrieval_score=relevance_score,   # optional: from relevance engine
+    prompt_version="my_agent_v1",
+)
+
+with tracer.trace(prompt=prompt, system=system_prompt) as t:
+    response = client.messages.create(model=MODEL, ...)
+    result = parse_json_response(response)
+    t.finish(response, confidence=result.get("confidence"))
+    # Validator MUST be inside the with block
+    Validator("my_agent", lead_id=lead_id, context=context).validate(result, tracker=t)
+```
+
+#### Validation consequences
+
+| Consequence | When | Effect |
+|---|---|---|
+| `allow` | All checks pass | Safe to proceed |
+| `block` | Shape check fails (malformed output) | Output unusable — do not use downstream |
+| `defer` | Context or policy check fails | Queue for human review |
+
+#### Dev endpoints
+
+```bash
+# Diagnostic summary — 5 categories with counts and recent events
+curl http://localhost:8000/dev/diagnostics
+
+# Per-agent metrics
+curl http://localhost:8000/dev/agent-metrics
+
+# Recent traces (last 50 by default)
+curl http://localhost:8000/dev/traces?limit=20
+
+# Recent validation events
+curl http://localhost:8000/dev/validation-log?limit=20
+```
+
+#### Developer Dashboard
+
+The dashboard is at `http://localhost:5173/dev` and auto-refreshes every 10 seconds. It shows 6 panels (see `frontend/src/pages/DevDashboardPage.tsx`):
+- **Hallucination Root Cause** — 5-category grid
+- **AI Operations** — per-agent table
+- **Governance & Validation** — allow/block/defer breakdown + live feed
+- **Retrieval & Prompt Intelligence** — context coverage bars + prompt version tracking
+- **System Insights** — latency bottleneck chart + token cost (Sonnet 4.6 blended rate)
+- **Live Trace Feed** — last 20 calls with diagnostic chips
 
 ---
 
@@ -587,6 +767,70 @@ curl http://localhost:8000/audit/lead_001
 
 ---
 
+### `GET /dev/diagnostics`
+
+5-category hallucination diagnostic summary with counts and last 5 events per category.
+
+```bash
+curl http://localhost:8000/dev/diagnostics
+```
+
+Response shape:
+```json
+{
+  "total_traces": 47,
+  "by_category": {
+    "retrieval_failure": { "count": 2, "label": "Retrieval Failure", "description": "...", "recent_events": [...] },
+    "insufficient_context": { "count": 5, ... },
+    "ambiguous_prompt": { "count": 1, ... },
+    "validation_gap": { "count": 0, ... },
+    "task_model_mismatch": { "count": 3, ... }
+  }
+}
+```
+
+---
+
+### `GET /dev/agent-metrics`
+
+Per-agent aggregated stats.
+
+```bash
+curl http://localhost:8000/dev/agent-metrics
+```
+
+Response shape:
+```json
+{
+  "intent":       { "total_calls": 12, "success_rate": 1.0, "avg_latency_ms": 2340, "avg_tokens": 291, "avg_confidence": 0.93, "validation": { "allow": 11, "block": 0, "defer": 1, "pass_rate": 0.917 } },
+  "conversation": { "total_calls": 8,  "success_rate": 1.0, "avg_latency_ms": 6200, "avg_tokens": 510, "avg_confidence": null, "validation": { "allow": 8, "block": 0, "defer": 0, "pass_rate": 1.0 } },
+  "outreach":     { "total_calls": 5,  "success_rate": 1.0, "avg_latency_ms": 8100, "avg_tokens": 440, "avg_confidence": null, "validation": { "allow": 4, "block": 1, "defer": 0, "pass_rate": 0.8 } },
+  "research":     { "total_calls": 5,  "success_rate": 1.0, "avg_latency_ms": 3500, "avg_tokens": 310, "avg_confidence": null, "validation": { "allow": 5, "block": 0, "defer": 0, "pass_rate": 1.0 } }
+}
+```
+
+---
+
+### `GET /dev/traces`
+
+Recent agent call traces with all diagnostic metadata.
+
+```bash
+curl "http://localhost:8000/dev/traces?limit=10"
+```
+
+---
+
+### `GET /dev/validation-log`
+
+Recent validation events.
+
+```bash
+curl "http://localhost:8000/dev/validation-log?limit=10"
+```
+
+---
+
 ## 5. End-to-End Pipeline Example
 
 Full Python walkthrough from lead discovery to governed outreach:
@@ -645,6 +889,21 @@ print("Approved:", gov["approved"], "| Risk Score:", gov["risk_score"])
 
 # Step 9 — Record outcome later
 FeedbackCollector().record_outcome(lead["id"], "meeting_booked")
+
+# Step 10 — Inspect observability data (all auto-populated by agents)
+import requests
+
+# See per-agent metrics
+metrics = requests.get("http://localhost:8000/dev/agent-metrics").json()
+print("Research success rate:", metrics["research"]["success_rate"])
+print("Outreach avg latency:", metrics["outreach"]["avg_latency_ms"], "ms")
+
+# See diagnostic breakdown
+diag = requests.get("http://localhost:8000/dev/diagnostics").json()
+print("Total traces:", diag["total_traces"])
+for cat, data in diag["by_category"].items():
+    if data["count"] > 0:
+        print(f"  {data['label']}: {data['count']} events")
 ```
 
 ---
@@ -765,16 +1024,28 @@ Render auto-deploys on every push to `main`.
 
 ---
 
-## Storage Layout
+## Storage Layout (updated)
 
 All persistent data lives under `backend/storage/` (gitignored):
 
 ```
 backend/storage/
-├── conversations/      # Per-lead conversation history  (lead_id.json)
-├── audit_logs/         # Governance audit trail         (lead_id.jsonl)
-└── feedback/
-    └── outcomes.jsonl  # All recorded interaction outcomes
+├── audit_logs/             # Governance audit trail         (lead_id.jsonl)
+├── conversations/          # Per-lead conversation history  (lead_id.json)
+├── diagnostics/            # Observability layer (Phase 1)
+│   ├── traces.jsonl        # One line per Claude call
+│   └── validations.jsonl   # One line per validation event
+├── feedback/
+│   └── outcomes.jsonl      # All recorded interaction outcomes
+├── intent_analytics/
+│   └── events.jsonl        # Intent classification events
+└── lead_contexts/          # Email → lead context map (sanitized_email.json)
 ```
+
+In production (Phase 2 / AWS): replace file-based JSONL reads/writes with a database (Postgres or DynamoDB). The write/read boundary is in:
+- `diagnostic_store.py` → `_append()` and `_read_all()`
+- `audit_logger.py` → `_write()` and `get_audit_trail()`
+- `memory_manager.py` → `store_message()` and `get_history()`
+- `feedback_collector.py` → `record_outcome()`
 
 In production, replace local file storage with a database (Postgres + SQLAlchemy) or object store (S3) by swapping the read/write methods in `memory_manager.py`, `audit_logger.py`, and `feedback_collector.py`.

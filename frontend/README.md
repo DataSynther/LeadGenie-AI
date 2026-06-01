@@ -30,7 +30,8 @@ frontend/src/
 │   ├── ApprovalQueuePage.tsx    → GET /approval-queue
 │   ├── ConversationsPage.tsx    → POST /conversation/reply
 │   ├── AuditTrailPage.tsx       → GET /audit/:lead_id
-│   └── CampaignsPage.tsx        → (in progress)
+│   ├── CampaignsPage.tsx        → (in progress)
+│   └── DevDashboardPage.tsx     → GET /dev/diagnostics, /dev/agent-metrics, /dev/traces, /dev/validation-log
 │
 ├── components/             # Reusable UI components, grouped by domain
 │   ├── dashboard/          # KpiCard, FunnelCard, AgentFeedCard, RiskDistributionCard
@@ -79,6 +80,10 @@ const queue = await api.approvalQueue()
 | `api.auditTrail(leadId)` | GET | `/audit/:lead_id` |
 | `api.conversationReply(leadId, reply, context)` | POST | `/conversation/reply` |
 | `api.generateOutreach(leadId, companyDomain)` | POST | `/outreach/generate` |
+| `api.devDiagnostics()` | GET | `/dev/diagnostics` |
+| `api.devAgentMetrics()` | GET | `/dev/agent-metrics` |
+| `api.devTraces(limit?)` | GET | `/dev/traces` |
+| `api.devValidationLog(limit?)` | GET | `/dev/validation-log` |
 
 ---
 
@@ -97,3 +102,5 @@ const queue = await api.approvalQueue()
 **AuditTrailPage** — Full immutable decision log for any lead. Shows every governance decision, what was sent, and why.
 
 **CampaignsPage** — Campaign management view (in progress).
+
+**DevDashboardPage** — Developer observability dashboard at `/dev`. Six auto-refreshing panels: Hallucination Root Cause Analysis (5 diagnostic categories), AI Operations (per-agent metrics table), Governance & Validation (allow/block/defer breakdown + live feed), Retrieval & Prompt Intelligence (context coverage and ambiguity per agent, prompt version tracking), System Insights (latency bottleneck chart, token usage, estimated cost), and Live Trace Feed. All data is live from the backend — no mocks. Refreshes every 10 seconds.

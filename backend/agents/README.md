@@ -70,3 +70,37 @@ result = IntentDetector().classify(reply, lead_id=lead_id, context=context)
 ```
 
 **`memory_manager.py`** — Stores and retrieves per-lead conversation history. Persists to `backend/storage/conversations/{lead_id}.json`. `summarize_history()` returns a condensed string for injection into the Claude system prompt.
+
+---
+
+## Observability instrumentation
+
+Every agent that calls Claude is instrumented with `AgentTracer` + `Validator` from `backend/observability/`. The pattern is the same across all 4 agents:
+
+```python
+from observability.agent_tracer import AgentTracer
+from observability.validator import Validator
+
+tracer = AgentTracer(agent="<name>", lead_id=lead_id, context=context, prompt_version="<name>_v1")
+with tracer.trace(prompt=prompt, system=system) as t:
+    response = client.messages.create(...)
+    result = parse(response)
+    t.finish(response, confidence=result.get("confidence"))
+    Validator("<name>", lead_id=lead_id, context=context).validate(result, tracker=t)
+    # ^ Validator MUST be inside the `with` block to prevent validation_gap being fired
+```
+
+The tracer writes to `backend/storage/diagnostics/traces.jsonl`. The validator writes to `backend/storage/diagnostics/validations.jsonl`. Both are queried by the `/dev/*` endpoints and the DevDashboardPage at `/dev`.
+
+**Instrumented agents:**
+
+| Agent | `agent=` key | Prompt version tracked | Confidence tracked |
+|---|---|---|---|
+| `research_agent.py` | `"research"` | `"research_v1"` | No |
+| `outreach_agent.py` (email) | `"outreach"` | `"outreach_email_v1"` | No |
+| `outreach_agent.py` (follow-up) | `"outreach"` | `"followup_v1"` | No |
+| `outreach_agent.py` (objection) | `"outreach"` | `"objection_v1"` | No |
+| `intent_detector.py` | `"intent"` | `"intent_v1"` | Yes — from JSON `confidence` field |
+| `conversation_agent.py` | `"conversation"` | `"conv_{intent}_v1"` | No |
+
+See `backend/observability/README.md` for full details on adding new agents.

@@ -30,6 +30,9 @@ Existing SDR workflows force teams to choose between slow manual prospecting and
 | Audit Lineage | Immutable per-lead JSONL audit trail for all decisions |
 | Continuous Learning | Feedback-driven pattern analysis and prompt improvement |
 | Meeting Scheduling | Calendly link sent automatically on meeting requests |
+| **AI Observability** | Per-agent tracing, context scoring, prompt ambiguity detection, validation layer |
+| **Hallucination Diagnostics** | 5-category root cause breakdown: retrieval / context / prompt / validation / task-mismatch |
+| **Developer Dashboard** | Live governed AI dashboard at `/dev` with agent metrics, cost tracking, and validation feed |
 
 ---
 
@@ -111,6 +114,11 @@ LeadGenie-AI/
 │   │   └── trends/                 # Market trend ingestion
 │   │       └── trend_agent.py
 │   │
+│   ├── observability/              # Governed AI diagnostic layer — see observability/README.md
+│   │   ├── diagnostic_store.py     # JSONL persistence + query helpers + 5 category constants
+│   │   ├── agent_tracer.py         # Context manager wrapping every Claude call
+│   │   └── validator.py            # Shape/context/policy/business rule checks → allow/block/defer
+│   │
 │   ├── governance/                 # Safety layer — see backend/governance/README.md
 │   │   ├── risk_engine.py          # Composite risk scorer
 │   │   ├── tone_validator.py       # Banned phrases, length limits
@@ -136,6 +144,7 @@ LeadGenie-AI/
 │   └── storage/                    # Runtime data (gitignored)
 │       ├── audit_logs/             # Per-lead audit JSONL
 │       ├── conversations/          # Conversation history
+│       ├── diagnostics/            # Agent traces + validation events (observability layer)
 │       ├── feedback/               # Outcome records
 │       ├── intent_analytics/       # Intent classification events
 │       └── lead_contexts/          # Email → lead context map
@@ -150,7 +159,8 @@ LeadGenie-AI/
 │   │   │   ├── ApprovalQueuePage.tsx
 │   │   │   ├── ConversationsPage.tsx
 │   │   │   ├── AuditTrailPage.tsx
-│   │   │   └── CampaignsPage.tsx
+│   │   │   ├── CampaignsPage.tsx
+│   │   │   └── DevDashboardPage.tsx    # Live AI observability dashboard (route: /dev)
 │   │   ├── components/             # Reusable UI components by domain
 │   │   └── context/                # React context (theme, sidebar)
 │   └── Dockerfile
@@ -327,6 +337,14 @@ All routes are defined in `backend/main.py`. Interactive docs available at `http
 | GET | `/learning/analytics` | — | Pattern analysis from feedback history |
 | GET | `/trends` | — | Current market trends used by relevance engine |
 
+### Developer Observability (Phase 1)
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/dev/diagnostics` | 5-category hallucination diagnostic summary with counts and recent events |
+| GET | `/dev/agent-metrics` | Per-agent: total calls, success rate, avg latency, avg tokens, avg confidence, validation pass rate |
+| GET | `/dev/traces?limit=50` | Recent agent call traces with latency, tokens, context score, ambiguity score, diagnostic categories |
+| GET | `/dev/validation-log?limit=50` | Recent validation events: shape/context/policy outcomes and consequence |
+
 ---
 
 ## Governance Model
@@ -375,6 +393,8 @@ summary = IntentDetector().get_summary()
 | Branch | Purpose |
 |---|---|
 | `main` | Stable baseline |
-| `feat/conversation-reply-loop` | Our branch — conversation agent, intent detection, Gmail loop |
-| `feature/kunal-final-code` | Kunal's branch — frontend, dashboard endpoints, pipeline |
-| `integration/premerge-phase1` | **This branch** — full integration of both |
+| `feat/conversation-reply-loop` | Conversation agent, intent detection, Gmail loop |
+| `feature/kunal-final-code` | Frontend, dashboard endpoints, pipeline |
+| `integration/premerge-phase1` | Full integration of conversation + frontend layers |
+| `feature/governed-dashboard-phase1` | **Active** — Phase 1 observability layer: agent tracer, validator, dev dashboard |
+| `feature/governed-dashboard-phase2-aws` | Phase 2 placeholder — memory intelligence, trajectory evaluation, AWS deployment |

@@ -294,6 +294,62 @@ The backend `AuditLogger` already writes entries in this shape:
 
 ---
 
+---
+
+### DevDashboardPage
+
+**Route:** `/dev`
+**File:** `frontend/src/pages/DevDashboardPage.tsx`
+**Branch:** `feature/governed-dashboard-phase1`
+
+| UI Panel | Data Source | API Call | Backend Handler | Status |
+|---|---|---|---|---|
+| Hallucination Root Cause (5 category cards) | `diagnostics.by_category` | `api.devDiagnostics()` | `GET /dev/diagnostics` → `diagnostic_store.get_diagnostics_summary()` | **Live** |
+| AI Operations table (success rate, latency, confidence, val. pass rate) | `metrics[agent]` | `api.devAgentMetrics()` | `GET /dev/agent-metrics` → `diagnostic_store.get_agent_metrics()` | **Live** |
+| Governance & Validation (allow/block/defer + live feed) | `validations[]` | `api.devValidationLog(30)` | `GET /dev/validation-log` → `diagnostic_store.get_recent_validations()` | **Live** |
+| Retrieval & Prompt Intelligence (context coverage, ambiguity, prompt versions) | `traces[]` metadata | `api.devTraces(100)` | `GET /dev/traces` → `diagnostic_store.get_recent_traces()` | **Live** |
+| System Insights (latency bottleneck chart, token usage, estimated cost) | `metrics[agent]` | `api.devAgentMetrics()` | Same as AI Operations | **Live** |
+| Live Trace Feed (last 20 calls, auto-refresh 10s) | `traces[]` | `api.devTraces(20)` | Same as Retrieval panel | **Live** |
+
+**How observability data flows:**
+
+```
+Agent makes Claude call
+        │
+        ▼
+AgentTracer.trace() context manager
+  - measures latency + tokens
+  - scores context completeness (0–1)
+  - scores prompt ambiguity (0–1)
+  - fires diagnostic categories
+        │
+        ▼
+Validator.validate()  ← must run INSIDE the with block
+  - checks shape, context, policy, business rules
+  - writes to validations.jsonl
+  - sets consequence: allow / block / defer
+        │
+        ▼
+AgentTracer.__exit__
+  - writes to traces.jsonl
+        │
+        ▼
+GET /dev/* endpoints read from JSONL files
+        │
+        ▼
+DevDashboardPage polls every 10s via React Query refetchInterval
+```
+
+**To extend the observability dashboard with a new panel:**
+1. Add a new query function to `api.ts` calling an existing `/dev/*` endpoint
+2. Add a new React component in `DevDashboardPage.tsx`
+3. If you need new data, add a new endpoint in `main.py` calling a new helper in `diagnostic_store.py`
+
+**To add a new diagnostic category:**
+See `backend/observability/README.md` → "Adding a new diagnostic category".
+
+---
+
 ## Known issues / gaps at time of writing
 
 | Issue | Location | Impact |
@@ -306,3 +362,4 @@ The backend `AuditLogger` already writes entries in this shape:
 | Pipeline `stage` always `"new"` | `main.py:_person_to_pipeline_item()` | Stage never updates — no lead state store wired yet |
 | Approval queue Approve/Reject not persisted | `ApprovalQueuePage.tsx` | Decisions lost on page refresh — needs backend endpoint |
 | "Generate Outreach" button in LeadDiscovery not wired | `LeadDiscoveryPage.tsx` | Button exists but does nothing — needs `api.generateOutreach()` call |
+| Dashboard KPI cards and agent feed are static | `main.py:dashboard_stats()` + `main.py:agent_feed_recent()` | Shows hardcoded numbers — Phase 2: derive from storage JSONL files |
