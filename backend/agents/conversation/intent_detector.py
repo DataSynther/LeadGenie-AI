@@ -6,6 +6,9 @@ from pathlib import Path
 from collections import defaultdict
 from anthropic import Anthropic
 
+from observability.agent_tracer import AgentTracer
+from observability.validator import Validator
+
 client = Anthropic()
 MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
 
@@ -38,19 +41,23 @@ Intent definitions:
 Respond with JSON only:
 {{"intent": "<one of the above>", "confidence": <0.0-1.0>, "key_signal": "<2-4 words from reply that drove classification>", "reasoning": "<one sentence explaining why>"}}"""
 
-        response = client.messages.create(
-            model=MODEL,
-            max_tokens=150,
-            system="You are a sales intent classifier. Always return valid JSON only.",
-            messages=[{"role": "user", "content": prompt}],
-        )
-        text = response.content[0].text.strip()
-        text = re.sub(r"^```(?:json)?\s*", "", text)
-        text = re.sub(r"\s*```$", "", text)
-        result = json.loads(text)
-
-        if result.get("intent") not in VALID_INTENTS:
-            result["intent"] = "neutral"
+        system = "You are a sales intent classifier. Always return valid JSON only."
+        tracer = AgentTracer(agent="intent", lead_id=lead_id, context=context or {}, prompt_version="intent_v1")
+        with tracer.trace(prompt=prompt, system=system) as t:
+            response = client.messages.create(
+                model=MODEL,
+                max_tokens=150,
+                system=system,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            text = response.content[0].text.strip()
+            text = re.sub(r"^```(?:json)?\s*", "", text)
+            text = re.sub(r"\s*```$", "", text)
+            result = json.loads(text)
+            if result.get("intent") not in VALID_INTENTS:
+                result["intent"] = "neutral"
+            t.finish(response, confidence=result.get("confidence"))
+            Validator("intent", lead_id=lead_id, context=context or {}).validate(result, tracker=t)
 
         self._log_event(reply, result, lead_id, context)
         return result

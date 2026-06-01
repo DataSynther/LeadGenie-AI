@@ -4,6 +4,9 @@ from anthropic import Anthropic
 from .memory_manager import MemoryManager
 from .intent_detector import IntentDetector
 
+from observability.agent_tracer import AgentTracer
+from observability.validator import Validator
+
 client = Anthropic()
 MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
 CALENDLY_URL = os.getenv("CALENDLY_URL", "https://calendly.com/leadgenie-demo/30min")
@@ -77,13 +80,20 @@ class ConversationAgent:
         # interested, neutral, fact_question — use Claude with context-grounded system prompt
         history = self.memory.summarize_history(lead_id)
         messages = self._build_messages(history)
-        response = client.messages.create(
-            model=MODEL,
-            max_tokens=512,
-            system=self._system_prompt(context, intent),
-            messages=messages + [{"role": "user", "content": reply}],
-        )
-        return response.content[0].text
+        system = self._system_prompt(context, intent)
+
+        tracer = AgentTracer(agent="conversation", lead_id=lead_id, context=context, prompt_version=f"conv_{intent}_v1")
+        with tracer.trace(prompt=reply, system=system) as t:
+            response = client.messages.create(
+                model=MODEL,
+                max_tokens=512,
+                system=system,
+                messages=messages + [{"role": "user", "content": reply}],
+            )
+            response_text = response.content[0].text
+            t.finish(response)
+            Validator("conversation", lead_id=lead_id, context=context).validate(response_text, tracker=t)
+        return response_text
 
     # ── Prompt construction ───────────────────────────────────────────────────
 

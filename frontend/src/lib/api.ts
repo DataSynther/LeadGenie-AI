@@ -159,6 +159,77 @@ export const generateOutreach = (leadId: string, companyDomain: string) =>
 
 export const healthCheck = () => get<{ status: string; version: string }>("/health");
 
+// ── Developer Observability ───────────────────────────────────────────────────
+
+export type DiagnosticCategory = {
+  count: number;
+  label: string;
+  description: string;
+  recent_events: { ts: string; agent: string; lead_id: string | null; detail: string }[];
+};
+
+export type DiagnosticsSummary = {
+  total_traces: number;
+  by_category: Record<string, DiagnosticCategory>;
+};
+
+export const devDiagnostics = () => get<DiagnosticsSummary>("/dev/diagnostics");
+
+export type AgentMetrics = {
+  total_calls: number;
+  success_rate: number;
+  avg_latency_ms: number;
+  avg_tokens: number;
+  avg_confidence: number | null;
+  validation: {
+    total: number;
+    allow: number;
+    block: number;
+    defer: number;
+    pass_rate: number;
+  };
+};
+
+export const devAgentMetrics = () => get<Record<string, AgentMetrics>>("/dev/agent-metrics");
+
+export type TraceRecord = {
+  ts: string;
+  agent: string;
+  lead_id: string | null;
+  prompt_preview: string;
+  response_preview: string;
+  latency_ms: number;
+  tokens_used: number;
+  success: boolean;
+  diagnostic_categories: string[];
+  metadata: {
+    context_score?: number;
+    ambiguity_score?: number;
+    retrieval_score?: number | null;
+    confidence?: number | null;
+    prompt_version?: string;
+    context_fields_used?: Record<string, unknown>;
+  };
+};
+
+export const devTraces = (limit = 50) =>
+  get<TraceRecord[]>(`/dev/traces?limit=${limit}`);
+
+export type ValidationRecord = {
+  ts: string;
+  agent: string;
+  lead_id: string | null;
+  shape_ok: boolean;
+  context_ok: boolean;
+  policy_ok: boolean;
+  consequence: "allow" | "block" | "defer";
+  issues: string[];
+  output_preview: string;
+};
+
+export const devValidationLog = (limit = 50) =>
+  get<ValidationRecord[]>(`/dev/validation-log?limit=${limit}`);
+
 export const api = {
   dashboardStats,
   agentFeedRecent,
@@ -172,6 +243,10 @@ export const api = {
   conversationReply,
   generateOutreach,
   healthCheck,
+  devDiagnostics,
+  devAgentMetrics,
+  devTraces,
+  devValidationLog,
 };
 
 export default api;

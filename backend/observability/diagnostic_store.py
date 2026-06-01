@@ -1,0 +1,206 @@
+"""Central store for all observability events — traces, validations, diagnostics."""
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+from collections import defaultdict
+from typing import Optional
+
+STORE_DIR = Path(__file__).parent.parent / "storage" / "diagnostics"
+TRACES_FILE     = STORE_DIR / "traces.jsonl"
+VALIDATIONS_FILE = STORE_DIR / "validations.jsonl"
+STORE_DIR.mkdir(parents=True, exist_ok=True)
+
+
+# ── Failure categories (maps to the 5 upstream hallucination causes) ──────────
+
+CATEGORY_RETRIEVAL     = "retrieval_failure"       # semantically right, factually wrong
+CATEGORY_CONTEXT       = "insufficient_context"    # missing / thin context
+CATEGORY_PROMPT        = "ambiguous_prompt"        # vague instructions
+CATEGORY_VALIDATION    = "validation_gap"          # no check downstream
+CATEGORY_TASK_MISMATCH = "task_model_mismatch"     # model not suited / low confidence
+
+
+def _append(path: Path, record: dict) -> None:
+    with open(path, "a") as f:
+        f.write(json.dumps(record) + "\n")
+
+
+def _read_all(path: Path) -> list:
+    if not path.exists():
+        return []
+    out = []
+    with open(path) as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                try:
+                    out.append(json.loads(line))
+                except json.JSONDecodeError:
+                    pass
+    return out
+
+
+# ── Trace writer ──────────────────────────────────────────────────────────────
+
+def write_trace(
+    agent: str,
+    lead_id: Optional[str],
+    prompt_preview: str,        # first 300 chars of prompt
+    response_preview: str,      # first 300 chars of response
+    latency_ms: float,
+    tokens_used: int,
+    success: bool,
+    diagnostic_categories: list[str],   # which of the 5 categories fired
+    metadata: Optional[dict] = None,
+) -> dict:
+    record = {
+        "ts": datetime.now(timezone.utc).isoformat(),
+        "agent": agent,
+        "lead_id": lead_id,
+        "prompt_preview": prompt_preview[:300],
+        "response_preview": response_preview[:300],
+        "latency_ms": round(latency_ms, 1),
+        "tokens_used": tokens_used,
+        "success": success,
+        "diagnostic_categories": diagnostic_categories,
+        "metadata": metadata or {},
+    }
+    _append(TRACES_FILE, record)
+    return record
+
+
+# ── Validation writer ─────────────────────────────────────────────────────────
+
+def write_validation(
+    agent: str,
+    lead_id: Optional[str],
+    shape_ok: bool,
+    context_ok: bool,
+    policy_ok: bool,
+    consequence: str,           # "allow" | "block" | "defer"
+    issues: list[str],
+    output_preview: str,
+) -> dict:
+    record = {
+        "ts": datetime.now(timezone.utc).isoformat(),
+        "agent": agent,
+        "lead_id": lead_id,
+        "shape_ok": shape_ok,
+        "context_ok": context_ok,
+        "policy_ok": policy_ok,
+        "consequence": consequence,
+        "issues": issues,
+        "output_preview": output_preview[:300],
+    }
+    _append(VALIDATIONS_FILE, record)
+    return record
+
+
+# ── Query helpers ─────────────────────────────────────────────────────────────
+
+def get_recent_traces(limit: int = 50) -> list:
+    return _read_all(TRACES_FILE)[-limit:]
+
+
+def get_recent_validations(limit: int = 50) -> list:
+    return _read_all(VALIDATIONS_FILE)[-limit:]
+
+
+def get_agent_metrics() -> dict:
+    """Per-agent aggregated stats."""
+    traces = _read_all(TRACES_FILE)
+    validations = _read_all(VALIDATIONS_FILE)
+
+    agents = set(t["agent"] for t in traces) | set(v["agent"] for v in validations)
+    metrics = {}
+
+    for agent in agents:
+        agent_traces = [t for t in traces if t["agent"] == agent]
+        agent_vals   = [v for v in validations if v["agent"] == agent]
+
+        latencies = [t["latency_ms"] for t in agent_traces if t.get("latency_ms")]
+        tokens    = [t["tokens_used"] for t in agent_traces if t.get("tokens_used")]
+        conf_list = [t["metadata"].get("confidence") for t in agent_traces if t.get("metadata", {}).get("confidence")]
+
+        allow_count = sum(1 for v in agent_vals if v["consequence"] == "allow")
+        block_count = sum(1 for v in agent_vals if v["consequence"] == "block")
+        defer_count = sum(1 for v in agent_vals if v["consequence"] == "defer")
+        total_vals  = len(agent_vals) or 1
+
+        metrics[agent] = {
+            "total_calls": len(agent_traces),
+            "success_rate": round(sum(1 for t in agent_traces if t["success"]) / max(len(agent_traces), 1), 3),
+            "avg_latency_ms": round(sum(latencies) / len(latencies), 1) if latencies else 0,
+            "avg_tokens": round(sum(tokens) / len(tokens)) if tokens else 0,
+            "avg_confidence": round(sum(conf_list) / len(conf_list), 3) if conf_list else None,
+            "validation": {
+                "total": len(agent_vals),
+                "allow": allow_count,
+                "block": block_count,
+                "defer": defer_count,
+                "pass_rate": round(allow_count / total_vals, 3),
+            },
+        }
+    return metrics
+
+
+def get_diagnostics_summary() -> dict:
+    """Count events per diagnostic category across all traces."""
+    traces = _read_all(TRACES_FILE)
+    counts: dict = defaultdict(int)
+    recent: dict = defaultdict(list)
+
+    for t in traces:
+        for cat in t.get("diagnostic_categories", []):
+            counts[cat] += 1
+            recent[cat].append({
+                "ts": t["ts"],
+                "agent": t["agent"],
+                "lead_id": t.get("lead_id"),
+                "detail": t["metadata"].get("diagnostic_detail", ""),
+            })
+
+    # keep last 5 per category
+    for cat in recent:
+        recent[cat] = recent[cat][-5:]
+
+    categories = [
+        CATEGORY_RETRIEVAL,
+        CATEGORY_CONTEXT,
+        CATEGORY_PROMPT,
+        CATEGORY_VALIDATION,
+        CATEGORY_TASK_MISMATCH,
+    ]
+
+    return {
+        "total_traces": len(traces),
+        "by_category": {
+            cat: {
+                "count": counts.get(cat, 0),
+                "label": _category_label(cat),
+                "description": _category_description(cat),
+                "recent_events": recent.get(cat, []),
+            }
+            for cat in categories
+        },
+    }
+
+
+def _category_label(cat: str) -> str:
+    return {
+        CATEGORY_RETRIEVAL:     "Retrieval Failure",
+        CATEGORY_CONTEXT:       "Insufficient Context",
+        CATEGORY_PROMPT:        "Ambiguous Prompt",
+        CATEGORY_VALIDATION:    "Validation Gap",
+        CATEGORY_TASK_MISMATCH: "Task-Model Mismatch",
+    }.get(cat, cat)
+
+
+def _category_description(cat: str) -> str:
+    return {
+        CATEGORY_RETRIEVAL:     "Answer is semantically plausible but factually incorrect — retrieved context was close but wrong.",
+        CATEGORY_CONTEXT:       "Context passed to the model was missing critical fields, too thin, or incomplete.",
+        CATEGORY_PROMPT:        "Prompt contained vague behavioral instructions. Model chose an interpretation that was never validated.",
+        CATEGORY_VALIDATION:    "Model output flowed downstream with no shape, context, or policy check applied.",
+        CATEGORY_TASK_MISMATCH: "Model confidence was low or output schema mismatched — model may not be suited to this task.",
+    }.get(cat, cat)

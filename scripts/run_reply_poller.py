@@ -1,6 +1,8 @@
 """Starts the Gmail reply poller. Keep this running alongside the backend."""
 import sys, os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(_root, "backend"))
+sys.path.insert(0, _root)
 
 from dotenv import load_dotenv
 load_dotenv()

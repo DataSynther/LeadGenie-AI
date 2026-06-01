@@ -4,8 +4,12 @@ import re
 from anthropic import Anthropic
 from .prompt_templates import INITIAL_EMAIL_TEMPLATE, FOLLOW_UP_TEMPLATE, OBJECTION_RESPONSE_TEMPLATE
 
+from observability.agent_tracer import AgentTracer
+from observability.validator import Validator
+
 client = Anthropic()
 MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
+SYSTEM = "You are a senior SDR. Always respond with valid JSON."
 
 
 class OutreachAgent:
@@ -28,15 +32,21 @@ class OutreachAgent:
             pain_points=", ".join(research.get("pain_points", [])),
         )
 
-        response = client.messages.create(
-            model=MODEL,
-            max_tokens=1024,
-            system="You are a senior SDR. Always respond with valid JSON.",
-            messages=[{"role": "user", "content": prompt}],
-        )
-        text = re.sub(r"^```(?:json)?\s*", "", response.content[0].text.strip())
-        text = re.sub(r"\s*```$", "", text)
-        return json.loads(text)
+        lead_id = (context.get("lead") or {}).get("id")
+        tracer = AgentTracer(agent="outreach", lead_id=lead_id, context=context, prompt_version="outreach_email_v1")
+        with tracer.trace(prompt=prompt, system=SYSTEM) as t:
+            response = client.messages.create(
+                model=MODEL,
+                max_tokens=1024,
+                system=SYSTEM,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            text = re.sub(r"^```(?:json)?\s*", "", response.content[0].text.strip())
+            text = re.sub(r"\s*```$", "", text)
+            result = json.loads(text)
+            t.finish(response)
+            Validator("outreach", lead_id=lead_id, context=context).validate(result, tracker=t)
+        return result
 
     def generate_follow_up(self, context: dict, conversation_summary: str) -> dict:
         """Generate a follow-up email based on prior conversation history."""
@@ -50,15 +60,21 @@ class OutreachAgent:
             company=company.get("name"),
         )
 
-        response = client.messages.create(
-            model=MODEL,
-            max_tokens=512,
-            system="You are a senior SDR. Always respond with valid JSON.",
-            messages=[{"role": "user", "content": prompt}],
-        )
-        text = re.sub(r"^```(?:json)?\s*", "", response.content[0].text.strip())
-        text = re.sub(r"\s*```$", "", text)
-        return json.loads(text)
+        lead_id = (context.get("lead") or {}).get("id")
+        tracer = AgentTracer(agent="outreach", lead_id=lead_id, context=context, prompt_version="followup_v1")
+        with tracer.trace(prompt=prompt, system=SYSTEM) as t:
+            response = client.messages.create(
+                model=MODEL,
+                max_tokens=512,
+                system=SYSTEM,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            text = re.sub(r"^```(?:json)?\s*", "", response.content[0].text.strip())
+            text = re.sub(r"\s*```$", "", text)
+            result = json.loads(text)
+            t.finish(response)
+            Validator("outreach", lead_id=lead_id, context=context).validate(result, tracker=t)
+        return result
 
     def respond_to_objection(self, context: dict, objection: str) -> dict:
         """Generate a response to a lead's objection."""
@@ -74,12 +90,18 @@ class OutreachAgent:
             company_summary=research.get("summary", ""),
         )
 
-        response = client.messages.create(
-            model=MODEL,
-            max_tokens=512,
-            system="You are a senior SDR. Always respond with valid JSON.",
-            messages=[{"role": "user", "content": prompt}],
-        )
-        text = re.sub(r"^```(?:json)?\s*", "", response.content[0].text.strip())
-        text = re.sub(r"\s*```$", "", text)
-        return json.loads(text)
+        lead_id = (context.get("lead") or {}).get("id")
+        tracer = AgentTracer(agent="outreach", lead_id=lead_id, context=context, prompt_version="objection_v1")
+        with tracer.trace(prompt=prompt, system=SYSTEM) as t:
+            response = client.messages.create(
+                model=MODEL,
+                max_tokens=512,
+                system=SYSTEM,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            text = re.sub(r"^```(?:json)?\s*", "", response.content[0].text.strip())
+            text = re.sub(r"\s*```$", "", text)
+            result = json.loads(text)
+            t.finish(response)
+            Validator("outreach_objection", lead_id=lead_id, context=context).validate(result, tracker=t)
+        return result

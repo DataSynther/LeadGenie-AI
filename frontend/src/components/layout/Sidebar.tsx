@@ -2,6 +2,7 @@ import { NavLink } from "react-router-dom";
 import {
   Search,
   X,
+  Activity,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
@@ -18,6 +19,7 @@ interface NavItem {
 const WORKSPACE: NavItem[] = [
   // { to: "/dashboard", label: "Mission Control", icon: Activity },
   { to: "/discover", label: "Discover Leads", icon: Search },
+  { to: "/dev", label: "AI Observability", icon: Activity, badge: { text: "DEV", tone: "brand" } },
   // { to: "/campaigns", label: "Campaigns", icon: Sparkles },
   // {
   //   to: "/pipeline",

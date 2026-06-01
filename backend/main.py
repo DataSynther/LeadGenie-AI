@@ -26,6 +26,7 @@ from learning.feedback_collector import FeedbackCollector
 from learning.learning_engine import LearningEngine
 from scheduling.scheduler import Scheduler
 from services.lead_context_store import LeadContextStore
+from observability import diagnostic_store
 
 app = FastAPI(
     title="LeadGenie AI — Governed Adaptive SDR Platform",
@@ -325,6 +326,32 @@ async def company_research(company_name: str):
 async def company_list():
     """Return all sample companies."""
     return _SAMPLE_COMPANIES
+
+
+# ── Developer Observability Endpoints ────────────────────────────────────────
+
+@app.get("/dev/diagnostics")
+async def dev_diagnostics():
+    """Hallucination diagnostic summary: counts + recent events per category."""
+    return diagnostic_store.get_diagnostics_summary()
+
+
+@app.get("/dev/agent-metrics")
+async def dev_agent_metrics():
+    """Per-agent aggregated performance metrics."""
+    return diagnostic_store.get_agent_metrics()
+
+
+@app.get("/dev/traces")
+async def dev_traces(limit: int = 50):
+    """Recent agent call traces with diagnostic metadata."""
+    return diagnostic_store.get_recent_traces(limit=limit)
+
+
+@app.get("/dev/validation-log")
+async def dev_validation_log(limit: int = 50):
+    """Recent validation events with shape/context/policy outcomes."""
+    return diagnostic_store.get_recent_validations(limit=limit)
 
 
 @app.post("/api/webhook/inbound-reply")
