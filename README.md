@@ -225,6 +225,22 @@ npm run dev
 # UI available at http://localhost:5173
 ```
 
+### Where to access everything
+
+Once both servers are running:
+
+| What | URL |
+|---|---|
+| **AI Observability Dashboard** | http://localhost:5173/dev |
+| **Lead Discovery** | http://localhost:5173/discover |
+| **Mission Control (Dashboard)** | http://localhost:5173/dashboard |
+| **Pipeline** | http://localhost:5173/pipeline |
+| **Approval Queue** | http://localhost:5173/approval |
+| **Conversations** | http://localhost:5173/conversations |
+| **Audit Trail** | http://localhost:5173/audit |
+| **Backend API (interactive docs)** | http://localhost:8000/docs |
+| **Backend API (ReDoc)** | http://localhost:8000/redoc |
+
 ### 4. Gmail Reply Poller (optional — for live email conversations)
 
 ```bash

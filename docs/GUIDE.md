@@ -644,13 +644,25 @@ The dashboard is at `http://localhost:5173/dev` and auto-refreshes every 10 seco
 source venv/bin/activate
 
 # Start the FastAPI server with live reload
-uvicorn backend.main:app --reload --port 8000
+cd backend
+uvicorn main:app --reload --port 8000
 ```
 
-The API will be running at `http://localhost:8000`
+### Where to access everything
 
-Interactive docs (Swagger UI): `http://localhost:8000/docs`
-Alternative docs (ReDoc): `http://localhost:8000/redoc`
+| What | URL |
+|---|---|
+| **AI Observability Dashboard** | http://localhost:5173/dev |
+| **Lead Discovery** | http://localhost:5173/discover |
+| **Mission Control (Dashboard)** | http://localhost:5173/dashboard |
+| **Pipeline** | http://localhost:5173/pipeline |
+| **Approval Queue** | http://localhost:5173/approval |
+| **Conversations** | http://localhost:5173/conversations |
+| **Audit Trail** | http://localhost:5173/audit |
+| **Backend API (Swagger UI)** | http://localhost:8000/docs |
+| **Backend API (ReDoc)** | http://localhost:8000/redoc |
+
+> **Note:** The frontend must be started separately — `cd frontend && npm run dev`. The AI Observability Dashboard at `/dev` auto-populates once any agent call is made (e.g. `POST /conversation/reply`).
 
 ---
 
