@@ -436,7 +436,7 @@ async def pipeline_lineage(lead_id: str):
             return "success" if fallback_has_data else "unknown"
         return "success" if trace.get("success", True) else "error"
 
-    def build_validation(v: dict) -> dict | None:
+    def build_validation(v: dict) -> Optional[dict]:
         if not v:
             return None
         return {
