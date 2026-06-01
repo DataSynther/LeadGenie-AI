@@ -230,6 +230,47 @@ export type ValidationRecord = {
 export const devValidationLog = (limit = 50) =>
   get<ValidationRecord[]>(`/dev/validation-log?limit=${limit}`);
 
+// ── Pipeline Lineage ──────────────────────────────────────────────────────────
+
+export type LineageIndexItem = {
+  lead_id: string;
+  timestamp: string;
+  decision: string;
+  subject: string;
+};
+
+export type LineageStageValidation = {
+  consequence: "allow" | "block" | "defer";
+  shape_ok: boolean | null;
+  context_ok: boolean | null;
+  policy_ok: boolean | null;
+  issues: string[];
+};
+
+export type LineageStage = {
+  id: string;
+  label: string;
+  icon: string;
+  module: string;
+  status: "success" | "flagged" | "blocked" | "error" | "unknown";
+  inputs: Record<string, unknown>;
+  outputs: Record<string, unknown>;
+  perf: { latency_ms: number | null; tokens: number | null; context_score: number | null };
+  validation: LineageStageValidation | null;
+};
+
+export type PipelineLineage = {
+  lead_id: string;
+  has_data: boolean;
+  final_status: string;
+  risk_score: number | null;
+  stages: LineageStage[];
+  edges: { source: string; target: string }[];
+};
+
+export const lineageIndex = () => get<LineageIndexItem[]>("/pipeline/lineage");
+export const pipelineLineage = (leadId: string) => get<PipelineLineage>(`/pipeline/lineage/${leadId}`);
+
 export const api = {
   dashboardStats,
   agentFeedRecent,
@@ -247,6 +288,8 @@ export const api = {
   devAgentMetrics,
   devTraces,
   devValidationLog,
+  lineageIndex,
+  pipelineLineage,
 };
 
 export default api;

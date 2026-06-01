@@ -354,6 +354,261 @@ async def dev_validation_log(limit: int = 50):
     return diagnostic_store.get_recent_validations(limit=limit)
 
 
+# ── Pipeline Lineage Endpoints ───────────────────────────────────────────────
+
+@app.get("/pipeline/lineage")
+async def lineage_index():
+    """List all lead IDs that have audit log data, most recent first."""
+    audit_dir = Path(__file__).parent / "storage" / "audit_logs"
+    if not audit_dir.exists():
+        return []
+    results = []
+    for f in sorted(audit_dir.glob("*.jsonl"), key=lambda p: p.stat().st_mtime, reverse=True):
+        lead_id = f.stem
+        try:
+            with open(f) as fh:
+                first_line = fh.readline().strip()
+            if not first_line:
+                continue
+            ev = json.loads(first_line)
+            payload = ev.get("payload", {})
+            content = payload.get("content", {})
+            results.append({
+                "lead_id": lead_id,
+                "timestamp": ev.get("timestamp", ""),
+                "decision": ev.get("decision", "unknown"),
+                "subject": content.get("subject", ""),
+            })
+        except Exception:
+            continue
+    return results
+
+
+@app.get("/pipeline/lineage/{lead_id}")
+async def pipeline_lineage(lead_id: str):
+    """Full pipeline lineage for a specific lead assembled from audit + diagnostics."""
+    from governance.audit_logger import AuditLogger
+
+    audit_events = AuditLogger().get_audit_trail(lead_id)
+
+    traces_path = Path(__file__).parent / "storage" / "diagnostics" / "traces.jsonl"
+    validations_path = Path(__file__).parent / "storage" / "diagnostics" / "validations.jsonl"
+
+    traces_by_agent: dict = {}
+    if traces_path.exists():
+        with open(traces_path) as f:
+            for line in f:
+                try:
+                    t = json.loads(line.strip())
+                    if t.get("lead_id") == lead_id:
+                        agent = t["agent"]
+                        traces_by_agent.setdefault(agent, []).append(t)
+                except Exception:
+                    continue
+
+    validations_by_agent: dict = {}
+    if validations_path.exists():
+        with open(validations_path) as f:
+            for line in f:
+                try:
+                    v = json.loads(line.strip())
+                    if v.get("lead_id") == lead_id:
+                        agent = v["agent"]
+                        validations_by_agent.setdefault(agent, []).append(v)
+                except Exception:
+                    continue
+
+    gov_event = audit_events[-1] if audit_events else None
+    gov_payload = gov_event.get("payload", {}) if gov_event else {}
+    email_content = gov_payload.get("content", {})
+    tone_result = gov_payload.get("tone_result", {})
+    hallucination_result = gov_payload.get("hallucination_result", {})
+    risk_score = gov_payload.get("risk_score")
+    final_decision = gov_event.get("decision", "unknown") if gov_event else "unknown"
+    has_data = bool(audit_events)
+
+    def latest(agent_map: dict, agent: str) -> dict:
+        entries = agent_map.get(agent, [])
+        return entries[-1] if entries else {}
+
+    def stage_status_from_trace(trace: dict, fallback_has_data: bool) -> str:
+        if not trace:
+            return "success" if fallback_has_data else "unknown"
+        return "success" if trace.get("success", True) else "error"
+
+    def build_validation(v: dict) -> dict | None:
+        if not v:
+            return None
+        return {
+            "consequence": v.get("consequence", "allow"),
+            "shape_ok": v.get("shape_ok"),
+            "context_ok": v.get("context_ok"),
+            "policy_ok": v.get("policy_ok"),
+            "issues": v.get("issues", []),
+        }
+
+    r_trace = latest(traces_by_agent, "research")
+    o_trace = latest(traces_by_agent, "outreach")
+    r_val = latest(validations_by_agent, "research")
+    o_val = latest(validations_by_agent, "outreach")
+
+    stages = [
+        {
+            "id": "lead_discovery",
+            "label": "Lead Discovery",
+            "icon": "🔍",
+            "module": "Apollo API",
+            "status": "success" if has_data else "unknown",
+            "inputs": {"source": "Apollo.io", "criteria": "company · title · seniority"},
+            "outputs": {"lead_id": lead_id, "fields": "name, title, email, company, linkedin_url"},
+            "perf": {"latency_ms": None, "tokens": None, "context_score": None},
+            "validation": None,
+        },
+        {
+            "id": "research",
+            "label": "Research Agent",
+            "icon": "🧠",
+            "module": "research_agent.py",
+            "status": stage_status_from_trace(r_trace, has_data),
+            "inputs": {"company": "company dict from Apollo", "signals": "hiring + growth signals"},
+            "outputs": {
+                "summary": (r_trace.get("response_preview", "") or "")[:200] or "(see trace)",
+                "fields": "pain_points · ai_readiness_score · growth_stage · strategic_priorities",
+            },
+            "perf": {
+                "latency_ms": r_trace.get("latency_ms"),
+                "tokens": r_trace.get("tokens_used"),
+                "context_score": r_trace.get("metadata", {}).get("context_score"),
+            },
+            "validation": build_validation(r_val),
+        },
+        {
+            "id": "context_builder",
+            "label": "Context Builder",
+            "icon": "🗂️",
+            "module": "context_builder.py",
+            "status": "success" if has_data else "unknown",
+            "inputs": {"lead": "lead dict", "company": "company dict", "signals": "signals", "research": "research output"},
+            "outputs": {"context": "unified lead + company + signals + research object passed to all downstream agents"},
+            "perf": {"latency_ms": None, "tokens": None, "context_score": None},
+            "validation": None,
+        },
+        {
+            "id": "trend_fetch",
+            "label": "Trend Agent",
+            "icon": "📈",
+            "module": "trend_agent.py",
+            "status": "success" if has_data else "unknown",
+            "inputs": {"sources": "RSS feeds + curated AI/SaaS trend list"},
+            "outputs": {"trends": "list of {title, summary, source, relevance_tags}"},
+            "perf": {"latency_ms": None, "tokens": None, "context_score": None},
+            "validation": None,
+        },
+        {
+            "id": "relevance",
+            "label": "Relevance Engine",
+            "icon": "🎯",
+            "module": "relevance_engine.py",
+            "status": "success" if has_data else "unknown",
+            "inputs": {"context": "lead context", "trends": "all fetched trends", "top_k": 3},
+            "outputs": {"top_trends": "3 semantically ranked trends via Voyage AI embeddings + cosine similarity"},
+            "perf": {"latency_ms": None, "tokens": None, "context_score": None},
+            "validation": None,
+        },
+        {
+            "id": "outreach_gen",
+            "label": "Outreach Agent",
+            "icon": "✉️",
+            "module": "outreach_agent.py",
+            "status": stage_status_from_trace(o_trace, has_data),
+            "inputs": {"context": "unified context", "top_trends": "3 ranked trends"},
+            "outputs": {
+                "subject": email_content.get("subject", ""),
+                "body_preview": (email_content.get("body", "") or "")[:300] + ("…" if len(email_content.get("body", "") or "") > 300 else ""),
+                "reasoning": (email_content.get("reasoning", "") or "")[:250] + ("…" if len(email_content.get("reasoning", "") or "") > 250 else ""),
+            },
+            "perf": {
+                "latency_ms": o_trace.get("latency_ms"),
+                "tokens": o_trace.get("tokens_used"),
+                "context_score": o_trace.get("metadata", {}).get("context_score"),
+            },
+            "validation": build_validation(o_val),
+        },
+        {
+            "id": "tone_check",
+            "label": "Tone Validator",
+            "icon": "🎙️",
+            "module": "tone_validator.py",
+            "status": ("success" if tone_result.get("passed") else "flagged") if tone_result else ("unknown" if not has_data else "success"),
+            "inputs": {"email_body": "generated email"},
+            "outputs": {
+                "passed": tone_result.get("passed"),
+                "issues": tone_result.get("issues", []),
+            },
+            "perf": {"latency_ms": None, "tokens": None, "context_score": None},
+            "validation": None,
+        },
+        {
+            "id": "hallucination_check",
+            "label": "Hallucination Check",
+            "icon": "🔬",
+            "module": "hallucination_checker.py",
+            "status": ("success" if hallucination_result.get("passed") else "flagged") if hallucination_result else ("unknown" if not has_data else "success"),
+            "inputs": {"email_body": "generated email", "source_facts": "verified company + lead facts from Apollo"},
+            "outputs": {
+                "passed": hallucination_result.get("passed"),
+                "violations": hallucination_result.get("violations", []),
+            },
+            "perf": {"latency_ms": None, "tokens": None, "context_score": None},
+            "validation": None,
+        },
+        {
+            "id": "risk_engine",
+            "label": "Risk Engine",
+            "icon": "⚖️",
+            "module": "risk_engine.py",
+            "status": "flagged" if final_decision == "flagged" else ("success" if final_decision == "approved" else "unknown"),
+            "inputs": {
+                "tone_passed": tone_result.get("passed"),
+                "hallucination_passed": hallucination_result.get("passed"),
+                "issues": gov_payload.get("issues", []),
+            },
+            "outputs": {
+                "risk_score": risk_score,
+                "decision": final_decision,
+                "threshold": "< 0.4 → auto-approve  |  ≥ 0.4 → approval queue",
+            },
+            "perf": {"latency_ms": None, "tokens": None, "context_score": None},
+            "validation": None,
+        },
+        {
+            "id": "final",
+            "label": "Email Sent" if final_decision == "approved" else "Approval Queue" if final_decision == "flagged" else "Pending",
+            "icon": "🚀" if final_decision == "approved" else "🕐",
+            "module": "email_sender.py" if final_decision == "approved" else "approval_queue",
+            "status": "success" if final_decision == "approved" else ("flagged" if final_decision == "flagged" else "unknown"),
+            "inputs": {"email": "governance-approved email", "lead_email": "recipient address"},
+            "outputs": {
+                "sent": final_decision == "approved",
+                "queued_for_review": final_decision == "flagged",
+            },
+            "perf": {"latency_ms": None, "tokens": None, "context_score": None},
+            "validation": None,
+        },
+    ]
+
+    edges = [{"source": stages[i]["id"], "target": stages[i + 1]["id"]} for i in range(len(stages) - 1)]
+
+    return {
+        "lead_id": lead_id,
+        "has_data": has_data,
+        "final_status": final_decision,
+        "risk_score": risk_score,
+        "stages": stages,
+        "edges": edges,
+    }
+
+
 @app.post("/api/webhook/inbound-reply")
 async def inbound_email_reply(request: Request):
     """Receives inbound email replies forwarded by Resend or any email routing service.

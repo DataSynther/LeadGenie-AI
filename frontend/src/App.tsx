@@ -8,6 +8,7 @@ import { ConversationsPage } from "./pages/ConversationsPage";
 import { ApprovalQueuePage } from "./pages/ApprovalQueuePage";
 import { AuditTrailPage } from "./pages/AuditTrailPage";
 import { DevDashboardPage } from "./pages/DevDashboardPage";
+import { PipelineLineagePage } from "./pages/PipelineLineagePage";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Route path="/approval" element={<ApprovalQueuePage />} />
         <Route path="/audit" element={<AuditTrailPage />} />
         <Route path="/dev" element={<DevDashboardPage />} />
+        <Route path="/lineage" element={<PipelineLineagePage />} />
       </Route>
     </Routes>
   );
