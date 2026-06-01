@@ -1,0 +1,11 @@
+.git
+.gitignore
+*.md
+docs/
+frontend/
+__pycache__
+**/__pycache__
+*.pyc
+*.pyo
+.venv
+venv/

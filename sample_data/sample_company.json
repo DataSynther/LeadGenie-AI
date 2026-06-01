@@ -1,0 +1,13 @@
+{
+  "id": "org_acme_001",
+  "name": "Acme Corp",
+  "domain": "acme-corp.com",
+  "industry": "Software",
+  "employee_count": 320,
+  "revenue_estimate": 45000000,
+  "funding_stage": "Series B",
+  "technologies": ["Snowflake", "Salesforce", "AWS", "Python", "React"],
+  "description": "Acme Corp builds enterprise data infrastructure tools for mid-market companies.",
+  "headquarters": "San Francisco, CA",
+  "linkedin_url": "https://linkedin.com/company/acme-corp"
+}

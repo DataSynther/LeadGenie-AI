@@ -1,0 +1,146 @@
+@import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@300;400;500;600&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Light mode tokens ───────────────────────────────────────── */
+:root {
+  color-scheme: light;
+
+  --c-brand:         106 50 122;
+  --c-brand-soft:    232 223 255;
+  --c-brand-dark:    74 34 86;
+
+  --c-gold:          250 184 24;
+  --c-gold-tint:     255 248 231;
+  --c-gold-dark:     176 122 0;
+
+  --c-ink:           51 51 51;
+  --c-ink-2:         128 128 128;
+  --c-ink-mute:      176 176 176;
+
+  --c-canvas:        250 250 251;
+  --c-surface:       255 255 255;
+  --c-surface-2:     243 239 245;
+  --c-surface-hover: 226 223 228;
+
+  --c-line:          208 202 212;
+  --c-line-soft:     234 230 236;
+
+  --c-info:          43 76 255;
+  --c-info-tint:     232 223 255;
+
+  --c-danger:        255 111 61;
+  --c-danger-tint:   255 239 233;
+
+  --c-magenta:       234 102 238;
+  --c-magenta-dark:  168 50 168;
+}
+
+/* ── Dark mode tokens ────────────────────────────────────────── */
+/* html.dark has specificity (0,1,1) — always beats :root (0,1,0) */
+html.dark {
+  color-scheme: dark;
+
+  --c-brand:         148 88 170;
+  --c-brand-soft:    42 22 60;
+  --c-brand-dark:    172 120 195;
+
+  --c-gold:          250 184 24;
+  --c-gold-tint:     40 30 8;
+  --c-gold-dark:     220 165 70;
+
+  --c-ink:           235 232 242;
+  --c-ink-2:         140 134 158;
+  --c-ink-mute:      78 72 96;
+
+  --c-canvas:        11 11 15;
+  --c-surface:       18 18 24;
+  --c-surface-2:     26 24 34;
+  --c-surface-hover: 36 34 46;
+
+  --c-line:          52 48 64;
+  --c-line-soft:     36 32 50;
+
+  --c-info:          92 116 255;
+  --c-info-tint:     18 24 60;
+
+  --c-danger:        255 120 80;
+  --c-danger-tint:   48 18 12;
+
+  --c-magenta:       234 102 238;
+  --c-magenta-dark:  200 90 200;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  html {
+    /* Direct reference — not @apply — so no build-time inlining risk */
+    background-color: rgb(var(--c-canvas));
+  }
+
+  body {
+    background-color: rgb(var(--c-canvas));
+    color: rgb(var(--c-ink));
+    @apply font-sans antialiased;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* Smooth theme transitions (only fires on user toggle, not on page load) */
+  html.theme-transitioning *,
+  html.theme-transitioning *::before,
+  html.theme-transitioning *::after {
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      color 0.15s ease,
+      box-shadow 0.2s ease !important;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgb(var(--c-line));
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgb(var(--c-ink-mute));
+  }
+}
+
+@layer components {
+  .card-base {
+    @apply bg-surface border border-line-soft rounded-[10px] shadow-card overflow-hidden;
+  }
+
+  .btn-primary {
+    @apply bg-brand text-white px-3.5 py-2 rounded-md text-xs font-semibold cursor-pointer transition-all border-0;
+  }
+  .btn-primary:hover {
+    @apply -translate-y-px shadow-btn-brand;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent text-ink-2 border border-line px-3.5 py-2 rounded-md text-xs font-semibold cursor-pointer transition-colors;
+  }
+  .btn-ghost:hover {
+    @apply bg-surface-2 text-ink;
+  }
+
+  .label-mono {
+    @apply font-mono text-label uppercase text-ink-mute;
+  }
+}
