@@ -43,6 +43,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+_ACTIVITY_FILE = Path("/tmp/leadgenie_last_activity")
+
+@app.middleware("http")
+async def touch_activity_marker(request: Request, call_next):
+    """Update idle-shutdown activity marker on every request."""
+    try:
+        _ACTIVITY_FILE.touch()
+    except OSError:
+        pass
+    return await call_next(request)
+
 apollo_people = ApolloPeopleService()
 apollo_company = ApolloCompanyService()
 apollo_signals = ApolloSignalsService()
@@ -473,6 +484,24 @@ async def dev_self_eval_stats():
 async def dev_prompt_versions():
     """Per prompt-version stats: runs, pass rates, avg attempts, recent runs with correction history."""
     return diagnostic_store.get_prompt_version_stats()
+
+
+@app.get("/dev/explainability/{lead_id}")
+async def dev_explainability(lead_id: str):
+    """Pillar 4: return context-field influence map and trend-selection reasoning for a lead's outreach."""
+    traces = diagnostic_store.get_recent_traces(limit=200)
+    for trace in traces:
+        if trace.get("lead_id") == lead_id and trace.get("agent") == "outreach":
+            citations = (trace.get("metadata") or {}).get("citations") or {}
+            explainability = citations.get("explainability")
+            if explainability:
+                return {
+                    "lead_id": lead_id,
+                    "agent": "outreach",
+                    "ts": trace.get("ts"),
+                    **explainability,
+                }
+    raise HTTPException(status_code=404, detail="No explainability data found for this lead.")
 
 
 # ── Pipeline Lineage Endpoints ───────────────────────────────────────────────

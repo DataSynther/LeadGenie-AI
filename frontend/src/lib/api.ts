@@ -400,6 +400,36 @@ export type PromptVersionStats = {
 export const devPromptVersions = () =>
   get<Record<string, PromptVersionStats>>("/dev/prompt-versions");
 
+// ── Pillar 4 Explainability ─────────────────────────────────────────────────
+
+export type ContextFieldInfluence = {
+  field: string;
+  populated: boolean;
+  value_preview: string | null;
+  influence: string;
+  used: boolean;
+};
+
+export type TrendScore = {
+  title: string | null;
+  source: string | null;
+  relevance: number;
+  reasons: string[];
+  selected: boolean;
+};
+
+export type ExplainabilityReport = {
+  lead_id: string;
+  agent: string;
+  ts: string;
+  context_field_influence: ContextFieldInfluence[];
+  trend_selection: TrendScore[];
+  selected_trend: string | null;
+};
+
+export const devExplainability = (leadId: string) =>
+  get<ExplainabilityReport>(`/dev/explainability/${leadId}`);
+
 export const api = {
   dashboardStats,
   agentFeedRecent,
@@ -424,6 +454,7 @@ export const api = {
   devInterpretations,
   devSelfEvalStats,
   devPromptVersions,
+  devExplainability,
 };
 
 export default api;

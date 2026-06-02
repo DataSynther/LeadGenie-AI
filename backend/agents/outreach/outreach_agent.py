@@ -192,8 +192,85 @@ class OutreachAgent:
                 {"title": t.get("title"), "source": t.get("source", "Trend Agent"), "url": t.get("url")}
                 for t in (top_trends or [])[:3]
             ],
+            "explainability": self._build_explainability(context, top_trends),
         }
         return {k: v for k, v in citations.items() if v}
+
+    def _build_explainability(self, context: dict, top_trends: list) -> dict:
+        """Pillar 4: explain which context fields and which trend drove the email.
+
+        Returns a dict with:
+          context_field_influence – each field's populated state + why it matters
+          trend_selection         – scored ranking of all available trends
+        """
+        lead = context.get("lead") or {}
+        company = context.get("company") or {}
+        research = context.get("research") or {}
+
+        # ── context field influence map ────────────────────────────────────────
+        field_influence = []
+        _fields = [
+            ("lead.name",              lead.get("name"),                  "personalises greeting & subject"),
+            ("lead.title",             lead.get("title"),                 "informs seniority framing"),
+            ("company.name",           company.get("name"),               "required for context credibility"),
+            ("company.industry",       company.get("industry"),           "selects industry-relevant pain points"),
+            ("company.employee_count", company.get("employee_count"),     "tailors scale-related messaging"),
+            ("research.summary",       research.get("summary"),           "provides company-specific narrative"),
+            ("research.pain_points",   research.get("pain_points"),       "anchors value proposition to known pain"),
+            ("research.signals",       research.get("signals"),           "surfaces recent triggers for outreach timing"),
+        ]
+        for field_path, value, reason in _fields:
+            populated = bool(value) and value not in ("", [], None)
+            field_influence.append({
+                "field":     field_path,
+                "populated": populated,
+                "value_preview": str(value)[:80] if populated else None,
+                "influence": reason,
+                "used":      populated,
+            })
+
+        # ── trend selection reasoning ──────────────────────────────────────────
+        industry = (company.get("industry") or "").lower()
+        title    = (lead.get("title") or "").lower()
+        pain_str = " ".join(research.get("pain_points") or []).lower()
+
+        scored_trends = []
+        for i, trend in enumerate(top_trends or []):
+            t_title = (trend.get("title") or "").lower()
+            t_body  = (trend.get("summary") or trend.get("description") or "").lower()
+            combined = f"{t_title} {t_body}"
+
+            score = 0.0
+            reasons = []
+
+            if industry and industry in combined:
+                score += 0.4
+                reasons.append(f"industry '{industry}' mentioned in trend")
+            if any(word in combined for word in title.split()):
+                score += 0.3
+                reasons.append("lead title keywords match trend content")
+            if pain_str and any(w in combined for w in pain_str.split() if len(w) > 4):
+                score += 0.3
+                reasons.append("pain-point keywords overlap with trend")
+            if i == 0:
+                score += 0.1
+                reasons.append("ranked #1 by TrendAgent relevance score")
+
+            scored_trends.append({
+                "title":       trend.get("title"),
+                "source":      trend.get("source"),
+                "relevance":   round(min(score, 1.0), 2),
+                "reasons":     reasons,
+                "selected":    i == 0,
+            })
+
+        scored_trends.sort(key=lambda x: x["relevance"], reverse=True)
+
+        return {
+            "context_field_influence": field_influence,
+            "trend_selection":         scored_trends,
+            "selected_trend":          (top_trends[0].get("title") if top_trends else None),
+        }
 
     def respond_to_objection(self, context: dict, objection: str) -> dict:
         """Generate a response to a lead's objection."""
