@@ -349,6 +349,47 @@ export const devRetrievalStats = () => get<RetrievalStats>("/dev/retrieval-stats
 export const devInterpretations = () => get<InterpretationSummary>("/dev/interpretations");
 export const devSelfEvalStats = () => get<SelfEvalStats>("/dev/self-eval-stats");
 
+// ── Prompt Version Performance ─────────────────────────────────────────────
+
+export type PromptVersionRun = {
+  ts: string;
+  agent: string;
+  lead_id: string | null;
+  prompt_preview: string;
+  response_preview: string;
+  attempt_number: number;
+  attempt_history: {
+    attempt: number;
+    passed: boolean;
+    layers: Record<string, {
+      passed?: boolean;
+      consequence?: string;
+      issues?: string[];
+      violations?: string[];
+      confidence?: number;
+    }>;
+  }[];
+  retrieval_score: number | null;
+  self_eval_confidence: number | null;
+  diagnostic_categories: string[];
+  latency_ms: number | null;
+  tokens_used: number | null;
+};
+
+export type PromptVersionStats = {
+  total_runs: number;
+  first_attempt_pass_rate: number;
+  avg_attempts: number;
+  attempt_distribution: Record<string, number>;
+  avg_retrieval_score: number | null;
+  avg_self_eval_confidence: number | null;
+  agent: string;
+  recent_runs: PromptVersionRun[];
+};
+
+export const devPromptVersions = () =>
+  get<Record<string, PromptVersionStats>>("/dev/prompt-versions");
+
 export const api = {
   dashboardStats,
   agentFeedRecent,
@@ -372,6 +413,7 @@ export const api = {
   devRetrievalStats,
   devInterpretations,
   devSelfEvalStats,
+  devPromptVersions,
 };
 
 export default api;

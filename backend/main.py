@@ -22,6 +22,7 @@ from agents.relevance.relevance_engine import RelevanceEngine
 from agents.outreach.outreach_agent import OutreachAgent
 from agents.conversation.conversation_agent import ConversationAgent
 from governance.risk_engine import RiskEngine
+from governance.orchestrator import GovernanceOrchestrator
 from learning.feedback_collector import FeedbackCollector
 from learning.learning_engine import LearningEngine
 from scheduling.scheduler import Scheduler
@@ -52,6 +53,11 @@ relevance_engine = RelevanceEngine()
 outreach_agent = OutreachAgent()
 conversation_agent = ConversationAgent()
 risk_engine = RiskEngine()
+governance_orchestrator = GovernanceOrchestrator(
+    tone_validator=risk_engine.tone_validator,
+    hallucination_checker=risk_engine.hallucination_checker,
+    risk_engine=risk_engine,
+)
 feedback_collector = FeedbackCollector()
 learning_engine = LearningEngine()
 scheduler = Scheduler()
@@ -119,21 +125,30 @@ async def generate_outreach(req: OutreachRequest):
     trends = trend_agent.get_current_trends()
     top_trends = relevance_engine.rank_trends(context, trends, top_k=3)
 
-    email = outreach_agent.generate_email(context, top_trends)
-
     source_facts = {
         "company_name": company.get("name"),
         "industry": company.get("industry"),
         "lead_title": lead.get("title"),
+        "description": company.get("description"),
+        "employee_count": company.get("employee_count"),
+        "technologies": company.get("technologies", []),
     }
-    governance = risk_engine.evaluate(req.lead_id, email, source_facts)
+
+    result = governance_orchestrator.run(
+        outreach_agent=outreach_agent,
+        context=context,
+        top_trends=top_trends,
+        source_facts=source_facts,
+        lead_id=req.lead_id,
+    )
 
     return {
         "lead": lead,
         "company": company,
         "top_trends": top_trends,
-        "email": email,
-        "governance": governance,
+        "email": result["email"],
+        "governance": result["governance"],
+        "governance_attempt_history": result["governance_attempt_history"],
     }
 
 
@@ -452,6 +467,12 @@ async def dev_interpretations():
 async def dev_self_eval_stats():
     """Per-agent self-evaluation confidence distribution."""
     return diagnostic_store.get_self_eval_stats()
+
+
+@app.get("/dev/prompt-versions")
+async def dev_prompt_versions():
+    """Per prompt-version stats: runs, pass rates, avg attempts, recent runs with correction history."""
+    return diagnostic_store.get_prompt_version_stats()
 
 
 # ── Pipeline Lineage Endpoints ───────────────────────────────────────────────

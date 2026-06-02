@@ -79,6 +79,52 @@ class OutreachAgent:
         result["_attempt_history"] = attempt_history
         return result
 
+    def generate_single(
+        self,
+        context: dict,
+        top_trends: list,
+        correction_note: str = None,
+        attempt: int = 1,
+    ) -> dict:
+        """One Claude call for outreach generation. Used by GovernanceOrchestrator."""
+        lead = context["lead"]
+        company = context["company"]
+        research = context["research"]
+        top_trend = top_trends[0]["title"] if top_trends else "AI adoption trends"
+        lead_id = (context.get("lead") or {}).get("id")
+
+        base_prompt = INITIAL_EMAIL_TEMPLATE.format(
+            name=lead.get("name"),
+            title=lead.get("title"),
+            company=company.get("name"),
+            industry=company.get("industry"),
+            company_summary=research.get("summary", ""),
+            top_trend=top_trend,
+            pain_points=", ".join(research.get("pain_points", [])),
+        )
+        prompt = base_prompt + (correction_note or "")
+
+        tracer = AgentTracer(
+            agent="outreach", lead_id=lead_id, context=context,
+            prompt_version="outreach_email_v1",
+        )
+        with tracer.trace(prompt=prompt, system=SYSTEM) as t:
+            response = client.messages.create(
+                model=MODEL,
+                max_tokens=1024,
+                system=SYSTEM,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            text = re.sub(r"^```(?:json)?\s*", "", response.content[0].text.strip())
+            text = re.sub(r"\s*```$", "", text)
+            result = json.loads(text)
+            t.finish(response)
+            t.set_retrieval_score(compute_retrieval_score(result.get("body", ""), context))
+            t.set_self_eval(self_evaluate("outreach", result.get("body", ""), context_to_summary(context)))
+            t.set_citations(self._build_citations(context, top_trends))
+            t.set_attempt_info(attempt, [])
+        return result
+
     def _build_correction_prompt(self, issues: list, attempt: int) -> str:
         """Build correction instructions from previous validation failures."""
         lines = [

@@ -261,6 +261,69 @@ def get_self_eval_stats() -> dict:
     return result
 
 
+def get_prompt_version_stats() -> dict:
+    """Aggregate per prompt_version: runs, pass rates, avg attempts, recent runs."""
+    traces = _read_all(TRACES_FILE)
+
+    by_version: dict = defaultdict(list)
+    for t in traces:
+        pv = (t.get("metadata") or {}).get("prompt_version")
+        if pv:
+            by_version[pv].append(t)
+
+    result = {}
+    for version, version_traces in by_version.items():
+        total = len(version_traces)
+        attempt_nums = [(t.get("metadata") or {}).get("attempt_number", 1) for t in version_traces]
+        first_pass = sum(1 for t in version_traces
+                         if (t.get("metadata") or {}).get("attempt_number", 1) == 1
+                         and not t.get("diagnostic_categories"))
+        retrieval_scores = [(t.get("metadata") or {}).get("retrieval_score")
+                            for t in version_traces
+                            if (t.get("metadata") or {}).get("retrieval_score") is not None]
+        self_confs = [(t.get("metadata") or {}).get("self_eval", {}).get("confidence")
+                      for t in version_traces
+                      if (t.get("metadata") or {}).get("self_eval", {}).get("confidence") is not None]
+
+        # Attempt distribution: how many runs needed 1, 2, 3 attempts
+        attempt_dist = {1: 0, 2: 0, 3: 0}
+        for n in attempt_nums:
+            attempt_dist[min(n, 3)] += 1
+
+        # Recent runs (last 5), newest first
+        recent = sorted(version_traces, key=lambda t: t["ts"], reverse=True)[:5]
+        recent_runs = []
+        for t in recent:
+            meta = t.get("metadata") or {}
+            recent_runs.append({
+                "ts": t["ts"],
+                "agent": t["agent"],
+                "lead_id": t.get("lead_id"),
+                "prompt_preview": t.get("prompt_preview", "")[:400],
+                "response_preview": t.get("response_preview", "")[:400],
+                "attempt_number": meta.get("attempt_number", 1),
+                "attempt_history": meta.get("attempt_history") or [],
+                "retrieval_score": meta.get("retrieval_score"),
+                "self_eval_confidence": (meta.get("self_eval") or {}).get("confidence"),
+                "diagnostic_categories": t.get("diagnostic_categories", []),
+                "latency_ms": t.get("latency_ms"),
+                "tokens_used": t.get("tokens_used"),
+            })
+
+        result[version] = {
+            "total_runs": total,
+            "first_attempt_pass_rate": round(first_pass / total, 3) if total else 0,
+            "avg_attempts": round(sum(attempt_nums) / total, 2) if total else 1.0,
+            "attempt_distribution": attempt_dist,
+            "avg_retrieval_score": round(sum(retrieval_scores) / len(retrieval_scores), 3) if retrieval_scores else None,
+            "avg_self_eval_confidence": round(sum(self_confs) / len(self_confs), 3) if self_confs else None,
+            "agent": version_traces[0]["agent"] if version_traces else "unknown",
+            "recent_runs": recent_runs,
+        }
+
+    return result
+
+
 def _category_description(cat: str) -> str:
     return {
         CATEGORY_RETRIEVAL:     "Answer is semantically plausible but factually incorrect — retrieved context was close but wrong.",

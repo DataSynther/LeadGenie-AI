@@ -4,6 +4,7 @@ import {
   X,
   Activity,
   GitBranch,
+  BarChart2,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
@@ -22,6 +23,7 @@ const WORKSPACE: NavItem[] = [
   { to: "/discover", label: "Discover Leads", icon: Search },
   { to: "/dev", label: "AI Observability", icon: Activity, badge: { text: "DEV", tone: "brand" } },
   { to: "/lineage", label: "Pipeline Lineage", icon: GitBranch },
+  { to: "/prompt-versions", label: "Prompt Versions", icon: BarChart2, badge: { text: "NEW", tone: "brand" } },
   // { to: "/campaigns", label: "Campaigns", icon: Sparkles },
   // {
   //   to: "/pipeline",
