@@ -57,10 +57,10 @@ jobs:
           script: |
             set -e
 
-            mkdir -p /app/leadgenie
+            sudo mkdir -p /app/leadgenie
 
             # Write env file from secret (base64-encoded)
-            echo "${{ secrets.ENV_B64 }}" | base64 -d > /app/leadgenie/.env
+            echo "${{ secrets.ENV_B64 }}" | base64 -d | sudo tee /app/leadgenie/.env > /dev/null
 
             # Login to ECR
             aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
