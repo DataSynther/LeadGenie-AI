@@ -283,106 +283,147 @@ async def leads_list():
 
 @app.get("/approval-queue")
 async def approval_queue():
-    """Get approval queue with citations and validator checkpoints per item."""
-    leads = apollo_people.search_people({"per_page": 25})
+    """Approval queue built from real governance traces.
+
+    Shows the FINAL corrected email per lead — i.e. the last attempt that passed
+    all governance layers. Includes full correction history so the reviewer can
+    see what was wrong and how it was fixed.
+
+    Items are included when any of these are true:
+      - auto-correction was triggered (attempt_number > 1)
+      - final risk_score >= 0.4  (needs human sign-off)
+      - any governance layer was blocked/deferred on the final attempt
+    """
+    traces = diagnostic_store.get_recent_traces(limit=500)
+
+    # ── 1. Group outreach traces by lead_id, keep latest per lead ────────────
+    by_lead: dict[str, dict] = {}
+    for t in traces:
+        if t.get("agent") != "outreach":
+            continue
+        lead_id = t.get("lead_id")
+        if not lead_id:
+            continue
+        existing = by_lead.get(lead_id)
+        if existing is None or t["ts"] > existing["ts"]:
+            by_lead[lead_id] = t
+
+    # ── 2. Build queue from traces that needed review ─────────────────────────
     queue = []
-    items_data = [
-        {
-            "body": "Hi {name}, saw {company} just closed a funding round — our pricing typically comes in around $48k annually for teams your size. Worth a 20-min scoping call?",
-            "risk": "high", "trigger": "pricing_mention", "policy": "no_explicit_pricing", "conf": 0.91,
-            "checkpoints": {
-                "shape":          {"ok": True,  "issues": []},
-                "context":        {"ok": True,  "issues": []},
-                "policy":         {"ok": False, "issues": ["policy:explicit_pricing_mentioned"]},
-                "hallucination":  {"ok": False, "violations": ["'$48k annually' — pricing figure not sourced from CRM or pricing sheet; appears fabricated for this lead."]},
-            },
-            "citations": {
-                "lead_name":     {"value": "{name}", "source": "Apollo People API", "field": "lead.name"},
-                "company_name":  {"value": "{company}", "source": "Apollo Company API", "field": "company.name"},
-                "funding_round": {"value": "mentioned as recent", "source": "Research Agent (AI-generated)", "field": "research.signals"},
-                "pricing_figure":{"value": "$48k annually", "source": "UNKNOWN — not in source data", "field": "hallucinated"},
-                "team_size":     {"value": "teams your size", "source": "Apollo Company API (employee_count)", "field": "company.employee_count"},
-            },
-        },
-        {
-            "body": "Hi {name}, loved the recent product launch at {company}. We help teams like yours compress the research-to-outreach cycle significantly.",
-            "risk": "medium", "trigger": "unverified_claim", "policy": "factual_accuracy_policy", "conf": 0.76,
-            "checkpoints": {
-                "shape":          {"ok": True,  "issues": []},
-                "context":        {"ok": False, "issues": ["context:company_name_absent:{company}"]},
-                "policy":         {"ok": True,  "issues": []},
-                "hallucination":  {"ok": False, "violations": ["'recent product launch' — no product launch found in research data for this company."]},
-            },
-            "citations": {
-                "lead_name":      {"value": "{name}", "source": "Apollo People API", "field": "lead.name"},
-                "company_name":   {"value": "{company}", "source": "Apollo Company API", "field": "company.name"},
-                "product_launch": {"value": "recent launch mentioned", "source": "UNKNOWN — not in research", "field": "hallucinated"},
-                "cycle_claim":    {"value": "compress research-to-outreach cycle", "source": "LeadGenie product capability", "field": "seller_profile.capabilities"},
-            },
-        },
-        {
-            "body": "Hi {name}, noticed {company} is scaling fast. Our platform handles compliance automatically so your team can focus on pipeline.",
-            "risk": "medium", "trigger": "compliance_claim", "policy": "factual_accuracy_policy", "conf": 0.82,
-            "checkpoints": {
-                "shape":          {"ok": True, "issues": []},
-                "context":        {"ok": True, "issues": []},
-                "policy":         {"ok": True, "issues": []},
-                "hallucination":  {"ok": True, "violations": []},
-            },
-            "citations": {
-                "lead_name":      {"value": "{name}", "source": "Apollo People API", "field": "lead.name"},
-                "company_name":   {"value": "{company}", "source": "Apollo Company API", "field": "company.name"},
-                "scaling_signal": {"value": "headcount growth > 15% 12m", "source": "Apollo Signals API", "field": "signals.headcount_growth_12m"},
-                "compliance_auto":{"value": "handles compliance automatically", "source": "LeadGenie product capability", "field": "seller_profile.capabilities"},
-            },
-        },
-        {
-            "body": "Hi {name}, your work at {company} caught my attention. I'd love to show you how we're helping similar orgs close deals 2x faster.",
-            "risk": "high", "trigger": "performance_guarantee", "policy": "no_guarantees_policy", "conf": 0.88,
-            "checkpoints": {
-                "shape":          {"ok": True,  "issues": []},
-                "context":        {"ok": True,  "issues": []},
-                "policy":         {"ok": False, "issues": ["policy:performance_guarantee:close_deals_2x_faster"]},
-                "hallucination":  {"ok": True,  "violations": []},
-            },
-            "citations": {
-                "lead_name":     {"value": "{name}", "source": "Apollo People API", "field": "lead.name"},
-                "company_name":  {"value": "{company}", "source": "Apollo Company API", "field": "company.name"},
-                "2x_faster":     {"value": "close deals 2x faster", "source": "UNVERIFIED — performance guarantee not backed by cited study", "field": "policy_violation"},
-                "similar_orgs":  {"value": "similar orgs", "source": "Research Agent (industry comparison)", "field": "research.industry"},
-            },
-        },
-    ]
+    for lead_id, t in by_lead.items():
+        meta       = t.get("metadata") or {}
+        attempt_n  = meta.get("attempt_number") or 1
+        ah         = meta.get("attempt_history") or []
+        citations  = meta.get("citations") or {}
+        risk_score = meta.get("risk_score")
 
-    for i, lead in enumerate(leads[:4]):
-        item = items_data[i % len(items_data)]
-        fname = lead["name"].split()[0]
-        cname = lead["company"] or "your company"
-        body = item["body"].format(name=fname, company=cname)
+        # Determine if this item belongs in the queue
+        needed_correction = attempt_n > 1
+        high_risk         = risk_score is not None and risk_score >= 0.4
+        final_layers      = (ah[-1].get("layers") or {}) if ah else {}
+        any_layer_failed  = any(
+            not (v.get("passed", True) and not v.get("violations"))
+            for v in final_layers.values()
+        )
 
-        # Resolve citation placeholders to actual lead values
-        citations = {}
-        for k, v in item["citations"].items():
-            resolved = dict(v)
-            resolved["value"] = str(resolved.get("value") or "").replace("{name}", lead["name"]).replace("{company}", cname)
-            citations[k] = resolved
+        if not (needed_correction or high_risk or any_layer_failed):
+            continue
+
+        # ── Parse final email from response_preview ───────────────────────────
+        preview = t.get("response_preview", "")
+        subject, body = "", preview[:300]
+        try:
+            import re as _re
+            clean = _re.sub(r"^```(?:json)?\s*", "", preview.strip())
+            clean = _re.sub(r"\s*```$", "", clean)
+            parsed = json.loads(clean)
+            subject = parsed.get("subject", "")
+            body    = parsed.get("body", preview[:300])
+        except Exception:
+            pass
+
+        # ── Build checkpoint summary from final attempt ───────────────────────
+        checkpoints = {}
+        if ah:
+            last = ah[-1].get("layers") or {}
+            val_layer  = last.get("validator") or {}
+            tone_layer = last.get("tone") or {}
+            hal_layer  = last.get("hallucination") or {}
+            checkpoints = {
+                "shape":   {"ok": val_layer.get("consequence", "allow") == "allow",
+                            "issues": [i for i in (val_layer.get("issues") or []) if i.startswith("shape:")]},
+                "context": {"ok": val_layer.get("consequence", "allow") == "allow",
+                            "issues": [i for i in (val_layer.get("issues") or []) if i.startswith("context:")]},
+                "policy":  {"ok": val_layer.get("consequence", "allow") == "allow",
+                            "issues": [i for i in (val_layer.get("issues") or []) if i.startswith("policy:")]},
+                "hallucination": {
+                    "ok":         hal_layer.get("passed", True) and not hal_layer.get("violations"),
+                    "violations": hal_layer.get("violations") or [],
+                    "confidence": hal_layer.get("confidence"),
+                },
+                "tone": {
+                    "ok":    tone_layer.get("passed", True),
+                    "issues": tone_layer.get("issues") or [],
+                },
+            }
+
+        # ── Derive trigger / policy labels from correction history ────────────
+        all_issues: list[str] = []
+        for entry in ah:
+            for layer_res in (entry.get("layers") or {}).values():
+                all_issues += layer_res.get("issues", [])
+                all_issues += layer_res.get("violations", [])
+
+        trigger = "auto_corrected" if needed_correction else "risk_score"
+        policy  = next((i.split(":")[1] for i in all_issues if i.startswith("policy:")), "governance_policy")
+
+        # ── Risk level from score ─────────────────────────────────────────────
+        rs = risk_score or 0.0
+        risk_level = "high" if rs >= 0.7 else "medium" if rs >= 0.4 else "low"
+
+        # ── Correction summary for the reviewer ──────────────────────────────
+        correction_summary = []
+        for entry in ah:
+            if entry.get("passed"):
+                continue
+            issues_found = []
+            for layer_name, layer_res in (entry.get("layers") or {}).items():
+                issues_found += layer_res.get("issues", [])
+                issues_found += layer_res.get("violations", [])
+            if issues_found:
+                correction_summary.append({
+                    "attempt": entry.get("attempt"),
+                    "issues": issues_found[:5],
+                })
 
         queue.append({
-            "event_id": f"evt_{lead['id'][:8]}",
-            "lead_id": lead["id"],
-            "lead_name": lead["name"],
-            "lead_title": lead["title"],
-            "company_name": cname,
-            "risk_level": item["risk"],
-            "risk_score": round(item["conf"] - 0.1 + (i * 0.03), 2),
-            "timestamp": f"2026-05-27T{10 + i}:{15 + i * 3:02d}:00Z",
-            "content_snippet": body,
-            "trigger": item["trigger"],
-            "policy": item["policy"],
-            "confidence": item["conf"],
-            "checkpoints": item["checkpoints"],
-            "citations": citations,
+            "event_id":            f"evt_{lead_id[:8]}_{attempt_n}",
+            "lead_id":             lead_id,
+            "lead_name":           meta.get("context_fields_used", {}).get("lead", {}) and "",
+            "lead_title":          "",
+            "company_name":        "",
+            "risk_level":          risk_level,
+            "risk_score":          round(rs, 2),
+            "timestamp":           t["ts"],
+            "subject":             subject,
+            "content_snippet":     body[:400],
+            "trigger":             trigger,
+            "policy":              policy,
+            "confidence":          meta.get("confidence") or meta.get("self_eval", {}) and 0.0,
+            "total_attempts":      attempt_n,
+            "correction_summary":  correction_summary,
+            "checkpoints":         checkpoints,
+            "citations":           {k: v for k, v in citations.items() if k != "explainability"},
+            "auto_corrected":      needed_correction,
+            "final_passed":        (ah[-1].get("passed") if ah else True),
         })
+
+    # Sort: auto-corrected + high risk first
+    queue.sort(key=lambda x: (
+        0 if x["risk_level"] == "high" else 1 if x["risk_level"] == "medium" else 2,
+        not x["auto_corrected"],
+        x["timestamp"],
+    ))
     return queue
 
 
