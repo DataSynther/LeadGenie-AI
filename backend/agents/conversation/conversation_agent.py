@@ -6,6 +6,7 @@ from .intent_detector import IntentDetector
 
 from observability.agent_tracer import AgentTracer
 from observability.validator import Validator
+from observability.self_evaluator import self_evaluate, context_to_summary
 
 client = Anthropic()
 MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
@@ -92,6 +93,7 @@ class ConversationAgent:
             )
             response_text = response.content[0].text
             t.finish(response)
+            t.set_self_eval(self_evaluate("conversation", response_text, context_to_summary(context)))
             Validator("conversation", lead_id=lead_id, context=context).validate(response_text, tracker=t)
         return response_text
 

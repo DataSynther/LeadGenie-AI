@@ -8,6 +8,7 @@ from anthropic import Anthropic
 
 from observability.agent_tracer import AgentTracer
 from observability.validator import Validator
+from observability.self_evaluator import self_evaluate, context_to_summary
 
 client = Anthropic()
 MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
@@ -57,6 +58,7 @@ Respond with JSON only:
             if result.get("intent") not in VALID_INTENTS:
                 result["intent"] = "neutral"
             t.finish(response, confidence=result.get("confidence"))
+            t.set_self_eval(self_evaluate("intent", result.get("intent", ""), context_to_summary(context or {})))
             Validator("intent", lead_id=lead_id, context=context or {}).validate(result, tracker=t)
 
         self._log_event(reply, result, lead_id, context)

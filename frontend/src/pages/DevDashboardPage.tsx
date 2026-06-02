@@ -3,6 +3,7 @@ import { cn } from "../lib/utils";
 import { Topbar } from "../components/layout/Topbar";
 import { StatusPill } from "../components/StatusPill";
 import { api, type AgentMetrics, type TraceRecord, type ValidationRecord } from "../lib/api";
+import type { CitationEntry, RetrievalStats, InterpretationSummary, SelfEvalStats } from "../lib/api";
 
 // ── Colour tokens for diagnostic categories ──────────────────────────────────
 const CATEGORY_COLOURS: Record<string, string> = {
@@ -485,6 +486,190 @@ function TraceFeed() {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
+// ── Retrieval Grounding Panel ─────────────────────────────────────────────────
+
+function RetrievalGroundingPanel() {
+  const { data: stats } = useQuery<RetrievalStats>({
+    queryKey: ["devRetrievalStats"],
+    queryFn: api.devRetrievalStats,
+    refetchInterval: 10_000,
+  });
+  const { data: selfEval } = useQuery<SelfEvalStats>({
+    queryKey: ["devSelfEvalStats"],
+    queryFn: api.devSelfEvalStats,
+    refetchInterval: 10_000,
+  });
+
+  const maxBucket = stats ? Math.max(...stats.histogram.map(h => h.count), 1) : 1;
+
+  return (
+    <Card>
+      <SectionHeader icon="🔗" title="Retrieval Grounding" sub="How well generated content maps back to source context" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Score histogram */}
+        <div>
+          <div className="text-[11px] text-ink-mute font-mono mb-3">Score distribution (0 = hallucinated, 1 = fully grounded)</div>
+          {stats ? (
+            <div className="space-y-1.5">
+              {stats.histogram.map(h => (
+                <div key={h.range} className="flex items-center gap-2 text-[11px]">
+                  <span className="font-mono text-ink-mute w-14 shrink-0">{h.range}</span>
+                  <div className="flex-1 h-4 bg-surface-2 rounded overflow-hidden">
+                    <div
+                      className={cn("h-full rounded", parseInt(h.range) < 40 ? "bg-red-400" : parseInt(h.range) < 60 ? "bg-amber-400" : "bg-emerald-400")}
+                      style={{ width: `${Math.round((h.count / maxBucket) * 100)}%` }}
+                    />
+                  </div>
+                  <span className="font-mono text-ink w-5 text-right shrink-0">{h.count}</span>
+                </div>
+              ))}
+              <div className="mt-2 pt-2 border-t border-line-soft flex gap-4 text-[11px] font-mono">
+                <span className="text-ink-mute">avg: <span className="text-ink">{stats.avg?.toFixed(3) ?? "—"}</span></span>
+                <span className="text-red-400">below 0.55: {stats.below_threshold}</span>
+                <span className="text-ink-mute">total: {stats.count}</span>
+              </div>
+            </div>
+          ) : (
+            <span className="text-[11px] text-ink-mute">No retrieval scores yet — run an outreach generation.</span>
+          )}
+        </div>
+        {/* Self-eval confidence */}
+        <div>
+          <div className="text-[11px] text-ink-mute font-mono mb-3">Self-evaluation confidence by agent</div>
+          {selfEval && Object.keys(selfEval).length > 0 ? (
+            <div className="space-y-2">
+              {Object.entries(selfEval).map(([agent, s]) => (
+                <div key={agent} className="flex items-center gap-3 text-[11px]">
+                  <span className={cn("font-mono px-1.5 py-px rounded capitalize shrink-0", AGENT_COLOURS[agent] ?? "bg-surface-2 text-ink-2")}>{agent}</span>
+                  <div className="flex-1 h-2 bg-surface-2 rounded overflow-hidden">
+                    <div className={cn("h-full rounded", s.avg_confidence >= 0.65 ? "bg-emerald-400" : "bg-amber-400")} style={{ width: `${Math.round(s.avg_confidence * 100)}%` }} />
+                  </div>
+                  <span className="font-mono text-ink w-8 text-right">{(s.avg_confidence * 100).toFixed(0)}%</span>
+                  {s.below_threshold > 0 && <span className="text-amber-400 font-mono">{s.below_threshold}↓</span>}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <span className="text-[11px] text-ink-mute">No self-eval data yet.</span>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+// ── Source Citations Panel ────────────────────────────────────────────────────
+
+function CitationsPanel() {
+  const { data: entries } = useQuery<CitationEntry[]>({
+    queryKey: ["devCitations"],
+    queryFn: () => api.devCitations(20),
+    refetchInterval: 10_000,
+  });
+
+  function renderCitation(key: string, val: unknown) {
+    if (val === null || val === undefined) return null;
+    if (Array.isArray(val)) {
+      return (
+        <div key={key} className="text-[10px] text-ink-2">
+          <span className="text-ink-mute font-mono">{key}:</span>{" "}
+          {(val as { title?: string; source?: string; url?: string }[]).map((t, i) => (
+            <span key={i} className="ml-1">
+              {t.title}
+              {t.url
+                ? <a href={t.url} target="_blank" rel="noreferrer" className="text-brand underline ml-1">↗</a>
+                : <span className="text-ink-mute ml-1">({t.source})</span>
+              }
+            </span>
+          ))}
+        </div>
+      );
+    }
+    const c = val as { value?: unknown; source?: string; url?: string };
+    const display = Array.isArray(c.value) ? (c.value as string[]).slice(0, 2).join(", ") : String(c.value ?? "");
+    if (!display || display === "null") return null;
+    return (
+      <div key={key} className="flex gap-1.5 text-[10px]">
+        <span className="text-ink-mute font-mono shrink-0 w-28 truncate">{key}</span>
+        <span className="text-ink-2 truncate">{display}</span>
+        <span className="text-ink-mute ml-auto shrink-0">{c.source}</span>
+      </div>
+    );
+  }
+
+  return (
+    <Card>
+      <SectionHeader icon="📎" title="Source Citations" sub="Fact provenance for each outreach generation — what came from where" />
+      {!entries || entries.length === 0 ? (
+        <p className="text-[12px] text-ink-mute">No citations yet — run an outreach generation to see source attribution.</p>
+      ) : (
+        <div className="space-y-4 max-h-[420px] overflow-y-auto pr-1">
+          {entries.map((entry, i) => (
+            <div key={i} className="rounded-lg border border-line-soft bg-surface-2 p-3 space-y-1.5">
+              <div className="flex items-center gap-2 mb-2">
+                <span className={cn("font-mono text-[10px] px-1.5 py-px rounded capitalize", AGENT_COLOURS[entry.agent] ?? "bg-surface-2 text-ink-2")}>{entry.agent}</span>
+                {entry.retrieval_score != null && (
+                  <span className={cn("font-mono text-[10px] px-1.5 py-px rounded", entry.retrieval_score >= 0.55 ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400")}>
+                    retrieval {entry.retrieval_score.toFixed(3)}
+                  </span>
+                )}
+                <span className="text-[10px] text-ink-mute ml-auto font-mono">{fmtTime(entry.ts)}</span>
+              </div>
+              {entry.citations && Object.entries(entry.citations).map(([k, v]) => renderCitation(k, v))}
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+// ── Interpretation Drift Panel ────────────────────────────────────────────────
+
+function InterpretationDriftPanel() {
+  const { data: summary } = useQuery<InterpretationSummary>({
+    queryKey: ["devInterpretations"],
+    queryFn: api.devInterpretations,
+    refetchInterval: 10_000,
+  });
+
+  const entries = summary ? Object.entries(summary) : [];
+
+  return (
+    <Card>
+      <SectionHeader icon="🔀" title="Interpretation Drift" sub="Detects when a prompt version produces a structurally different output than known patterns" />
+      {entries.length === 0 ? (
+        <p className="text-[12px] text-ink-mute">No interpretation data yet. Drift is tracked per prompt version after 2+ runs.</p>
+      ) : (
+        <div className="space-y-3">
+          {entries.map(([pv, s]) => (
+            <div key={pv} className="rounded-lg border border-line-soft bg-surface-2 p-3">
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                <span className="font-mono text-[11px] text-ink">{pv}</span>
+                <span className={cn("font-mono text-[10px] px-1.5 py-px rounded capitalize", AGENT_COLOURS[s.agent] ?? "bg-surface-2 text-ink-2")}>{s.agent}</span>
+                <span className="text-[10px] text-ink-mute">{s.total_seen} runs</span>
+                {s.drift_events > 0
+                  ? <span className="ml-auto text-[10px] bg-amber-500/10 text-amber-400 px-1.5 py-px rounded font-mono">⚠ {s.drift_events} drift{s.drift_events > 1 ? "s" : ""}</span>
+                  : <span className="ml-auto text-[10px] bg-emerald-500/10 text-emerald-400 px-1.5 py-px rounded font-mono">✓ stable</span>
+                }
+              </div>
+              {s.recent_drift.length > 0 && (
+                <div className="space-y-1 mt-1">
+                  {s.recent_drift.map((d, i) => (
+                    <div key={i} className="text-[10px] text-ink-mute font-mono truncate">
+                      {fmtTime(d.ts)} — "{d.angle}"
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
 export function DevDashboardPage() {
   const { data: metrics } = useQuery({
     queryKey: ["devAgentMetrics"],
@@ -532,6 +717,15 @@ export function DevDashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <SystemInsightsPanel />
           <TraceFeed />
+        </div>
+
+        {/* Row 5: Retrieval Grounding */}
+        <RetrievalGroundingPanel />
+
+        {/* Row 6: Citations + Interpretation Drift */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <CitationsPanel />
+          <InterpretationDriftPanel />
         </div>
       </div>
     </>

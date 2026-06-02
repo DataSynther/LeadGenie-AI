@@ -6,6 +6,8 @@ from .prompt_templates import INITIAL_EMAIL_TEMPLATE, FOLLOW_UP_TEMPLATE, OBJECT
 
 from observability.agent_tracer import AgentTracer
 from observability.validator import Validator
+from observability.retrieval_checker import compute_retrieval_score
+from observability.self_evaluator import self_evaluate, context_to_summary
 
 client = Anthropic()
 MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
@@ -45,6 +47,16 @@ class OutreachAgent:
             text = re.sub(r"\s*```$", "", text)
             result = json.loads(text)
             t.finish(response)
+
+            # Retrieval check: how well does the email body map back to source context?
+            t.set_retrieval_score(compute_retrieval_score(result.get("body", ""), context))
+
+            # Self-evaluation: did the model feel it had enough info?
+            t.set_self_eval(self_evaluate("outreach", result.get("body", ""), context_to_summary(context)))
+
+            # Source citations: record provenance of every fact used
+            t.set_citations(self._build_citations(context, top_trends))
+
             Validator("outreach", lead_id=lead_id, context=context).validate(result, tracker=t)
         return result
 
@@ -75,6 +87,26 @@ class OutreachAgent:
             t.finish(response)
             Validator("outreach", lead_id=lead_id, context=context).validate(result, tracker=t)
         return result
+
+    def _build_citations(self, context: dict, top_trends: list) -> dict:
+        """Build source attribution map for each fact used in outreach generation."""
+        lead = context.get("lead") or {}
+        company = context.get("company") or {}
+        research = context.get("research") or {}
+        citations = {
+            "lead_name":      {"value": lead.get("name"), "source": "Apollo People API", "field": "lead.name"},
+            "lead_title":     {"value": lead.get("title"), "source": "Apollo People API", "field": "lead.title"},
+            "company_name":   {"value": company.get("name"), "source": "Apollo Company API", "field": "company.name"},
+            "industry":       {"value": company.get("industry"), "source": "Apollo Company API", "field": "company.industry"},
+            "employee_count": {"value": company.get("employee_count"), "source": "Apollo Company API", "field": "company.employee_count"},
+            "pain_points":    {"value": research.get("pain_points"), "source": "Research Agent (AI-generated)", "field": "research.pain_points"},
+            "summary":        {"value": (research.get("summary") or "")[:150], "source": "Research Agent (AI-generated)", "field": "research.summary"},
+            "top_trends":     [
+                {"title": t.get("title"), "source": t.get("source", "Trend Agent"), "url": t.get("url")}
+                for t in (top_trends or [])[:3]
+            ],
+        }
+        return {k: v for k, v in citations.items() if v}
 
     def respond_to_objection(self, context: dict, objection: str) -> dict:
         """Generate a response to a lead's objection."""

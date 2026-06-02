@@ -196,6 +196,71 @@ def _category_label(cat: str) -> str:
     }.get(cat, cat)
 
 
+def get_citations_log(limit: int = 50) -> list:
+    """Return recent traces that have citation metadata attached."""
+    traces = _read_all(TRACES_FILE)
+    cited = [
+        {
+            "ts": t["ts"],
+            "agent": t["agent"],
+            "lead_id": t.get("lead_id"),
+            "citations": t["metadata"].get("citations"),
+            "retrieval_score": t["metadata"].get("retrieval_score"),
+            "response_preview": t.get("response_preview", "")[:200],
+        }
+        for t in traces
+        if t.get("metadata", {}).get("citations")
+    ]
+    return cited[-limit:]
+
+
+def get_retrieval_stats() -> dict:
+    """Return retrieval score distribution across all traced calls."""
+    traces = _read_all(TRACES_FILE)
+    scores = [
+        t["metadata"]["retrieval_score"]
+        for t in traces
+        if t.get("metadata", {}).get("retrieval_score") is not None
+    ]
+    if not scores:
+        return {"count": 0, "avg": None, "below_threshold": 0, "histogram": []}
+
+    threshold = 0.55
+    buckets = [0, 0, 0, 0, 0]  # 0–0.2, 0.2–0.4, 0.4–0.6, 0.6–0.8, 0.8–1.0
+    for s in scores:
+        idx = min(int(s / 0.2), 4)
+        buckets[idx] += 1
+
+    return {
+        "count": len(scores),
+        "avg": round(sum(scores) / len(scores), 3),
+        "below_threshold": sum(1 for s in scores if s < threshold),
+        "histogram": [
+            {"range": f"{i*20}–{(i+1)*20}%", "count": buckets[i]}
+            for i in range(5)
+        ],
+    }
+
+
+def get_self_eval_stats() -> dict:
+    """Return self-evaluation confidence distribution across agents."""
+    traces = _read_all(TRACES_FILE)
+    by_agent: dict = defaultdict(list)
+    for t in traces:
+        se = t.get("metadata", {}).get("self_eval")
+        if se and se.get("confidence") is not None:
+            by_agent[t["agent"]].append(se["confidence"])
+
+    result = {}
+    for agent, confs in by_agent.items():
+        result[agent] = {
+            "count": len(confs),
+            "avg_confidence": round(sum(confs) / len(confs), 3),
+            "below_threshold": sum(1 for c in confs if c < 0.65),
+        }
+    return result
+
+
 def _category_description(cat: str) -> str:
     return {
         CATEGORY_RETRIEVAL:     "Answer is semantically plausible but factually incorrect — retrieved context was close but wrong.",

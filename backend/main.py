@@ -354,6 +354,31 @@ async def dev_validation_log(limit: int = 50):
     return diagnostic_store.get_recent_validations(limit=limit)
 
 
+@app.get("/dev/citations")
+async def dev_citations(limit: int = 50):
+    """Recent agent traces with source citation metadata attached."""
+    return diagnostic_store.get_citations_log(limit=limit)
+
+
+@app.get("/dev/retrieval-stats")
+async def dev_retrieval_stats():
+    """Retrieval score distribution and below-threshold counts."""
+    return diagnostic_store.get_retrieval_stats()
+
+
+@app.get("/dev/interpretations")
+async def dev_interpretations():
+    """Per-prompt-version interpretation counts and drift events."""
+    from observability import interpretation_tracker
+    return interpretation_tracker.get_summary()
+
+
+@app.get("/dev/self-eval-stats")
+async def dev_self_eval_stats():
+    """Per-agent self-evaluation confidence distribution."""
+    return diagnostic_store.get_self_eval_stats()
+
+
 # ── Pipeline Lineage Endpoints ───────────────────────────────────────────────
 
 @app.get("/pipeline/lineage")

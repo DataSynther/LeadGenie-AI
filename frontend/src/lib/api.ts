@@ -271,6 +271,42 @@ export type PipelineLineage = {
 export const lineageIndex = () => get<LineageIndexItem[]>("/pipeline/lineage");
 export const pipelineLineage = (leadId: string) => get<PipelineLineage>(`/pipeline/lineage/${leadId}`);
 
+// ── Deep Observability ─────────────────────────────────────────────────────
+
+export type CitationEntry = {
+  ts: string;
+  agent: string;
+  lead_id: string | null;
+  retrieval_score: number | null;
+  response_preview: string;
+  citations: Record<string, unknown> | null;
+};
+
+export type RetrievalStats = {
+  count: number;
+  avg: number | null;
+  below_threshold: number;
+  histogram: { range: string; count: number }[];
+};
+
+export type InterpretationSummary = Record<string, {
+  total_seen: number;
+  drift_events: number;
+  agent: string;
+  recent_drift: { ts: string; angle: string; lead_id: string | null }[];
+}>;
+
+export type SelfEvalStats = Record<string, {
+  count: number;
+  avg_confidence: number;
+  below_threshold: number;
+}>;
+
+export const devCitations = (limit = 50) => get<CitationEntry[]>(`/dev/citations?limit=${limit}`);
+export const devRetrievalStats = () => get<RetrievalStats>("/dev/retrieval-stats");
+export const devInterpretations = () => get<InterpretationSummary>("/dev/interpretations");
+export const devSelfEvalStats = () => get<SelfEvalStats>("/dev/self-eval-stats");
+
 export const api = {
   dashboardStats,
   agentFeedRecent,
@@ -290,6 +326,10 @@ export const api = {
   devValidationLog,
   lineageIndex,
   pipelineLineage,
+  devCitations,
+  devRetrievalStats,
+  devInterpretations,
+  devSelfEvalStats,
 };
 
 export default api;

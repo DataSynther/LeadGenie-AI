@@ -5,6 +5,7 @@ from anthropic import Anthropic
 
 from observability.agent_tracer import AgentTracer
 from observability.validator import Validator
+from observability.self_evaluator import self_evaluate, context_to_summary
 
 client = Anthropic()
 MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
@@ -50,6 +51,7 @@ Respond with valid JSON only.
             text = re.sub(r"\s*```$", "", text)
             result = json.loads(text)
             t.finish(response)
+            t.set_self_eval(self_evaluate("research", json.dumps(result)[:400], context_to_summary(context)))
             validation = Validator("research", lead_id=lead_id, context=context).validate(result, tracker=t)
             result["_validation"] = validation["consequence"]
         return result
