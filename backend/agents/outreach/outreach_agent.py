@@ -60,6 +60,48 @@ class OutreachAgent:
         text = re.sub(r"\s*```$", "", text)
         return json.loads(text)
 
+    def generate_whatsapp_followup(self, context: dict, outreach: dict) -> str:
+        """Generate a short WhatsApp follow-up grounded in the original email."""
+        lead = context.get("lead", {})
+        company = context.get("company", {})
+        research = context.get("research", {})
+        prompt = f"""
+Write one WhatsApp follow-up message for a lead who did not reply to an outreach email yet.
+
+Rules:
+- 1 to 3 short sentences.
+- Friendly, conversational, and WhatsApp-appropriate.
+- Preserve the original email's personalization and topic.
+- Do not copy the email body.
+- Include a lightweight CTA.
+- Return valid JSON only: {{"message": "..."}}
+
+Lead:
+- Name: {lead.get("name")}
+- Title: {lead.get("title")}
+
+Company:
+- Name: {company.get("name")}
+- Industry: {company.get("industry")}
+- Summary: {research.get("summary", "")}
+
+Original outreach:
+- Subject: {outreach.get("subject", "")}
+- Body: {outreach.get("body", "")}
+- Reasoning: {outreach.get("reasoning", "")}
+""".strip()
+
+        response = client.messages.create(
+            model=MODEL,
+            max_tokens=220,
+            system="You write concise, natural WhatsApp sales follow-ups. Always respond with valid JSON.",
+            messages=[{"role": "user", "content": prompt}],
+        )
+        text = re.sub(r"^```(?:json)?\s*", "", response.content[0].text.strip())
+        text = re.sub(r"\s*```$", "", text)
+        data = json.loads(text)
+        return str(data.get("message", "")).strip()
+
     def respond_to_objection(self, context: dict, objection: str) -> dict:
         """Generate a response to a lead's objection."""
         lead = context["lead"]

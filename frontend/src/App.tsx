@@ -7,6 +7,7 @@ import { PipelinePage } from "./pages/PipelinePage";
 import { ConversationsPage } from "./pages/ConversationsPage";
 import { ApprovalQueuePage } from "./pages/ApprovalQueuePage";
 import { AuditTrailPage } from "./pages/AuditTrailPage";
+import { WhatsAppInboxPage } from "./pages/WhatsAppInboxPage";
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
         <Route path="/pipeline" element={<PipelinePage />} />
         <Route path="/conversations" element={<ConversationsPage />} />
         <Route path="/approval" element={<ApprovalQueuePage />} />
+        <Route path="/whatsapp" element={<WhatsAppInboxPage />} />
         <Route path="/audit" element={<AuditTrailPage />} />
       </Route>
     </Routes>

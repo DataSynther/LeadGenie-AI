@@ -77,3 +77,62 @@ stored = store.get_by_email("lead@company.com")
 ```
 
 Persists to `backend/storage/lead_contexts/{sanitized_email}.json`. Directory is gitignored.
+
+The store also supports phone lookup with `get_by_phone(phone)`, so WhatsApp follow-ups and inbound WhatsApp replies can resolve back to the same saved lead context.
+
+---
+
+## twilio_whatsapp.py
+
+Sends WhatsApp messages through the hosted Render/Twilio mailbox service. This lets the local backend call a single HTTP endpoint while Twilio credentials stay on the hosted service.
+
+Hosted mailbox environment:
+- `TWILIO_ACCOUNT_SID`
+- `TWILIO_AUTH_TOKEN`
+- `TWILIO_WHATSAPP_FROM` (optional, defaults to the Twilio sandbox sender)
+
+Local backend environment:
+- `WHATSAPP_API_URL` - defaults to the hosted `/send-whatsapp` endpoint
+- `WHATSAPP_REQUEST_TIMEOUT_SECONDS` - defaults to `90`
+
+```python
+TwilioWhatsApp().send(
+    phone="+919999999999",
+    message="Thought I would follow up here in case WhatsApp is easier.",
+)
+# Returns: { sent: True/False, to: "...", status_code: 200, error: None/"..." }
+```
+
+---
+
+## render_whatsapp_mailbox.py
+
+Imports inbound WhatsApp replies from the hosted Render mailbox into the local LeadGenie inbox.
+
+How it works:
+1. Fetches raw messages from `WHATSAPP_PENDING_MESSAGES_URL`
+2. Deduplicates imported messages in `processed_message_keys.json`
+3. Resolves sender phone to a scheduled follow-up or saved lead context
+4. Stores the reply in `WhatsAppConversationStore`
+5. Captures unknown senders as `Unknown WhatsApp Lead`
+
+Environment:
+- `WHATSAPP_PENDING_MESSAGES_URL` - defaults to the hosted `/pending-messages` endpoint
+- `WHATSAPP_PENDING_REQUEST_TIMEOUT_SECONDS` - defaults to `20`
+- `WHATSAPP_LOCAL_MAILBOX_DIR` - optional local raw mailbox storage override
+
+`GET /whatsapp/debug` exposes remote mailbox status, local mailbox count, unread count, and storage paths.
+
+---
+
+## whatsapp_conversation_store.py
+
+File-based store for human-controlled WhatsApp conversations.
+
+Inbound messages are marked:
+- `status: "awaiting_human"`
+- `unread: true`
+
+Opening a conversation clears the unread flag. Sending a human reply appends an outbound message and moves the conversation out of the awaiting-human state.
+
+Persists to `backend/storage/whatsapp_conversations/{lead_id}.json`.

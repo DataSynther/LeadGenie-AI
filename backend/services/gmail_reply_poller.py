@@ -1,31 +1,30 @@
-import imaplib
 import email
+import imaplib
+import logging
 import os
 import time
-import logging
-from email.header import decode_header
 from datetime import datetime, timezone
+from email.header import decode_header
+from email.utils import parseaddr
 
-from services.lead_context_store import LeadContextStore
 from agents.conversation.conversation_agent import ConversationAgent
+from scheduling.followup_scheduler import FollowupScheduler
+from services.lead_context_store import LeadContextStore
 
 logger = logging.getLogger(__name__)
 
-POLL_INTERVAL = int(os.getenv("REPLY_POLL_INTERVAL", "60"))  # seconds
+POLL_INTERVAL = int(os.getenv("REPLY_POLL_INTERVAL", "60"))
 
 
 class GmailReplyPoller:
-    """Polls Gmail inbox for replies to LeadGenie outreach emails.
-
-    Matches the sender's email address against stored lead contexts,
-    then calls ConversationAgent.handle_reply() and sends a response back.
-    """
+    """Polls Gmail inbox for replies to LeadGenie outreach emails."""
 
     def __init__(self):
-        self.user     = os.getenv("LEADGENIE_GMAIL", "")
+        self.user = os.getenv("LEADGENIE_GMAIL", "")
         self.password = os.getenv("LEADGENIE_GMAIL_PASSWORD", "")
-        self.store    = LeadContextStore()
-        self.agent    = ConversationAgent()
+        self.store = LeadContextStore()
+        self.agent = ConversationAgent()
+        self.followups = FollowupScheduler()
 
     def _connect(self) -> imaplib.IMAP4_SSL:
         mail = imaplib.IMAP4_SSL("imap.gmail.com", 993)
@@ -53,36 +52,34 @@ class GmailReplyPoller:
         else:
             body = msg.get_payload(decode=True).decode("utf-8", errors="replace")
 
-        # Strip quoted reply history (lines starting with ">")
-        lines = [l for l in body.splitlines() if not l.strip().startswith(">")]
+        lines = [line for line in body.splitlines() if not line.strip().startswith(">")]
         return "\n".join(lines).strip()
 
     def _known_lead_emails(self) -> list[str]:
         """Return all email addresses that have stored contexts."""
-        import os
-        from pathlib import Path
-        store_dir = Path(__file__).parent.parent / "storage" / "lead_contexts"
-        if not store_dir.exists():
-            return []
-        emails = []
-        for f in store_dir.glob("*.json"):
-            key = f.stem  # e.g. vickyiter_at_gmail_com
-            addr = key.replace("_at_", "@").replace("_", ".")
-            emails.append(addr)
-        return emails
+        return self.store.list_lead_emails()
 
     def _fetch_unseen(self, mail: imaplib.IMAP4_SSL) -> list[dict]:
         mail.select("INBOX")
 
         known = self._known_lead_emails()
         if not known:
+            logger.info("No stored lead emails found; skipping Gmail search")
             return []
 
-        # Search IMAP for UNSEEN reply emails (Re:) FROM known leads only
+        logger.info("Searching Gmail for unseen replies from %s known lead email(s)", len(known))
+
         msg_id_set = set()
         for lead_email in known:
-            _, data = mail.search(None, f'UNSEEN FROM "{lead_email}" SUBJECT "Re:"')
-            if data[0]:
+            status, data = mail.search(None, f'UNSEEN FROM "{lead_email}"')
+            matched = len(data[0].split()) if data and data[0] else 0
+            logger.info(
+                "Gmail search lead_email=%s status=%s matched=%s",
+                lead_email,
+                status,
+                matched,
+            )
+            if data and data[0]:
                 for mid in data[0].split():
                     msg_id_set.add(mid)
 
@@ -93,10 +90,16 @@ class GmailReplyPoller:
             sender = self._decode_header_value(msg.get("From", ""))
             subject = self._decode_header_value(msg.get("Subject", ""))
             body = self._extract_body(msg)
+            sender_email = parseaddr(sender)[1].strip().lower()
 
-            sender_email = sender
-            if "<" in sender and ">" in sender:
-                sender_email = sender.split("<")[1].rstrip(">").strip()
+            logger.info(
+                "Detected Gmail reply msg_id=%s from=%s parsed_email=%s subject=%r body_len=%s",
+                mid.decode(errors="replace") if isinstance(mid, bytes) else mid,
+                sender,
+                sender_email,
+                subject,
+                len(body or ""),
+            )
 
             messages.append({
                 "id": mid,
@@ -111,68 +114,94 @@ class GmailReplyPoller:
 
     def process_once(self) -> list[dict]:
         """Fetch unseen replies, process each, return results."""
+        logger.info("Starting Gmail reply poll user=%s", self.user)
         mail = self._connect()
-        messages = self._fetch_unseen(mail)
-        results = []
+        try:
+            messages = self._fetch_unseen(mail)
+            results = []
 
-        for msg in messages:
-            sender_email = msg["from"]
-            body = msg["body"]
+            for msg in messages:
+                sender_email = msg["from"]
+                body = msg["body"]
 
-            if not body:
-                logger.info("Skipping empty reply from %s", sender_email)
+                if not body:
+                    logger.info("Skipping empty reply from %s", sender_email)
+                    self._mark_seen(mail, msg["id"])
+                    continue
+
+                stored = self.store.get_by_email(sender_email)
+                if not stored:
+                    logger.info("Reply from unknown lead: %s - skipping", sender_email)
+                    continue
+
+                lead_id = stored["lead_id"]
+                context = stored["context"]
+                logger.info("Resolved Gmail reply sender=%s lead_id=%s", sender_email, lead_id)
+                before_followup = self.followups.get(lead_id)
+                logger.info(
+                    "Before mark_replied lead_id=%s followup_status=%s due_at=%s",
+                    lead_id,
+                    before_followup.get("status") if before_followup else None,
+                    before_followup.get("due_at") if before_followup else None,
+                )
+                marked = self.followups.mark_replied(lead_id)
+                after_followup = self.followups.get(lead_id)
+                logger.info(
+                    "After mark_replied lead_id=%s changed=%s followup_status=%s replied_at=%s",
+                    lead_id,
+                    marked,
+                    after_followup.get("status") if after_followup else None,
+                    after_followup.get("replied_at") if after_followup else None,
+                )
+
+                logger.info("Processing reply from %s (lead_id=%s)", sender_email, lead_id)
+                result = self.agent.handle_reply(
+                    lead_id=lead_id,
+                    reply=body,
+                    context=context,
+                    lead_email=sender_email,
+                )
+
                 self._mark_seen(mail, msg["id"])
-                continue
+                results.append({
+                    "lead_email": sender_email,
+                    "lead_id": lead_id,
+                    "intent": result.get("intent"),
+                    "intent_confidence": result.get("intent_confidence"),
+                    "response_sent": result.get("email_sent", False),
+                    "followup_marked_replied": marked,
+                })
+                logger.info(
+                    "Replied to %s - intent=%s email_sent=%s followup_marked_replied=%s",
+                    sender_email,
+                    result.get("intent"),
+                    result.get("email_sent"),
+                    marked,
+                )
 
-            stored = self.store.get_by_email(sender_email)
-            if not stored:
-                logger.info("Reply from unknown lead: %s — skipping", sender_email)
-                # Don't mark as seen — may need manual review
-                continue
-
-            lead_id = stored["lead_id"]
-            context = stored["context"]
-
-            logger.info("Processing reply from %s (lead_id=%s)", sender_email, lead_id)
-            result = self.agent.handle_reply(
-                lead_id=lead_id,
-                reply=body,
-                context=context,
-                lead_email=sender_email,
-            )
-
-            self._mark_seen(mail, msg["id"])
-            results.append({
-                "lead_email": sender_email,
-                "lead_id": lead_id,
-                "intent": result.get("intent"),
-                "intent_confidence": result.get("intent_confidence"),
-                "response_sent": result.get("email_sent", False),
-            })
-            logger.info(
-                "Replied to %s — intent=%s email_sent=%s",
-                sender_email, result.get("intent"), result.get("email_sent"),
-            )
-
-        mail.logout()
-        return results
+            return results
+        finally:
+            mail.logout()
 
     def run_forever(self) -> None:
         """Poll continuously. Run this in a background thread or separate process."""
-        logger.info("Gmail reply poller started — checking every %ds", POLL_INTERVAL)
+        logger.info("Gmail reply poller started - checking every %ds", POLL_INTERVAL)
         while True:
             try:
                 results = self.process_once()
                 if results:
-                    for r in results:
+                    for result in results:
+                        confidence = result.get("intent_confidence")
+                        confidence_text = f"{confidence:.2f}" if confidence is not None else "n/a"
                         print(
                             f"[{datetime.now(timezone.utc).strftime('%H:%M:%S')}] "
-                            f"{r['lead_email']} → intent={r['intent']} "
-                            f"(conf={r['intent_confidence']:.2f}) "
-                            f"reply_sent={r['response_sent']}"
+                            f"{result['lead_email']} -> intent={result['intent']} "
+                            f"(conf={confidence_text}) "
+                            f"reply_sent={result['response_sent']} "
+                            f"followup_replied={result['followup_marked_replied']}"
                         )
                 else:
                     print(f"[{datetime.now(timezone.utc).strftime('%H:%M:%S')}] No new replies")
-            except Exception as e:
-                logger.error("Poller error: %s", e)
+            except Exception:
+                logger.exception("Poller error")
             time.sleep(POLL_INTERVAL)

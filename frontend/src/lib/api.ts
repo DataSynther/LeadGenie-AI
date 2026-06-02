@@ -5,6 +5,7 @@ export type Lead = {
   company: string;
   seniority: string;
   email: string;
+  phone?: string;
 };
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
@@ -85,6 +86,7 @@ export const leadSearch = (params: {
   company: string;
   seniority: string;
   email: string;
+  phone?: string;
 }[]>("/leads/search", params);
 
 // ── Approval Queue ───────────────────────────────────────────────────────────
@@ -153,7 +155,83 @@ export const generateOutreach = (leadId: string, companyDomain: string) =>
     top_trends: unknown[];
     email: { subject: string; body: string; reasoning: string };
     governance: { approved: boolean; risk_score: number; issues: string[] };
+    context: unknown;
   }>("/outreach/generate", { lead_id: leadId, company_domain: companyDomain });
+
+export const sendOutreach = (params: {
+  leadId: string;
+  toEmail: string;
+  phone?: string;
+  subject: string;
+  body: string;
+  reasoning?: string;
+  context: unknown;
+}) =>
+  post<{
+    sent: boolean;
+    to: string;
+    lead_id: string;
+    governance: { approved: boolean; risk_score: number; issues: string[] };
+    followup: unknown;
+  }>("/outreach/send", {
+    lead_id: params.leadId,
+    to_email: params.toEmail,
+    phone: params.phone,
+    subject: params.subject,
+    body: params.body,
+    reasoning: params.reasoning,
+    context: params.context,
+  });
+
+// WhatsApp Inbox
+
+export type WhatsAppMessage = {
+  lead_id: string;
+  channel: "whatsapp";
+  direction: "inbound" | "outbound";
+  message: string;
+  timestamp: string;
+};
+
+export type WhatsAppConversation = {
+  lead_id: string;
+  lead_name: string;
+  company_name: string;
+  phone?: string;
+  status: "awaiting_human" | "human_responded";
+  unread: boolean;
+  last_message: string;
+  last_direction?: "inbound" | "outbound";
+  updated_at?: string;
+  messages: WhatsAppMessage[];
+};
+
+export const whatsappConversations = () =>
+  get<{
+    unread_count: number;
+    conversations: WhatsAppConversation[];
+    sync?: {
+      remote_url: string;
+      fetched: number;
+      imported: number;
+      skipped: number;
+      error: string | null;
+    };
+  }>("/whatsapp/conversations");
+
+export const openWhatsAppConversation = (leadId: string) =>
+  post<{
+    unread_count: number;
+    conversation: WhatsAppConversation;
+  }>(`/whatsapp/conversations/${encodeURIComponent(leadId)}/open`, {});
+
+export const sendWhatsAppReply = (leadId: string, message: string) =>
+  post<{
+    sent: boolean;
+    lead_id: string;
+    to: string;
+    conversation: WhatsAppConversation;
+  }>("/whatsapp/reply", { lead_id: leadId, message });
 
 // ── Health ───────────────────────────────────────────────────────────────────
 
@@ -171,6 +249,10 @@ export const api = {
   auditTrail,
   conversationReply,
   generateOutreach,
+  sendOutreach,
+  whatsappConversations,
+  openWhatsAppConversation,
+  sendWhatsAppReply,
   healthCheck,
 };
 

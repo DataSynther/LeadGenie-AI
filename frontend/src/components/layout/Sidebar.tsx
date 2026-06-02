@@ -1,5 +1,8 @@
 import { NavLink } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import {
+  Activity,
+  MessageCircle,
   Search,
   X,
   type LucideIcon,
@@ -7,6 +10,7 @@ import {
 import { cn } from "../../lib/utils";
 import { ThemeToggle } from "../ThemeToggle";
 import { useSidebar } from "../../context/SidebarContext";
+import { api } from "../../lib/api";
 
 interface NavItem {
   to: string;
@@ -15,22 +19,9 @@ interface NavItem {
   badge?: { text: string; tone: "danger" | "brand" | "neutral" };
 }
 
-const WORKSPACE: NavItem[] = [
-  // { to: "/dashboard", label: "Mission Control", icon: Activity },
+const WORKSPACE_BASE: NavItem[] = [
+  { to: "/dashboard", label: "Dashboard", icon: Activity },
   { to: "/discover", label: "Discover Leads", icon: Search },
-  // { to: "/campaigns", label: "Campaigns", icon: Sparkles },
-  // {
-  //   to: "/pipeline",
-  //   label: "Pipeline",
-  //   icon: Database,
-  //   badge: { text: "847", tone: "neutral" },
-  // },
-  // {
-  //   to: "/conversations",
-  //   label: "Conversations",
-  //   icon: MessagesSquare,
-  //   badge: { text: "12", tone: "brand" },
-  // },
 ];
 
 
@@ -80,6 +71,21 @@ function NavItemRow({ item, onNavigate }: { item: NavItem; onNavigate: () => voi
 
 export function Sidebar() {
   const { isOpen, close } = useSidebar();
+  const { data: whatsappInbox } = useQuery({
+    queryKey: ["whatsappConversations"],
+    queryFn: api.whatsappConversations,
+    refetchInterval: 30_000,
+  });
+  const unread = whatsappInbox?.unread_count ?? 0;
+  const workspace = [
+    ...WORKSPACE_BASE,
+    {
+      to: "/whatsapp",
+      label: "WhatsApp Inbox",
+      icon: MessageCircle,
+      badge: unread > 0 ? { text: String(unread), tone: "danger" as const } : undefined,
+    },
+  ];
 
   return (
     <aside
@@ -115,7 +121,7 @@ export function Sidebar() {
       <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-ink-mute px-3 pt-4 pb-2">
         Workspace
       </div>
-      {WORKSPACE.map((item) => (
+      {workspace.map((item) => (
         <NavItemRow key={item.to} item={item} onNavigate={close} />
       ))}
 

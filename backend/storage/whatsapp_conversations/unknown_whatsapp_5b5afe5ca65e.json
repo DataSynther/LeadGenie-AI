@@ -1,0 +1,34 @@
+{
+  "lead_id": "unknown_whatsapp_5b5afe5ca65e",
+  "phone": "whatsapp:+919999999999",
+  "context": {
+    "lead": {
+      "id": "unknown_whatsapp_5b5afe5ca65e",
+      "name": "Unknown WhatsApp Lead",
+      "phone": "whatsapp:+919999999999"
+    },
+    "company": {
+      "name": "Unknown company"
+    }
+  },
+  "status": "human_responded",
+  "unread": false,
+  "messages": [
+    {
+      "lead_id": "unknown_whatsapp_5b5afe5ca65e",
+      "channel": "whatsapp",
+      "direction": "inbound",
+      "message": "LeadGenie webhook storage test",
+      "timestamp": "2026-06-02T10:43:11.030822"
+    },
+    {
+      "lead_id": "unknown_whatsapp_5b5afe5ca65e",
+      "channel": "whatsapp",
+      "direction": "outbound",
+      "message": "hi",
+      "timestamp": "2026-06-02T10:59:22.770000"
+    }
+  ],
+  "created_at": "2026-06-02T10:43:11.030798",
+  "updated_at": "2026-06-02T10:59:22.770000"
+}

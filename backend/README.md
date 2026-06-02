@@ -17,6 +17,7 @@ Interactive API docs: `http://localhost:8000/docs`
 ```
 backend/
 ├── main.py               # All API routes — single file, all endpoints registered here
+├── render_whatsapp_mailbox_app.py # Standalone Render mailbox app for Twilio WhatsApp webhooks
 ├── requirements.txt
 ├── Dockerfile
 │
@@ -24,13 +25,16 @@ backend/
 ├── governance/           # Safety layer — see governance/README.md
 ├── services/             # External integrations — see services/README.md
 ├── learning/             # Feedback collection and pattern analysis
-├── scheduling/           # Calendly integration
+├── scheduling/           # Calendly integration + WhatsApp follow-up scheduler
 └── storage/              # Runtime data (gitignored)
     ├── audit_logs/       # Immutable per-lead JSONL audit trail
     ├── conversations/    # Conversation history per lead
     ├── feedback/         # Outcome records
     ├── intent_analytics/ # Intent classification event log
-    └── lead_contexts/    # Email → lead context map for reply matching
+    ├── lead_contexts/    # Email/phone → lead context map for reply matching
+    ├── followups/        # Pending WhatsApp fallback jobs
+    ├── render_mailbox/   # Local raw WhatsApp mailbox import state
+    └── whatsapp_conversations/ # Human-controlled WhatsApp inbox threads
 ```
 
 ---
@@ -66,3 +70,29 @@ All service and agent classes are stateless except for file-based persistence in
 ## Scheduling
 
 `scheduler.py` integrates with Calendly API to check availability and list scheduled events. Requires `CALENDLY_API_TOKEN` and `CALENDLY_ORG_URI` in `.env`. Not required for the core conversation flow — the conversation agent sends a Calendly URL directly when it detects `meeting_request` intent.
+
+`followup_scheduler.py` schedules WhatsApp follow-ups after reviewed email outreach is sent. If no email reply is detected before `WHATSAPP_FOLLOWUP_WAIT_MINUTES`, it sends a short WhatsApp fallback and stores the outbound message in the WhatsApp conversation store.
+
+Run the worker from the repo root:
+```bash
+python3 scripts/run_followup_scheduler.py
+```
+
+Manual processing is also available through `POST /followups/process-due`.
+
+---
+
+## WhatsApp Mailbox
+
+`main.py` exposes the local human-controlled WhatsApp inbox:
+- `GET /whatsapp/conversations` imports remote pending messages and returns awaiting-human conversations
+- `POST /whatsapp/conversations/{lead_id}/open` clears the unread flag
+- `POST /whatsapp/reply` sends a human-authored WhatsApp reply
+- `GET /whatsapp/debug` shows remote/local mailbox sync details
+
+For a standalone hosted Twilio webhook, deploy `render_whatsapp_mailbox_app.py` with:
+```bash
+uvicorn render_whatsapp_mailbox_app:app --host 0.0.0.0 --port $PORT
+```
+
+The hosted app accepts inbound Twilio payloads at `POST /whatsapp`, stores them in a Render-safe mailbox path, and exposes raw pending messages at `GET /pending-messages`.

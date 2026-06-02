@@ -26,6 +26,7 @@ Existing SDR workflows force teams to choose between slow manual prospecting and
 | Intent Detection | Classifies replies: interested / objection / fact_question / neutral / meeting_request / unsubscribe |
 | Intent Analytics | Logs every classification to JSONL for pattern analysis |
 | Gmail Reply Loop | Sends outreach via Gmail SMTP; IMAP poller catches replies and triggers conversation agent |
+| WhatsApp Fallback Loop | Schedules WhatsApp follow-ups after no email reply and queues inbound replies for human response |
 | Governance Engine | Tone validation, hallucination checks, risk scoring |
 | Audit Lineage | Immutable per-lead JSONL audit trail for all decisions |
 | Continuous Learning | Feedback-driven pattern analysis and prompt improvement |
@@ -124,21 +125,28 @@ LeadGenie-AI/
 │   │   │   └── apollo_signals.py   # Hiring/growth signals
 │   │   ├── email_sender.py         # Gmail SMTP outbound
 │   │   ├── gmail_reply_poller.py   # Gmail IMAP inbound reply watcher
-│   │   └── lead_context_store.py   # Email → lead context lookup store
+│   │   ├── lead_context_store.py   # Email/phone → lead context lookup store
+│   │   ├── twilio_whatsapp.py      # WhatsApp send via hosted mailbox service
+│   │   ├── render_whatsapp_mailbox.py # Imports hosted pending WhatsApp messages
+│   │   └── whatsapp_conversation_store.py # Human-controlled WhatsApp inbox store
 │   │
 │   ├── learning/
 │   │   ├── feedback_collector.py   # Records lead outcomes
 │   │   └── learning_engine.py      # Analyzes feedback patterns
 │   │
 │   ├── scheduling/
-│   │   └── scheduler.py            # Calendly API integration
+│   │   ├── scheduler.py            # Calendly API integration
+│   │   └── followup_scheduler.py   # WhatsApp no-reply fallback scheduler
 │   │
 │   └── storage/                    # Runtime data (gitignored)
 │       ├── audit_logs/             # Per-lead audit JSONL
 │       ├── conversations/          # Conversation history
 │       ├── feedback/               # Outcome records
 │       ├── intent_analytics/       # Intent classification events
-│       └── lead_contexts/          # Email → lead context map
+│       ├── lead_contexts/          # Email/phone → lead context map
+│       ├── followups/              # WhatsApp fallback jobs
+│       ├── render_mailbox/         # Raw WhatsApp mailbox import state
+│       └── whatsapp_conversations/ # Human-controlled WhatsApp conversations
 │
 ├── frontend/                       # React + TypeScript UI — see frontend/README.md
 │   ├── src/
@@ -149,6 +157,7 @@ LeadGenie-AI/
 │   │   │   ├── LeadDiscoveryPage.tsx
 │   │   │   ├── ApprovalQueuePage.tsx
 │   │   │   ├── ConversationsPage.tsx
+│   │   │   ├── WhatsAppInboxPage.tsx
 │   │   │   ├── AuditTrailPage.tsx
 │   │   │   └── CampaignsPage.tsx
 │   │   ├── components/             # Reusable UI components by domain
@@ -222,6 +231,13 @@ python3 scripts/run_reply_poller.py
 # Watches LEADGENIE_GMAIL inbox every 60s for lead replies
 ```
 
+### 5. WhatsApp Follow-up Scheduler (optional — for no-reply fallback)
+
+```bash
+python3 scripts/run_followup_scheduler.py
+# After email send, waits WHATSAPP_FOLLOWUP_WAIT_MINUTES, then sends WhatsApp if no reply was detected
+```
+
 ### Docker (runs everything)
 
 ```bash
@@ -241,6 +257,15 @@ Copy `.env.example` to `.env` and fill in:
 | `VOYAGE_API_KEY` | Yes | Voyage AI embeddings — [voyageai.com](https://voyageai.com) |
 | `LEADGENIE_GMAIL` | Yes | Dedicated Gmail address for sending outreach and receiving replies |
 | `LEADGENIE_GMAIL_PASSWORD` | Yes | Gmail App Password (not account password) — Google Account → Security → App Passwords |
+| `TWILIO_ACCOUNT_SID` | No | Twilio account SID for WhatsApp fallback |
+| `TWILIO_AUTH_TOKEN` | No | Twilio auth token for WhatsApp fallback |
+| `TWILIO_WHATSAPP_FROM` | No | Twilio WhatsApp sender, default `whatsapp:+14155238886` |
+| `WHATSAPP_API_URL` | No | Hosted WhatsApp send endpoint, default Render `/send-whatsapp` URL |
+| `WHATSAPP_PENDING_MESSAGES_URL` | No | Hosted mailbox `/pending-messages` URL imported by the local inbox |
+| `WHATSAPP_LOCAL_MAILBOX_DIR` | No | Local raw mailbox storage override |
+| `WHATSAPP_MAILBOX_DIR` | No | Hosted Render mailbox storage path, default `/tmp/leadgenie_whatsapp_mailbox` |
+| `WHATSAPP_FOLLOWUP_WAIT_MINUTES` | No | Minutes after email send before WhatsApp fallback, default `2` |
+| `FOLLOWUP_SCHEDULER_INTERVAL_SECONDS` | No | How often the follow-up worker checks due follow-ups, default `15` |
 | `CLAUDE_MODEL` | No | Model override (default: `claude-sonnet-4-6`) |
 | `CALENDLY_URL` | No | Meeting booking link sent on meeting requests |
 | `REPLY_POLL_INTERVAL` | No | Gmail poll frequency in seconds (default: `60`) |
@@ -281,6 +306,8 @@ All routes are defined in `backend/main.py`. Interactive docs available at `http
 | Method | Endpoint | Body | Description |
 |---|---|---|---|
 | POST | `/outreach/generate` | `{lead_id, company_domain}` | Full pipeline: enrich → research → trends → relevance → email → governance |
+| POST | `/outreach/send` | `{lead_id, to_email, phone, subject, body, context}` | Sends reviewed email, stores reply context, schedules WhatsApp fallback |
+| POST | `/followups/process-due` | — | Processes due WhatsApp follow-ups; useful for cron/manual testing |
 
 **Response includes:**
 ```json
@@ -298,6 +325,13 @@ All routes are defined in `backend/main.py`. Interactive docs available at `http
 |---|---|---|---|
 | POST | `/conversation/reply` | `{lead_id, reply, context}` | Classify intent → generate context-grounded response → optionally send email |
 | POST | `/api/webhook/inbound-reply` | Resend/Gmail webhook payload | Inbound email → match lead by sender → run conversation agent |
+| POST | `/api/webhook/whatsapp-reply` | Twilio WhatsApp form payload | Inbound WhatsApp → queue for human response |
+| POST | `/whatsapp` | Twilio WhatsApp form/JSON payload | Stores inbound WhatsApp message and returns `{stored, pending_count, unread_count}` |
+| GET | `/whatsapp/conversations` | — | Imports hosted pending messages and lists WhatsApp conversations awaiting a human |
+| POST | `/whatsapp/conversations/{lead_id}/open` | — | Marks a WhatsApp conversation as opened/read |
+| POST | `/whatsapp/reply` | `{lead_id, message}` | Sends a human-authored WhatsApp reply and stores it in conversation history |
+| GET | `/whatsapp/debug` | — | Shows hosted mailbox sync status, local counts, and storage previews |
+| GET | `/pending-messages` | — | Local/raw mailbox endpoint used for testing and mailbox inspection |
 
 **Intent types detected:** `interested` · `objection` · `fact_question` · `neutral` · `meeting_request` · `unsubscribe`
 

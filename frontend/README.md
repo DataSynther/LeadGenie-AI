@@ -29,6 +29,7 @@ frontend/src/
 │   ├── LeadDiscoveryPage.tsx    → POST /leads/search
 │   ├── ApprovalQueuePage.tsx    → GET /approval-queue
 │   ├── ConversationsPage.tsx    → POST /conversation/reply
+│   ├── WhatsAppInboxPage.tsx    → GET /whatsapp/conversations, POST /whatsapp/reply
 │   ├── AuditTrailPage.tsx       → GET /audit/:lead_id
 │   └── CampaignsPage.tsx        → (in progress)
 │
@@ -79,6 +80,9 @@ const queue = await api.approvalQueue()
 | `api.auditTrail(leadId)` | GET | `/audit/:lead_id` |
 | `api.conversationReply(leadId, reply, context)` | POST | `/conversation/reply` |
 | `api.generateOutreach(leadId, companyDomain)` | POST | `/outreach/generate` |
+| `api.whatsappConversations()` | GET | `/whatsapp/conversations` |
+| `api.openWhatsAppConversation(leadId)` | POST | `/whatsapp/conversations/:lead_id/open` |
+| `api.sendWhatsAppReply(leadId, message)` | POST | `/whatsapp/reply` |
 
 ---
 
@@ -93,6 +97,8 @@ const queue = await api.approvalQueue()
 **ApprovalQueuePage** — Emails held for human review (risk ≥ 0.4). Shows risk level, score, trigger reason, policy violated, and the flagged content snippet.
 
 **ConversationsPage** — Multi-turn conversation threads per lead. Shows the AI's detected intent and generated responses.
+
+**WhatsAppInboxPage** — Human-controlled WhatsApp reply inbox. Shows remote mailbox sync status, unread conversations, message history, and a reply composer.
 
 **AuditTrailPage** — Full immutable decision log for any lead. Shows every governance decision, what was sent, and why.
 

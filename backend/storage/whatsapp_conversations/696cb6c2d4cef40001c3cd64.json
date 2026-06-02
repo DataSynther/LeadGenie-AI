@@ -1,0 +1,120 @@
+{
+  "lead_id": "696cb6c2d4cef40001c3cd64",
+  "phone": "whatsapp:+918056498879",
+  "context": {
+    "lead": {
+      "name": "Ravi Sharma",
+      "title": "VP- Operations and CTO",
+      "seniority": "c_suite",
+      "department": "engineering",
+      "linkedin_url": "https://linkedin.com/in/ravi-sharma-demo",
+      "email": "ajaykumar130721@gmail.com",
+      "phone": "+91 8056498879"
+    },
+    "company": {
+      "name": "Britannia Industries Limited",
+      "industry": "food & beverages",
+      "employee_count": 5400,
+      "funding_stage": null,
+      "technologies": [
+        "AboveNet",
+        "Amazon AWS",
+        "Amazon CloudFront",
+        "Amazon Elastic Load Balancer",
+        "Blinkit",
+        "Bootstrap Framework",
+        "Cloudflare DNS",
+        "ExactTarget",
+        "Excel4Apps",
+        "GRIN"
+      ],
+      "description": "Britannia Industries Limited is a prominent Indian food and beverage company founded in 1892 in Kolkata. It specializes in bakery, dairy, and snacking products and operates in over 80 countries. As part of the Wadia Group, Britannia has grown to become a household name in India, employing over 4,500 people and achieving a market capitalization of \u20b91.08 trillion.\n\nThe company's diverse product portfolio includes a wide range of biscuits under popular brands like Good Day, NutriChoice, and Bourbon, as well as breads, cakes, and rusk products. In the dairy segment, Britannia produces milk, butter, cheese, ghee, and curd, with offerings like Winkin' Cow. With annual revenues exceeding \u20b99,000 crore, Britannia maintains a strong market presence in the food and beverage sector, focusing on providing tasty yet healthy products that fit into consumers' daily lives."
+    },
+    "signals": {
+      "open_roles": 0,
+      "ai_hiring": null,
+      "scaling": null
+    },
+    "research": {
+      "summary": "Research generated for Britannia Industries Limited",
+      "growth_stage": null,
+      "pain_points": [],
+      "ai_readiness_score": null,
+      "strategic_priorities": []
+    },
+    "outreach": {
+      "subject": "Britannia's ops scale + AI \u2014 quick thought",
+      "body": "Hi Ravi,\n\nManaging operations at Britannia's scale \u2014 hundreds of SKUs, a pan-India supply chain, and growing quick-commerce demand \u2014 means even small inefficiencies compound fast. A lot of F&B leaders we speak with are quietly piloting AI to cut forecast errors and reduce distribution bottlenecks before they show up on the P&L. Given your dual role across Ops and Tech, you're likely the right person evaluating where this actually makes sense versus where it's just noise. Would a 20-minute call this week be useful to compare notes on what's working in the space?\n\nBest,\n[Your Name]",
+      "reasoning": "Ravi holds both the Operations and CTO title, which means he sits at the exact intersection of tech adoption and operational accountability \u2014 a rare combination. The hook acknowledges Britannia's real complexity (scale, SKU depth, quick-commerce pressure) rather than generic flattery, which earns credibility fast. Framing AI not as hype but as something peers are 'quietly piloting' lowers defensiveness and positions the sender as a peer sharing market intelligence rather than a vendor pitching a product. The CTA is low-commitment and respects his seniority."
+    }
+  },
+  "status": "awaiting_human",
+  "unread": true,
+  "messages": [
+    {
+      "lead_id": "696cb6c2d4cef40001c3cd64",
+      "channel": "whatsapp",
+      "direction": "outbound",
+      "message": "Hey Ravi! \ud83d\udc4b Dropped you an email about how AI is helping F&B companies like Britannia sharpen demand forecasting and cut supply chain inefficiencies \u2014 figured it might be relevant given the scale you're operating at. Would a quick 20-min chat this week or next work for you?",
+      "timestamp": "2026-06-02T10:35:17.113074"
+    },
+    {
+      "lead_id": "696cb6c2d4cef40001c3cd64",
+      "channel": "whatsapp",
+      "direction": "outbound",
+      "message": "Hey Ravi, just wanted to make sure my note didn't get buried \u2014 I had a thought on how some FMCG leaders are getting real gains in supply chain forecasting that felt relevant given Britannia's scale. Would a quick 20-min call this week or next work for you? \ud83d\ude0a",
+      "timestamp": "2026-06-02T10:39:21.382187"
+    },
+    {
+      "lead_id": "696cb6c2d4cef40001c3cd64",
+      "channel": "whatsapp",
+      "direction": "outbound",
+      "message": "Hi Ravi, just wanted to nudge this up in case my email got buried \u2014 given Britannia's scale across SKUs and distribution, I think there's a genuinely useful conversation to be had on where AI is moving the needle in FMCG ops. Would a quick 20-minute call this week or next work for you? \ud83d\ude42",
+      "timestamp": "2026-06-02T11:00:56.081101"
+    },
+    {
+      "lead_id": "696cb6c2d4cef40001c3cd64",
+      "channel": "whatsapp",
+      "direction": "inbound",
+      "message": "Hi",
+      "timestamp": "2026-06-02T11:02:34.118017"
+    },
+    {
+      "lead_id": "696cb6c2d4cef40001c3cd64",
+      "channel": "whatsapp",
+      "direction": "outbound",
+      "message": "heloo",
+      "timestamp": "2026-06-02T11:03:00.903337"
+    },
+    {
+      "lead_id": "696cb6c2d4cef40001c3cd64",
+      "channel": "whatsapp",
+      "direction": "outbound",
+      "message": "Hey Ravi, just checking if my email on AI for Britannia's ops and supply chain landed in the right place \u2014 know inboxes get busy! Given your dual hat across Ops and Tech, thought it might be worth a quick 20-min chat. Open to connecting this week? \ud83d\ude42",
+      "timestamp": "2026-06-02T11:24:15.959965"
+    },
+    {
+      "lead_id": "696cb6c2d4cef40001c3cd64",
+      "channel": "whatsapp",
+      "direction": "inbound",
+      "message": "Okay sure we will connect",
+      "timestamp": "2026-06-02T11:24:52.562008"
+    },
+    {
+      "lead_id": "696cb6c2d4cef40001c3cd64",
+      "channel": "whatsapp",
+      "direction": "outbound",
+      "message": "hi",
+      "timestamp": "2026-06-02T12:12:12.894081"
+    },
+    {
+      "lead_id": "696cb6c2d4cef40001c3cd64",
+      "channel": "whatsapp",
+      "direction": "inbound",
+      "message": "Can we schedule a meeting?",
+      "timestamp": "2026-06-02T12:12:43.876596"
+    }
+  ],
+  "created_at": "2026-06-02T10:35:17.113074",
+  "updated_at": "2026-06-02T12:12:43.876596"
+}

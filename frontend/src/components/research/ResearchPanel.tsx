@@ -1,7 +1,18 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
-  X, ExternalLink, TrendingUp, TrendingDown, Minus,
-  Building2, Users, DollarSign, Calendar, Zap, Cpu,
+  X,
+  ExternalLink,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Building2,
+  Users,
+  DollarSign,
+  Calendar,
+  Zap,
+  Cpu,
+  Send,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import type { Lead } from "../../lib/api";
@@ -19,13 +30,53 @@ const SIGNAL_STYLES: Record<string, string> = {
   ai: "bg-brand-soft text-brand border-brand/20",
 };
 
-const TECH_AI_KEYWORDS = ["AI", "Anthropic Claude", "machine learning", "TensorFlow", "PyTorch", "OpenAI"];
+const TECH_AI_KEYWORDS = [
+  "AI",
+  "Anthropic Claude",
+  "machine learning",
+  "TensorFlow",
+  "PyTorch",
+  "OpenAI",
+];
 
 export function ResearchPanel({ lead, onClose }: ResearchPanelProps) {
+  const [generatedEmail, setGeneratedEmail] = useState<{
+    subject: string;
+    body: string;
+    reasoning?: string;
+  } | null>(null);
+  const [generatedContext, setGeneratedContext] = useState<unknown>(null);
+
   const { data: company, isLoading, error } = useQuery({
     queryKey: ["companyResearch", lead?.company],
     queryFn: () => api.companyResearch(lead!.company),
     enabled: !!lead?.company,
+  });
+
+  const outreach = useMutation({
+    mutationFn: () => api.generateOutreach(lead!.id, lead!.company),
+    onMutate: () => {
+      sendOutreach.reset();
+      setGeneratedEmail(null);
+      setGeneratedContext(null);
+    },
+    onSuccess: (data) => {
+      setGeneratedEmail(data.email);
+      setGeneratedContext(data.context);
+    },
+  });
+
+  const sendOutreach = useMutation({
+    mutationFn: () =>
+      api.sendOutreach({
+        leadId: lead!.id,
+        toEmail: lead!.email,
+        phone: lead!.phone,
+        subject: generatedEmail!.subject,
+        body: generatedEmail!.body,
+        reasoning: generatedEmail!.reasoning,
+        context: generatedContext,
+      }),
   });
 
   return (
@@ -191,12 +242,151 @@ export function ResearchPanel({ lead, onClose }: ResearchPanelProps) {
           )}
         </div>
 
+        {(generatedEmail || outreach.error) && (
+          <div className="border-t border-line-soft bg-surface px-6 py-4 shrink-0 max-h-[42vh] overflow-y-auto">
+            {outreach.error && (
+              <div className="rounded-md border border-danger/20 bg-danger-tint p-4">
+                <div className="text-danger text-sm font-medium">
+                  Outreach generation failed
+                </div>
+                <div className="text-danger text-xs font-mono mt-1">
+                  {(outreach.error as Error).message}
+                </div>
+              </div>
+            )}
+
+            {generatedEmail && (
+              <div>
+                <div className="label-mono text-brand mb-3">
+                  Generated Outreach
+                </div>
+                <label className="block">
+                  <div className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-2 mb-1">
+                    Subject
+                  </div>
+                  <input
+                    value={generatedEmail.subject}
+                    onChange={(e) =>
+                      setGeneratedEmail((current) =>
+                        current ? { ...current, subject: e.target.value } : current
+                      )
+                    }
+                    disabled={sendOutreach.data?.sent}
+                    className="w-full rounded-md border border-line bg-surface px-3 py-2 text-[13px] font-medium text-ink placeholder:text-ink-2 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-soft disabled:opacity-70"
+                  />
+                </label>
+                <label className="block mt-2.5">
+                  <div className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-2 mb-1">
+                    Body
+                  </div>
+                  <textarea
+                    value={generatedEmail.body}
+                    onChange={(e) =>
+                      setGeneratedEmail((current) =>
+                        current ? { ...current, body: e.target.value } : current
+                      )
+                    }
+                    disabled={sendOutreach.data?.sent}
+                    rows={8}
+                    className="w-full resize-none rounded-md border border-line bg-surface px-3 py-2.5 text-[12px] leading-relaxed text-ink placeholder:text-ink-2 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-soft disabled:opacity-70"
+                  />
+                </label>
+                {generatedEmail.reasoning && (
+                  <div className="rounded-md border border-line-soft bg-surface-2 p-3 mt-2.5">
+                    <div className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-2 mb-1">
+                      Reasoning
+                    </div>
+                    <p className="text-[11px] leading-relaxed text-ink-2">
+                      {generatedEmail.reasoning}
+                    </p>
+                  </div>
+                )}
+                {sendOutreach.error && (
+                  <div className="rounded-md border border-danger/20 bg-danger-tint p-3 mt-2.5">
+                    <div className="text-danger text-sm font-medium">
+                      Send failed
+                    </div>
+                    <div className="text-danger text-xs font-mono mt-1">
+                      {(sendOutreach.error as Error).message}
+                    </div>
+                  </div>
+                )}
+                {sendOutreach.data?.sent && (
+                  <div className="rounded-md border border-brand/20 bg-brand-soft p-3 mt-2.5">
+                    <div className="text-brand text-sm font-medium">
+                      Sent to {sendOutreach.data.to}
+                    </div>
+                    <div className="text-brand text-xs font-mono mt-1">
+                      Reply context saved. WhatsApp fallback scheduled if no email reply arrives.
+                    </div>
+                  </div>
+                )}
+                <button
+                  onClick={() => sendOutreach.mutate()}
+                  disabled={
+                    sendOutreach.isPending ||
+                    !lead?.email ||
+                    !generatedContext ||
+                    !generatedEmail.subject.trim() ||
+                    !generatedEmail.body.trim() ||
+                    sendOutreach.data?.sent
+                  }
+                  className="btn-primary mt-3 flex w-full items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  <Send size={13} />
+                  {sendOutreach.isPending
+                    ? "Sending..."
+                    : sendOutreach.data?.sent
+                      ? "Outreach Sent"
+                      : "Send Outreach"}
+                </button>
+                {!lead?.email && (
+                  <div className="text-danger text-xs font-mono mt-2">
+                    This lead has no email address.
+                  </div>
+                )}
+                {!sendOutreach.data?.sent && (
+                  <div className="mt-2.5 grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => {
+                        sendOutreach.reset();
+                        outreach.mutate();
+                      }}
+                      disabled={outreach.isPending}
+                      className="btn-ghost disabled:opacity-60 disabled:cursor-wait"
+                    >
+                      {outreach.isPending ? "Regenerating..." : "Regenerate"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        sendOutreach.reset();
+                        setGeneratedEmail(null);
+                        setGeneratedContext(null);
+                      }}
+                      className="btn-ghost"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Footer CTAs */}
         {company && (
           <div className="px-6 py-4 border-t border-line-soft flex gap-2.5 shrink-0 bg-surface">
-            <button className="btn-primary flex items-center gap-2 flex-1 justify-center">
+            <button
+              onClick={() => {
+                sendOutreach.reset();
+                outreach.mutate();
+              }}
+              disabled={outreach.isPending}
+              className="btn-primary flex items-center gap-2 flex-1 justify-center disabled:opacity-60 disabled:cursor-wait"
+            >
               <Zap size={13} />
-              Generate Outreach
+              {outreach.isPending ? "Generating..." : "Generate Outreach"}
             </button>
             <button className="flex items-center gap-2 px-4 py-2 rounded-md text-[12px] font-medium bg-surface-2 text-ink border border-line hover:border-brand hover:text-brand transition-colors">
               Add to Pipeline

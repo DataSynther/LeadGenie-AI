@@ -218,7 +218,10 @@ export function LeadDiscoveryPage() {
                           <UserPlus size={11} />
                           Add
                         </button>
-                        <button className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium bg-surface-2 text-ink border border-line hover:border-brand hover:text-brand transition-colors">
+                        <button
+                          onClick={() => setSelectedLead(lead)}
+                          className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium bg-surface-2 text-ink border border-line hover:border-brand hover:text-brand transition-colors disabled:opacity-60 disabled:cursor-wait"
+                        >
                           <Zap size={11} />
                           Outreach
                         </button>

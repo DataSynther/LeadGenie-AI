@@ -1,0 +1,66 @@
+{
+  "lead_id": "696cb6c2d4cef40001c3cd64",
+  "phone": "+91 8056498879",
+  "context": {
+    "lead": {
+      "name": "Ravi Sharma",
+      "title": "VP- Operations and CTO",
+      "seniority": "c_suite",
+      "department": "engineering",
+      "linkedin_url": "https://linkedin.com/in/ravi-sharma-demo",
+      "email": "ajaykumar130721@gmail.com",
+      "phone": "+91 8056498879"
+    },
+    "company": {
+      "name": "Britannia Industries Limited",
+      "industry": "food & beverages",
+      "employee_count": 5400,
+      "funding_stage": null,
+      "technologies": [
+        "AboveNet",
+        "Amazon AWS",
+        "Amazon CloudFront",
+        "Amazon Elastic Load Balancer",
+        "Blinkit",
+        "Bootstrap Framework",
+        "Cloudflare DNS",
+        "ExactTarget",
+        "Excel4Apps",
+        "GRIN"
+      ],
+      "description": "Britannia Industries Limited is a prominent Indian food and beverage company founded in 1892 in Kolkata. It specializes in bakery, dairy, and snacking products and operates in over 80 countries. As part of the Wadia Group, Britannia has grown to become a household name in India, employing over 4,500 people and achieving a market capitalization of \u20b91.08 trillion.\n\nThe company's diverse product portfolio includes a wide range of biscuits under popular brands like Good Day, NutriChoice, and Bourbon, as well as breads, cakes, and rusk products. In the dairy segment, Britannia produces milk, butter, cheese, ghee, and curd, with offerings like Winkin' Cow. With annual revenues exceeding \u20b99,000 crore, Britannia maintains a strong market presence in the food and beverage sector, focusing on providing tasty yet healthy products that fit into consumers' daily lives."
+    },
+    "signals": {
+      "open_roles": 0,
+      "ai_hiring": null,
+      "scaling": null
+    },
+    "research": {
+      "summary": "Research generated for Britannia Industries Limited",
+      "growth_stage": null,
+      "pain_points": [],
+      "ai_readiness_score": null,
+      "strategic_priorities": []
+    },
+    "outreach": {
+      "subject": "Britannia's ops scale + AI \u2014 quick thought",
+      "body": "Hi Ravi,\n\nManaging operations at Britannia's scale \u2014 hundreds of SKUs, a pan-India supply chain, and growing quick-commerce demand \u2014 means even small inefficiencies compound fast. A lot of F&B leaders we speak with are quietly piloting AI to cut forecast errors and reduce distribution bottlenecks before they show up on the P&L. Given your dual role across Ops and Tech, you're likely the right person evaluating where this actually makes sense versus where it's just noise. Would a 20-minute call this week be useful to compare notes on what's working in the space?\n\nBest,\n[Your Name]",
+      "reasoning": "Ravi holds both the Operations and CTO title, which means he sits at the exact intersection of tech adoption and operational accountability \u2014 a rare combination. The hook acknowledges Britannia's real complexity (scale, SKU depth, quick-commerce pressure) rather than generic flattery, which earns credibility fast. Framing AI not as hype but as something peers are 'quietly piloting' lowers defensiveness and positions the sender as a peer sharing market intelligence rather than a vendor pitching a product. The CTA is low-commitment and respects his seniority."
+    }
+  },
+  "outreach": {
+    "subject": "Britannia's ops scale + AI \u2014 quick thought",
+    "body": "Hi Ravi,\n\nManaging operations at Britannia's scale \u2014 hundreds of SKUs, a pan-India supply chain, and growing quick-commerce demand \u2014 means even small inefficiencies compound fast. A lot of F&B leaders we speak with are quietly piloting AI to cut forecast errors and reduce distribution bottlenecks before they show up on the P&L. Given your dual role across Ops and Tech, you're likely the right person evaluating where this actually makes sense versus where it's just noise. Would a 20-minute call this week be useful to compare notes on what's working in the space?\n\nBest,\n[Your Name]",
+    "reasoning": "Ravi holds both the Operations and CTO title, which means he sits at the exact intersection of tech adoption and operational accountability \u2014 a rare combination. The hook acknowledges Britannia's real complexity (scale, SKU depth, quick-commerce pressure) rather than generic flattery, which earns credibility fast. Framing AI not as hype but as something peers are 'quietly piloting' lowers defensiveness and positions the sender as a peer sharing market intelligence rather than a vendor pitching a product. The CTA is low-commitment and respects his seniority."
+  },
+  "email_sent_at": "2026-06-02T11:22:00.986446",
+  "due_at": "2026-06-02T11:24:00.986446",
+  "status": "replied",
+  "whatsapp_sent_at": "2026-06-02T11:24:15.949716",
+  "whatsapp_error": null,
+  "whatsapp_traceback": null,
+  "whatsapp_status_code": 200,
+  "whatsapp_elapsed_seconds": 0.953,
+  "whatsapp_normalized_to": "+918056498879",
+  "replied_at": "2026-06-02T12:12:43.851665"
+}
