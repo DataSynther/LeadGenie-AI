@@ -545,8 +545,29 @@ async def pipeline_lineage(lead_id: str):
         return "success"
 
     def build_validation(v: dict, trace: Optional[dict] = None) -> Optional[dict]:
+        meta = (trace or {}).get("metadata", {}) if trace else {}
+        attempt_number = meta.get("attempt_number", 1)
+        attempt_history = meta.get("attempt_history") or []
+
+        # If no validation record but trace has attempt history, still build the block
         if not v:
-            return None
+            if not attempt_history:
+                return None
+            return {
+                "consequence": "allow" if attempt_number > 1 and attempt_history[-1]["consequence"] == "allow" else "allow",
+                "shape_ok": True,
+                "context_ok": True,
+                "policy_ok": True,
+                "issues": [],
+                "checkpoints": {
+                    "shape":   {"ok": True, "issues": []},
+                    "context": {"ok": True, "issues": []},
+                    "policy":  {"ok": True, "issues": []},
+                },
+                "attempts": attempt_number,
+                "attempt_history": attempt_history,
+            }
+
         result: dict = {
             "consequence": v.get("consequence", "allow"),
             "shape_ok": v.get("shape_ok"),
@@ -558,11 +579,9 @@ async def pipeline_lineage(lead_id: str):
                 "context": {"ok": v.get("context_ok", True), "issues": [i for i in v.get("issues", []) if i.startswith("context:")]},
                 "policy":  {"ok": v.get("policy_ok", True),  "issues": [i for i in v.get("issues", []) if i.startswith("policy:")]},
             },
+            "attempts": attempt_number,
+            "attempt_history": attempt_history,
         }
-        if trace:
-            meta = trace.get("metadata", {})
-            result["attempts"] = meta.get("attempt_number", 1)
-            result["attempt_history"] = meta.get("attempt_history") or []
         return result
 
     # ── Resolve traces & validations ──────────────────────────────────────────
