@@ -7,13 +7,15 @@ on:
 
 env:
   AWS_REGION: ${{ vars.AWS_REGION }}
-  ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
-  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+  AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+  ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+  ECR_REGISTRY: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com
 
 jobs:
   deploy-backend:
     name: Build & Deploy Backend (EC2 + ECR)
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,7 +28,6 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
-        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build and push backend image
@@ -52,9 +53,11 @@ jobs:
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
           script: |
             set -e
+
+            mkdir -p /app/leadgenie
 
             # Write env file from secret (base64-encoded)
             echo "${{ secrets.ENV_B64 }}" | base64 -d > /app/leadgenie/.env
@@ -84,6 +87,7 @@ jobs:
   deploy-frontend:
     name: Build & Deploy Frontend (S3 + CloudFront)
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -93,8 +97,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          # aws-region: ${{ vars.AWS_REGION }}
-          aws-region: ap-south-1
+          aws-region: ${{ vars.AWS_REGION }}
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -115,17 +118,17 @@ jobs:
 
       - name: Sync to S3
         run: |
-          aws s3 sync frontend/dist s3://${{ secrets.S3_BUCKET }} \
+          aws s3 sync frontend/dist s3://${{ vars.S3_BUCKET }} \
             --delete \
             --cache-control "public,max-age=31536000,immutable" \
             --exclude "index.html"
 
-          # index.html must not be cached so deployments take effect immediately
-          aws s3 cp frontend/dist/index.html s3://${{ secrets.S3_BUCKET }}/index.html \
+          aws s3 cp frontend/dist/index.html \
+            s3://${{ vars.S3_BUCKET }}/index.html \
             --cache-control "no-cache,no-store,must-revalidate"
 
       - name: Invalidate CloudFront
         run: |
           aws cloudfront create-invalidation \
-            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --distribution-id ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }} \
             --paths "/*"
