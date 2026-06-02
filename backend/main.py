@@ -570,12 +570,19 @@ async def pipeline_lineage(lead_id: str):
         attempt_number = meta.get("attempt_number", 1)
         attempt_history = meta.get("attempt_history") or []
 
+        def _ah_passed(ah_item: dict) -> bool:
+            """Handle both governance format (passed) and old format (consequence)."""
+            if "passed" in ah_item:
+                return ah_item["passed"]
+            return ah_item.get("consequence", "allow") == "allow"
+
         # If no validation record but trace has attempt history, still build the block
         if not v:
             if not attempt_history:
                 return None
+            last_passed = _ah_passed(attempt_history[-1])
             return {
-                "consequence": "allow" if attempt_number > 1 and attempt_history[-1]["consequence"] == "allow" else "allow",
+                "consequence": "allow" if last_passed else "defer",
                 "shape_ok": True,
                 "context_ok": True,
                 "policy_ok": True,
@@ -585,7 +592,7 @@ async def pipeline_lineage(lead_id: str):
                     "context": {"ok": True, "issues": []},
                     "policy":  {"ok": True, "issues": []},
                 },
-                "attempts": attempt_number,
+                "attempts": len(attempt_history),
                 "attempt_history": attempt_history,
             }
 
@@ -600,7 +607,7 @@ async def pipeline_lineage(lead_id: str):
                 "context": {"ok": v.get("context_ok", True), "issues": [i for i in v.get("issues", []) if i.startswith("context:")]},
                 "policy":  {"ok": v.get("policy_ok", True),  "issues": [i for i in v.get("issues", []) if i.startswith("policy:")]},
             },
-            "attempts": attempt_number,
+            "attempts": len(attempt_history) if attempt_history else attempt_number,
             "attempt_history": attempt_history,
         }
         return result
