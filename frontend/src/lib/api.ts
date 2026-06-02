@@ -304,6 +304,7 @@ export type LineageStage = {
   icon: string;
   module: string;
   status: "success" | "flagged" | "blocked" | "error" | "unknown";
+  parent_stage: string | null;
   inputs: Record<string, unknown>;
   outputs: Record<string, unknown>;
   perf: { latency_ms: number | null; tokens: number | null; context_score: number | null };

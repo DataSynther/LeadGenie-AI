@@ -647,6 +647,30 @@ async def pipeline_lineage(lead_id: str):
     o_retrieval_score = (o_trace.get("metadata", {}) or {}).get("retrieval_score")
     o_self_eval = (o_trace.get("metadata", {}) or {}).get("self_eval") or {}
 
+    # ── Override tone/hallucination with final corrected state if auto-correction passed ──
+    # The audit log stores the INITIAL check results (before auto-correction).
+    # If the last governance attempt passed, use those layer results as the truth.
+    o_attempt_history = (o_trace.get("metadata") or {}).get("attempt_history") or []
+    if o_attempt_history:
+        last_ah = o_attempt_history[-1]
+        last_passed = last_ah.get("passed", last_ah.get("consequence") == "allow")
+        if last_passed:
+            last_layers = last_ah.get("layers") or {}
+            if "tone" in last_layers:
+                tl = last_layers["tone"]
+                tone_result = {
+                    "passed": tl.get("passed", True) and tl.get("consequence", "allow") != "block",
+                    "issues": tl.get("issues") or [],
+                }
+            if "hallucination" in last_layers:
+                hl = last_layers["hallucination"]
+                hallucination_result = {
+                    "passed": hl.get("passed", True) and not hl.get("violations"),
+                    "violations": hl.get("violations") or [],
+                    "confidence": hl.get("confidence"),
+                    "explanation": "Corrected via auto-correction loop." if not (hl.get("violations") or []) else "",
+                }
+
     stages = [
         {
             "id": "lead_discovery",
@@ -654,6 +678,7 @@ async def pipeline_lineage(lead_id: str):
             "icon": "🔍",
             "module": "Apollo API",
             "status": "success" if has_data else "unknown",
+            "parent_stage": None,
             "inputs": {
                 "source": "Apollo.io People API",
                 "filter_criteria": "VP / C-Suite / Director seniority",
@@ -675,6 +700,7 @@ async def pipeline_lineage(lead_id: str):
             "icon": "🧠",
             "module": "research_agent.py",
             "status": stage_status_from_trace(r_trace, has_data),
+            "parent_stage": None,
             "inputs": {
                 "company_name": lead_info.get("company") or "(from Apollo)",
                 "signals": "hiring + growth signals from Apollo",
@@ -700,6 +726,7 @@ async def pipeline_lineage(lead_id: str):
             "icon": "🗂️",
             "module": "context_builder.py",
             "status": "success" if has_data else "unknown",
+            "parent_stage": None,
             "inputs": {
                 "lead": "lead dict from Apollo",
                 "company": "company dict from Apollo",
@@ -722,6 +749,7 @@ async def pipeline_lineage(lead_id: str):
             "icon": "📈",
             "module": "trend_agent.py",
             "status": "success" if has_data else "unknown",
+            "parent_stage": None,
             "inputs": {
                 "sources": "RSS feeds (TechCrunch, HBR, NASSCOM)",
                 "curated_list": "AI/SaaS/enterprise trend bank",
@@ -740,6 +768,7 @@ async def pipeline_lineage(lead_id: str):
             "icon": "🎯",
             "module": "relevance_engine.py",
             "status": "success" if has_data else "unknown",
+            "parent_stage": None,
             "inputs": {
                 "context": "unified lead + company context",
                 "trends_count": len(o_citations.get("top_trends", [])) or "(all fetched)",
@@ -760,6 +789,7 @@ async def pipeline_lineage(lead_id: str):
             "icon": "✉️",
             "module": "outreach_agent.py",
             "status": stage_status_from_trace(o_trace, has_data),
+            "parent_stage": None,
             "inputs": {
                 "lead_name": o_citations.get("lead_name", {}).get("value") or lead_info.get("name") or lead_id,
                 "company_name": o_citations.get("company_name", {}).get("value") or lead_info.get("company") or "(from context)",
@@ -788,6 +818,7 @@ async def pipeline_lineage(lead_id: str):
             "icon": "🎙️",
             "module": "tone_validator.py",
             "status": ("success" if tone_result.get("passed") else "flagged") if tone_result else ("unknown" if not has_data else "success"),
+            "parent_stage": "outreach_gen",
             "inputs": {
                 "email_subject": email_content.get("subject") or "(generated email)",
                 "email_body_length": len(email_content.get("body") or "") or None,
@@ -817,6 +848,7 @@ async def pipeline_lineage(lead_id: str):
             "icon": "🔬",
             "module": "hallucination_checker.py",
             "status": ("success" if hallucination_result.get("passed") else "flagged") if hallucination_result else ("unknown" if not has_data else "success"),
+            "parent_stage": "outreach_gen",
             "inputs": {
                 "email_body": (email_content.get("body") or "")[:120] + "…" if email_content.get("body") else "(generated email)",
                 "source_facts": "company_name · industry · lead_title · description · technologies",
@@ -854,6 +886,7 @@ async def pipeline_lineage(lead_id: str):
             "icon": "⚖️",
             "module": "risk_engine.py",
             "status": "flagged" if final_decision == "flagged" else ("success" if final_decision == "approved" else "unknown"),
+            "parent_stage": "outreach_gen",
             "inputs": {
                 "tone_passed": tone_result.get("passed"),
                 "hallucination_passed": hallucination_result.get("passed"),
@@ -875,6 +908,7 @@ async def pipeline_lineage(lead_id: str):
             "icon": "🚀" if final_decision == "approved" else "🕐",
             "module": "email_sender.py" if final_decision == "approved" else "approval_queue.py",
             "status": "success" if final_decision == "approved" else ("flagged" if final_decision == "flagged" else "unknown"),
+            "parent_stage": None,
             "inputs": {
                 "email_subject": email_content.get("subject") or "(pending)",
                 "recipient": lead_info.get("email") or "(masked)",
