@@ -66,13 +66,73 @@ function BoolPill({ ok, label }: { ok: boolean | null; label: string }) {
 }
 
 function KV({ k, v }: { k: string; v: unknown }) {
-  const display = typeof v === "boolean" ? (v ? "true" : "false") : String(v ?? "—");
-  const isEmpty = display === "—" || display === "" || display === "null" || display === "undefined";
-  if (isEmpty && typeof v !== "boolean") return null;
+  if (v == null || v === "" || v === "null" || v === "undefined") return null;
+
+  // Array: render as bullet list
+  if (Array.isArray(v)) {
+    if (v.length === 0) return null;
+    return (
+      <div className="py-0.5">
+        <span className="text-ink-mute font-mono text-[10px] block mb-0.5">{k}</span>
+        <ul className="pl-2 space-y-0.5">
+          {v.map((item, i) => (
+            <li key={i} className="text-[11px] text-ink-2 leading-snug flex gap-1">
+              <span className="text-ink-mute shrink-0">·</span>
+              <span className="break-words min-w-0">{typeof item === "object" ? JSON.stringify(item) : String(item)}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
+
+  // Boolean
+  if (typeof v === "boolean") {
+    return (
+      <div className="flex gap-2 text-[11px] leading-snug py-0.5">
+        <span className="text-ink-mute font-mono shrink-0 w-28 truncate">{k}</span>
+        <span className={cn("font-mono", v ? "text-emerald-400" : "text-red-400")}>{v ? "true" : "false"}</span>
+      </div>
+    );
+  }
+
+  // Number
+  if (typeof v === "number") {
+    return (
+      <div className="flex gap-2 text-[11px] leading-snug py-0.5">
+        <span className="text-ink-mute font-mono shrink-0 w-28 truncate">{k}</span>
+        <span className="text-ink font-mono">{v}</span>
+      </div>
+    );
+  }
+
+  const str = String(v);
+  if (str === "—" || str === "") return null;
+
+  // Long text: truncate with expand
+  if (str.length > 180) {
+    return <KVLong k={k} v={str} />;
+  }
+
   return (
     <div className="flex gap-2 text-[11px] leading-snug py-0.5">
       <span className="text-ink-mute font-mono shrink-0 w-28 truncate">{k}</span>
-      <span className="text-ink-2 break-words min-w-0">{display}</span>
+      <span className="text-ink-2 break-words min-w-0">{str}</span>
+    </div>
+  );
+}
+
+function KVLong({ k, v }: { k: string; v: string }) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <div className="py-0.5">
+      <span className="text-ink-mute font-mono text-[10px] block mb-0.5">{k}</span>
+      <span className="text-ink-2 text-[11px] leading-snug break-words">
+        {expanded ? v : v.slice(0, 180) + "…"}
+      </span>
+      <button onClick={() => setExpanded(e => !e)} className="text-[10px] text-brand font-mono ml-1">
+        {expanded ? "collapse" : "expand"}
+      </button>
     </div>
   );
 }
@@ -157,23 +217,108 @@ function Arrow({ dim }: { dim?: boolean }) {
 
 // ── Detail panel (below the strip) ───────────────────────────────────────────
 
-function ValidationBlock({ v }: { v: LineageStageValidation }) {
+function CheckpointRow({ label, cp }: {
+  label: string;
+  cp: { ok: boolean; issues?: string[]; violations?: string[]; confidence?: number; explanation?: string };
+}) {
+  const allIssues = [...(cp.issues ?? []), ...(cp.violations ?? [])];
   return (
-    <div className="rounded-lg border border-line-soft bg-surface-2 p-3 space-y-2">
+    <div className="py-1 border-b border-line-soft last:border-0">
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className={cn(
+          "text-[10px] px-1.5 py-px rounded font-mono font-semibold",
+          cp.ok ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"
+        )}>
+          {cp.ok ? "✓" : "✗"} {label}
+        </span>
+        {cp.confidence != null && (
+          <span className="text-[10px] text-ink-mute font-mono">conf {Math.round(cp.confidence * 100)}%</span>
+        )}
+      </div>
+      {allIssues.map((iss, i) => (
+        <div key={i} className="mt-0.5 pl-2 text-[10px] text-red-300 font-mono leading-snug">⚠ {iss}</div>
+      ))}
+      {cp.explanation && (
+        <div className="mt-0.5 pl-2 text-[10px] text-ink-mute leading-snug italic">{cp.explanation.slice(0, 180)}{cp.explanation.length > 180 ? "…" : ""}</div>
+      )}
+    </div>
+  );
+}
+
+function ValidationBlock({ v }: { v: LineageStageValidation }) {
+  const [showHistory, setShowHistory] = useState(false);
+  const cps = v.checkpoints;
+  const hasAttempts = (v.attempts ?? 1) > 1;
+
+  return (
+    <div className="space-y-2">
+      {/* Consequence + attempt badge */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className={cn("text-[11px] px-2 py-px rounded-full font-mono font-medium", CONSEQUENCE_STYLE[v.consequence])}>
           {v.consequence.toUpperCase()}
         </span>
-        <BoolPill ok={v.shape_ok} label="shape" />
-        <BoolPill ok={v.context_ok} label="context" />
-        <BoolPill ok={v.policy_ok} label="policy" />
+        {hasAttempts && (
+          <span className="text-[10px] px-1.5 py-px rounded font-mono bg-amber-500/10 text-amber-400">
+            {v.attempts} attempts
+          </span>
+        )}
       </div>
-      {v.issues.length > 0 && (
-        <ul className="space-y-1">
-          {v.issues.map((issue, i) => (
-            <li key={i} className="text-[11px] text-amber-400 font-mono">⚠ {issue}</li>
-          ))}
-        </ul>
+
+      {/* Per-checkpoint breakdown */}
+      {cps ? (
+        <div className="rounded-lg border border-line-soft bg-surface overflow-hidden">
+          <div className="px-2.5 py-1 border-b border-line-soft bg-surface-2">
+            <span className="font-mono text-[9px] uppercase tracking-widest text-ink-mute">Checkpoint Results</span>
+          </div>
+          <div className="px-2.5 py-1">
+            <CheckpointRow label="Shape" cp={cps.shape} />
+            <CheckpointRow label="Context" cp={cps.context} />
+            <CheckpointRow label="Policy" cp={cps.policy} />
+            {cps.hallucination && (
+              <CheckpointRow label="Hallucination" cp={cps.hallucination} />
+            )}
+          </div>
+        </div>
+      ) : (
+        // Fallback: flat issue list
+        v.issues.length > 0 && (
+          <ul className="space-y-1">
+            {v.issues.map((issue, i) => (
+              <li key={i} className="text-[11px] text-amber-400 font-mono">⚠ {issue}</li>
+            ))}
+          </ul>
+        )
+      )}
+
+      {/* Attempt history */}
+      {v.attempt_history && v.attempt_history.length > 0 && (
+        <div>
+          <button
+            onClick={() => setShowHistory(h => !h)}
+            className="text-[10px] font-mono text-ink-mute hover:text-ink flex items-center gap-1"
+          >
+            {showHistory ? "▲" : "▼"} Auto-correction history ({v.attempt_history.length} attempt{v.attempt_history.length > 1 ? "s" : ""})
+          </button>
+          {showHistory && (
+            <div className="mt-1.5 space-y-1.5">
+              {v.attempt_history.map((ah) => (
+                <div key={ah.attempt} className={cn(
+                  "rounded border px-2.5 py-1.5 text-[10px] font-mono",
+                  ah.consequence === "allow" ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-400"
+                    : "border-red-500/30 bg-red-500/5 text-red-400"
+                )}>
+                  <div className="font-semibold mb-0.5">
+                    Attempt {ah.attempt} → {ah.consequence.toUpperCase()}
+                  </div>
+                  {ah.issues.map((iss, i) => (
+                    <div key={i} className="text-ink-mute leading-snug">⚠ {iss}</div>
+                  ))}
+                  {ah.issues.length === 0 && <div className="text-ink-mute">All checks passed.</div>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

@@ -47,15 +47,25 @@ class Validator:
             tracker: Optional _TraceTracker from AgentTracer — marks validation_ran.
 
         Returns:
-            dict with keys: shape_ok, context_ok, policy_ok, consequence, issues, output_preview
+            dict with keys: shape_ok, context_ok, policy_ok, consequence, issues,
+            checkpoints, output_preview
         """
-        issues = []
+        shape_issues: list = []
+        context_issues: list = []
+        policy_issues: list = []
 
-        shape_ok   = self._check_shape(output, issues)
-        context_ok = self._check_context(output, issues)
-        policy_ok  = self._check_policy(output, issues)
+        shape_ok   = self._check_shape(output, shape_issues)
+        context_ok = self._check_context(output, context_issues)
+        policy_ok  = self._check_policy(output, policy_issues)
 
+        issues = shape_issues + context_issues + policy_issues
         consequence = self._decide(shape_ok, context_ok, policy_ok)
+
+        checkpoints = {
+            "shape":   {"ok": shape_ok,   "issues": shape_issues},
+            "context": {"ok": context_ok, "issues": context_issues},
+            "policy":  {"ok": policy_ok,  "issues": policy_issues},
+        }
 
         preview = self._preview(output)
         record = write_validation(
@@ -72,7 +82,7 @@ class Validator:
         if tracker is not None:
             tracker.mark_validation_ran()
 
-        return {**record, "consequence": consequence}
+        return {**record, "consequence": consequence, "checkpoints": checkpoints}
 
     # ── Checks ────────────────────────────────────────────────────────────────
 

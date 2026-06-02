@@ -89,6 +89,28 @@ export const leadSearch = (params: {
 
 // ── Approval Queue ───────────────────────────────────────────────────────────
 
+export type ValidationCheckpoint = {
+  ok: boolean;
+  issues?: string[];
+  violations?: string[];
+  confidence?: number;
+  explanation?: string;
+};
+
+export type ValidatorCheckpoints = {
+  shape: ValidationCheckpoint;
+  context: ValidationCheckpoint;
+  policy: ValidationCheckpoint;
+  hallucination?: ValidationCheckpoint;
+};
+
+export type CitationEntry2 = {
+  value: string | string[] | number | null;
+  source: string;
+  field: string;
+  url?: string;
+};
+
 export type ApprovalItem = {
   event_id: string;
   lead_id: string;
@@ -102,6 +124,8 @@ export type ApprovalItem = {
   trigger: string;
   policy: string;
   confidence: number;
+  checkpoints?: ValidatorCheckpoints;
+  citations?: Record<string, CitationEntry2>;
 };
 
 export const approvalQueue = () => get<ApprovalItem[]>("/approval-queue");
@@ -245,6 +269,24 @@ export type LineageStageValidation = {
   context_ok: boolean | null;
   policy_ok: boolean | null;
   issues: string[];
+  checkpoints?: {
+    shape:   { ok: boolean; issues: string[] };
+    context: { ok: boolean; issues: string[] };
+    policy:  { ok: boolean; issues: string[] };
+    hallucination?: {
+      ok: boolean;
+      violations: string[];
+      confidence?: number;
+      explanation?: string;
+    };
+  };
+  attempts?: number;
+  attempt_history?: {
+    attempt: number;
+    consequence: string;
+    issues: string[];
+    checkpoints?: Record<string, { ok: boolean; issues: string[] }>;
+  }[];
 };
 
 export type LineageStage = {

@@ -159,6 +159,8 @@ class AgentTracer:
                     "is_new_interpretation": is_new_interp,
                     "self_eval": self_eval or None,
                     "citations": tracker.citations or None,
+                    "attempt_number": tracker.attempt_number,
+                    "attempt_history": tracker.attempt_history or None,
                 },
             )
 
@@ -176,6 +178,8 @@ class _TraceTracker:
         self.retrieval_score: Optional[float] = None  # set via set_retrieval_score()
         self.self_eval_result: Optional[dict] = None  # set via set_self_eval()
         self.citations: Optional[dict] = None         # set via set_citations()
+        self.attempt_number: int = 1
+        self.attempt_history: list = []
 
     def finish(self, response, confidence: Optional[float] = None):
         """Record the Claude response (anthropic.types.Message)."""
@@ -202,6 +206,11 @@ class _TraceTracker:
     def set_citations(self, citations: dict):
         """Attach source attribution map to this trace."""
         self.citations = citations
+
+    def set_attempt_info(self, attempt_number: int, prior_history: list):
+        """Record which correction attempt this is and the history of prior attempts."""
+        self.attempt_number = attempt_number
+        self.attempt_history = prior_history
 
     def fail(self, reason: str = ""):
         self.success = False

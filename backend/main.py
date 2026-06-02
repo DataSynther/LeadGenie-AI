@@ -257,30 +257,105 @@ async def leads_list():
 
 @app.get("/approval-queue")
 async def approval_queue():
-    """Get approval queue built from sample leads — high/medium risk items."""
+    """Get approval queue with citations and validator checkpoints per item."""
     leads = apollo_people.search_people({"per_page": 25})
     queue = []
-    snippets = [
-        ("Hi {name}, saw {company} just closed a funding round — our pricing typically comes in around $48k annually for teams your size. Worth a 20-min scoping call?", "high", "pricing_mention", "no_explicit_pricing", 0.91),
-        ("Hi {name}, loved the recent product launch at {company}. We help teams like yours compress the research-to-outreach cycle significantly.", "medium", "competitor_comparison", "competitor_mention_policy", 0.76),
-        ("Hi {name}, noticed {company} is scaling fast. Our platform handles compliance automatically so your team can focus on pipeline.", "medium", "compliance_claim", "factual_accuracy_policy", 0.82),
-        ("Hi {name}, your work at {company} caught my attention. I'd love to show you how we're helping similar orgs close deals 2x faster.", "high", "performance_guarantee", "no_guarantees_policy", 0.88),
+    items_data = [
+        {
+            "body": "Hi {name}, saw {company} just closed a funding round — our pricing typically comes in around $48k annually for teams your size. Worth a 20-min scoping call?",
+            "risk": "high", "trigger": "pricing_mention", "policy": "no_explicit_pricing", "conf": 0.91,
+            "checkpoints": {
+                "shape":          {"ok": True,  "issues": []},
+                "context":        {"ok": True,  "issues": []},
+                "policy":         {"ok": False, "issues": ["policy:explicit_pricing_mentioned"]},
+                "hallucination":  {"ok": False, "violations": ["'$48k annually' — pricing figure not sourced from CRM or pricing sheet; appears fabricated for this lead."]},
+            },
+            "citations": {
+                "lead_name":     {"value": "{name}", "source": "Apollo People API", "field": "lead.name"},
+                "company_name":  {"value": "{company}", "source": "Apollo Company API", "field": "company.name"},
+                "funding_round": {"value": "mentioned as recent", "source": "Research Agent (AI-generated)", "field": "research.signals"},
+                "pricing_figure":{"value": "$48k annually", "source": "UNKNOWN — not in source data", "field": "hallucinated"},
+                "team_size":     {"value": "teams your size", "source": "Apollo Company API (employee_count)", "field": "company.employee_count"},
+            },
+        },
+        {
+            "body": "Hi {name}, loved the recent product launch at {company}. We help teams like yours compress the research-to-outreach cycle significantly.",
+            "risk": "medium", "trigger": "unverified_claim", "policy": "factual_accuracy_policy", "conf": 0.76,
+            "checkpoints": {
+                "shape":          {"ok": True,  "issues": []},
+                "context":        {"ok": False, "issues": ["context:company_name_absent:{company}"]},
+                "policy":         {"ok": True,  "issues": []},
+                "hallucination":  {"ok": False, "violations": ["'recent product launch' — no product launch found in research data for this company."]},
+            },
+            "citations": {
+                "lead_name":      {"value": "{name}", "source": "Apollo People API", "field": "lead.name"},
+                "company_name":   {"value": "{company}", "source": "Apollo Company API", "field": "company.name"},
+                "product_launch": {"value": "recent launch mentioned", "source": "UNKNOWN — not in research", "field": "hallucinated"},
+                "cycle_claim":    {"value": "compress research-to-outreach cycle", "source": "LeadGenie product capability", "field": "seller_profile.capabilities"},
+            },
+        },
+        {
+            "body": "Hi {name}, noticed {company} is scaling fast. Our platform handles compliance automatically so your team can focus on pipeline.",
+            "risk": "medium", "trigger": "compliance_claim", "policy": "factual_accuracy_policy", "conf": 0.82,
+            "checkpoints": {
+                "shape":          {"ok": True, "issues": []},
+                "context":        {"ok": True, "issues": []},
+                "policy":         {"ok": True, "issues": []},
+                "hallucination":  {"ok": True, "violations": []},
+            },
+            "citations": {
+                "lead_name":      {"value": "{name}", "source": "Apollo People API", "field": "lead.name"},
+                "company_name":   {"value": "{company}", "source": "Apollo Company API", "field": "company.name"},
+                "scaling_signal": {"value": "headcount growth > 15% 12m", "source": "Apollo Signals API", "field": "signals.headcount_growth_12m"},
+                "compliance_auto":{"value": "handles compliance automatically", "source": "LeadGenie product capability", "field": "seller_profile.capabilities"},
+            },
+        },
+        {
+            "body": "Hi {name}, your work at {company} caught my attention. I'd love to show you how we're helping similar orgs close deals 2x faster.",
+            "risk": "high", "trigger": "performance_guarantee", "policy": "no_guarantees_policy", "conf": 0.88,
+            "checkpoints": {
+                "shape":          {"ok": True,  "issues": []},
+                "context":        {"ok": True,  "issues": []},
+                "policy":         {"ok": False, "issues": ["policy:performance_guarantee:close_deals_2x_faster"]},
+                "hallucination":  {"ok": True,  "violations": []},
+            },
+            "citations": {
+                "lead_name":     {"value": "{name}", "source": "Apollo People API", "field": "lead.name"},
+                "company_name":  {"value": "{company}", "source": "Apollo Company API", "field": "company.name"},
+                "2x_faster":     {"value": "close deals 2x faster", "source": "UNVERIFIED — performance guarantee not backed by cited study", "field": "policy_violation"},
+                "similar_orgs":  {"value": "similar orgs", "source": "Research Agent (industry comparison)", "field": "research.industry"},
+            },
+        },
     ]
+
     for i, lead in enumerate(leads[:4]):
-        snippet_tpl, risk, trigger, policy, conf = snippets[i % len(snippets)]
+        item = items_data[i % len(items_data)]
+        fname = lead["name"].split()[0]
+        cname = lead["company"] or "your company"
+        body = item["body"].format(name=fname, company=cname)
+
+        # Resolve citation placeholders to actual lead values
+        citations = {}
+        for k, v in item["citations"].items():
+            resolved = dict(v)
+            resolved["value"] = str(resolved.get("value") or "").replace("{name}", lead["name"]).replace("{company}", cname)
+            citations[k] = resolved
+
         queue.append({
             "event_id": f"evt_{lead['id'][:8]}",
             "lead_id": lead["id"],
             "lead_name": lead["name"],
             "lead_title": lead["title"],
-            "company_name": lead["company"] or "Unknown",
-            "risk_level": risk,
-            "risk_score": round(conf - 0.1 + (i * 0.03), 2),
+            "company_name": cname,
+            "risk_level": item["risk"],
+            "risk_score": round(item["conf"] - 0.1 + (i * 0.03), 2),
             "timestamp": f"2026-05-27T{10 + i}:{15 + i * 3:02d}:00Z",
-            "content_snippet": snippet_tpl.format(name=lead["name"].split()[0], company=lead["company"] or "your company"),
-            "trigger": trigger,
-            "policy": policy,
-            "confidence": conf,
+            "content_snippet": body,
+            "trigger": item["trigger"],
+            "policy": item["policy"],
+            "confidence": item["conf"],
+            "checkpoints": item["checkpoints"],
+            "citations": citations,
         })
     return queue
 
@@ -446,8 +521,8 @@ async def pipeline_lineage(lead_id: str):
     gov_event = audit_events[-1] if audit_events else None
     gov_payload = gov_event.get("payload", {}) if gov_event else {}
     email_content = gov_payload.get("content", {})
-    tone_result = gov_payload.get("tone_result", {})
-    hallucination_result = gov_payload.get("hallucination_result", {})
+    tone_result = gov_payload.get("tone_result", {}) or {}
+    hallucination_result = gov_payload.get("hallucination_result", {}) or {}
     risk_score = gov_payload.get("risk_score")
     final_decision = gov_event.get("decision", "unknown") if gov_event else "unknown"
     has_data = bool(audit_events)
@@ -456,26 +531,74 @@ async def pipeline_lineage(lead_id: str):
         entries = agent_map.get(agent, [])
         return entries[-1] if entries else {}
 
+    def all_for(agent_map: dict, agent: str) -> list:
+        return agent_map.get(agent, [])
+
     def stage_status_from_trace(trace: dict, fallback_has_data: bool) -> str:
         if not trace:
             return "success" if fallback_has_data else "unknown"
-        return "success" if trace.get("success", True) else "error"
+        cats = trace.get("diagnostic_categories", [])
+        if not trace.get("success", True):
+            return "error"
+        if cats:
+            return "flagged"
+        return "success"
 
-    def build_validation(v: dict) -> Optional[dict]:
+    def build_validation(v: dict, trace: Optional[dict] = None) -> Optional[dict]:
         if not v:
             return None
-        return {
+        result: dict = {
             "consequence": v.get("consequence", "allow"),
             "shape_ok": v.get("shape_ok"),
             "context_ok": v.get("context_ok"),
             "policy_ok": v.get("policy_ok"),
             "issues": v.get("issues", []),
+            "checkpoints": {
+                "shape":   {"ok": v.get("shape_ok", True),   "issues": [i for i in v.get("issues", []) if i.startswith("shape:")]},
+                "context": {"ok": v.get("context_ok", True), "issues": [i for i in v.get("issues", []) if i.startswith("context:")]},
+                "policy":  {"ok": v.get("policy_ok", True),  "issues": [i for i in v.get("issues", []) if i.startswith("policy:")]},
+            },
         }
+        if trace:
+            meta = trace.get("metadata", {})
+            result["attempts"] = meta.get("attempt_number", 1)
+            result["attempt_history"] = meta.get("attempt_history") or []
+        return result
 
+    # ── Resolve traces & validations ──────────────────────────────────────────
     r_trace = latest(traces_by_agent, "research")
-    o_trace = latest(traces_by_agent, "outreach")
+    o_traces = all_for(traces_by_agent, "outreach")
+    o_trace = o_traces[-1] if o_traces else {}
     r_val = latest(validations_by_agent, "research")
-    o_val = latest(validations_by_agent, "outreach")
+    o_vals = all_for(validations_by_agent, "outreach")
+    o_val = o_vals[-1] if o_vals else {}
+
+    # ── Parse research output from trace preview ──────────────────────────────
+    r_parsed: dict = {}
+    r_preview = r_trace.get("response_preview", "") or ""
+    if r_preview:
+        try:
+            r_parsed = json.loads(r_preview) if r_preview.strip().startswith("{") else {}
+        except Exception:
+            pass
+
+    # ── Build lead info from audit (lead_id is available) ─────────────────────
+    lead_info: dict = {}
+    for ev in audit_events:
+        p = ev.get("payload", {})
+        if p.get("lead_name"):
+            lead_info = {
+                "name": p.get("lead_name"),
+                "title": p.get("lead_title"),
+                "company": p.get("company_name"),
+                "email": p.get("lead_email"),
+            }
+            break
+
+    # ── Collect citations from outreach trace ─────────────────────────────────
+    o_citations = (o_trace.get("metadata", {}) or {}).get("citations") or {}
+    o_retrieval_score = (o_trace.get("metadata", {}) or {}).get("retrieval_score")
+    o_self_eval = (o_trace.get("metadata", {}) or {}).get("self_eval") or {}
 
     stages = [
         {
@@ -484,8 +607,18 @@ async def pipeline_lineage(lead_id: str):
             "icon": "🔍",
             "module": "Apollo API",
             "status": "success" if has_data else "unknown",
-            "inputs": {"source": "Apollo.io", "criteria": "company · title · seniority"},
-            "outputs": {"lead_id": lead_id, "fields": "name, title, email, company, linkedin_url"},
+            "inputs": {
+                "source": "Apollo.io People API",
+                "filter_criteria": "VP / C-Suite / Director seniority",
+                "lead_id": lead_id,
+            },
+            "outputs": {
+                "lead_id": lead_id,
+                "name": lead_info.get("name") or "(from pipeline)",
+                "title": lead_info.get("title") or "(from pipeline)",
+                "company": lead_info.get("company") or "(from pipeline)",
+                "email": lead_info.get("email") or "(masked)",
+            },
             "perf": {"latency_ms": None, "tokens": None, "context_score": None},
             "validation": None,
         },
@@ -495,15 +628,22 @@ async def pipeline_lineage(lead_id: str):
             "icon": "🧠",
             "module": "research_agent.py",
             "status": stage_status_from_trace(r_trace, has_data),
-            "inputs": {"company": "company dict from Apollo", "signals": "hiring + growth signals"},
+            "inputs": {
+                "company_name": lead_info.get("company") or "(from Apollo)",
+                "signals": "hiring + growth signals from Apollo",
+                "model": "claude-sonnet-4-6",
+            },
             "outputs": {
-                "summary": (r_trace.get("response_preview", "") or "")[:200] or "(see trace)",
-                "fields": "pain_points · ai_readiness_score · growth_stage · strategic_priorities",
+                "summary": (r_parsed.get("summary") or (r_preview[:200] if r_preview else "(no trace)") ),
+                "pain_points": r_parsed.get("pain_points") or r_parsed.get("likely_pain_points") or "(see trace)",
+                "growth_stage": r_parsed.get("growth_stage") or "(see trace)",
+                "ai_readiness_score": r_parsed.get("ai_readiness_score"),
+                "strategic_priorities": r_parsed.get("strategic_priorities"),
             },
             "perf": {
                 "latency_ms": r_trace.get("latency_ms"),
                 "tokens": r_trace.get("tokens_used"),
-                "context_score": r_trace.get("metadata", {}).get("context_score"),
+                "context_score": (r_trace.get("metadata") or {}).get("context_score"),
             },
             "validation": build_validation(r_val),
         },
@@ -513,8 +653,19 @@ async def pipeline_lineage(lead_id: str):
             "icon": "🗂️",
             "module": "context_builder.py",
             "status": "success" if has_data else "unknown",
-            "inputs": {"lead": "lead dict", "company": "company dict", "signals": "signals", "research": "research output"},
-            "outputs": {"context": "unified lead + company + signals + research object passed to all downstream agents"},
+            "inputs": {
+                "lead": "lead dict from Apollo",
+                "company": "company dict from Apollo",
+                "signals": "signals array",
+                "research": "research output",
+            },
+            "outputs": {
+                "context_keys": "lead · company · signals · research",
+                "lead_name": lead_info.get("name") or "(from pipeline)",
+                "company_name": lead_info.get("company") or "(from pipeline)",
+                "has_research": bool(r_parsed),
+                "has_signals": has_data,
+            },
             "perf": {"latency_ms": None, "tokens": None, "context_score": None},
             "validation": None,
         },
@@ -524,8 +675,15 @@ async def pipeline_lineage(lead_id: str):
             "icon": "📈",
             "module": "trend_agent.py",
             "status": "success" if has_data else "unknown",
-            "inputs": {"sources": "RSS feeds + curated AI/SaaS trend list"},
-            "outputs": {"trends": "list of {title, summary, source, relevance_tags}"},
+            "inputs": {
+                "sources": "RSS feeds (TechCrunch, HBR, NASSCOM)",
+                "curated_list": "AI/SaaS/enterprise trend bank",
+            },
+            "outputs": {
+                "trend_1": (o_citations.get("top_trends", [{}])[0] or {}).get("title") or "(see trace)",
+                "trend_2": (o_citations.get("top_trends", [{}] * 2)[1] or {}).get("title") if len(o_citations.get("top_trends", [])) > 1 else "(see trace)",
+                "trend_3": (o_citations.get("top_trends", [{}] * 3)[2] or {}).get("title") if len(o_citations.get("top_trends", [])) > 2 else "(see trace)",
+            },
             "perf": {"latency_ms": None, "tokens": None, "context_score": None},
             "validation": None,
         },
@@ -535,8 +693,17 @@ async def pipeline_lineage(lead_id: str):
             "icon": "🎯",
             "module": "relevance_engine.py",
             "status": "success" if has_data else "unknown",
-            "inputs": {"context": "lead context", "trends": "all fetched trends", "top_k": 3},
-            "outputs": {"top_trends": "3 semantically ranked trends via Voyage AI embeddings + cosine similarity"},
+            "inputs": {
+                "context": "unified lead + company context",
+                "trends_count": len(o_citations.get("top_trends", [])) or "(all fetched)",
+                "top_k": 3,
+                "method": "Voyage AI embeddings + cosine similarity",
+            },
+            "outputs": {
+                "selected_trend_1": (o_citations.get("top_trends", [{}])[0] or {}).get("title") or "(see trace)",
+                "source_1": (o_citations.get("top_trends", [{}])[0] or {}).get("source") or "Trend Agent",
+                "url_1": (o_citations.get("top_trends", [{}])[0] or {}).get("url") or None,
+            },
             "perf": {"latency_ms": None, "tokens": None, "context_score": None},
             "validation": None,
         },
@@ -546,18 +713,27 @@ async def pipeline_lineage(lead_id: str):
             "icon": "✉️",
             "module": "outreach_agent.py",
             "status": stage_status_from_trace(o_trace, has_data),
-            "inputs": {"context": "unified context", "top_trends": "3 ranked trends"},
+            "inputs": {
+                "lead_name": o_citations.get("lead_name", {}).get("value") or lead_info.get("name") or lead_id,
+                "company_name": o_citations.get("company_name", {}).get("value") or lead_info.get("company") or "(from context)",
+                "industry": o_citations.get("industry", {}).get("value") or "(from context)",
+                "top_trend": (o_citations.get("top_trends", [{}])[0] or {}).get("title") or "(see trace)",
+                "pain_points": o_citations.get("pain_points", {}).get("value") or "(from research)",
+            },
             "outputs": {
-                "subject": email_content.get("subject", ""),
-                "body_preview": (email_content.get("body", "") or "")[:300] + ("…" if len(email_content.get("body", "") or "") > 300 else ""),
-                "reasoning": (email_content.get("reasoning", "") or "")[:250] + ("…" if len(email_content.get("reasoning", "") or "") > 250 else ""),
+                "subject": email_content.get("subject") or "(see audit log)",
+                "body_preview": (email_content.get("body") or "")[:300] + ("…" if len(email_content.get("body") or "") > 300 else ""),
+                "reasoning": (email_content.get("reasoning") or "")[:200] + ("…" if len(email_content.get("reasoning") or "") > 200 else ""),
+                "retrieval_score": round(o_retrieval_score, 3) if o_retrieval_score is not None else None,
+                "self_eval_confidence": o_self_eval.get("confidence"),
+                "self_eval_sufficient": o_self_eval.get("sufficient_info"),
             },
             "perf": {
                 "latency_ms": o_trace.get("latency_ms"),
                 "tokens": o_trace.get("tokens_used"),
-                "context_score": o_trace.get("metadata", {}).get("context_score"),
+                "context_score": (o_trace.get("metadata") or {}).get("context_score"),
             },
-            "validation": build_validation(o_val),
+            "validation": build_validation(o_val, o_trace),
         },
         {
             "id": "tone_check",
@@ -565,13 +741,28 @@ async def pipeline_lineage(lead_id: str):
             "icon": "🎙️",
             "module": "tone_validator.py",
             "status": ("success" if tone_result.get("passed") else "flagged") if tone_result else ("unknown" if not has_data else "success"),
-            "inputs": {"email_body": "generated email"},
+            "inputs": {
+                "email_subject": email_content.get("subject") or "(generated email)",
+                "email_body_length": len(email_content.get("body") or "") or None,
+            },
             "outputs": {
                 "passed": tone_result.get("passed"),
-                "issues": tone_result.get("issues", []),
+                "issues": tone_result.get("issues") or [],
+                "checks": "no_guarantee_language · no_excessive_links · appropriate_length · no_spam_phrases",
             },
             "perf": {"latency_ms": None, "tokens": None, "context_score": None},
-            "validation": None,
+            "validation": {
+                "consequence": "allow" if tone_result.get("passed") else "defer",
+                "shape_ok": True,
+                "context_ok": tone_result.get("passed", True),
+                "policy_ok": tone_result.get("passed", True),
+                "issues": tone_result.get("issues") or [],
+                "checkpoints": {
+                    "shape":   {"ok": True, "issues": []},
+                    "context": {"ok": True, "issues": []},
+                    "policy":  {"ok": tone_result.get("passed", True), "issues": tone_result.get("issues") or []},
+                },
+            } if has_data else None,
         },
         {
             "id": "hallucination_check",
@@ -579,13 +770,36 @@ async def pipeline_lineage(lead_id: str):
             "icon": "🔬",
             "module": "hallucination_checker.py",
             "status": ("success" if hallucination_result.get("passed") else "flagged") if hallucination_result else ("unknown" if not has_data else "success"),
-            "inputs": {"email_body": "generated email", "source_facts": "verified company + lead facts from Apollo"},
+            "inputs": {
+                "email_body": (email_content.get("body") or "")[:120] + "…" if email_content.get("body") else "(generated email)",
+                "source_facts": "company_name · industry · lead_title · description · technologies",
+                "fact_source": "Apollo Company API",
+            },
             "outputs": {
                 "passed": hallucination_result.get("passed"),
-                "violations": hallucination_result.get("violations", []),
+                "confidence": hallucination_result.get("confidence"),
+                "violations": hallucination_result.get("violations") or [],
+                "explanation": (hallucination_result.get("explanation") or "")[:200] + ("…" if len(hallucination_result.get("explanation") or "") > 200 else ""),
             },
             "perf": {"latency_ms": None, "tokens": None, "context_score": None},
-            "validation": None,
+            "validation": {
+                "consequence": "allow" if hallucination_result.get("passed") else "defer",
+                "shape_ok": True,
+                "context_ok": True,
+                "policy_ok": hallucination_result.get("passed", True),
+                "issues": hallucination_result.get("violations") or [],
+                "checkpoints": {
+                    "shape":   {"ok": True, "issues": []},
+                    "context": {"ok": True, "issues": []},
+                    "policy":  {"ok": False, "issues": []},
+                    "hallucination": {
+                        "ok": hallucination_result.get("passed", True),
+                        "violations": hallucination_result.get("violations") or [],
+                        "confidence": hallucination_result.get("confidence"),
+                        "explanation": (hallucination_result.get("explanation") or "")[:300],
+                    },
+                },
+            } if has_data else None,
         },
         {
             "id": "risk_engine",
@@ -596,12 +810,14 @@ async def pipeline_lineage(lead_id: str):
             "inputs": {
                 "tone_passed": tone_result.get("passed"),
                 "hallucination_passed": hallucination_result.get("passed"),
-                "issues": gov_payload.get("issues", []),
+                "violations_count": len(hallucination_result.get("violations") or []),
+                "issues": gov_payload.get("issues") or [],
             },
             "outputs": {
                 "risk_score": risk_score,
                 "decision": final_decision,
-                "threshold": "< 0.4 → auto-approve  |  ≥ 0.4 → approval queue",
+                "rule": "risk_score < 0.4 → auto-approve | ≥ 0.4 → approval queue",
+                "triggered_by": (gov_payload.get("issues") or ["none"])[0] if gov_payload.get("issues") else "all checks passed",
             },
             "perf": {"latency_ms": None, "tokens": None, "context_score": None},
             "validation": None,
@@ -610,12 +826,18 @@ async def pipeline_lineage(lead_id: str):
             "id": "final",
             "label": "Email Sent" if final_decision == "approved" else "Approval Queue" if final_decision == "flagged" else "Pending",
             "icon": "🚀" if final_decision == "approved" else "🕐",
-            "module": "email_sender.py" if final_decision == "approved" else "approval_queue",
+            "module": "email_sender.py" if final_decision == "approved" else "approval_queue.py",
             "status": "success" if final_decision == "approved" else ("flagged" if final_decision == "flagged" else "unknown"),
-            "inputs": {"email": "governance-approved email", "lead_email": "recipient address"},
+            "inputs": {
+                "email_subject": email_content.get("subject") or "(pending)",
+                "recipient": lead_info.get("email") or "(masked)",
+                "decision": final_decision,
+            },
             "outputs": {
                 "sent": final_decision == "approved",
                 "queued_for_review": final_decision == "flagged",
+                "risk_score": risk_score,
+                "timestamp": gov_event.get("timestamp") if gov_event else None,
             },
             "perf": {"latency_ms": None, "tokens": None, "context_score": None},
             "validation": None,
