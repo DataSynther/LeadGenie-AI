@@ -283,9 +283,18 @@ export type LineageStageValidation = {
   attempts?: number;
   attempt_history?: {
     attempt: number;
-    consequence: string;
-    issues: string[];
+    passed?: boolean;
+    consequence?: string;
+    issues?: string[];
     checkpoints?: Record<string, { ok: boolean; issues: string[] }>;
+    layers?: Record<string, {
+      passed?: boolean;
+      consequence?: string;
+      issues?: string[];
+      violations?: string[];
+      confidence?: number;
+      explanation?: string;
+    }>;
   }[];
 };
 
