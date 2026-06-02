@@ -1,0 +1,12 @@
+[
+  {
+    "role": "prospect",
+    "content": "We already have a solution in place, not looking right now.",
+    "timestamp": "2026-05-29T10:28:23.905128"
+  },
+  {
+    "role": "sdr",
+    "content": "Hi Arjun, I completely understand \u2014 the last thing you need is another vendor pitching you on something you've already solved. I respect that. That said, I've been speaking with a few other CTOs at mid-size tech companies recently, and a common theme I'm hearing is that their existing solutions are handling about 80% of the problem well, but leaving real gaps in [specific area, e.g., scalability during peak loads / security compliance / integration overhead] \u2014 gaps that only become visible as the team scales. I'm not suggesting you rip anything out. I'd just love to ask you two quick questions to see if what we do is even relevant to your setup. If it's not, I'll be the first to tell you. Would a 15-minute call this week or next be worth your time?",
+    "timestamp": "2026-05-29T10:28:35.263307"
+  }
+]

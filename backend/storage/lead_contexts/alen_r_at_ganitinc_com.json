@@ -1,0 +1,60 @@
+{
+  "lead_id": "665022c80b63ff0001f39cda",
+  "context": {
+    "lead": {
+      "name": "Rahul Gupta",
+      "title": "CEO",
+      "seniority": "c_suite",
+      "department": "executive",
+      "linkedin_url": "https://linkedin.com/in/rahul-gupta-demo"
+    },
+    "company": {
+      "name": "Zomato",
+      "industry": "information technology & services",
+      "employee_count": 4000,
+      "funding_stage": null,
+      "technologies": [
+        "AI",
+        "Akamai",
+        "Amazon AWS",
+        "Amazon SES",
+        "Atlassian Cloud",
+        "Gmail",
+        "Google Apps",
+        "Helpscout",
+        "Microsoft Office 365",
+        "MongoDB"
+      ],
+      "description": "Zomato is a multi-service food platform operating in over 19 countries, specializing in restaurant discovery, online food delivery, dining reservations, and supply chain solutions for the food industry. Initially established as a restaurant review platform, Zomato has evolved to include a robust food delivery service, which is its primary revenue driver. The platform delivers approximately 1.3 million orders daily from over 150,000 restaurants across 556+ Indian cities and has expanded to around 700 cities globally.\n\nIn addition to food delivery, Zomato offers logistics services through its subsidiary Runnr, which fulfills around 300,000 orders monthly. The company also provides fresh ingredients to restaurants via its Hyperpure service, operating large warehouses in major cities. Zomato has embraced cloud kitchens to enhance service in specific areas, managing 663 kitchen units across 50 cities in India. Furthermore, Zomato utilizes its advertising platform, AdOnMo, to create value for its stakeholders."
+    },
+    "signals": {
+      "open_roles": 0,
+      "ai_hiring": 3,
+      "scaling": false
+    },
+    "research": {
+      "summary": "Zomato is a large-scale, multi-service food technology platform operating across 19+ countries with a strong presence in India, processing approximately 1.3 million daily orders. With 4,000 employees and a diversified portfolio spanning food delivery, logistics (Runnr), fresh ingredient supply (Hyperpure), cloud kitchens, and advertising (AdOnMo), Zomato has evolved from a restaurant discovery platform into a full-stack food industry ecosystem. The company leverages a modern cloud-based tech stack including AWS, AI, and MongoDB, signaling a data-driven operational approach.",
+      "growth_stage": "Growth/Expansion \u2014 Zomato exhibits characteristics of a mature growth-stage company. It has established core revenue streams, diversified into adjacent verticals, and scaled to 700+ global cities. However, the absence of open general roles combined with selective AI and engineering hiring suggests a phase of operational consolidation and targeted capability-building rather than broad headcount expansion.",
+      "pain_points": [
+        "Managing complex multi-vertical data pipelines across delivery, logistics, supply chain, and kitchens in a unified and scalable manner",
+        "High operational costs associated with last-mile delivery and maintaining 663 cloud kitchen units",
+        "Customer retention and churn management in a highly competitive food delivery market",
+        "Real-time inventory and demand forecasting accuracy for Hyperpure and cloud kitchens",
+        "Ensuring platform reliability and low latency at 1.3M+ daily orders scale \u2014 Akamai/AWS dependency risk",
+        "Cross-functional data silos between Zomato core, Runnr, Hyperpure, and AdOnMo limiting unified analytics",
+        "Talent acquisition and retention for specialized AI/ML and engineering roles in a competitive market",
+        "Regulatory and compliance complexity across 19+ countries with varying food safety and data privacy laws"
+      ],
+      "ai_readiness_score": 7,
+      "strategic_priorities": [
+        "AI and machine learning integration across delivery optimization, demand forecasting, and personalization",
+        "Scaling Hyperpure fresh ingredient supply chain to capture more B2B restaurant revenue",
+        "Expanding cloud kitchen infrastructure to improve unit economics and delivery density",
+        "Strengthening logistics capabilities through Runnr to reduce third-party dependency",
+        "Monetizing the advertising platform (AdOnMo) to diversify beyond delivery commissions",
+        "International market consolidation and selective expansion in high-potential geographies",
+        "Improving operational efficiency and profitability through automation and data analytics"
+      ]
+    }
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "lead_id": "6051ce8e97b52e00018389cc",
+  "context": {
+    "lead": {
+      "name": "Sandip Agarwal",
+      "title": "Chief Technology Officer",
+      "seniority": "vp",
+      "department": "engineering",
+      "linkedin_url": "https://linkedin.com/in/sandip-agarwal-demo"
+    },
+    "company": {
+      "name": "Traya",
+      "industry": "health, wellness & fitness",
+      "employee_count": 760,
+      "funding_stage": "Private Equity",
+      "technologies": [
+        "AI",
+        "API Gateway",
+        "AWS CloudFormation",
+        "AWS CodeBuild",
+        "AWS CodeDeploy",
+        "AWS CodePipeline",
+        "AWS Step Functions",
+        "Adobe Photoshop",
+        "Adobe Premiere Pro",
+        "Amazon CloudFront"
+      ],
+      "description": "Nestl\u00e9 S.A. is the world's largest food and beverage company, based in Vevey, Switzerland. Established in 1905 from the merger of the Anglo-Swiss Condensed Milk Company and Farine Lact\u00e9e Henri Nestl\u00e9, the company has a rich history rooted in food preservation and nutrition. Nestl\u00e9 operates in nearly 200 countries, with hundreds of factories producing a wide range of products.\n\nThe company offers a diverse portfolio that includes infant nutrition, dairy products, chocolate, beverages, frozen and prepared foods, cereals, and pet food. Notable brands include Nescaf\u00e9, KitKat, and Stouffer\u2019s. Nestl\u00e9 emphasizes convenience and nutrition, continually investing in research and development to enhance its offerings. With a strong global presence, Nestl\u00e9 remains committed to providing quality food and beverage options to consumers worldwide."
+    },
+    "signals": {
+      "open_roles": 62,
+      "ai_hiring": 1,
+      "scaling": true
+    },
+    "research": {
+      "summary": "Traya is a health, wellness & fitness company with approximately 760 employees, currently backed by Private Equity funding. Despite a mismatch in the provided description (which references Nestl\u00e9), Traya operates in the direct-to-consumer health and wellness space, likely focused on personalized health solutions. The company is actively scaling with 62 open roles, engineering expansion signals, and a confirmed scaling trajectory. Their tech stack reflects a mature AWS-native infrastructure with CI/CD pipelines, AI integration, and content production capabilities.",
+      "growth_stage": "Growth / Scale-Up \u2014 Traya exhibits strong scaling signals with 62 open roles, engineering team expansion (5 roles), and Private Equity backing suggesting an active investment phase focused on operational maturity, product expansion, and market penetration. The company is transitioning from early growth to scaling infrastructure and team depth.",
+      "pain_points": [
+        "Rapid hiring across engineering and operations may create onboarding inefficiencies and cultural dilution",
+        "Managing AWS infrastructure complexity at scale \u2014 cost optimization, security, and observability gaps",
+        "Limited AI hiring (only 1 AI role) relative to scaling needs may slow personalization roadmap",
+        "Data silos between health, behavioral, and transactional data limiting 360-degree customer insights",
+        "PE pressure to demonstrate measurable ROI on technology investments and growth spend",
+        "Content production scaling bottlenecks as creative team supports growing marketing demands",
+        "Potential gaps in data governance, compliance (HIPAA/health data regulations), and privacy management",
+        "Engineering bandwidth constraints with only 5 expansion roles against a broad technical roadmap"
+      ],
+      "ai_readiness_score": 6,
+      "strategic_priorities": [
+        "Scaling engineering and product teams to support platform growth and feature velocity",
+        "Deepening AI/ML integration into personalization and health recommendation engines",
+        "Optimizing cloud infrastructure on AWS for performance, cost efficiency, and reliability",
+        "Expanding content and creative production capabilities (Adobe Photoshop, Premiere Pro signals)",
+        "Driving customer acquisition and retention through data-driven personalization",
+        "Meeting Private Equity performance benchmarks around revenue growth and operational efficiency",
+        "Building robust API ecosystem to support third-party integrations and partner channels"
+      ]
+    }
+  }
+}

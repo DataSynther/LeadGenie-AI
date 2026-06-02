@@ -1,0 +1,22 @@
+[
+  {
+    "role": "prospect",
+    "content": "Sounds interesting, tell me more",
+    "timestamp": "2026-05-30T05:44:25.702540"
+  },
+  {
+    "role": "sdr",
+    "content": "Great to hear that resonates with you, Priya! \n\nGiven that Acme is scaling and you're in the fast-paced B2B SaaS space, I imagine slow onboarding is more than just a minor frustration \u2014 it probably has a real downstream impact on your engineering team's velocity and how quickly new hires can actually start contributing, right?\n\nWhat we typically help VP Engs like yourself do is dramatically cut down that ramp-up time \u2014 we're talking getting new engineers productive in days rather than weeks \u2014 which frees your team leads from constantly being pulled into hand-holding mode.\n\nWith 200 people and what sounds like active growth, that kind of efficiency can compound pretty quickly across your org.\n\nI'd love to dig into the specifics of where the friction is hitting you hardest \u2014 whether it's tooling, documentation, access management, or something else entirely. Everyone's situation is a little different.\n\nWould you be open to a quick 15-minute call this week? Nothing formal \u2014 just a chance for me to understand your setup better and see if there's a genuine fit worth exploring. I promise to keep it focused and respect your time. \ud83d\ude0a\n\nWhat does your calendar look like?",
+    "timestamp": "2026-05-30T05:44:36.162901"
+  },
+  {
+    "role": "prospect",
+    "content": "Sounds interesting, tell me more about this",
+    "timestamp": "2026-05-30T05:47:23.265962"
+  },
+  {
+    "role": "sdr",
+    "content": "Love the curiosity, Priya! Happy to go a bit deeper. \ud83d\ude0a\n\nSo specifically for engineering teams at scaling SaaS companies like Acme, the onboarding bottleneck usually shows up in a few key places:\n\n- **Getting context fast** \u2014 new engineers spending weeks just trying to understand the codebase, architecture decisions, and \"why things are the way they are\"\n- **Dependency on senior engineers** \u2014 your best people constantly getting pulled away to answer the same questions repeatedly\n- **Tribal knowledge gaps** \u2014 critical information that lives in people's heads rather than anywhere discoverable\n\nWhat we do is essentially help teams surface and structure that institutional knowledge so new hires can self-serve answers from day one \u2014 rather than waiting in someone's Slack DMs.\n\nFor a team of your size that's actively scaling, the math gets interesting pretty quickly. If you're onboarding even 2-3 engineers a month, shaving weeks off each person's ramp time adds up to a significant amount of recovered engineering capacity over a quarter.\n\nBut honestly \u2014 and I mean this \u2014 the specifics really do vary a lot depending on how your team is set up today. What works for one VP Eng doesn't always translate directly to another.\n\nThat's exactly why I'd love that 15 minutes with you. Even if it's just to map out where *your* biggest friction points are right now.\n\nAre you generally more free earlier in the week or later? Happy to work around your schedule! \ud83d\udcc5",
+    "timestamp": "2026-05-30T05:47:34.954541"
+  }
+]

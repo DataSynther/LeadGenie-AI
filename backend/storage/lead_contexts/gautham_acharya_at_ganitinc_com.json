@@ -1,0 +1,59 @@
+{
+  "lead_id": "66ebc081ed632d000142baed",
+  "context": {
+    "lead": {
+      "name": "Madhusudhan Rao",
+      "title": "Chief Technology Officer",
+      "seniority": "vp",
+      "department": "engineering",
+      "linkedin_url": "https://linkedin.com/in/madhusudhan-rao-demo"
+    },
+    "company": {
+      "name": "Swiggy",
+      "industry": "information technology & services",
+      "employee_count": 5500,
+      "funding_stage": null,
+      "technologies": [
+        "3M 360 Encompass - Health Analytics Suite",
+        "AI",
+        "AWS SDK for JavaScript",
+        "Amazon AWS",
+        "Amazon CloudFront",
+        "Amazon Elastic Load Balancer",
+        "Amazon SES",
+        "Anthropic Claude",
+        "Apache Kafka",
+        "Appcues"
+      ],
+      "description": "Swiggy is an on-demand convenience platform based in Bangalore, India, founded in 2014. It started as a hyperlocal food delivery service and has since expanded to serve approximately 13 million monthly users across 653 cities. With a network of around 196,000 restaurant partners, Swiggy connects consumers to a wide variety of dining options.\n\nThe company offers several services, including its flagship food delivery, Instamart for quick grocery delivery, Swiggy Stores for a range of goods, and Swiggy Genie for on-demand errands. In 2022, Swiggy acquired Dineout to enhance in-restaurant dining experiences. The platform is designed to provide urban consumers with unparalleled convenience, supported by a robust logistics network of over 600,000 delivery partners. Swiggy has achieved significant milestones, including EBITDA profitability in under nine years and one of India's largest IPOs."
+    },
+    "signals": {
+      "open_roles": 132,
+      "ai_hiring": 2,
+      "scaling": false
+    },
+    "research": {
+      "summary": "Swiggy is a leading Indian on-demand convenience platform headquartered in Bangalore, founded in 2014. With 5,500 employees and operations spanning 653 cities, the company serves ~13 million monthly users through food delivery, quick commerce (Instamart), and ancillary services. Having recently completed one of India's largest IPOs and achieved EBITDA profitability, Swiggy is in a post-IPO maturation phase balancing growth investment with operational efficiency. Its tech stack reflects a cloud-native, AI-curious organization leveraging AWS infrastructure and emerging AI tools including Anthropic Claude.",
+      "growth_stage": "Late Growth / Post-IPO Maturation \u2014 Swiggy has cleared major milestones (IPO, EBITDA profitability) and is now focused on sustainable scaling, market share defense against Zomato, and diversification of its service portfolio rather than pure hypergrowth.",
+      "pain_points": [
+        "Managing unit economics and delivery cost optimization across a hyper-distributed 600K+ partner logistics network",
+        "Data silos and real-time analytics challenges at scale across food delivery, grocery, and errand verticals",
+        "Intense competitive pressure from Zomato and emerging quick commerce players compressing margins",
+        "Integrating acquired platforms (Dineout) into a unified technology and data infrastructure",
+        "Fraud detection, dynamic pricing accuracy, and demand prediction across diverse geographies and service lines",
+        "Post-IPO compliance, reporting overhead, and investor scrutiny on path to profitability",
+        "Retaining and managing a large gig workforce of delivery partners with high churn rates",
+        "Customer retention and reducing churn among 13M monthly users in a price-sensitive market"
+      ],
+      "ai_readiness_score": 7,
+      "strategic_priorities": [
+        "Expanding quick commerce (Instamart) footprint and profitability as a key differentiator against competitors",
+        "Leveraging AI and data analytics to improve logistics efficiency, demand forecasting, and personalization for 13M+ monthly users",
+        "Post-IPO cost discipline and path to net profitability while sustaining revenue growth",
+        "Deepening restaurant and merchant partner ecosystem, including monetization of the Dineout acquisition",
+        "Scaling engineering and product capabilities, evidenced by 132 open roles including AI and engineering positions",
+        "Strengthening last-mile delivery network reliability across 653 cities with 600K+ delivery partners"
+      ]
+    }
+  }
+}

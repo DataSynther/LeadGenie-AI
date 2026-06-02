@@ -27,12 +27,7 @@ venv/
 env/
 ENV/
 
-# Storage / runtime data
-backend/storage/audit_logs/
-backend/storage/feedback/
-backend/storage/conversations/
-backend/storage/lead_contexts/
-backend/storage/intent_analytics/
+# Storage / runtime data (seed data committed; live data excluded via .gitkeep pattern)
 backend/agents/trends/trend_store.json
 
 # IDE

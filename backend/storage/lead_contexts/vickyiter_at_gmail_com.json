@@ -1,0 +1,62 @@
+{
+  "lead_id": "696cb6c2d4cef40001c3cd64",
+  "context": {
+    "lead": {
+      "name": "Ravi Sharma",
+      "title": "VP- Operations and CTO",
+      "seniority": "c_suite",
+      "department": "engineering",
+      "linkedin_url": "https://linkedin.com/in/ravi-sharma-demo"
+    },
+    "company": {
+      "name": "Britannia Industries Limited",
+      "industry": "food & beverages",
+      "employee_count": 5400,
+      "funding_stage": null,
+      "technologies": [
+        "AboveNet",
+        "Amazon AWS",
+        "Amazon CloudFront",
+        "Amazon Elastic Load Balancer",
+        "Blinkit",
+        "Bootstrap Framework",
+        "Cloudflare DNS",
+        "ExactTarget",
+        "Excel4Apps",
+        "GRIN"
+      ],
+      "description": "Britannia Industries Limited is a prominent Indian food and beverage company founded in 1892 in Kolkata. It specializes in bakery, dairy, and snacking products and operates in over 80 countries. As part of the Wadia Group, Britannia has grown to become a household name in India, employing over 4,500 people and achieving a market capitalization of \u20b91.08 trillion.\n\nThe company's diverse product portfolio includes a wide range of biscuits under popular brands like Good Day, NutriChoice, and Bourbon, as well as breads, cakes, and rusk products. In the dairy segment, Britannia produces milk, butter, cheese, ghee, and curd, with offerings like Winkin' Cow. With annual revenues exceeding \u20b99,000 crore, Britannia maintains a strong market presence in the food and beverage sector, focusing on providing tasty yet healthy products that fit into consumers' daily lives."
+    },
+    "signals": {
+      "open_roles": 0,
+      "ai_hiring": 0,
+      "scaling": false
+    },
+    "research": {
+      "summary": "Britannia Industries Limited is a century-old Indian FMCG giant founded in 1892, operating under the Wadia Group conglomerate. With a market cap of \u20b91.08 trillion and revenues exceeding \u20b99,000 crore, the company is a dominant player in India's bakery, dairy, and snacking segments. It operates across 80+ countries with 5,400 employees and maintains a diverse portfolio of iconic brands including Good Day, NutriChoice, and Bourbon. Despite its scale and heritage, the company shows limited hiring activity, suggesting operational consolidation rather than aggressive headcount expansion.",
+      "growth_stage": "Mature / Steady-State Growth \u2014 Britannia is an established enterprise with strong market presence and brand equity. It is not in a hypergrowth phase but continues to expand product lines and geographies incrementally. The single engineering expansion signal suggests selective modernization efforts rather than broad digital transformation.",
+      "pain_points": [
+        "Complex multi-channel distribution management across traditional retail, modern trade, and quick-commerce platforms",
+        "Data silos between legacy ERP systems and modern cloud infrastructure hindering unified analytics",
+        "Demand forecasting challenges across a diverse SKU portfolio spanning 80+ countries",
+        "Rising raw material costs (wheat, dairy, edible oils) compressing margins and requiring dynamic pricing intelligence",
+        "Limited agility in marketing personalization despite ExactTarget adoption, given scale and portfolio breadth",
+        "Fragmented customer data across D2C, quick-commerce, and retail channels limiting 360-degree consumer insights",
+        "Talent acquisition and retention in technology and engineering roles given limited open roles signal",
+        "Compliance and regulatory complexity across multiple international markets",
+        "Inventory and shelf-life management for perishable dairy and bakery products at scale"
+      ],
+      "ai_readiness_score": 5,
+      "strategic_priorities": [
+        "Supply chain optimization and distribution network strengthening across 80+ countries",
+        "Digital commerce expansion leveraging platforms like Blinkit for quick-commerce penetration",
+        "Product portfolio diversification into health-focused and premium snacking segments",
+        "Dairy segment scaling with brands like Winkin' Cow to compete with established dairy players",
+        "Technology infrastructure modernization using AWS, CloudFront, and Cloudflare for improved digital operations",
+        "Marketing automation and customer engagement through tools like ExactTarget (Salesforce Marketing Cloud)",
+        "Influencer and creator marketing investment evidenced by GRIN technology adoption",
+        "Cost efficiency and margin management in a competitive FMCG landscape"
+      ]
+    }
+  }
+}

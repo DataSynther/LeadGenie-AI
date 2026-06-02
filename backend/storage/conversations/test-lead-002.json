@@ -1,0 +1,12 @@
+[
+  {
+    "role": "prospect",
+    "content": "Ok noted.",
+    "timestamp": "2026-06-01T04:18:03.317890"
+  },
+  {
+    "role": "sdr",
+    "content": "Appreciate you taking a moment to respond, Priya!\n\nOne thing I've been noticing with a lot of SaaS companies at your stage \u2014 when you're growing quickly but infrastructure costs start climbing faster than revenue, it creates this awkward inflection point where scaling decisions become really painful really fast.\n\nGiven Acme Corp's growth trajectory, that tension is probably something your team is navigating pretty actively right now.\n\nCurious \u2014 is infra cost optimization something that's more of a background concern at the moment, or is it actively showing up in your planning conversations?",
+    "timestamp": "2026-06-01T04:18:10.324656"
+  }
+]

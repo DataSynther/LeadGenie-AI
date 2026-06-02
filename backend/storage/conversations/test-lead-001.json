@@ -1,0 +1,22 @@
+[
+  {
+    "role": "prospect",
+    "content": "Hi, I was curious what kind of results you typically see for companies our size? We have about 200 engineers and run petabytes of data.",
+    "timestamp": "2026-06-01T04:14:19.734284"
+  },
+  {
+    "role": "sdr",
+    "content": "Great question, Ravi. For companies at Britannia's scale \u2014 growth-stage FMCG with a maturing data function \u2014 we typically see a few consistent outcomes:\n\n**On pipeline latency** (which I know is a real pain point for your team), companies similar to yours usually see **40-60% reduction in data pipeline delays** within the first few months. At petabyte scale, that compounds quickly in terms of time your engineers aren't firefighting.\n\n**On ML model deployment**, teams at your AI readiness level \u2014 where the models exist but deployment is the bottleneck \u2014 tend to cut deployment cycles by **30-50%**, which meaningfully accelerates how fast your data investments actually hit the business.\n\nThat said, I want to be honest with you \u2014 the *exact* numbers depend heavily on your current stack, where the latency is originating, and how your deployment workflows are set up today. I don't want to over-promise on specifics I don't have visibility into yet.\n\nWhat I can say is that with 200 people and petabyte-scale data in FMCG, you're at exactly the inflection point where the right infrastructure changes have outsized impact \u2014 because your data volume is already there, it's really about removing the friction.\n\nWould it be worth a quick call to look at your specific setup? I think we could give you much sharper numbers once we understand the pipeline architecture a bit better.",
+    "timestamp": "2026-06-01T04:14:31.115019"
+  },
+  {
+    "role": "prospect",
+    "content": "Thanks for the context. What does the onboarding timeline look like?",
+    "timestamp": "2026-06-01T04:17:54.312670"
+  },
+  {
+    "role": "sdr",
+    "content": "Honestly, I don't have the exact onboarding timeline details in front of me to give you a precise answer \u2014 and I'd rather not throw out a number that turns out to be off.\n\nWhat I can say is that for companies at your scale \u2014 petabyte-level data infrastructure, a growing team, and existing pipeline complexity \u2014 onboarding typically isn't a flip-the-switch process. The sequencing usually matters a lot: where you start (often the highest-latency pipelines first), how your current stack is set up, and how much your team wants to self-serve vs. be guided through it.\n\nRather than give you a generic range that may not reflect your situation, could I connect you with one of our solutions engineers who's worked with similar FMCG data teams? They'd be able to map out a realistic timeline based on your actual architecture \u2014 and given that pipeline latency is already a live pain point for your team, it's probably worth getting that specificity sooner rather than later.",
+    "timestamp": "2026-06-01T04:18:03.293059"
+  }
+]

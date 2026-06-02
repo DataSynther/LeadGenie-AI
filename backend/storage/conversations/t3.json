@@ -1,0 +1,22 @@
+[
+  {
+    "role": "prospect",
+    "content": "What does your platform actually do?",
+    "timestamp": "2026-05-30T05:44:52.013041"
+  },
+  {
+    "role": "sdr",
+    "content": "Great question, Sunita. At its core, our platform automates data collection, transformation, and reporting \u2014 so instead of your team spending hours manually pulling together reports, the platform handles that continuously and in real-time.\n\nFor a fintech like yours, that typically means connecting to your various data sources \u2014 whether that's transaction systems, CRMs, databases \u2014 and turning all of that into clean, reliable reporting and dashboards without the manual legwork.\n\nGiven that manual reporting is something your team is dealing with, it's probably pretty relevant. But I'd want to understand more about *where* the pain actually sits for you \u2014 is it the data collection side, the transformation, or more the reporting and distribution piece?",
+    "timestamp": "2026-05-30T05:45:01.618877"
+  },
+  {
+    "role": "prospect",
+    "content": "What exactly does your platform do?",
+    "timestamp": "2026-05-30T05:47:44.581077"
+  },
+  {
+    "role": "sdr",
+    "content": "It looks like we might have had a bit of a loop there \u2014 I did just cover this, so I want to make sure I'm actually being useful to you rather than just repeating myself!\n\nTo quickly recap: our platform automates the end-to-end data pipeline \u2014 collection, transformation, and reporting \u2014 so your team isn't doing that manually.\n\nBut honestly, Sunita, I'm wondering if my first answer didn't quite land, which is fair. Is there a specific part you'd like me to go deeper on? For example:\n\n- **How** the data connections actually work?\n- What the reporting and dashboards look like?\n- Or how it would fit into what your team is already doing?\n\nHappy to get more specific \u2014 I just want to make sure I'm answering what's actually useful for you.",
+    "timestamp": "2026-05-30T05:47:53.694230"
+  }
+]

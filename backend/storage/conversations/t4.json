@@ -1,0 +1,22 @@
+[
+  {
+    "role": "prospect",
+    "content": "Sure, lets schedule a call. When are you free?",
+    "timestamp": "2026-05-30T05:45:01.692462"
+  },
+  {
+    "role": "sdr",
+    "content": "That's great, Rahul! Here's a link to book a time that works for you: https://calendly.com/leadgenie-demo/30min\n\nLooking forward to it!",
+    "timestamp": "2026-05-30T05:45:04.450517"
+  },
+  {
+    "role": "prospect",
+    "content": "Sure, lets schedule a call. When are you free?",
+    "timestamp": "2026-05-30T05:47:53.697774"
+  },
+  {
+    "role": "sdr",
+    "content": "That's great, Rahul! Here's a link to book a time that works for you: https://calendly.com/leadgenie-demo/30min\n\nLooking forward to it!",
+    "timestamp": "2026-05-30T05:47:56.049935"
+  }
+]

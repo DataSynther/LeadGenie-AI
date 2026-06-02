@@ -1,0 +1,22 @@
+[
+  {
+    "role": "prospect",
+    "content": "Please remove me from your list",
+    "timestamp": "2026-05-30T05:45:04.523526"
+  },
+  {
+    "role": "sdr",
+    "content": "Completely understood \u2014 I'll remove you from our list. Sorry for any interruption, and best of luck with your work.",
+    "timestamp": "2026-05-30T05:45:07.060761"
+  },
+  {
+    "role": "prospect",
+    "content": "Please remove me from your mailing list",
+    "timestamp": "2026-05-30T05:47:56.052448"
+  },
+  {
+    "role": "sdr",
+    "content": "Completely understood \u2014 I'll remove you from our list. Sorry for any interruption, and best of luck with your work.",
+    "timestamp": "2026-05-30T05:47:58.302562"
+  }
+]

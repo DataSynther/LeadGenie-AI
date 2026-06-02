@@ -1,0 +1,22 @@
+[
+  {
+    "role": "prospect",
+    "content": "We already have a vendor, not interested",
+    "timestamp": "2026-05-30T05:44:36.249580"
+  },
+  {
+    "role": "sdr",
+    "content": "Totally understand, Arjun \u2014 the last thing I want to do is disrupt something that's already working for your team. Most CTOs I speak with at mid-size tech companies actually came to us *while* they had an existing vendor, not because they were looking to switch, but because they wanted a benchmark or a backup plan. What I've found is that having a second perspective occasionally surfaces gaps that even great vendors miss \u2014 especially as your stack scales. Would it be worth a 20-minute conversation just to see if there's anything we could add that your current setup doesn't cover? No pitch, just a candid comparison. If there's no gap, I'll be the first to tell you to stick with what you have.",
+    "timestamp": "2026-05-30T05:44:51.930926"
+  },
+  {
+    "role": "prospect",
+    "content": "We already have a vendor for this, not interested",
+    "timestamp": "2026-05-30T05:47:34.957921"
+  },
+  {
+    "role": "sdr",
+    "content": "Hi Arjun, I completely understand \u2014 the last thing you need is another vendor conversation when you've already invested in a solution. I respect that. That said, most CTOs I speak with who are in a similar position tell me that their current vendor handles the core use case well, but there are usually one or two gaps \u2014 whether it's scalability, integration depth, or support responsiveness \u2014 that quietly create friction for the engineering team. I'm not here to replace what's working. I'd just love 15 minutes to understand how your current setup is performing and share one or two things we do differently. If it's not a fit, I'll be the first to say so. Would a quick call this week or next be worth the time?",
+    "timestamp": "2026-05-30T05:47:44.578391"
+  }
+]

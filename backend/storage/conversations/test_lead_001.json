@@ -1,0 +1,12 @@
+[
+  {
+    "role": "prospect",
+    "content": "Hi, thanks for reaching out. What exactly does your platform do?",
+    "timestamp": "2026-05-29T10:28:06.952739"
+  },
+  {
+    "role": "sdr",
+    "content": "Great question, Priya! At a high level, our platform helps B2B SaaS companies automate the manual, repetitive workflows that slow down their teams \u2014 things like data entry, onboarding processes, and cross-system syncs.\n\nGiven that Acme Corp is scaling quickly, I imagine your team is feeling some of that friction firsthand \u2014 whether it's new customers taking too long to get up and running, or your team spending time on manual data work that could be automated.\n\nThose are actually two of the areas we tend to have the most impact. Does either of those resonate with what you're seeing right now?",
+    "timestamp": "2026-05-29T10:28:14.014913"
+  }
+]

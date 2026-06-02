@@ -1,0 +1,58 @@
+{
+  "lead_id": "54a211117468693825e2fa09",
+  "context": {
+    "lead": {
+      "name": "Dipak Shah",
+      "title": "CEO",
+      "seniority": "c_suite",
+      "department": "executive",
+      "linkedin_url": "https://linkedin.com/in/dipak-shah-demo"
+    },
+    "company": {
+      "name": "Zomato",
+      "industry": "information technology & services",
+      "employee_count": 4000,
+      "funding_stage": null,
+      "technologies": [
+        "AI",
+        "Akamai",
+        "Amazon AWS",
+        "Amazon SES",
+        "Atlassian Cloud",
+        "Gmail",
+        "Google Apps",
+        "Helpscout",
+        "Microsoft Office 365",
+        "MongoDB"
+      ],
+      "description": "Zomato is a multi-service food platform operating in over 19 countries, specializing in restaurant discovery, online food delivery, dining reservations, and supply chain solutions for the food industry. Initially established as a restaurant review platform, Zomato has evolved to include a robust food delivery service, which is its primary revenue driver. The platform delivers approximately 1.3 million orders daily from over 150,000 restaurants across 556+ Indian cities and has expanded to around 700 cities globally.\n\nIn addition to food delivery, Zomato offers logistics services through its subsidiary Runnr, which fulfills around 300,000 orders monthly. The company also provides fresh ingredients to restaurants via its Hyperpure service, operating large warehouses in major cities. Zomato has embraced cloud kitchens to enhance service in specific areas, managing 663 kitchen units across 50 cities in India. Furthermore, Zomato utilizes its advertising platform, AdOnMo, to create value for its stakeholders."
+    },
+    "signals": {
+      "open_roles": 0,
+      "ai_hiring": 3,
+      "scaling": false
+    },
+    "research": {
+      "summary": "Zomato is a large-scale multi-service food technology platform headquartered in India, operating across 19+ countries with a strong focus on food delivery, restaurant discovery, logistics, and supply chain solutions. With approximately 4,000 employees and 1.3 million daily orders, the company has matured from a restaurant review site into a diversified food ecosystem. Its technology stack includes AI, cloud infrastructure (AWS, Akamai), productivity tools (Microsoft Office 365, Google Apps, Atlassian Cloud), and data management tools (MongoDB), indicating a modern, cloud-native operational posture. Current hiring signals are modest, with limited open roles but targeted AI and engineering hires suggesting selective, strategic capability building rather than broad expansion.",
+      "growth_stage": "Growth-to-Maturity \u2014 Zomato has passed early hypergrowth and is now focused on operational efficiency, market consolidation, and diversification of revenue streams (logistics via Runnr, fresh ingredients via Hyperpure, cloud kitchens, and AdOnMo advertising). The absence of a disclosed funding stage and low scaling signals suggest the company is prioritizing profitability and sustainable unit economics over aggressive headcount expansion.",
+      "pain_points": [
+        "Managing data complexity and real-time analytics at scale across 556+ Indian cities and 700+ global cities with high-volume transactional workloads",
+        "Coordinating multi-vendor, multi-cloud infrastructure reliability and latency for time-sensitive food delivery operations",
+        "Retaining and attracting top AI/ML engineering talent in a competitive market while keeping headcount costs lean",
+        "Ensuring supply chain visibility and cold-chain integrity for Hyperpure fresh ingredient operations across distributed warehouses",
+        "Balancing customer acquisition costs with profitability pressures in a competitive food delivery market (versus Swiggy and others)",
+        "Scaling internal collaboration and project management tooling (Atlassian Cloud, Office 365) as cross-functional teams grow in complexity",
+        "Fraud detection, identity verification, and trust-and-safety across a large gig-economy delivery workforce"
+      ],
+      "ai_readiness_score": 7,
+      "strategic_priorities": [
+        "Deepening AI integration across delivery optimization, demand forecasting, and personalization to improve margins and customer retention",
+        "Expanding Hyperpure fresh ingredient supply chain to increase restaurant partner stickiness and create a high-margin B2B revenue stream",
+        "Scaling cloud kitchen infrastructure across Tier 2 and Tier 3 Indian cities to capture underserved markets",
+        "Monetizing the advertising platform (AdOnMo) as a high-margin revenue diversification strategy",
+        "Improving last-mile logistics efficiency through Runnr and potential automation initiatives",
+        "Achieving and sustaining profitability by optimizing operational costs across the food delivery core business"
+      ]
+    }
+  }
+}

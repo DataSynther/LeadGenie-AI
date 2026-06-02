@@ -1,0 +1,12 @@
+[
+  {
+    "role": "prospect",
+    "content": "What kind of results have you seen for companies scaling their data pipelines?",
+    "timestamp": "2026-06-01T04:20:19.796441"
+  },
+  {
+    "role": "sdr",
+    "content": "Great question, Ravi. I'll be honest \u2014 I don't have specific benchmarked case studies in front of me right now that I can quote exact numbers from with confidence.\n\nWhat I can say is that for FMCG companies at a similar growth stage to Britannia, the common themes we see after addressing pipeline latency issues are things like:\n\n- **Faster time-to-insight** \u2014 reducing lag from hours to near real-time, which matters a lot for demand forecasting and supply chain decisions\n- **Reduced engineering overhead** \u2014 teams spending less time firefighting pipeline failures and more time on actual ML work\n- **Smoother ML deployment** \u2014 which I know is a pain point for your team specifically\n\nBut rather than give you vague numbers that may not be relevant to your context, I'd much rather have a focused conversation where we talk through what \"results\" would actually mean for Britannia \u2014 whether that's pipeline latency benchmarks, deployment velocity, or something else entirely.\n\nWould it be worth a 30-minute call where I can bring in someone from our technical team who's worked directly with FMCG data setups? They'd be able to speak much more concretely to what's realistic for a team at your scale.",
+    "timestamp": "2026-06-01T04:20:30.029327"
+  }
+]

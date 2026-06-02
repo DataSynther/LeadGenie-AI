@@ -1,0 +1,12 @@
+[
+  {
+    "role": "prospect",
+    "content": "We already have a vendor for this.",
+    "timestamp": "2026-06-01T04:20:30.040062"
+  },
+  {
+    "role": "sdr",
+    "content": "Hi Ananya, that makes complete sense \u2014 a company like Nexus Tech at this stage would absolutely have core vendors in place. I wouldn't expect otherwise. I'm not here to disrupt what's working for you. What I've noticed, though, is that many CTOs we speak with in the mid-stage SaaS space find that their existing vendor covers 80% of their needs really well \u2014 but there's a specific gap, often around [scalability during rapid growth / integration depth / real-time analytics], where they end up building workarounds. I'd love to ask just one question: is there any part of your current setup where your team is spending more time managing the tool than benefiting from it? If the answer is no, I'll genuinely respect that. But if there's even a small friction point, it might be worth a 20-minute conversation to see if we can add value alongside what you already have.",
+    "timestamp": "2026-06-01T04:20:40.683499"
+  }
+]
