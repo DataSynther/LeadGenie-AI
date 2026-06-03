@@ -390,6 +390,25 @@ export const devSelfEvalStats = () => get<SelfEvalStats>("/dev/self-eval-stats")
 
 // ── Prompt Version Performance ─────────────────────────────────────────────
 
+export type PromptAttemptLayer = {
+  passed?: boolean;
+  consequence?: string;
+  issues?: string[];
+  violations?: string[];
+  confidence?: number;
+  explanation?: string;
+  checkpoints?: Record<string, { ok: boolean; issues: string[] }>;
+};
+
+export type PromptAttempt = {
+  attempt: number;
+  passed: boolean;
+  prompt_preview?: string;
+  correction_note?: string;
+  email?: { subject: string; body: string; reasoning: string } | null;
+  layers: Record<string, PromptAttemptLayer>;
+};
+
 export type PromptVersionRun = {
   ts: string;
   agent: string;
@@ -397,17 +416,7 @@ export type PromptVersionRun = {
   prompt_preview: string;
   response_preview: string;
   attempt_number: number;
-  attempt_history: {
-    attempt: number;
-    passed: boolean;
-    layers: Record<string, {
-      passed?: boolean;
-      consequence?: string;
-      issues?: string[];
-      violations?: string[];
-      confidence?: number;
-    }>;
-  }[];
+  attempt_history: PromptAttempt[];
   retrieval_score: number | null;
   self_eval_confidence: number | null;
   diagnostic_categories: string[];
@@ -428,6 +437,24 @@ export type PromptVersionStats = {
 
 export const devPromptVersions = () =>
   get<Record<string, PromptVersionStats>>("/dev/prompt-versions");
+
+// ── Engagement Runs (per-lead outreach/reply with per-attempt detail) ──────────
+
+export type EngagementRun = {
+  run_id: string;
+  ts: string;
+  lead_id: string | null;
+  lead_name: string | null;
+  company_name: string | null;
+  agent: string;
+  prompt_version: string;
+  total_attempts: number;
+  final_passed: boolean;
+  final_risk_score: number | null;
+  attempts: PromptAttempt[];
+};
+
+export const devEngagementRuns = () => get<EngagementRun[]>("/dev/engagement-runs");
 
 export const api = {
   dashboardStats,
@@ -455,6 +482,7 @@ export const api = {
   devInterpretations,
   devSelfEvalStats,
   devPromptVersions,
+  devEngagementRuns,
 };
 
 export default api;

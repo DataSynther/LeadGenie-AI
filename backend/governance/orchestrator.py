@@ -11,6 +11,7 @@ import logging
 from typing import Optional
 
 from observability.validator import Validator
+from observability import diagnostic_store
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +46,12 @@ class GovernanceOrchestrator:
 
         for attempt in range(1, MAX_ATTEMPTS + 1):
             # ── 1. Generate email (one attempt, with optional correction) ───────
-            email = outreach_agent.generate_single(context, top_trends, correction_note, attempt)
+            raw = outreach_agent.generate_single(context, top_trends, correction_note, attempt)
+
+            # Pull observability fields injected by generate_single, then clean email
+            prompt_used     = raw.pop("_prompt_used", "")
+            correction_used = raw.pop("_correction_note", "")
+            email = raw  # clean dict: {subject, body, reasoning, ...}
 
             # ── 2. Shape / context / policy validator ────────────────────────────
             val = Validator("outreach", lead_id=lead_id, context=context).validate(email)
@@ -72,6 +78,7 @@ class GovernanceOrchestrator:
                     "passed": hallucination.get("passed", True),
                     "violations": hallucination.get("violations", []),
                     "confidence": hallucination.get("confidence"),
+                    "explanation": hallucination.get("explanation", ""),
                 },
             }
 
@@ -82,9 +89,26 @@ class GovernanceOrchestrator:
             )
             passed = not all_issues
 
+            # For retry attempts show the tail of the prompt so the correction is visible;
+            # for the first attempt show the head so the base instructions are visible.
+            if attempt == 1 or not correction_used:
+                preview = prompt_used[:800]
+            else:
+                # Show head (200) + tail (600) so both base context and correction are visible
+                head = prompt_used[:200]
+                tail = prompt_used[-600:] if len(prompt_used) > 800 else prompt_used[200:]
+                preview = head + "\n…\n" + tail
+
             attempt_history.append({
-                "attempt": attempt,
-                "passed": passed,
+                "attempt":         attempt,
+                "passed":          passed,
+                "prompt_preview":  preview,
+                "correction_note": correction_used,
+                "email": {
+                    "subject":   email.get("subject", ""),
+                    "body":      email.get("body", ""),
+                    "reasoning": email.get("reasoning", ""),
+                },
                 "layers": layer_results,
             })
 
@@ -103,6 +127,22 @@ class GovernanceOrchestrator:
         governance = self.risk_engine.evaluate(lead_id, email, source_facts)
         governance["governance_attempt_history"] = attempt_history
         governance["total_attempts"] = len(attempt_history)
+
+        # ── 6. Persist full per-attempt record for PromptVersionsPage ─────────
+        final_passed = attempt_history[-1].get("passed", True) if attempt_history else True
+        try:
+            diagnostic_store.write_governance_run(
+                lead_id=lead_id,
+                prompt_version="outreach_email_v1",
+                agent="outreach",
+                attempt_history=attempt_history,
+                final_passed=final_passed,
+                final_risk_score=governance.get("risk_score"),
+                lead_name=(context.get("lead") or {}).get("name"),
+                company_name=(context.get("company") or {}).get("name"),
+            )
+        except Exception as exc:
+            logger.warning("write_governance_run failed: %s", exc)
 
         return {
             "email": email,

@@ -6,8 +6,9 @@ from collections import defaultdict
 from typing import Optional
 
 STORE_DIR = Path(__file__).parent.parent / "storage" / "diagnostics"
-TRACES_FILE     = STORE_DIR / "traces.jsonl"
-VALIDATIONS_FILE = STORE_DIR / "validations.jsonl"
+TRACES_FILE       = STORE_DIR / "traces.jsonl"
+VALIDATIONS_FILE  = STORE_DIR / "validations.jsonl"
+GOVERNANCE_RUNS_FILE = STORE_DIR / "governance_runs.jsonl"
 STORE_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -96,7 +97,41 @@ def write_validation(
     return record
 
 
+# ── Governance run writer ─────────────────────────────────────────────────────
+
+def write_governance_run(
+    lead_id: Optional[str],
+    prompt_version: str,
+    agent: str,
+    attempt_history: list,
+    final_passed: bool,
+    final_risk_score: Optional[float] = None,
+    lead_name: Optional[str] = None,
+    company_name: Optional[str] = None,
+) -> dict:
+    """Persist full per-attempt governance data for the PromptVersionsPage."""
+    record = {
+        "ts": datetime.now(timezone.utc).isoformat(),
+        "lead_id": lead_id,
+        "lead_name": lead_name,
+        "company_name": company_name,
+        "prompt_version": prompt_version,
+        "agent": agent,
+        "total_attempts": len(attempt_history),
+        "final_passed": final_passed,
+        "final_risk_score": final_risk_score,
+        "attempts": attempt_history,
+    }
+    _append(GOVERNANCE_RUNS_FILE, record)
+    return record
+
+
 # ── Query helpers ─────────────────────────────────────────────────────────────
+
+def get_governance_runs(limit: int = 100) -> list:
+    """Return recent governance runs with full per-attempt data."""
+    return _read_all(GOVERNANCE_RUNS_FILE)[-limit:]
+
 
 def get_recent_traces(limit: int = 50) -> list:
     return _read_all(TRACES_FILE)[-limit:]
@@ -262,53 +297,101 @@ def get_self_eval_stats() -> dict:
 
 
 def get_prompt_version_stats() -> dict:
-    """Aggregate per prompt_version: runs, pass rates, avg attempts, recent runs."""
-    traces = _read_all(TRACES_FILE)
+    """Aggregate per prompt_version: runs, pass rates, avg attempts, recent runs.
 
-    by_version: dict = defaultdict(list)
+    Prefers governance_runs.jsonl (rich per-attempt data) for recent_runs;
+    falls back to traces.jsonl when no governance runs are recorded yet.
+    """
+    traces = _read_all(TRACES_FILE)
+    gov_runs = _read_all(GOVERNANCE_RUNS_FILE)
+
+    # Index traces by prompt_version
+    traces_by_version: dict = defaultdict(list)
     for t in traces:
         pv = (t.get("metadata") or {}).get("prompt_version")
         if pv:
-            by_version[pv].append(t)
+            traces_by_version[pv].append(t)
+
+    # Index governance runs by prompt_version
+    gov_by_version: dict = defaultdict(list)
+    for r in gov_runs:
+        pv = r.get("prompt_version")
+        if pv:
+            gov_by_version[pv].append(r)
+
+    all_versions = set(traces_by_version.keys()) | set(gov_by_version.keys())
 
     result = {}
-    for version, version_traces in by_version.items():
-        total = len(version_traces)
-        attempt_nums = [(t.get("metadata") or {}).get("attempt_number", 1) for t in version_traces]
-        first_pass = sum(1 for t in version_traces
-                         if (t.get("metadata") or {}).get("attempt_number", 1) == 1
-                         and not t.get("diagnostic_categories"))
+    for version in all_versions:
+        version_gov = gov_by_version[version]
+        version_traces = traces_by_version[version]
+
+        # Prefer governance runs for aggregation if available (more accurate per-run view)
+        if version_gov:
+            total = len(version_gov)
+            attempt_nums = [r.get("total_attempts", 1) for r in version_gov]
+            first_pass = sum(1 for r in version_gov if r.get("total_attempts", 1) == 1 and r.get("final_passed", True))
+            agent_name = version_gov[0].get("agent", "outreach")
+        else:
+            total = len(version_traces)
+            attempt_nums = [(t.get("metadata") or {}).get("attempt_number", 1) for t in version_traces]
+            first_pass = sum(1 for t in version_traces
+                             if (t.get("metadata") or {}).get("attempt_number", 1) == 1
+                             and not t.get("diagnostic_categories"))
+            agent_name = version_traces[0]["agent"] if version_traces else "outreach"
+
         retrieval_scores = [(t.get("metadata") or {}).get("retrieval_score")
                             for t in version_traces
                             if (t.get("metadata") or {}).get("retrieval_score") is not None]
-        self_confs = [(t.get("metadata") or {}).get("self_eval", {}).get("confidence")
+        self_confs = [((t.get("metadata") or {}).get("self_eval") or {}).get("confidence")
                       for t in version_traces
-                      if (t.get("metadata") or {}).get("self_eval", {}).get("confidence") is not None]
+                      if ((t.get("metadata") or {}).get("self_eval") or {}).get("confidence") is not None]
 
-        # Attempt distribution: how many runs needed 1, 2, 3 attempts
         attempt_dist = {1: 0, 2: 0, 3: 0}
         for n in attempt_nums:
             attempt_dist[min(n, 3)] += 1
 
-        # Recent runs (last 5), newest first
-        recent = sorted(version_traces, key=lambda t: t["ts"], reverse=True)[:5]
-        recent_runs = []
-        for t in recent:
-            meta = t.get("metadata") or {}
-            recent_runs.append({
-                "ts": t["ts"],
-                "agent": t["agent"],
-                "lead_id": t.get("lead_id"),
-                "prompt_preview": t.get("prompt_preview", "")[:400],
-                "response_preview": t.get("response_preview", "")[:400],
-                "attempt_number": meta.get("attempt_number", 1),
-                "attempt_history": meta.get("attempt_history") or [],
-                "retrieval_score": meta.get("retrieval_score"),
-                "self_eval_confidence": (meta.get("self_eval") or {}).get("confidence"),
-                "diagnostic_categories": t.get("diagnostic_categories", []),
-                "latency_ms": t.get("latency_ms"),
-                "tokens_used": t.get("tokens_used"),
-            })
+        # Build recent_runs — governance runs provide the richest data
+        if version_gov:
+            recent_gov = sorted(version_gov, key=lambda r: r["ts"], reverse=True)[:5]
+            recent_runs = []
+            for r in recent_gov:
+                attempts = r.get("attempts") or []
+                first_attempt = attempts[0] if attempts else {}
+                last_attempt = attempts[-1] if attempts else {}
+                recent_runs.append({
+                    "ts": r["ts"],
+                    "agent": r.get("agent", "outreach"),
+                    "lead_id": r.get("lead_id"),
+                    "prompt_preview": first_attempt.get("prompt_preview", "")[:400],
+                    "response_preview": (last_attempt.get("email") or {}).get("body", "")[:400],
+                    "attempt_number": r.get("total_attempts", 1),
+                    "attempt_history": attempts,
+                    "retrieval_score": None,
+                    "self_eval_confidence": None,
+                    "diagnostic_categories": [] if r.get("final_passed") else ["governance_retry"],
+                    "latency_ms": None,
+                    "tokens_used": None,
+                })
+        else:
+            recent = sorted(version_traces, key=lambda t: t["ts"], reverse=True)[:5]
+            recent_runs = []
+            for t in recent:
+                meta = t.get("metadata") or {}
+                recent_runs.append({
+                    "ts": t["ts"],
+                    "agent": t["agent"],
+                    "lead_id": t.get("lead_id"),
+                    "prompt_preview": t.get("prompt_preview", "")[:400],
+                    "response_preview": t.get("response_preview", "")[:400],
+                    "attempt_number": meta.get("attempt_number", 1),
+                    "attempt_history": meta.get("attempt_history") or [],
+                    "retrieval_score": meta.get("retrieval_score"),
+                    "self_eval_confidence": (meta.get("self_eval") or {}).get("confidence"),
+                    "diagnostic_categories": t.get("diagnostic_categories", []),
+                    "latency_ms": t.get("latency_ms"),
+                    "tokens_used": t.get("tokens_used"),
+                })
 
         result[version] = {
             "total_runs": total,
@@ -317,7 +400,7 @@ def get_prompt_version_stats() -> dict:
             "attempt_distribution": attempt_dist,
             "avg_retrieval_score": round(sum(retrieval_scores) / len(retrieval_scores), 3) if retrieval_scores else None,
             "avg_self_eval_confidence": round(sum(self_confs) / len(self_confs), 3) if self_confs else None,
-            "agent": version_traces[0]["agent"] if version_traces else "unknown",
+            "agent": agent_name,
             "recent_runs": recent_runs,
         }
 

@@ -476,6 +476,29 @@ async def dev_prompt_versions():
     return diagnostic_store.get_prompt_version_stats()
 
 
+@app.get("/dev/engagement-runs")
+async def dev_engagement_runs():
+    """Per-engagement governance runs (one per lead outreach/reply) with full per-attempt detail."""
+    gov_runs = diagnostic_store.get_governance_runs(limit=100)
+    runs = []
+    for r in sorted(gov_runs, key=lambda x: x.get("ts", ""), reverse=True):
+        lead_id = r.get("lead_id")
+        runs.append({
+            "run_id": f"{r.get('ts', '')}_{lead_id or 'unknown'}",
+            "ts": r.get("ts", ""),
+            "lead_id": lead_id,
+            "lead_name": r.get("lead_name"),
+            "company_name": r.get("company_name"),
+            "agent": r.get("agent", "outreach"),
+            "prompt_version": r.get("prompt_version", ""),
+            "total_attempts": r.get("total_attempts", 1),
+            "final_passed": r.get("final_passed", True),
+            "final_risk_score": r.get("final_risk_score"),
+            "attempts": r.get("attempts", []),
+        })
+    return runs
+
+
 # ── Pipeline Stats (real funnel from traces) ─────────────────────────────────
 
 @app.get("/pipeline/stats")

@@ -2,259 +2,377 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "../lib/utils";
 import { Topbar } from "../components/layout/Topbar";
-import { api, type PromptVersionStats, type PromptVersionRun } from "../lib/api";
+import {
+  api,
+  type EngagementRun,
+  type PromptAttempt,
+  type PromptAttemptLayer,
+} from "../lib/api";
 
-// ── Colour helpers ────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-function passRateColor(rate: number) {
-  if (rate >= 0.8) return "text-emerald-400";
-  if (rate >= 0.5) return "text-amber-400";
-  return "text-red-400";
+function agentLabel(agent: string): string {
+  const map: Record<string, string> = {
+    outreach:     "Initial Outreach",
+    conversation: "Conversation Reply",
+    objection:    "Objection Response",
+    followup:     "Follow-up",
+    research:     "Research",
+    intent:       "Intent Classifier",
+  };
+  return map[agent] ?? agent;
 }
 
-function attemptColor(n: number) {
-  if (n === 1) return "bg-emerald-500/10 text-emerald-400";
-  if (n === 2) return "bg-amber-500/10 text-amber-400";
+function agentColor(agent: string): string {
+  const map: Record<string, string> = {
+    outreach:     "bg-brand/10 text-brand",
+    conversation: "bg-violet-500/10 text-violet-400",
+    objection:    "bg-amber-500/10 text-amber-400",
+    followup:     "bg-sky-500/10 text-sky-400",
+    research:     "bg-emerald-500/10 text-emerald-400",
+    intent:       "bg-pink-500/10 text-pink-400",
+  };
+  return map[agent] ?? "bg-surface-2 text-ink-mute";
+}
+
+function attemptBadgeColor(n: number, passed: boolean): string {
+  if (n === 1 && passed) return "bg-emerald-500/10 text-emerald-400";
+  if (n === 2)           return "bg-amber-500/10 text-amber-400";
   return "bg-red-500/10 text-red-400";
 }
 
-// ── Version selector card ─────────────────────────────────────────────────────
+function fmtTs(ts: string): string {
+  try {
+    const d = new Date(ts);
+    return d.toLocaleString("en-IN", {
+      month: "short", day: "numeric",
+      hour: "2-digit", minute: "2-digit",
+      hour12: false,
+    });
+  } catch {
+    return ts.slice(0, 16).replace("T", " ");
+  }
+}
 
-function VersionCard({
-  version, stats, selected, onClick,
-}: { version: string; stats: PromptVersionStats; selected: boolean; onClick: () => void }) {
-  const pct = Math.round(stats.first_attempt_pass_rate * 100);
+function layerOk(r: PromptAttemptLayer): boolean {
+  return r.passed !== false && r.consequence !== "block" && r.consequence !== "defer";
+}
+
+// ── Engagement card (left panel) ──────────────────────────────────────────────
+
+function EngagementCard({
+  run, selected, onClick,
+}: { run: EngagementRun; selected: boolean; onClick: () => void }) {
+  const displayName = run.lead_name ?? (run.lead_id ? run.lead_id.slice(0, 10) + "…" : "Unknown Lead");
+  const layers = (run.attempts[0]?.layers ?? {}) as Record<string, PromptAttemptLayer>;
+  const layerNames = Object.keys(layers);
+
   return (
     <button
       onClick={onClick}
       className={cn(
-        "w-full text-left rounded-lg border p-3.5 transition-all",
+        "w-full text-left rounded-lg border p-3 transition-all",
         selected
           ? "border-brand bg-brand/5 ring-1 ring-brand"
           : "border-line-soft bg-surface hover:border-line"
       )}
     >
-      <div className="text-[11px] font-mono font-semibold text-ink truncate mb-2">{version}</div>
-      <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[10px] text-ink-mute font-mono">{stats.total_runs} runs</span>
-        <span className={cn("text-[10px] font-mono font-semibold", passRateColor(stats.first_attempt_pass_rate))}>
-          {pct}% 1st-pass
+      {/* Name + company */}
+      <div className="font-semibold text-[12px] text-ink truncate">{displayName}</div>
+      {run.company_name && (
+        <div className="text-[10px] text-ink-mute truncate mb-1.5">{run.company_name}</div>
+      )}
+
+      {/* Agent badge + attempt badge */}
+      <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
+        <span className={cn("text-[9px] px-1.5 py-px rounded-full font-mono font-semibold", agentColor(run.agent))}>
+          {agentLabel(run.agent)}
+        </span>
+        <span className={cn("text-[9px] px-1.5 py-px rounded-full font-mono font-semibold", attemptBadgeColor(run.total_attempts, run.final_passed))}>
+          {run.total_attempts} attempt{run.total_attempts !== 1 ? "s" : ""}
+        </span>
+        <span className={cn(
+          "text-[9px] px-1.5 py-px rounded-full font-mono font-semibold ml-auto",
+          run.final_passed ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"
+        )}>
+          {run.final_passed ? "✓ passed" : "✗ failed"}
         </span>
       </div>
-      {/* Pass rate bar */}
-      <div className="h-1 bg-surface-2 rounded-full overflow-hidden">
-        <div
-          className={cn("h-full rounded-full", pct >= 80 ? "bg-emerald-400" : pct >= 50 ? "bg-amber-400" : "bg-red-400")}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      <div className="flex items-center justify-between mt-1.5">
-        <span className="text-[9px] text-ink-mute font-mono uppercase tracking-wider">{stats.agent}</span>
-        <span className="text-[10px] text-ink-mute font-mono">avg {stats.avg_attempts}× attempts</span>
-      </div>
+
+      {/* Layer dots */}
+      {layerNames.length > 0 && (
+        <div className="flex gap-1 mb-1.5">
+          {layerNames.map(k => {
+            const ok = layerOk(layers[k]);
+            return (
+              <span key={k} className={cn(
+                "text-[8px] px-1 py-px rounded font-mono",
+                ok ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"
+              )}>
+                {ok ? "✓" : "✗"} {k.slice(0, 3)}
+              </span>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="text-[9px] text-ink-mute font-mono">{fmtTs(run.ts)}</div>
     </button>
   );
 }
 
-// ── Stat tile ─────────────────────────────────────────────────────────────────
+// ── Check panel ───────────────────────────────────────────────────────────────
 
-function StatTile({ label, value, sub }: { label: string; value: string | number | null; sub?: string }) {
+function CheckPanel({ name, r }: { name: string; r: PromptAttemptLayer }) {
+  const ok = layerOk(r);
+  const allIssues = [...(r.issues ?? []), ...(r.violations ?? [])];
   return (
-    <div className="rounded-lg border border-line-soft bg-surface-2 px-4 py-3">
-      <div className="text-[11px] text-ink-mute font-mono mb-1">{label}</div>
-      <div className="text-[22px] font-semibold text-ink font-mono leading-none">
-        {value ?? "—"}
-      </div>
-      {sub && <div className="text-[10px] text-ink-mute mt-0.5">{sub}</div>}
-    </div>
-  );
-}
-
-// ── Attempt distribution bar ──────────────────────────────────────────────────
-
-function AttemptDistBar({ dist, total }: { dist: Record<string, number>; total: number }) {
-  const segments = [
-    { label: "1 attempt", key: "1", color: "bg-emerald-500" },
-    { label: "2 attempts", key: "2", color: "bg-amber-500" },
-    { label: "3 attempts", key: "3", color: "bg-red-500" },
-  ];
-  return (
-    <div>
-      <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-2">Attempt Distribution</div>
-      <div className="flex h-5 rounded-full overflow-hidden gap-px">
-        {segments.map(({ key, color }) => {
-          const count = dist[key] ?? 0;
-          const pct = total > 0 ? (count / total) * 100 : 0;
-          if (pct === 0) return null;
-          return (
-            <div
-              key={key}
-              className={cn("h-full transition-all", color)}
-              style={{ width: `${pct}%` }}
-              title={`${key} attempt: ${count} run${count !== 1 ? "s" : ""} (${Math.round(pct)}%)`}
-            />
-          );
-        })}
-      </div>
-      <div className="flex gap-3 mt-1.5">
-        {segments.map(({ key, label, color }) => {
-          const count = dist[key] ?? 0;
-          if (count === 0) return null;
-          return (
-            <div key={key} className="flex items-center gap-1">
-              <span className={cn("w-2 h-2 rounded-full inline-block", color)} />
-              <span className="text-[10px] text-ink-mute font-mono">{label}: {count}</span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ── Single run card ───────────────────────────────────────────────────────────
-
-function LayerBadge({ layer, result }: { layer: string; result: { passed?: boolean; consequence?: string; issues?: string[]; violations?: string[] } }) {
-  const ok = result.passed !== false && result.consequence !== "block" && result.consequence !== "defer";
-  const issueCount = (result.issues?.length ?? 0) + (result.violations?.length ?? 0);
-  return (
-    <span className={cn(
-      "inline-flex items-center gap-1 text-[9px] px-1.5 py-px rounded font-mono",
-      ok ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"
+    <div className={cn(
+      "rounded border p-3 flex-1 min-w-0",
+      ok ? "border-emerald-500/25 bg-emerald-500/5" : "border-red-500/25 bg-red-500/5"
     )}>
-      {ok ? "✓" : "✗"} {layer}{!ok && issueCount > 0 ? ` (${issueCount})` : ""}
-    </span>
-  );
-}
-
-function AttemptRow({ ah, index }: { ah: { attempt: number; passed: boolean; layers: Record<string, unknown> }; index: number }) {
-  const [open, setOpen] = useState(index === 0);
-  const layers = ah.layers as Record<string, { passed?: boolean; consequence?: string; issues?: string[]; violations?: string[] }>;
-
-  return (
-    <div className={cn("rounded border mb-1.5", ah.passed ? "border-emerald-500/30 bg-emerald-500/5" : "border-red-500/30 bg-red-500/5")}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-3 py-2 text-left"
-      >
-        <div className="flex items-center gap-2">
-          <span className={cn("text-[10px] font-mono font-semibold", ah.passed ? "text-emerald-400" : "text-red-400")}>
-            Attempt {ah.attempt} → {ah.passed ? "PASSED" : "FAILED"}
+      <div className={cn(
+        "text-[9px] font-mono font-semibold uppercase tracking-wider mb-2 flex items-center gap-1.5",
+        ok ? "text-emerald-400" : "text-red-400"
+      )}>
+        <span>{ok ? "✓" : "✗"}</span>
+        <span>{name}</span>
+        {!ok && allIssues.length > 0 && (
+          <span className="ml-auto bg-red-500/20 text-red-300 rounded px-1 text-[9px]">{allIssues.length}</span>
+        )}
+      </div>
+      {r.consequence && (
+        <div className="text-[9px] text-ink-mute font-mono mb-1.5">
+          consequence: <span className={cn(r.consequence === "allow" ? "text-emerald-400" : "text-amber-400")}>
+            {r.consequence}
           </span>
-          <div className="flex gap-1">
-            {layers.validator && <LayerBadge layer="validator" result={layers.validator} />}
-            {layers.tone && <LayerBadge layer="tone" result={layers.tone} />}
-            {layers.hallucination && <LayerBadge layer="hallucination" result={layers.hallucination} />}
-          </div>
         </div>
-        <span className="text-[10px] text-ink-mute font-mono">{open ? "▲" : "▼"}</span>
-      </button>
-
-      {open && (
-        <div className="px-3 pb-2 space-y-1.5 border-t border-line-soft pt-2">
-          {Object.entries(layers).map(([name, res]) => {
-            const r = res as { passed?: boolean; consequence?: string; issues?: string[]; violations?: string[] };
-            const allIssues = [...(r.issues ?? []), ...(r.violations ?? [])];
-            return (
-              <div key={name}>
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className={cn(
-                    "text-[9px] px-1.5 py-px rounded font-mono font-semibold",
-                    (r.passed !== false && r.consequence !== "block" && r.consequence !== "defer")
-                      ? "bg-emerald-500/10 text-emerald-400"
-                      : "bg-red-500/10 text-red-400"
-                  )}>
-                    {(r.passed !== false && r.consequence !== "block" && r.consequence !== "defer") ? "✓" : "✗"} {name}
-                  </span>
-                </div>
-                {allIssues.map((iss, i) => (
-                  <div key={i} className="pl-3 text-[10px] text-red-300 font-mono leading-snug">⚠ {iss}</div>
-                ))}
-              </div>
-            );
-          })}
+      )}
+      {r.confidence != null && (
+        <div className="text-[9px] text-ink-mute font-mono mb-1.5">
+          confidence: <span className="text-ink">{Math.round(r.confidence * 100)}%</span>
+        </div>
+      )}
+      {allIssues.length > 0 ? (
+        <div className="space-y-1">
+          {allIssues.map((iss, i) => (
+            <div key={i} className="text-[10px] text-red-300 font-mono leading-snug break-words">⚠ {iss}</div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-[10px] text-emerald-400/70 font-mono">No issues</div>
+      )}
+      {r.explanation && (
+        <div className="mt-1.5 text-[9px] text-ink-mute leading-relaxed italic border-t border-line-soft pt-1.5">
+          {r.explanation}
         </div>
       )}
     </div>
   );
 }
 
-function RunCard({ run }: { run: PromptVersionRun }) {
-  const [expanded, setExpanded] = useState(false);
-  const hasHistory = run.attempt_history && run.attempt_history.length > 0;
+// ── Attempt row ───────────────────────────────────────────────────────────────
+
+function AttemptRow({ ah, index }: { ah: PromptAttempt; index: number }) {
+  const [open, setOpen] = useState(index === 0);
+  const layers = ah.layers as Record<string, PromptAttemptLayer>;
+  const issueCount = Object.values(layers).reduce(
+    (n, r) => n + (r.issues?.length ?? 0) + (r.violations?.length ?? 0), 0
+  );
 
   return (
-    <div className="rounded-lg border border-line-soft bg-surface mb-3 overflow-hidden">
-      {/* Header row */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-line-soft bg-surface-2">
-        <div className="flex items-center gap-2.5">
-          <span className={cn("text-[10px] px-1.5 py-px rounded font-mono", attemptColor(run.attempt_number))}>
-            {run.attempt_number} attempt{run.attempt_number > 1 ? "s" : ""}
+    <div className={cn(
+      "rounded-lg border mb-3 overflow-hidden",
+      ah.passed ? "border-emerald-500/30" : "border-red-500/30"
+    )}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className={cn(
+          "w-full flex items-center justify-between px-4 py-2.5 text-left",
+          ah.passed ? "bg-emerald-500/5" : "bg-red-500/5"
+        )}
+      >
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <span className={cn(
+            "text-[11px] font-mono font-semibold",
+            ah.passed ? "text-emerald-400" : "text-red-400"
+          )}>
+            Attempt {ah.attempt} — {ah.passed ? "PASSED" : "FAILED"}
           </span>
-          <span className="text-[11px] text-ink-mute font-mono">{run.lead_id ?? "—"}</span>
-          {run.diagnostic_categories.length > 0 && (
-            <span className="text-[9px] px-1.5 py-px rounded bg-amber-500/10 text-amber-400 font-mono">
-              {run.diagnostic_categories[0]}
+          {!ah.passed && issueCount > 0 && (
+            <span className="text-[9px] bg-red-500/15 text-red-300 rounded px-1.5 py-px font-mono">
+              {issueCount} issue{issueCount !== 1 ? "s" : ""}
+            </span>
+          )}
+          {ah.correction_note && (
+            <span className="text-[9px] bg-amber-500/15 text-amber-400 rounded px-1.5 py-px font-mono">
+              correction applied
             </span>
           )}
         </div>
-        <div className="flex items-center gap-3">
-          {run.retrieval_score != null && (
-            <span className="text-[10px] text-ink-mute font-mono">retrieval {Math.round(run.retrieval_score * 100)}%</span>
+        <div className="flex items-center gap-1.5">
+          {layers.validator && (
+            <span className={cn("text-[9px] px-1.5 py-px rounded font-mono",
+              layerOk(layers.validator) ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400")}>
+              {layerOk(layers.validator) ? "✓" : "✗"} val
+            </span>
           )}
-          {run.self_eval_confidence != null && (
-            <span className="text-[10px] text-ink-mute font-mono">conf {Math.round(run.self_eval_confidence * 100)}%</span>
+          {layers.tone && (
+            <span className={cn("text-[9px] px-1.5 py-px rounded font-mono",
+              layerOk(layers.tone) ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400")}>
+              {layerOk(layers.tone) ? "✓" : "✗"} tone
+            </span>
           )}
-          {run.latency_ms != null && (
-            <span className="text-[10px] text-ink-mute font-mono">{Math.round(run.latency_ms)}ms</span>
+          {layers.hallucination && (
+            <span className={cn("text-[9px] px-1.5 py-px rounded font-mono",
+              layerOk(layers.hallucination) ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400")}>
+              {layerOk(layers.hallucination) ? "✓" : "✗"} hal
+            </span>
           )}
-          <span className="text-[10px] text-ink-mute font-mono">{run.ts.slice(0, 16).replace("T", " ")}</span>
-          <button
-            onClick={() => setExpanded(e => !e)}
-            className="text-[10px] text-ink-mute hover:text-ink font-mono"
-          >
-            {expanded ? "▲ hide" : "▼ detail"}
-          </button>
+          <span className="text-[10px] text-ink-mute font-mono ml-1">{open ? "▲" : "▼"}</span>
+        </div>
+      </button>
+
+      {open && (
+        <div className="p-4 space-y-4 border-t border-line-soft">
+          {/* Correction note (attempt 2+) */}
+          {ah.correction_note && (
+            <div>
+              <div className="font-mono text-[9px] uppercase tracking-widest text-amber-400 mb-1.5">
+                Correction Injected into Prompt
+              </div>
+              <div className="rounded border border-amber-500/30 bg-amber-500/5 p-3 text-[11px] text-amber-200 font-mono leading-relaxed whitespace-pre-wrap break-words max-h-36 overflow-y-auto">
+                {ah.correction_note}
+              </div>
+            </div>
+          )}
+
+          {/* Prompt preview */}
+          {ah.prompt_preview && (
+            <div>
+              <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-1.5">
+                Prompt Sent to Claude (preview)
+              </div>
+              <div className="rounded border border-line-soft bg-surface-2 p-3 text-[11px] text-ink-2 font-mono leading-relaxed whitespace-pre-wrap break-words max-h-44 overflow-y-auto">
+                {ah.prompt_preview}
+              </div>
+            </div>
+          )}
+
+          {/* Generated email */}
+          {ah.email && (
+            <div>
+              <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-1.5">
+                Generated Email
+              </div>
+              <div className="rounded border border-line-soft bg-surface-2 p-3 space-y-2">
+                {ah.email.subject && (
+                  <div>
+                    <span className="text-[9px] font-mono text-ink-mute uppercase tracking-wider">Subject: </span>
+                    <span className="text-[11px] font-mono text-ink font-semibold">{ah.email.subject}</span>
+                  </div>
+                )}
+                {ah.email.body && (
+                  <div className="text-[11px] text-ink-2 leading-relaxed whitespace-pre-wrap break-words max-h-36 overflow-y-auto border-t border-line-soft pt-2">
+                    {ah.email.body}
+                  </div>
+                )}
+                {ah.email.reasoning && (
+                  <div className="text-[10px] text-ink-mute italic border-t border-line-soft pt-1.5">
+                    Reasoning: {ah.email.reasoning}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 3 check panels */}
+          {Object.keys(layers).length > 0 && (
+            <div>
+              <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-2">
+                Governance Checks
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                {layers.validator    && <CheckPanel name="Validator"    r={layers.validator} />}
+                {layers.tone         && <CheckPanel name="Tone"         r={layers.tone} />}
+                {layers.hallucination && <CheckPanel name="Hallucination" r={layers.hallucination} />}
+                {Object.entries(layers)
+                  .filter(([k]) => !["validator", "tone", "hallucination"].includes(k))
+                  .map(([k, r]) => <CheckPanel key={k} name={k} r={r} />)
+                }
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Run detail (right panel) ──────────────────────────────────────────────────
+
+function RunDetail({ run }: { run: EngagementRun }) {
+  const displayName = run.lead_name ?? (run.lead_id ? run.lead_id.slice(0, 12) + "…" : "Unknown Lead");
+
+  return (
+    <div>
+      {/* Run header */}
+      <div className="rounded-lg border border-line-soft bg-surface-2 px-5 py-4 mb-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="text-[16px] font-semibold text-ink">
+              {displayName}
+              {run.company_name && (
+                <span className="text-ink-mute font-normal"> @ {run.company_name}</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+              <span className={cn("text-[10px] px-2 py-0.5 rounded-full font-mono font-semibold", agentColor(run.agent))}>
+                {agentLabel(run.agent)}
+              </span>
+              <span className="text-[10px] text-ink-mute font-mono">{run.prompt_version}</span>
+              <span className="text-[10px] text-ink-mute font-mono">·</span>
+              <span className="text-[10px] text-ink-mute font-mono">{fmtTs(run.ts)}</span>
+            </div>
+          </div>
+          <div className="flex flex-col items-end gap-1.5 shrink-0">
+            <span className={cn(
+              "text-[11px] font-mono font-semibold px-2 py-0.5 rounded",
+              run.final_passed ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"
+            )}>
+              {run.final_passed ? "✓ Passed" : "✗ Failed"}
+            </span>
+            <span className={cn(
+              "text-[10px] font-mono px-2 py-0.5 rounded",
+              attemptBadgeColor(run.total_attempts, run.final_passed)
+            )}>
+              {run.total_attempts} attempt{run.total_attempts !== 1 ? "s" : ""}
+            </span>
+            {run.final_risk_score != null && (
+              <span className="text-[10px] font-mono text-ink-mute">
+                risk {run.final_risk_score.toFixed(2)}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
-      {expanded && (
-        <div className="p-4 space-y-4">
-          {/* Prompt + Final output side by side */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-1.5">Prompt (preview)</div>
-              <div className="rounded border border-line-soft bg-surface-2 p-3 text-[11px] text-ink-2 font-mono leading-relaxed whitespace-pre-wrap break-words max-h-40 overflow-y-auto">
-                {run.prompt_preview || "—"}
-              </div>
-            </div>
-            <div>
-              <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-1.5">
-                Final Output (attempt {run.attempt_number})
-              </div>
-              <div className="rounded border border-line-soft bg-surface-2 p-3 text-[11px] text-ink-2 leading-relaxed whitespace-pre-wrap break-words max-h-40 overflow-y-auto">
-                {run.response_preview || "—"}
-              </div>
-            </div>
+      {/* Attempt timeline */}
+      <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-3">
+        Attempt Timeline — {run.total_attempts} attempt{run.total_attempts !== 1 ? "s" : ""}
+      </div>
+      {run.attempts.length > 0 ? (
+        run.attempts.map((ah, i) => (
+          <AttemptRow key={ah.attempt} ah={ah} index={i} />
+        ))
+      ) : (
+        <div className="rounded-lg border border-line-soft bg-surface-2 px-5 py-6 text-center">
+          <div className="text-[12px] text-ink-mute">
+            No per-attempt detail captured for this run.
           </div>
-
-          {/* Attempt history */}
-          {hasHistory && (
-            <div>
-              <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-2">
-                Auto-Correction History ({run.attempt_history.length} attempt{run.attempt_history.length !== 1 ? "s" : ""})
-              </div>
-              {run.attempt_history.map((ah, i) => (
-                <AttemptRow key={ah.attempt} ah={ah} index={i} />
-              ))}
-            </div>
-          )}
-
-          {!hasHistory && (
-            <div className="text-[11px] text-emerald-400 font-mono">
-              ✓ Passed all governance checks on first attempt — no corrections needed.
-            </div>
-          )}
+          <div className="text-[11px] text-ink-mute/60 mt-1">
+            Re-run the pipeline to capture full attempt data.
+          </div>
         </div>
       )}
     </div>
@@ -264,90 +382,63 @@ function RunCard({ run }: { run: PromptVersionRun }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export function PromptVersionsPage() {
-  const { data: versions = {}, isLoading } = useQuery({
-    queryKey: ["promptVersions"],
-    queryFn: api.devPromptVersions,
+  const { data: runs = [], isLoading } = useQuery({
+    queryKey: ["engagementRuns"],
+    queryFn: api.devEngagementRuns,
+    refetchInterval: 30_000,
   });
 
-  const versionKeys = Object.keys(versions).sort();
-  const [selected, setSelected] = useState<string | null>(null);
-  const activeKey = selected ?? versionKeys[0] ?? null;
-  const active = activeKey ? versions[activeKey] : null;
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const activeRun = runs.find(r => r.run_id === selectedId) ?? runs[0] ?? null;
 
   return (
     <>
-      <Topbar breadcrumb="Observability" title="Prompt Version Performance" />
+      <Topbar breadcrumb="Observability" title="Prompt Quality by Engagement" />
 
       <div className="p-8 pb-20">
         {isLoading && (
-          <div className="text-ink-mute text-sm text-center py-12">Loading prompt version data…</div>
+          <div className="text-ink-mute text-sm text-center py-12">Loading engagement runs…</div>
         )}
 
-        {!isLoading && versionKeys.length === 0 && (
-          <div className="text-ink-mute text-sm text-center py-12">
-            No prompt version data yet. Run the outreach pipeline to generate traces.
+        {!isLoading && runs.length === 0 && (
+          <div className="text-center py-16">
+            <div className="text-[14px] text-ink-mute mb-2">No engagement runs yet.</div>
+            <div className="text-[12px] text-ink-mute/60">
+              Run the outreach pipeline or e2e_test.py to generate governed outreach — each run will appear here with full per-attempt detail.
+            </div>
           </div>
         )}
 
-        {!isLoading && versionKeys.length > 0 && (
+        {!isLoading && runs.length > 0 && (
           <div className="flex gap-6">
-            {/* Left: version list */}
+            {/* ── Left: engagement list ── */}
             <div className="w-64 shrink-0 space-y-2">
-              <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-3">Versions</div>
-              {versionKeys.map(v => (
-                <VersionCard
-                  key={v}
-                  version={v}
-                  stats={versions[v]}
-                  selected={v === activeKey}
-                  onClick={() => setSelected(v)}
+              <div className="flex items-center justify-between mb-3">
+                <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute">
+                  Engagements
+                </div>
+                <div className="text-[9px] text-ink-mute font-mono">{runs.length} total</div>
+              </div>
+              {runs.map(r => (
+                <EngagementCard
+                  key={r.run_id}
+                  run={r}
+                  selected={r.run_id === (activeRun?.run_id ?? null)}
+                  onClick={() => setSelectedId(r.run_id)}
                 />
               ))}
             </div>
 
-            {/* Right: version detail */}
-            {active && activeKey && (
-              <div className="flex-1 min-w-0">
-                {/* Stats grid */}
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-                  <StatTile label="Total Runs" value={active.total_runs} />
-                  <StatTile
-                    label="1st-Pass Rate"
-                    value={`${Math.round(active.first_attempt_pass_rate * 100)}%`}
-                    sub="no corrections needed"
-                  />
-                  <StatTile label="Avg Attempts" value={active.avg_attempts} sub="per successful run" />
-                  <StatTile
-                    label="Avg Retrieval"
-                    value={active.avg_retrieval_score != null ? `${Math.round(active.avg_retrieval_score * 100)}%` : "—"}
-                    sub="grounding score"
-                  />
-                  <StatTile
-                    label="Avg Self-Eval"
-                    value={active.avg_self_eval_confidence != null ? `${Math.round(active.avg_self_eval_confidence * 100)}%` : "—"}
-                    sub="model confidence"
-                  />
+            {/* ── Right: run detail ── */}
+            <div className="flex-1 min-w-0">
+              {activeRun ? (
+                <RunDetail run={activeRun} />
+              ) : (
+                <div className="text-ink-mute text-sm text-center py-12">
+                  Select an engagement to view attempt details.
                 </div>
-
-                {/* Attempt distribution */}
-                <div className="card-base p-5 mb-6">
-                  <AttemptDistBar
-                    dist={active.attempt_distribution}
-                    total={active.total_runs}
-                  />
-                </div>
-
-                {/* Recent runs */}
-                <div className="card-base p-5">
-                  <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-4">
-                    Recent Runs — expand to see prompt · output · correction steps
-                  </div>
-                  {active.recent_runs.map((run, i) => (
-                    <RunCard key={i} run={run} />
-                  ))}
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
       </div>

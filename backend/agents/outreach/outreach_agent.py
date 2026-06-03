@@ -123,6 +123,9 @@ class OutreachAgent:
             t.set_self_eval(self_evaluate("outreach", result.get("body", ""), context_to_summary(context)))
             t.set_citations(self._build_citations(context, top_trends))
             t.set_attempt_info(attempt, [])
+        # Expose the prompt used so GovernanceOrchestrator can record it per attempt
+        result["_prompt_used"]      = prompt
+        result["_correction_note"]  = correction_note or ""
         return result
 
     def _build_correction_prompt(self, issues: list, attempt: int) -> str:
