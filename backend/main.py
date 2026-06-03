@@ -110,6 +110,7 @@ class FeedbackRequest(BaseModel):
 class WhatsAppReplyRequest(BaseModel):
     lead_id: str
     message: str
+    conversation_id: Optional[str] = None
 
 
 # --- API Endpoints ---
@@ -528,14 +529,23 @@ async def inbound_whatsapp_reply(request: Request):
 
 @app.get("/whatsapp/conversations")
 async def whatsapp_conversations():
-    """List WhatsApp conversations awaiting human response."""
+    """List active WhatsApp conversations."""
     sync_result = render_whatsapp_mailbox.import_remote_pending()
-    conversations = whatsapp_conversation_store.list_awaiting_human()
+    conversations = whatsapp_conversation_store.list_active()
     return {
         "unread_count": whatsapp_conversation_store.unread_count(),
         "conversations": conversations,
         "sync": sync_result,
     }
+
+
+@app.get("/whatsapp/conversations/{conversation_id}")
+async def whatsapp_conversation(conversation_id: str):
+    """Return one WhatsApp conversation thread by phone-keyed conversation id."""
+    record = whatsapp_conversation_store.get(conversation_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="WhatsApp conversation not found")
+    return {"conversation": whatsapp_conversation_store._summary(record)}
 
 
 @app.get("/pending-messages")
@@ -551,15 +561,28 @@ async def whatsapp_debug():
     return render_whatsapp_mailbox.debug_status()
 
 
-@app.post("/whatsapp/conversations/{lead_id}/open")
-async def open_whatsapp_conversation(lead_id: str):
+@app.post("/whatsapp/conversations/{conversation_id}/open")
+async def open_whatsapp_conversation(conversation_id: str):
     """Mark a WhatsApp conversation notification as read when an admin opens it."""
-    record = whatsapp_conversation_store.mark_opened(lead_id)
+    record = whatsapp_conversation_store.mark_opened(conversation_id)
     if not record:
         raise HTTPException(status_code=404, detail="WhatsApp conversation not found")
     return {
         "unread_count": whatsapp_conversation_store.unread_count(),
         "conversation": whatsapp_conversation_store._summary(record),
+    }
+
+
+@app.delete("/whatsapp/conversations/{conversation_id}")
+async def delete_whatsapp_conversation(conversation_id: str):
+    """Delete a WhatsApp conversation from the inbox."""
+    deleted = whatsapp_conversation_store.delete(conversation_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="WhatsApp conversation not found")
+    return {
+        "deleted": True,
+        "conversation_id": conversation_id,
+        "unread_count": whatsapp_conversation_store.unread_count(),
     }
 
 
@@ -569,12 +592,14 @@ async def send_whatsapp_reply(req: WhatsAppReplyRequest):
     if not req.message.strip():
         raise HTTPException(status_code=400, detail="Message is required")
 
-    record = whatsapp_conversation_store.get(req.lead_id)
+    conversation_id = req.conversation_id or req.lead_id
+    record = whatsapp_conversation_store.get(conversation_id)
+    lead_id = (record or {}).get("lead_id") or req.lead_id
     stored = lead_context_store.get_by_phone(record.get("phone", "") if record else "")
     if not stored and record:
-        stored = {"lead_id": req.lead_id, "context": record.get("context", {})}
+        stored = {"lead_id": lead_id, "context": record.get("context", {})}
     if not record:
-        followup = followup_scheduler.get(req.lead_id)
+        followup = followup_scheduler.get(lead_id)
         if followup:
             record = {
                 "phone": followup.get("phone"),
@@ -591,7 +616,7 @@ async def send_whatsapp_reply(req: WhatsAppReplyRequest):
 
     context = (stored or {}).get("context") or (record or {}).get("context", {})
     updated = whatsapp_conversation_store.add_message(
-        lead_id=req.lead_id,
+        lead_id=lead_id,
         context=context,
         direction="outbound",
         message=req.message,
@@ -599,7 +624,8 @@ async def send_whatsapp_reply(req: WhatsAppReplyRequest):
     )
     return {
         "sent": True,
-        "lead_id": req.lead_id,
+        "lead_id": lead_id,
+        "conversation_id": whatsapp_conversation_store._summary(updated).get("conversation_id"),
         "to": result.get("to") or phone,
         "conversation": whatsapp_conversation_store._summary(updated),
     }

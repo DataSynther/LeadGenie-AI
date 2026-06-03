@@ -3,7 +3,7 @@
   "phone": "+91 8056498879",
   "context": {
     "lead": {
-      "name": "Ravi Sharma",
+      "name": "Ajay",
       "title": "VP- Operations and CTO",
       "seniority": "c_suite",
       "department": "engineering",
@@ -43,24 +43,20 @@
       "strategic_priorities": []
     },
     "outreach": {
-      "subject": "Britannia's ops scale + AI \u2014 quick thought",
-      "body": "Hi Ravi,\n\nManaging operations at Britannia's scale \u2014 hundreds of SKUs, a pan-India supply chain, and growing quick-commerce demand \u2014 means even small inefficiencies compound fast. A lot of F&B leaders we speak with are quietly piloting AI to cut forecast errors and reduce distribution bottlenecks before they show up on the P&L. Given your dual role across Ops and Tech, you're likely the right person evaluating where this actually makes sense versus where it's just noise. Would a 20-minute call this week be useful to compare notes on what's working in the space?\n\nBest,\n[Your Name]",
-      "reasoning": "Ravi holds both the Operations and CTO title, which means he sits at the exact intersection of tech adoption and operational accountability \u2014 a rare combination. The hook acknowledges Britannia's real complexity (scale, SKU depth, quick-commerce pressure) rather than generic flattery, which earns credibility fast. Framing AI not as hype but as something peers are 'quietly piloting' lowers defensiveness and positions the sender as a peer sharing market intelligence rather than a vendor pitching a product. The CTA is low-commitment and respects his seniority."
+      "subject": "Britannia's operations + AI \u2014 quick thought",
+      "body": "Hi Ajay,\n\nBritannia moves an enormous volume of SKUs across India daily, and I imagine keeping production efficiency and supply chain visibility tight is a constant balancing act at that scale. A lot of F&B manufacturers we speak with are starting to quietly pilot AI-driven demand forecasting and ops automation \u2014 not as a big transformation project, but as small, targeted wins that reduce waste and improve fill rates. Given your dual role across Operations and Technology, I thought it might be worth a 20-minute conversation to share what's working for similar companies and get your take on where Britannia is focusing. Would next week work for a quick call?",
+      "reasoning": "Ajay holds both an Operations and CTO title, meaning he sits at the intersection of technology decisions and day-to-day operational accountability \u2014 a rare and powerful combination to address simultaneously. By referencing Britannia's massive distribution scale (a publicly known operational complexity), the email demonstrates genuine context rather than generic flattery. Anchoring the AI angle around practical, incremental wins (demand forecasting, waste reduction) rather than hype respects his seniority and avoids the 'big transformation' fatigue common at large FMCG companies. The CTA is low-commitment and framed as a value exchange (sharing what works + getting his perspective), which reduces friction for a busy executive."
     }
   },
   "outreach": {
-    "subject": "Britannia's ops scale + AI \u2014 quick thought",
-    "body": "Hi Ravi,\n\nManaging operations at Britannia's scale \u2014 hundreds of SKUs, a pan-India supply chain, and growing quick-commerce demand \u2014 means even small inefficiencies compound fast. A lot of F&B leaders we speak with are quietly piloting AI to cut forecast errors and reduce distribution bottlenecks before they show up on the P&L. Given your dual role across Ops and Tech, you're likely the right person evaluating where this actually makes sense versus where it's just noise. Would a 20-minute call this week be useful to compare notes on what's working in the space?\n\nBest,\n[Your Name]",
-    "reasoning": "Ravi holds both the Operations and CTO title, which means he sits at the exact intersection of tech adoption and operational accountability \u2014 a rare combination. The hook acknowledges Britannia's real complexity (scale, SKU depth, quick-commerce pressure) rather than generic flattery, which earns credibility fast. Framing AI not as hype but as something peers are 'quietly piloting' lowers defensiveness and positions the sender as a peer sharing market intelligence rather than a vendor pitching a product. The CTA is low-commitment and respects his seniority."
+    "subject": "Britannia's operations + AI \u2014 quick thought",
+    "body": "Hi Ajay,\n\nBritannia moves an enormous volume of SKUs across India daily, and I imagine keeping production efficiency and supply chain visibility tight is a constant balancing act at that scale. A lot of F&B manufacturers we speak with are starting to quietly pilot AI-driven demand forecasting and ops automation \u2014 not as a big transformation project, but as small, targeted wins that reduce waste and improve fill rates. Given your dual role across Operations and Technology, I thought it might be worth a 20-minute conversation to share what's working for similar companies and get your take on where Britannia is focusing. Would next week work for a quick call?",
+    "reasoning": "Ajay holds both an Operations and CTO title, meaning he sits at the intersection of technology decisions and day-to-day operational accountability \u2014 a rare and powerful combination to address simultaneously. By referencing Britannia's massive distribution scale (a publicly known operational complexity), the email demonstrates genuine context rather than generic flattery. Anchoring the AI angle around practical, incremental wins (demand forecasting, waste reduction) rather than hype respects his seniority and avoids the 'big transformation' fatigue common at large FMCG companies. The CTA is low-commitment and framed as a value exchange (sharing what works + getting his perspective), which reduces friction for a busy executive."
   },
-  "email_sent_at": "2026-06-02T11:22:00.986446",
-  "due_at": "2026-06-02T11:24:00.986446",
+  "email_sent_at": "2026-06-03T11:18:02.994391",
+  "due_at": "2026-06-03T11:20:02.994391",
   "status": "replied",
-  "whatsapp_sent_at": "2026-06-02T11:24:15.949716",
+  "whatsapp_sent_at": null,
   "whatsapp_error": null,
-  "whatsapp_traceback": null,
-  "whatsapp_status_code": 200,
-  "whatsapp_elapsed_seconds": 0.953,
-  "whatsapp_normalized_to": "+918056498879",
-  "replied_at": "2026-06-02T12:12:43.851665"
+  "replied_at": "2026-06-03T11:23:22.312924"
 }

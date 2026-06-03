@@ -1,15 +1,15 @@
 {
   "lead_id": "696cb6c2d4cef40001c3cd64",
-  "phone": "whatsapp:+918056498879",
+  "phone": "whatsapp:+919883802320",
   "context": {
     "lead": {
-      "name": "Ravi Sharma",
+      "name": "Samprita",
       "title": "VP- Operations and CTO",
       "seniority": "c_suite",
       "department": "engineering",
       "linkedin_url": "https://linkedin.com/in/ravi-sharma-demo",
-      "email": "ajaykumar130721@gmail.com",
-      "phone": "+91 8056498879"
+      "email": "samprita.das.dataspeke05@gmail.com",
+      "phone": "+91 9883802320"
     },
     "company": {
       "name": "Britannia Industries Limited",
@@ -43,78 +43,50 @@
       "strategic_priorities": []
     },
     "outreach": {
-      "subject": "Britannia's ops scale + AI \u2014 quick thought",
-      "body": "Hi Ravi,\n\nManaging operations at Britannia's scale \u2014 hundreds of SKUs, a pan-India supply chain, and growing quick-commerce demand \u2014 means even small inefficiencies compound fast. A lot of F&B leaders we speak with are quietly piloting AI to cut forecast errors and reduce distribution bottlenecks before they show up on the P&L. Given your dual role across Ops and Tech, you're likely the right person evaluating where this actually makes sense versus where it's just noise. Would a 20-minute call this week be useful to compare notes on what's working in the space?\n\nBest,\n[Your Name]",
-      "reasoning": "Ravi holds both the Operations and CTO title, which means he sits at the exact intersection of tech adoption and operational accountability \u2014 a rare combination. The hook acknowledges Britannia's real complexity (scale, SKU depth, quick-commerce pressure) rather than generic flattery, which earns credibility fast. Framing AI not as hype but as something peers are 'quietly piloting' lowers defensiveness and positions the sender as a peer sharing market intelligence rather than a vendor pitching a product. The CTA is low-commitment and respects his seniority."
+      "subject": "Britannia's operations in an AI-first world",
+      "body": "Hi Samprita,\n\nWith Britannia scaling across 80+ product lines and managing one of India's most complex FMCG supply chains, even small inefficiencies in demand forecasting or production scheduling can compound quickly at that volume. A lot of food & beverage leaders at your scale are quietly starting to use AI-driven operational tools \u2014 not to replace processes, but to surface blind spots that manual reporting simply can't catch fast enough. I'd love to share a couple of specific examples from similar operations that might be worth 20 minutes of your time.\n\nWould a quick call this week or next work for you?",
+      "reasoning": "Samprita holds a dual role as VP of Operations and CTO, meaning she sits at the intersection of operational efficiency and technology adoption \u2014 both directly relevant to AI tools. By referencing Britannia's scale (80+ product lines, complex supply chain) rather than generic praise, the email signals genuine research rather than a template blast. The AI angle is framed practically \u2014 'surface blind spots' \u2014 avoiding hype while speaking directly to a CTO's skepticism and an ops leader's day-to-day pain. The CTA is low-friction and specific, making it easy to say yes."
     }
   },
-  "status": "awaiting_human",
-  "unread": true,
+  "status": "human_responded",
+  "unread": false,
   "messages": [
     {
       "lead_id": "696cb6c2d4cef40001c3cd64",
       "channel": "whatsapp",
       "direction": "outbound",
-      "message": "Hey Ravi! \ud83d\udc4b Dropped you an email about how AI is helping F&B companies like Britannia sharpen demand forecasting and cut supply chain inefficiencies \u2014 figured it might be relevant given the scale you're operating at. Would a quick 20-min chat this week or next work for you?",
-      "timestamp": "2026-06-02T10:35:17.113074"
+      "message": "Hey Samprita! \ud83d\udc4b Sent you an email recently about how AI is helping ops leaders at Britannia's scale catch supply chain blind spots faster \u2014 wanted to check if it landed in the right place. Would a quick 20-min chat this week or next work for you?",
+      "timestamp": "2026-06-03T10:20:58.936210"
     },
     {
-      "lead_id": "696cb6c2d4cef40001c3cd64",
-      "channel": "whatsapp",
-      "direction": "outbound",
-      "message": "Hey Ravi, just wanted to make sure my note didn't get buried \u2014 I had a thought on how some FMCG leaders are getting real gains in supply chain forecasting that felt relevant given Britannia's scale. Would a quick 20-min call this week or next work for you? \ud83d\ude0a",
-      "timestamp": "2026-06-02T10:39:21.382187"
-    },
-    {
-      "lead_id": "696cb6c2d4cef40001c3cd64",
-      "channel": "whatsapp",
-      "direction": "outbound",
-      "message": "Hi Ravi, just wanted to nudge this up in case my email got buried \u2014 given Britannia's scale across SKUs and distribution, I think there's a genuinely useful conversation to be had on where AI is moving the needle in FMCG ops. Would a quick 20-minute call this week or next work for you? \ud83d\ude42",
-      "timestamp": "2026-06-02T11:00:56.081101"
-    },
-    {
+      "conversation_id": "whatsapp_834d09f85d2eb610",
       "lead_id": "696cb6c2d4cef40001c3cd64",
       "channel": "whatsapp",
       "direction": "inbound",
-      "message": "Hi",
-      "timestamp": "2026-06-02T11:02:34.118017"
+      "message": "Hello, this week is not good can we connect next week?",
+      "phone": "whatsapp:+919883802320",
+      "timestamp": "2026-06-03T10:21:41.110786"
     },
     {
-      "lead_id": "696cb6c2d4cef40001c3cd64",
-      "channel": "whatsapp",
-      "direction": "outbound",
-      "message": "heloo",
-      "timestamp": "2026-06-02T11:03:00.903337"
-    },
-    {
-      "lead_id": "696cb6c2d4cef40001c3cd64",
-      "channel": "whatsapp",
-      "direction": "outbound",
-      "message": "Hey Ravi, just checking if my email on AI for Britannia's ops and supply chain landed in the right place \u2014 know inboxes get busy! Given your dual hat across Ops and Tech, thought it might be worth a quick 20-min chat. Open to connecting this week? \ud83d\ude42",
-      "timestamp": "2026-06-02T11:24:15.959965"
-    },
-    {
+      "conversation_id": "whatsapp_834d09f85d2eb610",
       "lead_id": "696cb6c2d4cef40001c3cd64",
       "channel": "whatsapp",
       "direction": "inbound",
-      "message": "Okay sure we will connect",
-      "timestamp": "2026-06-02T11:24:52.562008"
+      "message": "Also can you share some of the case studies",
+      "phone": "whatsapp:+919883802320",
+      "timestamp": "2026-06-03T10:22:45.750918"
     },
     {
+      "conversation_id": "whatsapp_834d09f85d2eb610",
       "lead_id": "696cb6c2d4cef40001c3cd64",
       "channel": "whatsapp",
       "direction": "outbound",
-      "message": "hi",
-      "timestamp": "2026-06-02T12:12:12.894081"
-    },
-    {
-      "lead_id": "696cb6c2d4cef40001c3cd64",
-      "channel": "whatsapp",
-      "direction": "inbound",
-      "message": "Can we schedule a meeting?",
-      "timestamp": "2026-06-02T12:12:43.876596"
+      "message": "Sure",
+      "phone": "whatsapp:+919883802320",
+      "timestamp": "2026-06-03T10:23:06.550809"
     }
   ],
-  "created_at": "2026-06-02T10:35:17.113074",
-  "updated_at": "2026-06-02T12:12:43.876596"
+  "created_at": "2026-06-03T10:20:58.936210",
+  "updated_at": "2026-06-03T10:23:06.550809",
+  "conversation_id": "whatsapp_834d09f85d2eb610"
 }

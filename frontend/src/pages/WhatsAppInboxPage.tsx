@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { MessageCircle, Send, Smartphone } from "lucide-react";
+import { MessageCircle, Send, Smartphone, Trash2 } from "lucide-react";
 import { Topbar } from "../components/layout/Topbar";
 import { api, type WhatsAppConversation } from "../lib/api";
 import { cn } from "../lib/utils";
@@ -29,36 +29,63 @@ export function WhatsAppInboxPage() {
   });
 
   const conversations = inbox.data?.conversations ?? [];
-  const selected = useMemo(
-    () => conversations.find((conv) => conv.lead_id === selectedId) ?? conversations[0],
+  const selectedSummary = useMemo(
+    () => conversations.find((conv) => conv.conversation_id === selectedId) ?? conversations[0],
     [conversations, selectedId],
   );
+  const thread = useQuery({
+    queryKey: ["whatsappConversation", selectedSummary?.conversation_id],
+    queryFn: () => api.whatsappConversation(selectedSummary!.conversation_id),
+    enabled: Boolean(selectedSummary?.conversation_id),
+  });
+  const selected = thread.data?.conversation ?? selectedSummary;
 
   useEffect(() => {
     if (!selectedId && conversations[0]) {
-      setSelectedId(conversations[0].lead_id);
+      setSelectedId(conversations[0].conversation_id);
     }
   }, [conversations, selectedId]);
 
   const openConversation = useMutation({
-    mutationFn: (leadId: string) => api.openWhatsAppConversation(leadId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["whatsappConversations"] }),
+    mutationFn: (conversationId: string) => api.openWhatsAppConversation(conversationId),
+    onSuccess: (_data, conversationId) => {
+      queryClient.invalidateQueries({ queryKey: ["whatsappConversations"] });
+      queryClient.invalidateQueries({ queryKey: ["whatsappConversation", conversationId] });
+    },
   });
 
   const sendReply = useMutation({
-    mutationFn: () => api.sendWhatsAppReply(selected!.lead_id, reply.trim()),
-    onSuccess: () => {
+    mutationFn: () => api.sendWhatsAppReply(selected!.conversation_id, reply.trim()),
+    onSuccess: (data) => {
       setReply("");
       queryClient.invalidateQueries({ queryKey: ["whatsappConversations"] });
+      queryClient.invalidateQueries({ queryKey: ["whatsappConversation", data.conversation_id] });
+    },
+  });
+
+  const deleteConversation = useMutation({
+    mutationFn: (conversationId: string) => api.deleteWhatsAppConversation(conversationId),
+    onSuccess: (data) => {
+      if (selectedId === data.conversation_id) {
+        setSelectedId(null);
+        setReply("");
+      }
+      queryClient.invalidateQueries({ queryKey: ["whatsappConversations"] });
+      queryClient.removeQueries({ queryKey: ["whatsappConversation", data.conversation_id] });
     },
   });
 
   function selectConversation(conv: WhatsAppConversation) {
-    setSelectedId(conv.lead_id);
+    setSelectedId(conv.conversation_id);
     setReply("");
     if (conv.unread) {
-      openConversation.mutate(conv.lead_id);
+      openConversation.mutate(conv.conversation_id);
     }
+  }
+
+  function removeConversation(event: React.MouseEvent, conv: WhatsAppConversation) {
+    event.stopPropagation();
+    deleteConversation.mutate(conv.conversation_id);
   }
 
   return (
@@ -81,7 +108,7 @@ export function WhatsAppInboxPage() {
         <div className="card-base h-[calc(100vh-170px)] min-h-[560px] grid grid-cols-1 lg:grid-cols-[360px_1fr]">
           <div className="border-b lg:border-b-0 lg:border-r border-line-soft bg-surface-2 overflow-y-auto">
             <div className="px-5 py-4 border-b border-line-soft bg-surface">
-              <div className="label-mono text-ink">Awaiting Human Response</div>
+              <div className="label-mono text-ink">Active WhatsApp Conversations</div>
               <div className="text-[12px] text-ink-2 mt-1">
                 {conversations.length} active WhatsApp conversation{conversations.length === 1 ? "" : "s"}
               </div>
@@ -124,22 +151,34 @@ export function WhatsAppInboxPage() {
             {!inbox.isLoading && conversations.length === 0 && (
               <div className="py-16 px-6 text-center">
                 <MessageCircle size={30} className="mx-auto text-ink-mute mb-3" strokeWidth={1.5} />
-                <div className="text-sm text-ink-2">No WhatsApp replies are awaiting a human.</div>
+                <div className="text-sm text-ink-2">No active WhatsApp conversations yet.</div>
               </div>
             )}
 
             {conversations.map((conv) => (
-              <button
-                key={conv.lead_id}
+              <div
+                key={conv.conversation_id}
                 onClick={() => selectConversation(conv)}
                 className={cn(
-                  "w-full text-left px-5 py-4 border-b border-line-soft transition-colors",
-                  selected?.lead_id === conv.lead_id ? "bg-brand-soft" : "bg-surface-2 hover:bg-surface",
+                  "w-full cursor-pointer text-left px-5 py-4 border-b border-line-soft transition-colors",
+                  selected?.conversation_id === conv.conversation_id ? "bg-brand-soft" : "bg-surface-2 hover:bg-surface",
                 )}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="text-[14px] font-semibold text-ink truncate">{conv.lead_name}</div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-[14px] font-semibold text-ink truncate">{conv.lead_name}</div>
+                      <button
+                        type="button"
+                        onClick={(event) => removeConversation(event, conv)}
+                        disabled={deleteConversation.isPending}
+                        title="Delete conversation"
+                        aria-label={`Delete ${conv.lead_name} WhatsApp conversation`}
+                        className="grid h-6 w-6 shrink-0 place-items-center rounded text-ink-mute transition-colors hover:bg-danger-tint hover:text-danger disabled:opacity-50"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
                     <div className="text-[12px] text-brand font-medium truncate">{conv.company_name}</div>
                     <div className="font-mono text-[10px] text-ink-2 mt-1">Phone: {conv.phone || "unknown"}</div>
                   </div>
@@ -152,7 +191,7 @@ export function WhatsAppInboxPage() {
                     {statusLabel(conv.status)}
                   </span>
                 </div>
-              </button>
+              </div>
             ))}
           </div>
 
