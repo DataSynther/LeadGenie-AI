@@ -14,8 +14,8 @@ export function ApprovalPreviewCard() {
   return (
     <div className="card-base">
       <div className="px-5 py-4 border-b border-line-soft flex items-center justify-between">
-        <div className="font-serif text-display-md text-ink">
-          Pending <em className="text-brand italic">approvals</em>
+        <div className="text-display-md font-semibold text-ink">
+          Pending <span className="text-brand">Approvals</span>
         </div>
         <Link to="/approval" className="label-mono hover:text-ink">
           {items.length} awaiting review →

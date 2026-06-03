@@ -38,7 +38,7 @@ export function AuditTrailPage() {
     <>
       <Topbar
         breadcrumb="Governance / Audit Trail"
-        title={<>Audit <em className="text-brand italic">Trail</em></>}
+        title={<>Audit <span className="text-brand font-semibold">Trail</span></>}
         right={
           <>
             <button className="btn-ghost">Filter</button>
@@ -57,8 +57,8 @@ export function AuditTrailPage() {
 
         <div className="card-base">
           <div className="px-5 py-4 border-b border-line-soft flex items-center justify-between">
-            <div className="font-serif text-display-md text-ink">
-              Decision <em className="text-brand italic">log</em>
+            <div className="text-display-md font-semibold text-ink">
+              Decision <span className="text-brand">Log</span>
             </div>
             <div className="label-mono">Every outbound action is recorded</div>
           </div>

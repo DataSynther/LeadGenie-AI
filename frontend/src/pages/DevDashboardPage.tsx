@@ -1,4 +1,22 @@
 import { useQuery } from "@tanstack/react-query";
+import {
+  Microscope,
+  BarChart3,
+  ShieldCheck,
+  ScanSearch,
+  Zap,
+  Radio,
+  Link2,
+  Paperclip,
+  Shuffle,
+  RefreshCw,
+  FileX,
+  HelpCircle,
+  AlertTriangle,
+  Layers,
+  Check,
+  X,
+} from "lucide-react";
 import { cn } from "../lib/utils";
 import { Topbar } from "../components/layout/Topbar";
 import { StatusPill } from "../components/StatusPill";
@@ -7,19 +25,19 @@ import type { CitationEntry, RetrievalStats, InterpretationSummary, SelfEvalStat
 
 // ── Colour tokens for diagnostic categories ──────────────────────────────────
 const CATEGORY_COLOURS: Record<string, string> = {
-  retrieval_failure:      "bg-red-500/10 text-red-400 border-red-500/20",
-  insufficient_context:   "bg-amber-500/10 text-amber-400 border-amber-500/20",
-  ambiguous_prompt:       "bg-violet-500/10 text-violet-400 border-violet-500/20",
-  validation_gap:         "bg-orange-500/10 text-orange-400 border-orange-500/20",
-  task_model_mismatch:    "bg-sky-500/10 text-sky-400 border-sky-500/20",
+  retrieval_failure:      "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30",
+  insufficient_context:   "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30",
+  ambiguous_prompt:       "bg-violet-500/15 text-violet-700 dark:text-violet-400 border-violet-500/30",
+  validation_gap:         "bg-orange-500/15 text-orange-700 dark:text-orange-400 border-orange-500/30",
+  task_model_mismatch:    "bg-sky-500/15 text-sky-700 dark:text-sky-400 border-sky-500/30",
 };
 
-const CATEGORY_ICONS: Record<string, string> = {
-  retrieval_failure:    "⟳",
-  insufficient_context: "◫",
-  ambiguous_prompt:     "≈",
-  validation_gap:       "△",
-  task_model_mismatch:  "⌇",
+const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+  retrieval_failure:    <RefreshCw className="w-3 h-3 inline-block" />,
+  insufficient_context: <FileX className="w-3 h-3 inline-block" />,
+  ambiguous_prompt:     <HelpCircle className="w-3 h-3 inline-block" />,
+  validation_gap:       <AlertTriangle className="w-3 h-3 inline-block" />,
+  task_model_mismatch:  <Layers className="w-3 h-3 inline-block" />,
 };
 
 const CONSEQUENCE_COLOURS = {
@@ -53,13 +71,13 @@ function Bar({ value, max, colour }: { value: number; max: number; colour: strin
   );
 }
 
-function SectionHeader({ icon, title, sub }: { icon: string; title: string; sub?: string }) {
+function SectionHeader({ icon, title, sub }: { icon: React.ReactNode; title: string; sub?: string }) {
   return (
-    <div className="flex items-start gap-2 mb-4">
-      <span className="text-xl leading-none mt-0.5">{icon}</span>
+    <div className="flex items-center gap-2.5 mb-4">
+      <span className="text-ink shrink-0">{icon}</span>
       <div>
-        <div className="text-sm font-semibold text-ink">{title}</div>
-        {sub && <div className="text-[11px] text-ink-2 mt-0.5">{sub}</div>}
+        <div className="text-sm font-semibold text-ink tracking-tight">{title}</div>
+        {sub && <div className="text-[11px] text-ink-2 mt-0.5 font-medium">{sub}</div>}
       </div>
     </div>
   );
@@ -97,23 +115,25 @@ function DiagnosticsPanel() {
 
   return (
     <Card>
-      <SectionHeader icon="🧬" title="Hallucination Root Cause Analysis" sub={`${data.total_traces} total traces`} />
+      <SectionHeader icon={<Microscope className="w-5 h-5" />} title="Hallucination Root Cause Analysis" sub={`${data.total_traces} total traces`} />
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
         {cats.map(([key, cat]) => (
           <div key={key} className={cn("rounded-lg border p-3.5", CATEGORY_COLOURS[key] ?? "bg-surface-2 border-line-soft")}>
-            <div className="flex items-center justify-between mb-1">
-              <span className="font-mono text-[10px] uppercase tracking-widest opacity-60">{CATEGORY_ICONS[key]} {cat.label}</span>
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-mono text-[10px] font-semibold uppercase tracking-widest flex items-center gap-1.5">
+                {CATEGORY_ICONS[key]} {cat.label}
+              </span>
               <span className="font-serif text-2xl font-bold">{cat.count}</span>
             </div>
-            <p className="text-[11px] opacity-70 mb-2 leading-relaxed">{cat.description}</p>
+            <p className="text-[11px] mb-2 leading-relaxed opacity-90">{cat.description}</p>
             {cat.recent_events.length > 0 && (
-              <div className="space-y-1 border-t border-current/10 pt-2 mt-1">
+              <div className="space-y-1 border-t border-current/20 pt-2 mt-1">
                 {cat.recent_events.slice(0, 3).map((ev, i) => (
-                  <div key={i} className="text-[10px] opacity-60 flex gap-1.5">
-                    <span>{fmtTime(ev.ts)}</span>
-                    <span className="opacity-50">·</span>
-                    <span className="capitalize">{ev.agent}</span>
-                    {ev.detail && <span className="opacity-50 truncate">· {ev.detail}</span>}
+                  <div key={i} className="text-[10px] opacity-75 flex gap-1.5">
+                    <span className="font-mono tabular-nums">{fmtTime(ev.ts)}</span>
+                    <span className="opacity-60">·</span>
+                    <span className="capitalize font-medium">{ev.agent}</span>
+                    {ev.detail && <span className="opacity-70 truncate">· {ev.detail}</span>}
                   </div>
                 ))}
               </div>
@@ -138,7 +158,7 @@ function AgentMetricsPanel() {
   if (!data || Object.keys(data).length === 0) {
     return (
       <Card>
-        <SectionHeader icon="📊" title="AI Operations" sub="Per-agent performance" />
+        <SectionHeader icon={<BarChart3 className="w-5 h-5" />} title="AI Operations" sub="Per-agent performance" />
         <div className="text-ink-2 text-sm py-6 text-center">No traces yet — run some agent calls to populate.</div>
       </Card>
     );
@@ -148,7 +168,7 @@ function AgentMetricsPanel() {
 
   return (
     <Card>
-      <SectionHeader icon="📊" title="AI Operations" sub="Per-agent aggregated metrics" />
+      <SectionHeader icon={<BarChart3 className="w-5 h-5" />} title="AI Operations" sub="Per-agent aggregated metrics" />
       <div className="overflow-x-auto">
         <table className="w-full text-[12px]">
           <thead>
@@ -206,7 +226,7 @@ function ValidationPanel() {
   if (!data || data.length === 0) {
     return (
       <Card>
-        <SectionHeader icon="🛡️" title="Governance & Validation" sub="shape · context · policy · business rules" />
+        <SectionHeader icon={<ShieldCheck className="w-5 h-5" />} title="Governance & Validation" sub="shape · context · policy · business rules" />
         <div className="text-ink-2 text-sm py-6 text-center">No validation events yet.</div>
       </Card>
     );
@@ -219,7 +239,7 @@ function ValidationPanel() {
 
   return (
     <Card>
-      <SectionHeader icon="🛡️" title="Governance & Validation" sub="shape · context · policy · business rules" />
+      <SectionHeader icon={<ShieldCheck className="w-5 h-5" />} title="Governance & Validation" sub="shape · context · policy · business rules" />
 
       {/* Summary pills */}
       <div className="flex gap-3 mb-4">
@@ -250,8 +270,8 @@ function ValidationPanel() {
               {v.consequence}
             </span>
             {agentChip(v.agent)}
-            <span className="text-ink-2 truncate flex-1">{v.issues.length > 0 ? v.issues.join(" · ") : "all checks passed"}</span>
-            <span className="text-ink-mute shrink-0">{fmtTime(v.ts)}</span>
+            <span className="text-ink truncate flex-1">{v.issues.length > 0 ? v.issues.join(" · ") : "all checks passed"}</span>
+            <span className="text-ink-2 shrink-0 font-mono tabular-nums">{fmtTime(v.ts)}</span>
           </div>
         ))}
       </div>
@@ -272,7 +292,7 @@ function RetrievalAndPromptPanel() {
   if (!data || data.length === 0) {
     return (
       <Card>
-        <SectionHeader icon="🔍" title="Retrieval & Prompt Intelligence" sub="context coverage · ambiguity scores" />
+        <SectionHeader icon={<ScanSearch className="w-5 h-5" />} title="Retrieval & Prompt Intelligence" sub="context coverage · ambiguity scores" />
         <div className="text-ink-2 text-sm py-6 text-center">No traces yet.</div>
       </Card>
     );
@@ -303,7 +323,7 @@ function RetrievalAndPromptPanel() {
 
   return (
     <Card>
-      <SectionHeader icon="🔍" title="Retrieval & Prompt Intelligence" sub="context coverage · ambiguity scores · prompt versions" />
+      <SectionHeader icon={<ScanSearch className="w-5 h-5" />} title="Retrieval & Prompt Intelligence" sub="context coverage · ambiguity scores · prompt versions" />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Context & Ambiguity by agent */}
@@ -372,7 +392,7 @@ function SystemInsightsPanel() {
   if (!data || Object.keys(data).length === 0) {
     return (
       <Card>
-        <SectionHeader icon="⚡" title="System Insights" sub="latency bottlenecks · token cost" />
+        <SectionHeader icon={<Zap className="w-5 h-5" />} title="System Insights" sub="latency bottlenecks · token cost" />
         <div className="text-ink-2 text-sm py-6 text-center">No data yet.</div>
       </Card>
     );
@@ -389,7 +409,7 @@ function SystemInsightsPanel() {
 
   return (
     <Card>
-      <SectionHeader icon="⚡" title="System Insights" sub="agent bottlenecks · token cost awareness" />
+      <SectionHeader icon={<Zap className="w-5 h-5" />} title="System Insights" sub="agent bottlenecks · token cost awareness" />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Latency bottleneck */}
@@ -415,18 +435,18 @@ function SystemInsightsPanel() {
           <div>
             <div className="label-mono mb-2">Token Usage</div>
             <div className="font-serif text-3xl text-ink">{totalTokens.toLocaleString()}</div>
-            <div className="text-[11px] text-ink-2 mt-0.5">across {totalCalls} agent calls</div>
+            <div className="text-[11px] text-ink mt-0.5">across {totalCalls} agent calls</div>
           </div>
           <div>
             <div className="label-mono mb-2">Estimated Cost</div>
             <div className="font-serif text-3xl text-gold-dark">${estCostUsd.toFixed(4)}</div>
-            <div className="text-[11px] text-ink-2 mt-0.5">Sonnet 4.6 blended rate</div>
+            <div className="text-[11px] text-ink mt-0.5">Sonnet 4.6 blended rate</div>
           </div>
           <div className="border-t border-line-soft pt-3 space-y-1">
             {agents.map(([agent, m]) => (
               <div key={agent} className="flex justify-between text-[11px]">
                 {agentChip(agent)}
-                <span className="text-ink-2 font-mono">{(m.avg_tokens * m.total_calls).toLocaleString()} tok · ${(m.avg_tokens * m.total_calls * COST_PER_TOKEN).toFixed(4)}</span>
+                <span className="text-ink font-mono">{(m.avg_tokens * m.total_calls).toLocaleString()} tok · <span className="text-ink-2">${(m.avg_tokens * m.total_calls * COST_PER_TOKEN).toFixed(4)}</span></span>
               </div>
             ))}
           </div>
@@ -449,7 +469,7 @@ function TraceFeed() {
   if (!data || data.length === 0) {
     return (
       <Card>
-        <SectionHeader icon="📡" title="Live Trace Feed" sub="most recent agent calls" />
+        <SectionHeader icon={<Radio className="w-5 h-5" />} title="Live Trace Feed" sub="most recent agent calls" />
         <div className="text-ink-2 text-sm py-6 text-center">No traces yet — trigger an agent call to start.</div>
       </Card>
     );
@@ -457,21 +477,21 @@ function TraceFeed() {
 
   return (
     <Card>
-      <SectionHeader icon="📡" title="Live Trace Feed" sub="auto-refreshes every 10s" />
+      <SectionHeader icon={<Radio className="w-5 h-5" />} title="Live Trace Feed" sub="auto-refreshes every 10s" />
       <div className="space-y-2 max-h-80 overflow-y-auto">
         {[...data].reverse().map((t: TraceRecord, i) => (
-          <div key={i} className="flex items-start gap-2 text-[11px] py-1.5 border-b border-line-soft/50 last:border-0">
-            <span className="text-ink-mute font-mono w-16 shrink-0">{fmtTime(t.ts)}</span>
+          <div key={i} className="flex items-center gap-2 text-[11px] py-1.5 border-b border-line-soft/50 last:border-0">
+            <span className="text-ink-2 font-mono w-16 shrink-0 tabular-nums">{fmtTime(t.ts)}</span>
             {agentChip(t.agent)}
-            <span className={cn("font-mono shrink-0", t.success ? "text-emerald-400" : "text-red-400")}>
-              {t.success ? "✓" : "✗"}
+            <span className={cn("shrink-0", t.success ? "text-emerald-500" : "text-red-500")}>
+              {t.success ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
             </span>
-            <span className="text-ink-2 font-mono shrink-0">{t.latency_ms.toFixed(0)}ms</span>
+            <span className="text-ink font-mono shrink-0">{t.latency_ms.toFixed(0)}ms</span>
             <span className="text-ink-2 font-mono shrink-0">{t.tokens_used}tok</span>
             {t.diagnostic_categories.length > 0 && (
               <div className="flex gap-1 flex-wrap">
                 {t.diagnostic_categories.map(cat => (
-                  <span key={cat} className={cn("px-1 py-px rounded border text-[9px] font-mono", CATEGORY_COLOURS[cat] ?? "bg-surface-2 text-ink-2 border-line-soft")}>
+                  <span key={cat} className={cn("px-1 py-px rounded border text-[9px] font-mono flex items-center gap-0.5", CATEGORY_COLOURS[cat] ?? "bg-surface-2 text-ink-2 border-line-soft")}>
                     {CATEGORY_ICONS[cat] ?? "?"} {cat.split("_")[0]}
                   </span>
                 ))}
@@ -504,11 +524,11 @@ function RetrievalGroundingPanel() {
 
   return (
     <Card>
-      <SectionHeader icon="🔗" title="Retrieval Grounding" sub="How well generated content maps back to source context" />
+      <SectionHeader icon={<Link2 className="w-5 h-5" />} title="Retrieval Grounding" sub="How well generated content maps back to source context" />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Score histogram */}
         <div>
-          <div className="text-[11px] text-ink-mute font-mono mb-3">Score distribution (0 = hallucinated, 1 = fully grounded)</div>
+          <div className="text-[11px] text-ink-2 font-mono mb-3">Score distribution (0 = hallucinated, 1 = fully grounded)</div>
           {stats ? (
             <div className="space-y-1.5">
               {stats.histogram.map(h => (
@@ -524,18 +544,18 @@ function RetrievalGroundingPanel() {
                 </div>
               ))}
               <div className="mt-2 pt-2 border-t border-line-soft flex gap-4 text-[11px] font-mono">
-                <span className="text-ink-mute">avg: <span className="text-ink">{stats.avg?.toFixed(3) ?? "—"}</span></span>
-                <span className="text-red-400">below 0.55: {stats.below_threshold}</span>
-                <span className="text-ink-mute">total: {stats.count}</span>
+                <span className="text-ink-2">avg: <span className="text-ink font-semibold">{stats.avg?.toFixed(3) ?? "—"}</span></span>
+                <span className="text-red-500 dark:text-red-400 font-medium">below 0.55: {stats.below_threshold}</span>
+                <span className="text-ink-2">total: {stats.count}</span>
               </div>
             </div>
           ) : (
-            <span className="text-[11px] text-ink-mute">No retrieval scores yet — run an outreach generation.</span>
+            <span className="text-[11px] text-ink-2">No retrieval scores yet — run an outreach generation.</span>
           )}
         </div>
         {/* Self-eval confidence */}
         <div>
-          <div className="text-[11px] text-ink-mute font-mono mb-3">Self-evaluation confidence by agent</div>
+          <div className="text-[11px] text-ink-2 font-mono mb-3">Self-evaluation confidence by agent</div>
           {selfEval && Object.keys(selfEval).length > 0 ? (
             <div className="space-y-2">
               {Object.entries(selfEval).map(([agent, s]) => (
@@ -550,7 +570,7 @@ function RetrievalGroundingPanel() {
               ))}
             </div>
           ) : (
-            <span className="text-[11px] text-ink-mute">No self-eval data yet.</span>
+            <span className="text-[11px] text-ink-2">No self-eval data yet.</span>
           )}
         </div>
       </div>
@@ -599,9 +619,9 @@ function CitationsPanel() {
 
   return (
     <Card>
-      <SectionHeader icon="📎" title="Source Citations" sub="Fact provenance for each outreach generation — what came from where" />
+      <SectionHeader icon={<Paperclip className="w-5 h-5" />} title="Source Citations" sub="Fact provenance for each outreach generation — what came from where" />
       {!entries || entries.length === 0 ? (
-        <p className="text-[12px] text-ink-mute">No citations yet — run an outreach generation to see source attribution.</p>
+        <p className="text-[12px] text-ink-2">No citations yet — run an outreach generation to see source attribution.</p>
       ) : (
         <div className="space-y-4 max-h-[420px] overflow-y-auto pr-1">
           {entries.map((entry, i) => (
@@ -637,9 +657,9 @@ function InterpretationDriftPanel() {
 
   return (
     <Card>
-      <SectionHeader icon="🔀" title="Interpretation Drift" sub="Detects when a prompt version produces a structurally different output than known patterns" />
+      <SectionHeader icon={<Shuffle className="w-5 h-5" />} title="Interpretation Drift" sub="Detects when a prompt version produces a structurally different output than known patterns" />
       {entries.length === 0 ? (
-        <p className="text-[12px] text-ink-mute">No interpretation data yet. Drift is tracked per prompt version after 2+ runs.</p>
+        <p className="text-[12px] text-ink-2">No interpretation data yet. Drift is tracked per prompt version after 2+ runs.</p>
       ) : (
         <div className="space-y-3">
           {entries.map(([pv, s]) => (
@@ -649,14 +669,14 @@ function InterpretationDriftPanel() {
                 <span className={cn("font-mono text-[10px] px-1.5 py-px rounded capitalize", AGENT_COLOURS[s.agent] ?? "bg-surface-2 text-ink-2")}>{s.agent}</span>
                 <span className="text-[10px] text-ink-mute">{s.total_seen} runs</span>
                 {s.drift_events > 0
-                  ? <span className="ml-auto text-[10px] bg-amber-500/10 text-amber-400 px-1.5 py-px rounded font-mono">⚠ {s.drift_events} drift{s.drift_events > 1 ? "s" : ""}</span>
-                  : <span className="ml-auto text-[10px] bg-emerald-500/10 text-emerald-400 px-1.5 py-px rounded font-mono">✓ stable</span>
+                  ? <span className="ml-auto text-[10px] bg-amber-500/10 text-amber-400 px-1.5 py-px rounded font-mono flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> {s.drift_events} drift{s.drift_events > 1 ? "s" : ""}</span>
+                  : <span className="ml-auto text-[10px] bg-emerald-500/10 text-emerald-400 px-1.5 py-px rounded font-mono flex items-center gap-1"><Check className="w-3 h-3" /> stable</span>
                 }
               </div>
               {s.recent_drift.length > 0 && (
                 <div className="space-y-1 mt-1">
                   {s.recent_drift.map((d, i) => (
-                    <div key={i} className="text-[10px] text-ink-mute font-mono truncate">
+                    <div key={i} className="text-[10px] text-ink-2 font-mono truncate">
                       {fmtTime(d.ts)} — "{d.angle}"
                     </div>
                   ))}
@@ -686,7 +706,7 @@ export function DevDashboardPage() {
     <>
       <Topbar
         breadcrumb="Dev / Governed Dashboard"
-        title={<>AI <em className="text-brand italic">Observability</em></>}
+        title={<>AI <span className="text-brand font-semibold">Observability</span></>}
         right={
           <div className="flex items-center gap-2.5">
             <StatusPill>{totalCalls} traces</StatusPill>

@@ -48,8 +48,8 @@ export function RiskDistributionCard() {
   return (
     <div className="card-base">
       <div className="px-5 py-4 border-b border-line-soft flex items-center justify-between">
-        <div className="font-serif text-display-md text-ink">
-          Risk <em className="text-brand italic">distribution</em>
+        <div className="text-display-md font-semibold text-ink">
+          Risk <span className="text-brand">Distribution</span>
         </div>
         <div className="label-mono">Last 24h · {total} msgs</div>
       </div>

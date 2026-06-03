@@ -6,11 +6,13 @@ import {
   GitBranch,
   BarChart2,
   ShieldCheck,
+  LogOut,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { ThemeToggle } from "../ThemeToggle";
 import { useSidebar } from "../../context/SidebarContext";
+import { useAuth } from "../../context/AuthContext";
 
 interface NavItem {
   to: string;
@@ -20,12 +22,27 @@ interface NavItem {
 }
 
 const WORKSPACE: NavItem[] = [
-  // { to: "/dashboard", label: "Mission Control", icon: Activity },
   { to: "/discover", label: "Discover Leads", icon: Search },
-  { to: "/command-center", label: "Command Center", icon: ShieldCheck, badge: { text: "NEW", tone: "brand" } },
-  { to: "/dev", label: "AI Observability", icon: Activity, badge: { text: "DEV", tone: "brand" } },
+  { to: "/dashboard", label: "Mission Control", icon: Activity },
+  {
+    to: "/command-center",
+    label: "Command Center",
+    icon: ShieldCheck,
+    badge: { text: "NEW", tone: "brand" },
+  },
+  {
+    to: "/dev",
+    label: "AI Observability",
+    icon: Activity,
+    badge: { text: "DEV", tone: "brand" },
+  },
   { to: "/lineage", label: "Pipeline Lineage", icon: GitBranch },
-  { to: "/prompt-versions", label: "Prompt Versions", icon: BarChart2, badge: { text: "NEW", tone: "brand" } },
+  {
+    to: "/prompt-versions",
+    label: "Prompt Versions",
+    icon: BarChart2,
+    badge: { text: "NEW", tone: "brand" },
+  },
   // { to: "/campaigns", label: "Campaigns", icon: Sparkles },
   // {
   //   to: "/pipeline",
@@ -41,14 +58,19 @@ const WORKSPACE: NavItem[] = [
   // },
 ];
 
-
 function badgeClasses(tone: "danger" | "brand" | "neutral") {
   if (tone === "danger") return "bg-danger text-white";
   if (tone === "brand") return "bg-brand text-white";
   return "bg-surface-2 text-ink-2";
 }
 
-function NavItemRow({ item, onNavigate }: { item: NavItem; onNavigate: () => void }) {
+function NavItemRow({
+  item,
+  onNavigate,
+}: {
+  item: NavItem;
+  onNavigate: () => void;
+}) {
   const Icon = item.icon;
   return (
     <NavLink
@@ -88,6 +110,12 @@ function NavItemRow({ item, onNavigate }: { item: NavItem; onNavigate: () => voi
 
 export function Sidebar() {
   const { isOpen, close } = useSidebar();
+  const { user, logout } = useAuth();
+
+  const displayName = user?.username
+    ? user.username.charAt(0).toUpperCase() + user.username.slice(1)
+    : "User";
+  const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
     <aside
@@ -112,8 +140,8 @@ export function Sidebar() {
           alt="LeadGenie bot"
           className="w-20 h-20 md:w-30 md:h-30 rounded-full object-cover ring-2 ring-brand/40 shadow-[0_0_16px_rgba(106,50,122,0.30)] mb-3"
         />
-        <div className="font-serif text-[28px] md:text-[32px] leading-none tracking-[-0.02em] text-ink">
-          Lead<em className="text-brand italic">Genie</em>
+        <div className="text-[26px] md:text-[28px] font-bold leading-none tracking-tight text-ink">
+          Lead<span className="text-brand">Genie</span>
         </div>
         <div className="font-mono text-[9px] uppercase tracking-[0.15em] text-ink-mute mt-1.5">
           v0.1
@@ -135,15 +163,22 @@ export function Sidebar() {
       ))} */}
 
       <div className="mt-auto pt-3 border-t border-line-soft flex items-center gap-2.5 px-3">
-        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-brand to-gold flex items-center justify-center font-mono text-[11px] font-semibold text-white">
-          PR
+        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-brand to-gold flex items-center justify-center font-mono text-[11px] font-semibold text-white shrink-0">
+          {initials}
         </div>
-        <div>
-          <div className="text-xs text-ink">Priya R.</div>
-          <div className="text-[10px] text-ink-mute font-mono">Sales Ops</div>
+        <div className="min-w-0">
+          <div className="text-xs text-ink truncate">{displayName}</div>
+          <div className="text-[10px] text-ink-mute font-mono">Signed in</div>
         </div>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-1.5">
           <ThemeToggle />
+          <button
+            onClick={logout}
+            title="Sign out"
+            className="text-ink-mute hover:text-danger transition-colors p-1 rounded"
+          >
+            <LogOut size={13} strokeWidth={2} />
+          </button>
         </div>
       </div>
     </aside>

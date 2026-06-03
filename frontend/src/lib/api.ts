@@ -9,8 +9,13 @@ export type Lead = {
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
+function authHeader(): Record<string, string> {
+  const token = localStorage.getItem("lg_auth_token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`);
+  const res = await fetch(`${BASE_URL}${path}`, { headers: authHeader() });
   if (!res.ok) throw new Error(`GET ${path} → ${res.status}`);
   return res.json();
 }
@@ -18,7 +23,7 @@ async function get<T>(path: string): Promise<T> {
 async function post<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeader() },
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`POST ${path} → ${res.status}`);
@@ -77,6 +82,8 @@ export const leadSearch = (params: {
   company_names?: string[];
   titles?: string[];
   seniorities?: string[];
+  industries?: string[];
+  locations?: string[];
   per_page?: number;
 }) => post<{
   id: string;

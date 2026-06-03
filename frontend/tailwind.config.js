@@ -44,7 +44,7 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['"DM Sans"', "system-ui", "sans-serif"],
+        sans: ['"Montserrat"', "system-ui", "sans-serif"],
         serif: ['"Instrument Serif"', "serif"],
         mono: ['"JetBrains Mono"', "monospace"],
       },

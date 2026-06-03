@@ -22,7 +22,7 @@ export function ApprovalQueuePage() {
     <>
       <Topbar
         breadcrumb="Governance / Approval Queue"
-        title={<>Approval <em className="text-brand italic">Queue</em></>}
+        title={<>Approval <span className="text-brand font-semibold">Queue</span></>}
         right={
           <>
             <StatusPill tone="danger">{items.length} awaiting</StatusPill>
@@ -41,8 +41,8 @@ export function ApprovalQueuePage() {
 
         <div className="card-base">
           <div className="px-5 py-4 border-b border-line-soft flex items-center justify-between">
-            <div className="font-serif text-display-md text-ink">
-              Awaiting your <em className="text-brand italic">review</em>
+            <div className="text-display-md font-semibold text-ink">
+              Awaiting Your <span className="text-brand">Review</span>
             </div>
             <div className="label-mono">Sorted by risk, then age</div>
           </div>

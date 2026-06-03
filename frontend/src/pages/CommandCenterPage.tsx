@@ -337,7 +337,7 @@ export function CommandCenterPage() {
     <>
       <Topbar
         breadcrumb="Command Center / Overview"
-        title={<>AI Governance <em className="text-brand italic">Command Center</em></>}
+        title={<>AI Governance <span className="text-brand font-semibold">Command Center</span></>}
         right={
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 bg-surface-2 border border-line-soft rounded-lg px-3 py-1.5">
@@ -556,16 +556,21 @@ export function CommandCenterPage() {
                     style={{ background: s.status === "SUCCESS" || s.status === "APPROVED" ? "#34d399" : s.status === "WARNING" ? "#fbbf24" : "#f87171" }}
                   />
                   <span className="flex-1 text-ink-2 truncate">{s.label}</span>
-                  <Badge label={s.status} cls={STEP_COLOUR[s.status] ?? STEP_COLOUR.SUCCESS} />
-                  {s.leadId && traceLeadId === "__all__" && (
-                    <button
-                      onClick={() => navigate(`/lineage?lead=${encodeURIComponent(s.leadId!)}`)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity text-brand"
-                      title="View in Pipeline Lineage"
-                    >
-                      <ExternalLink size={11} />
-                    </button>
-                  )}
+                  {/* Badge + optional lineage link always occupy the same right-aligned slot */}
+                  <div className="flex items-center gap-1 ml-auto flex-shrink-0">
+                    <Badge label={s.status} cls={STEP_COLOUR[s.status] ?? STEP_COLOUR.SUCCESS} />
+                    {s.leadId && traceLeadId === "__all__" ? (
+                      <button
+                        onClick={() => navigate(`/lineage?lead=${encodeURIComponent(s.leadId!)}`)}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity text-brand"
+                        title="View in Pipeline Lineage"
+                      >
+                        <ExternalLink size={11} />
+                      </button>
+                    ) : (
+                      <span className="w-[11px]" />
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -668,8 +673,8 @@ export function CommandCenterPage() {
           </Panel>
         </div>
 
-        {/* ── Row 4: Prompt perf | Model perf | Human review queue ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        {/* ── Row 4: Prompt perf | Model perf ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           {/* Prompt Performance */}
           <Panel>
             <PanelTitle>Prompt Performance</PanelTitle>
@@ -746,40 +751,6 @@ export function CommandCenterPage() {
             )}
           </Panel>
 
-          {/* Human Review Queue */}
-          <Panel className="flex flex-col">
-            <div className="flex items-center justify-between mb-4">
-              <PanelTitle>Human Review Queue</PanelTitle>
-              {humanR > 0 && (
-                <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-500 border border-amber-500/25">
-                  {humanR} pending
-                </span>
-              )}
-            </div>
-            <div className="space-y-3 flex-1 overflow-hidden">
-              {approvalItems.slice(0, 4).length > 0 ? (
-                approvalItems.slice(0, 4).map((item, i) => (
-                  <div key={i} className="flex items-start gap-2 p-2.5 rounded-lg bg-surface-2 border border-line-soft">
-                    <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5",
-                      item.risk_level === "high" ? "bg-red-500/20 text-red-500" : "bg-amber-500/20 text-amber-500")}>
-                      !
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[11px] font-semibold text-ink">{item.lead_name}</div>
-                      <div className="text-[10px] text-ink-mute truncate">{item.trigger ?? "governance_policy"}</div>
-                    </div>
-                    <div className="flex-shrink-0">
-                      <button className="text-[10px] font-medium px-2 py-0.5 rounded bg-brand/15 text-brand border border-brand/25 hover:bg-brand/25 transition-colors">
-                        Review
-                      </button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-[12px] text-ink-mute">No pending reviews.</div>
-              )}
-            </div>
-          </Panel>
         </div>
 
         {/* ── Row 5: Memory Governance ── */}

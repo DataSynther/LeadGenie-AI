@@ -20,8 +20,8 @@ export function FunnelCard({ rows }: { rows: FunnelRow[] }) {
   return (
     <div className="card-base">
       <div className="px-5 py-4 border-b border-line-soft flex items-center justify-between">
-        <div className="font-serif text-display-md text-ink">
-          Pipeline <em className="text-brand italic">funnel</em>
+        <div className="text-display-md font-semibold text-ink">
+          Pipeline <span className="text-brand">Funnel</span>
         </div>
         <div className="label-mono">Last 30 days</div>
       </div>
