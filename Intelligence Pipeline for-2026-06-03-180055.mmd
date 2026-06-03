@@ -1,0 +1,135 @@
+%%{init: {"flowchart": {"defaultRenderer":"elk"}, "themeVariables":{"fontSize":"12px"}}}%%
+flowchart TB
+    %% ── CLASS DEFINITIONS ──
+    classDef userLayer fill:#eef2ff,stroke:#818cf8,rx:10
+    classDef gatewayLayer fill:#f0fdfa,stroke:#2dd4bf,rx:10
+    classDef orchestration fill:#f5f3ff,stroke:#a78bfa,rx:10
+    classDef agentLayer fill:#fff7ed,stroke:#fb923c,rx:10
+    classDef intelligenceLayer fill:#f0f9ff,stroke:#38bdf8,rx:10
+    classDef dataLayer fill:#f0fdf4,stroke:#4ade80,rx:10
+    classDef governanceLayer fill:#fff1f2,stroke:#fb7185,rx:10
+    classDef outputLayer fill:#fefce8,stroke:#facc15,rx:10
+
+    %% ── EXPERIENCE LAYER ──
+    subgraph UX["🖥️ Experience Layer"]
+        direction TB
+        U1["Sales Executive Dashboard"]
+        U2["Revenue Leader Command Center"]
+        U3["Marketing Ops Hub"]
+    end
+
+    %% ── SECURE GATEWAY ──
+    subgraph GW["🔐 Secure Gateway"]
+        direction TB
+        G1["Identity & Permission Verification"]
+        G2["Request Intent Classification"]
+        G3["Load Balancing & Routing"]
+    end
+
+    %% ── ORCHESTRATION ENGINE ──
+    subgraph ORCH["🧠 Master Orchestration"]
+        direction TB
+        O1["Goal Decomposition"]
+        O2["Agent Workflow Planner"]
+        O3["Decision Arbiter"]
+        O4["Progress Monitor"]
+    end
+
+    %% ── AGENTIC WORKFORCE ──
+    subgraph AGENTS["🤖 Agentic Workforce"]
+        direction LR
+        A1["Prospect Discovery"]
+        A3["Lead Scoring"]
+        A4["Personalized Outreach"]
+        A5["Pipeline Intelligence"]
+        A6["Continuous Learning"]
+    end
+
+    %% ── INTELLIGENCE + DATA SECTION ──
+    subgraph KNOWLEDGE["⚡ Intelligence + 🗄️ Data Foundation"]
+        direction TB
+
+        subgraph INTEL["⚡ Intelligence Core"]
+            direction TB
+            I1["LLM Reasoning Models"]
+            I2["Predictive ML Models"]
+            I3["Knowledge Graph Engine"]
+        end
+
+        subgraph DATA["🗄️ Unified Data Layer"]
+            direction LR
+            D1["CRM & Sales History"]
+            D2["Intent & Behavioral Data"]
+            D3["Firmographics & Technographics"]
+            D4["Web Intelligence"]
+            D5["Engagement Analytics"]
+        end
+    end
+
+    %% ── GOVERNANCE ──
+    subgraph GOV["🛡️ Governance & Oversight"]
+        direction TB
+        V1["Human Review & Approval Gates"]
+        V2["Audit Trail & Explainability"]
+        V3["Data Privacy Controls"]
+    end
+
+    %% ── OUTCOMES ──
+    subgraph OUT["💰 Revenue Outcomes"]
+        direction TB
+        R1["Qualified Pipeline"]
+        R2["Meetings Booked"]
+        R3["Executive Insights"]
+    end
+
+    %% ── CONNECTIONS ──
+    U1 & U2 & U3 --> G1 --> G2 --> G3
+    G3 --> O1 --> O2 --> O3 --> O4
+    O2 --> A1 & A3 & A4 & A5
+    A6 -.->|"Learning Loop"| A1 & A3 & A4 & A5
+    A1 & A3 & A4 & A5 --> I1 & I2 & I3
+    I1 & I2 & I3 <--> D1 & D2 & D3 & D4 & D5
+    O4 --> GOV
+    A3 & A4 & A5 --> OUT
+    OUT -.->|"Outcome Feedback"| A6
+
+    %% ── LINK STYLES BY ORIGIN ──
+    %% User → Gateway (indigo)
+    linkStyle 0,1,2 stroke:#818cf8,stroke-width:2px
+    %% Gateway → Orchestration (teal)
+    linkStyle 3,4,5 stroke:#2dd4bf,stroke-width:2px
+    %% Orchestration → Agents (violet)
+    linkStyle 6,7,8,9 stroke:#a78bfa,stroke-width:2px
+    %% Agents → Intelligence (orange)
+    linkStyle 10,11,12,13 stroke:#fb923c,stroke-width:2px
+    %% Intelligence ↔ Data (sky blue)
+    linkStyle 14,15,16,17,18,19 stroke:#38bdf8,stroke-width:2px
+    %% Orchestration → Governance (violet, dashed)
+    linkStyle 20 stroke:#a78bfa,stroke-dasharray:3 3
+    %% Agents → Outcomes (orange)
+    linkStyle 21,22,23 stroke:#fb923c,stroke-width:2px
+    %% Outcomes → Feedback (yellow, dashed)
+    linkStyle 24 stroke:#facc15,stroke-dasharray:4 2
+
+    %% ── LEGEND ──
+    subgraph LEGEND["🎨 Legend (Flow Color Codes)"]
+        direction TB
+        L1["🟣 Orchestration (Violet)"]
+        L2["🔵 Intelligence↔Data (Sky Blue)"]
+        L3["🟠 Agent Flow (Orange)"]
+        L4["🟢 Gateway Flow (Teal)"]
+        L5["🟡 Outcome Feedback (Yellow, dashed)"]
+        L6["🟦 User Flow (Indigo)"]
+    end
+
+    %% ── ANIMATION (simulated sequential emphasis) ──
+    %% Simulate step-by-step presentation by numbered flow lines using opacity gradient (conceptual, static in Mermaid)
+    %% Stage 1: User → Gateway
+    style UX opacity:1
+    style GW opacity:0.9
+    style ORCH opacity:0.85
+    style AGENTS opacity:0.8
+    style INTEL opacity:0.75
+    style DATA opacity:0.75
+    style OUT opacity:0.7
+    style GOV opacity:0.7
