@@ -34,6 +34,9 @@ backend/storage/conversations/
 backend/storage/lead_contexts/
 backend/storage/intent_analytics/
 backend/agents/trends/trend_store.json
+# Memory runtime data (persisted by app at runtime — not committed)
+backend/storage/memory/
+backend/storage/memory_governance/
 
 # IDE
 .vscode/

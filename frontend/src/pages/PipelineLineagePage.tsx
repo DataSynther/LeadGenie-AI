@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "../lib/utils";
 import { Topbar } from "../components/layout/Topbar";
@@ -746,10 +747,17 @@ function LeadIndexSidebar({
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export function PipelineLineagePage() {
-  const [selectedLeadId, setSelectedLeadId]             = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+  const [selectedLeadId, setSelectedLeadId]             = useState<string | null>(searchParams.get("lead"));
   const [selectedStageId, setSelectedStageId]           = useState<string | null>(null);
   const [selectedAttemptLayer, setSelectedAttemptLayer] = useState<string | null>(null);
   const [subgraphOpen, setSubgraphOpen]                 = useState(false);
+
+  // honour ?lead= param if it changes (e.g. navigating from Command Center)
+  useEffect(() => {
+    const leadParam = searchParams.get("lead");
+    if (leadParam) setSelectedLeadId(leadParam);
+  }, [searchParams]);
 
   const indexQuery = useQuery({ queryKey: ["lineageIndex"], queryFn: api.lineageIndex, refetchInterval: 30_000 });
   const lineageQuery = useQuery({

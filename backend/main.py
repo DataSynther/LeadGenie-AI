@@ -28,6 +28,7 @@ from learning.learning_engine import LearningEngine
 from scheduling.scheduler import Scheduler
 from services.lead_context_store import LeadContextStore
 from observability import diagnostic_store
+from memory.memory_governance import governance as memory_governance
 
 app = FastAPI(
     title="LeadGenie AI — Governed Adaptive SDR Platform",
@@ -473,6 +474,90 @@ async def dev_self_eval_stats():
 async def dev_prompt_versions():
     """Per prompt-version stats: runs, pass rates, avg attempts, recent runs with correction history."""
     return diagnostic_store.get_prompt_version_stats()
+
+
+# ── Pipeline Stats (real funnel from traces) ─────────────────────────────────
+
+@app.get("/pipeline/stats")
+async def pipeline_stats():
+    """Derive real lead-generation funnel metrics directly from observability storage.
+
+    Funnel:
+      researched  → unique lead_ids with a research trace
+      outreach_sent → unique lead_ids whose outreach was approved (validation allow)
+      replies_received → unique lead_ids with an intent/conversation trace
+      interested → lead_ids where latest intent was 'interested' or 'meeting_request'
+      meetings_booked → lead_ids where latest intent was 'meeting_request'
+    """
+    import json as _json
+
+    traces = diagnostic_store.get_recent_traces(limit=2000)
+    validations = diagnostic_store.get_recent_validations(limit=2000)
+
+    # leads that went through research
+    researched_leads = {t["lead_id"] for t in traces if t.get("agent") == "research" and t.get("lead_id")}
+
+    # leads whose outreach was sent (approved by governance OR successful outreach trace)
+    # validation records sometimes lack lead_id; fall back to outreach traces with success=True
+    approved_lead_ids = {v["lead_id"] for v in validations if v.get("agent") == "outreach" and v.get("consequence") == "allow" and v.get("lead_id")}
+    if not approved_lead_ids:
+        approved_lead_ids = {t["lead_id"] for t in traces if t.get("agent") == "outreach" and t.get("success") and t.get("lead_id")}
+
+    # leads that replied (have an intent trace)
+    replied_leads = {t["lead_id"] for t in traces if t.get("agent") in ("intent", "conversation") and t.get("lead_id")}
+
+    # parse latest intent per lead from intent trace response_preview
+    latest_intent: dict[str, str] = {}
+    for t in sorted(traces, key=lambda x: x.get("ts", "")):
+        if t.get("agent") == "intent" and t.get("lead_id"):
+            preview = t.get("response_preview", "")
+            # strip markdown fences
+            preview = preview.strip().lstrip("```json").lstrip("```").rstrip("```").strip()
+            try:
+                parsed = _json.loads(preview)
+                latest_intent[t["lead_id"]] = parsed.get("intent", "")
+            except Exception:
+                pass
+
+    interested_leads = {lid for lid, intent in latest_intent.items() if intent in ("interested", "meeting_request")}
+    meeting_leads = {lid for lid, intent in latest_intent.items() if intent == "meeting_request"}
+
+    # reply rate = (leads that both received outreach AND replied) / outreach sent
+    replied_from_outreach = replied_leads & approved_lead_ids
+    reply_rate = round(len(replied_from_outreach) / len(approved_lead_ids), 3) if approved_lead_ids else 0.0
+
+    # governance funnel from validations
+    allow_count = sum(1 for v in validations if v.get("consequence") == "allow")
+    block_count = sum(1 for v in validations if v.get("consequence") == "block")
+    defer_count = sum(1 for v in validations if v.get("consequence") == "defer")
+
+    # agent call counts
+    from collections import Counter as _Counter
+    agent_counts = dict(_Counter(t.get("agent") for t in traces if t.get("agent")))
+
+    return {
+        "leads_researched":    len(researched_leads),
+        "outreach_sent":       len(approved_lead_ids),
+        "replies_received":    len(replied_from_outreach),
+        "interested":          len(interested_leads),
+        "meetings_booked":     len(meeting_leads),
+        "reply_rate":          reply_rate,
+        "total_ai_calls":      len(traces),
+        "governance": {
+            "approved": allow_count,
+            "blocked":  block_count,
+            "deferred": defer_count,
+        },
+        "agent_call_counts":   agent_counts,
+    }
+
+
+# ── Memory Governance ────────────────────────────────────────────────────────
+
+@app.get("/memory/governance")
+async def memory_governance_stats():
+    """Aggregated memory governance metrics: write/retrieval/decay/protection policies + context budget."""
+    return memory_governance.get_stats()
 
 
 # ── Pipeline Lineage Endpoints ───────────────────────────────────────────────

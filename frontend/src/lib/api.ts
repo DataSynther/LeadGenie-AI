@@ -254,6 +254,35 @@ export type ValidationRecord = {
 export const devValidationLog = (limit = 50) =>
   get<ValidationRecord[]>(`/dev/validation-log?limit=${limit}`);
 
+// ── Pipeline Stats (real funnel) ─────────────────────────────────────────────
+
+export type PipelineStats = {
+  leads_researched: number;
+  outreach_sent: number;
+  replies_received: number;
+  interested: number;
+  meetings_booked: number;
+  reply_rate: number;
+  total_ai_calls: number;
+  governance: { approved: number; blocked: number; deferred: number };
+  agent_call_counts: Record<string, number>;
+};
+
+export const pipelineStats = () => get<PipelineStats>("/pipeline/stats");
+
+// ── Memory Governance ─────────────────────────────────────────────────────────
+
+export type MemoryGovernanceStats = {
+  write_policy:      { memories_created: number; memories_rejected: number; low_value_blocked: number };
+  retrieval_policy:  { retrieved: number; accepted: number; rejected_below_threshold: number };
+  decay_policy:      { expired_facts: number; reaffirmed_facts: number; stale_facts_detected: number };
+  protection_policy: { cross_tenant_reads: number; blocked_access_attempts: number; namespace_violations: number };
+  context_budget:    { current_task: number; research: number; memory: number; trends: number; other: number };
+  total_memory_events: number;
+};
+
+export const memoryGovernance = () => get<MemoryGovernanceStats>("/memory/governance");
+
 // ── Pipeline Lineage ──────────────────────────────────────────────────────────
 
 export type LineageIndexItem = {
@@ -417,6 +446,8 @@ export const api = {
   devAgentMetrics,
   devTraces,
   devValidationLog,
+  pipelineStats,
+  memoryGovernance,
   lineageIndex,
   pipelineLineage,
   devCitations,
