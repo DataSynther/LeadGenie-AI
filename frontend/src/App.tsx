@@ -11,6 +11,7 @@ import { DevDashboardPage } from "./pages/DevDashboardPage";
 import { CommandCenterPage } from "./pages/CommandCenterPage";
 import { PipelineLineagePage } from "./pages/PipelineLineagePage";
 import { PromptVersionsPage } from "./pages/PromptVersionsPage";
+import { WhatsAppInboxPage } from "./pages/WhatsAppInboxPage";
 
 function App() {
   return (
@@ -24,10 +25,12 @@ function App() {
         <Route path="/conversations" element={<ConversationsPage />} />
         <Route path="/approval" element={<ApprovalQueuePage />} />
         <Route path="/audit" element={<AuditTrailPage />} />
+        <Route path="/audit/:leadId" element={<AuditTrailPage />} />
         <Route path="/dev" element={<DevDashboardPage />} />
         <Route path="/command-center" element={<CommandCenterPage />} />
         <Route path="/lineage" element={<PipelineLineagePage />} />
         <Route path="/prompt-versions" element={<PromptVersionsPage />} />
+        <Route path="/whatsapp" element={<WhatsAppInboxPage />} />
       </Route>
     </Routes>
   );

@@ -1,0 +1,92 @@
+{
+  "lead_id": "696cb6c2d4cef40001c3cd64",
+  "phone": "whatsapp:+919883802320",
+  "context": {
+    "lead": {
+      "name": "Samprita",
+      "title": "VP- Operations and CTO",
+      "seniority": "c_suite",
+      "department": "engineering",
+      "linkedin_url": "https://linkedin.com/in/ravi-sharma-demo",
+      "email": "samprita.das.dataspeke05@gmail.com",
+      "phone": "+91 9883802320"
+    },
+    "company": {
+      "name": "Britannia Industries Limited",
+      "industry": "food & beverages",
+      "employee_count": 5400,
+      "funding_stage": null,
+      "technologies": [
+        "AboveNet",
+        "Amazon AWS",
+        "Amazon CloudFront",
+        "Amazon Elastic Load Balancer",
+        "Blinkit",
+        "Bootstrap Framework",
+        "Cloudflare DNS",
+        "ExactTarget",
+        "Excel4Apps",
+        "GRIN"
+      ],
+      "description": "Britannia Industries Limited is a prominent Indian food and beverage company founded in 1892 in Kolkata. It specializes in bakery, dairy, and snacking products and operates in over 80 countries. As part of the Wadia Group, Britannia has grown to become a household name in India, employing over 4,500 people and achieving a market capitalization of \u20b91.08 trillion.\n\nThe company's diverse product portfolio includes a wide range of biscuits under popular brands like Good Day, NutriChoice, and Bourbon, as well as breads, cakes, and rusk products. In the dairy segment, Britannia produces milk, butter, cheese, ghee, and curd, with offerings like Winkin' Cow. With annual revenues exceeding \u20b99,000 crore, Britannia maintains a strong market presence in the food and beverage sector, focusing on providing tasty yet healthy products that fit into consumers' daily lives."
+    },
+    "signals": {
+      "open_roles": 0,
+      "ai_hiring": null,
+      "scaling": null
+    },
+    "research": {
+      "summary": "Research generated for Britannia Industries Limited",
+      "growth_stage": null,
+      "pain_points": [],
+      "ai_readiness_score": null,
+      "strategic_priorities": []
+    },
+    "outreach": {
+      "subject": "Britannia's operations in an AI-first world",
+      "body": "Hi Samprita,\n\nWith Britannia scaling across 80+ product lines and managing one of India's most complex FMCG supply chains, even small inefficiencies in demand forecasting or production scheduling can compound quickly at that volume. A lot of food & beverage leaders at your scale are quietly starting to use AI-driven operational tools \u2014 not to replace processes, but to surface blind spots that manual reporting simply can't catch fast enough. I'd love to share a couple of specific examples from similar operations that might be worth 20 minutes of your time.\n\nWould a quick call this week or next work for you?",
+      "reasoning": "Samprita holds a dual role as VP of Operations and CTO, meaning she sits at the intersection of operational efficiency and technology adoption \u2014 both directly relevant to AI tools. By referencing Britannia's scale (80+ product lines, complex supply chain) rather than generic praise, the email signals genuine research rather than a template blast. The AI angle is framed practically \u2014 'surface blind spots' \u2014 avoiding hype while speaking directly to a CTO's skepticism and an ops leader's day-to-day pain. The CTA is low-friction and specific, making it easy to say yes."
+    }
+  },
+  "status": "human_responded",
+  "unread": false,
+  "messages": [
+    {
+      "lead_id": "696cb6c2d4cef40001c3cd64",
+      "channel": "whatsapp",
+      "direction": "outbound",
+      "message": "Hey Samprita! \ud83d\udc4b Sent you an email recently about how AI is helping ops leaders at Britannia's scale catch supply chain blind spots faster \u2014 wanted to check if it landed in the right place. Would a quick 20-min chat this week or next work for you?",
+      "timestamp": "2026-06-03T10:20:58.936210"
+    },
+    {
+      "conversation_id": "whatsapp_834d09f85d2eb610",
+      "lead_id": "696cb6c2d4cef40001c3cd64",
+      "channel": "whatsapp",
+      "direction": "inbound",
+      "message": "Hello, this week is not good can we connect next week?",
+      "phone": "whatsapp:+919883802320",
+      "timestamp": "2026-06-03T10:21:41.110786"
+    },
+    {
+      "conversation_id": "whatsapp_834d09f85d2eb610",
+      "lead_id": "696cb6c2d4cef40001c3cd64",
+      "channel": "whatsapp",
+      "direction": "inbound",
+      "message": "Also can you share some of the case studies",
+      "phone": "whatsapp:+919883802320",
+      "timestamp": "2026-06-03T10:22:45.750918"
+    },
+    {
+      "conversation_id": "whatsapp_834d09f85d2eb610",
+      "lead_id": "696cb6c2d4cef40001c3cd64",
+      "channel": "whatsapp",
+      "direction": "outbound",
+      "message": "Sure",
+      "phone": "whatsapp:+919883802320",
+      "timestamp": "2026-06-03T10:23:06.550809"
+    }
+  ],
+  "created_at": "2026-06-03T10:20:58.936210",
+  "updated_at": "2026-06-03T10:23:06.550809",
+  "conversation_id": "whatsapp_834d09f85d2eb610"
+}

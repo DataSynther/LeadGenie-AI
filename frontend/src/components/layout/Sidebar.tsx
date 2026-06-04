@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import {
   Search,
   X,
@@ -6,39 +7,33 @@ import {
   GitBranch,
   BarChart2,
   ShieldCheck,
+  LayoutDashboard,
+  InboxIcon,
+  MessageCircle,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { ThemeToggle } from "../ThemeToggle";
 import { useSidebar } from "../../context/SidebarContext";
+import { api } from "../../lib/api";
 
 interface NavItem {
   to: string;
   label: string;
   icon: LucideIcon;
   badge?: { text: string; tone: "danger" | "brand" | "neutral" };
+  liveBadge?: boolean;
 }
 
 const WORKSPACE: NavItem[] = [
-  // { to: "/dashboard", label: "Mission Control", icon: Activity },
-  { to: "/discover", label: "Discover Leads", icon: Search },
-  { to: "/command-center", label: "Command Center", icon: ShieldCheck, badge: { text: "NEW", tone: "brand" } },
-  { to: "/dev", label: "AI Observability", icon: Activity, badge: { text: "DEV", tone: "brand" } },
-  { to: "/lineage", label: "Pipeline Lineage", icon: GitBranch },
-  { to: "/prompt-versions", label: "Prompt Versions", icon: BarChart2, badge: { text: "NEW", tone: "brand" } },
-  // { to: "/campaigns", label: "Campaigns", icon: Sparkles },
-  // {
-  //   to: "/pipeline",
-  //   label: "Pipeline",
-  //   icon: Database,
-  //   badge: { text: "847", tone: "neutral" },
-  // },
-  // {
-  //   to: "/conversations",
-  //   label: "Conversations",
-  //   icon: MessagesSquare,
-  //   badge: { text: "12", tone: "brand" },
-  // },
+  { to: "/dashboard",       label: "Mission Control",  icon: LayoutDashboard },
+  { to: "/discover",        label: "Discover Leads",   icon: Search },
+  { to: "/command-center",  label: "Command Center",   icon: ShieldCheck,  badge: { text: "NEW", tone: "brand" } },
+  { to: "/approval",        label: "Outreach Queue",   icon: InboxIcon,    liveBadge: true },
+  { to: "/dev",             label: "AI Observability", icon: Activity,     badge: { text: "DEV", tone: "brand" } },
+  { to: "/lineage",         label: "Pipeline Lineage", icon: GitBranch },
+  { to: "/prompt-versions", label: "Prompt Versions",  icon: BarChart2,    badge: { text: "NEW", tone: "brand" } },
+  { to: "/whatsapp",        label: "WhatsApp Inbox",   icon: MessageCircle },
 ];
 
 
@@ -48,8 +43,9 @@ function badgeClasses(tone: "danger" | "brand" | "neutral") {
   return "bg-surface-2 text-ink-2";
 }
 
-function NavItemRow({ item, onNavigate }: { item: NavItem; onNavigate: () => void }) {
+function NavItemRow({ item, onNavigate, queueCount }: { item: NavItem; onNavigate: () => void; queueCount?: number }) {
   const Icon = item.icon;
+  const showLive = item.liveBadge && queueCount != null && queueCount > 0;
   return (
     <NavLink
       to={item.to}
@@ -70,7 +66,12 @@ function NavItemRow({ item, onNavigate }: { item: NavItem; onNavigate: () => voi
           )}
           <Icon size={14} strokeWidth={2} />
           <span>{item.label}</span>
-          {item.badge && (
+          {showLive && (
+            <span className="ml-auto font-mono text-[10px] px-1.5 py-px rounded-lg font-medium bg-danger text-white">
+              {queueCount}
+            </span>
+          )}
+          {item.badge && !showLive && (
             <span
               className={cn(
                 "ml-auto font-mono text-[10px] px-1.5 py-px rounded-lg font-medium",
@@ -88,6 +89,12 @@ function NavItemRow({ item, onNavigate }: { item: NavItem; onNavigate: () => voi
 
 export function Sidebar() {
   const { isOpen, close } = useSidebar();
+  const { data: queueItems = [] } = useQuery({
+    queryKey: ["approvalQueue"],
+    queryFn: api.approvalQueue,
+    refetchInterval: 30_000,
+  });
+  const queueCount = queueItems.length;
 
   return (
     <aside
@@ -124,15 +131,8 @@ export function Sidebar() {
         Workspace
       </div>
       {WORKSPACE.map((item) => (
-        <NavItemRow key={item.to} item={item} onNavigate={close} />
+        <NavItemRow key={item.to} item={item} onNavigate={close} queueCount={queueCount} />
       ))}
-
-      {/* <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-ink-mute px-3 pt-4 pb-2">
-        Governance
-      </div>
-      {GOVERNANCE.map((item) => (
-        <NavItemRow key={item.to} item={item} onNavigate={close} />
-      ))} */}
 
       <div className="mt-auto pt-3 border-t border-line-soft flex items-center gap-2.5 px-3">
         <div className="w-7 h-7 rounded-full bg-gradient-to-br from-brand to-gold flex items-center justify-center font-mono text-[11px] font-semibold text-white">

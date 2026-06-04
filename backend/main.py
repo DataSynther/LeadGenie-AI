@@ -23,10 +23,16 @@ from agents.outreach.outreach_agent import OutreachAgent
 from agents.conversation.conversation_agent import ConversationAgent
 from governance.risk_engine import RiskEngine
 from governance.orchestrator import GovernanceOrchestrator
+from governance.outreach_queue_store import OutreachQueueStore
+from governance.credit_store import CreditStore
 from learning.feedback_collector import FeedbackCollector
 from learning.learning_engine import LearningEngine
 from scheduling.scheduler import Scheduler
+from scheduling.followup_scheduler import FollowupScheduler
 from services.lead_context_store import LeadContextStore
+from services.twilio_whatsapp import TwilioWhatsApp
+from services.whatsapp_conversation_store import WhatsAppConversationStore
+from services.render_whatsapp_mailbox import RenderWhatsAppMailbox
 from observability import diagnostic_store
 from memory.memory_governance import governance as memory_governance
 
@@ -62,7 +68,12 @@ governance_orchestrator = GovernanceOrchestrator(
 feedback_collector = FeedbackCollector()
 learning_engine = LearningEngine()
 scheduler = Scheduler()
+followup_scheduler = FollowupScheduler()
 lead_context_store = LeadContextStore()
+whatsapp_conversation_store = WhatsAppConversationStore()
+render_whatsapp_mailbox = RenderWhatsAppMailbox()
+outreach_queue = OutreachQueueStore()
+credit_store = CreditStore()
 
 
 class LeadSearchRequest(BaseModel):
@@ -87,6 +98,27 @@ class FeedbackRequest(BaseModel):
     lead_id: str
     outcome: str
     metadata: Optional[dict] = None
+
+
+class EditEmailRequest(BaseModel):
+    subject: str
+    body: str
+
+
+class SendOutreachRequest(BaseModel):
+    lead_id: str
+    to_email: Optional[str] = None
+    phone: Optional[str] = None
+    subject: str
+    body: str
+    reasoning: Optional[str] = None
+    context: dict = {}
+
+
+class WhatsAppReplyRequest(BaseModel):
+    lead_id: str
+    message: str
+    conversation_id: Optional[str] = None
 
 
 @app.get("/health")
@@ -143,6 +175,20 @@ async def generate_outreach(req: OutreachRequest):
         lead_id=req.lead_id,
     )
 
+    # Always enqueue for human review regardless of governance outcome
+    from agents.conversation.memory_manager import GroundingMemory
+    grounding_facts = GroundingMemory().read(req.lead_id)
+    event_id = outreach_queue.enqueue(
+        lead_id=req.lead_id,
+        lead_name=lead.get("name", ""),
+        lead_title=lead.get("title", ""),
+        company_name=company.get("name", ""),
+        email=result["email"],
+        governance=result["governance"],
+        attempt_history=result["governance_attempt_history"],
+        grounding_facts=grounding_facts,
+    )
+
     return {
         "lead": lead,
         "company": company,
@@ -150,7 +196,41 @@ async def generate_outreach(req: OutreachRequest):
         "email": result["email"],
         "governance": result["governance"],
         "governance_attempt_history": result["governance_attempt_history"],
+        "queued_event_id": event_id,
     }
+
+
+@app.post("/outreach/send")
+async def send_outreach(req: SendOutreachRequest):
+    """Send a reviewed outreach email and schedule WhatsApp follow-up if phone is available."""
+    lead = apollo_people.get_person_details(req.lead_id)
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    if not req.to_email:
+        raise HTTPException(status_code=400, detail="Lead email is required")
+
+    result = EmailSender().send(to_email=req.to_email, subject=req.subject, body=req.body)
+    if not result.get("sent"):
+        raise HTTPException(status_code=502, detail=result.get("error"))
+
+    lead_phone = req.phone or lead.get("phone")
+    enriched_context = {
+        **req.context,
+        "lead": {**req.context.get("lead", {}), "email": req.to_email, "phone": lead_phone},
+        "outreach": {"subject": req.subject, "body": req.body, "reasoning": req.reasoning},
+    }
+    lead_context_store.save(req.to_email, req.lead_id, enriched_context)
+
+    followup = None
+    if lead_phone:
+        followup = followup_scheduler.schedule_followup(
+            lead_id=req.lead_id,
+            phone=lead_phone,
+            context=enriched_context,
+            outreach={"subject": req.subject, "body": req.body, "reasoning": req.reasoning},
+        )
+
+    return {"sent": True, "to": req.to_email, "lead_id": req.lead_id, "followup": followup}
 
 
 @app.post("/conversation/reply")
@@ -273,107 +353,75 @@ async def leads_list():
 
 @app.get("/approval-queue")
 async def approval_queue():
-    """Get approval queue with citations and validator checkpoints per item."""
-    leads = apollo_people.search_people({"per_page": 25})
-    queue = []
-    items_data = [
-        {
-            "body": "Hi {name}, saw {company} just closed a funding round — our pricing typically comes in around $48k annually for teams your size. Worth a 20-min scoping call?",
-            "risk": "high", "trigger": "pricing_mention", "policy": "no_explicit_pricing", "conf": 0.91,
-            "checkpoints": {
-                "shape":          {"ok": True,  "issues": []},
-                "context":        {"ok": True,  "issues": []},
-                "policy":         {"ok": False, "issues": ["policy:explicit_pricing_mentioned"]},
-                "hallucination":  {"ok": False, "violations": ["'$48k annually' — pricing figure not sourced from CRM or pricing sheet; appears fabricated for this lead."]},
-            },
-            "citations": {
-                "lead_name":     {"value": "{name}", "source": "Apollo People API", "field": "lead.name"},
-                "company_name":  {"value": "{company}", "source": "Apollo Company API", "field": "company.name"},
-                "funding_round": {"value": "mentioned as recent", "source": "Research Agent (AI-generated)", "field": "research.signals"},
-                "pricing_figure":{"value": "$48k annually", "source": "UNKNOWN — not in source data", "field": "hallucinated"},
-                "team_size":     {"value": "teams your size", "source": "Apollo Company API (employee_count)", "field": "company.employee_count"},
-            },
-        },
-        {
-            "body": "Hi {name}, loved the recent product launch at {company}. We help teams like yours compress the research-to-outreach cycle significantly.",
-            "risk": "medium", "trigger": "unverified_claim", "policy": "factual_accuracy_policy", "conf": 0.76,
-            "checkpoints": {
-                "shape":          {"ok": True,  "issues": []},
-                "context":        {"ok": False, "issues": ["context:company_name_absent:{company}"]},
-                "policy":         {"ok": True,  "issues": []},
-                "hallucination":  {"ok": False, "violations": ["'recent product launch' — no product launch found in research data for this company."]},
-            },
-            "citations": {
-                "lead_name":      {"value": "{name}", "source": "Apollo People API", "field": "lead.name"},
-                "company_name":   {"value": "{company}", "source": "Apollo Company API", "field": "company.name"},
-                "product_launch": {"value": "recent launch mentioned", "source": "UNKNOWN — not in research", "field": "hallucinated"},
-                "cycle_claim":    {"value": "compress research-to-outreach cycle", "source": "LeadGenie product capability", "field": "seller_profile.capabilities"},
-            },
-        },
-        {
-            "body": "Hi {name}, noticed {company} is scaling fast. Our platform handles compliance automatically so your team can focus on pipeline.",
-            "risk": "medium", "trigger": "compliance_claim", "policy": "factual_accuracy_policy", "conf": 0.82,
-            "checkpoints": {
-                "shape":          {"ok": True, "issues": []},
-                "context":        {"ok": True, "issues": []},
-                "policy":         {"ok": True, "issues": []},
-                "hallucination":  {"ok": True, "violations": []},
-            },
-            "citations": {
-                "lead_name":      {"value": "{name}", "source": "Apollo People API", "field": "lead.name"},
-                "company_name":   {"value": "{company}", "source": "Apollo Company API", "field": "company.name"},
-                "scaling_signal": {"value": "headcount growth > 15% 12m", "source": "Apollo Signals API", "field": "signals.headcount_growth_12m"},
-                "compliance_auto":{"value": "handles compliance automatically", "source": "LeadGenie product capability", "field": "seller_profile.capabilities"},
-            },
-        },
-        {
-            "body": "Hi {name}, your work at {company} caught my attention. I'd love to show you how we're helping similar orgs close deals 2x faster.",
-            "risk": "high", "trigger": "performance_guarantee", "policy": "no_guarantees_policy", "conf": 0.88,
-            "checkpoints": {
-                "shape":          {"ok": True,  "issues": []},
-                "context":        {"ok": True,  "issues": []},
-                "policy":         {"ok": False, "issues": ["policy:performance_guarantee:close_deals_2x_faster"]},
-                "hallucination":  {"ok": True,  "violations": []},
-            },
-            "citations": {
-                "lead_name":     {"value": "{name}", "source": "Apollo People API", "field": "lead.name"},
-                "company_name":  {"value": "{company}", "source": "Apollo Company API", "field": "company.name"},
-                "2x_faster":     {"value": "close deals 2x faster", "source": "UNVERIFIED — performance guarantee not backed by cited study", "field": "policy_violation"},
-                "similar_orgs":  {"value": "similar orgs", "source": "Research Agent (industry comparison)", "field": "research.industry"},
-            },
-        },
-    ]
+    """Return all emails pending human review (sorted by risk desc)."""
+    return outreach_queue.get_queue(status="pending")
 
-    for i, lead in enumerate(leads[:4]):
-        item = items_data[i % len(items_data)]
-        fname = lead["name"].split()[0]
-        cname = lead["company"] or "your company"
-        body = item["body"].format(name=fname, company=cname)
 
-        # Resolve citation placeholders to actual lead values
-        citations = {}
-        for k, v in item["citations"].items():
-            resolved = dict(v)
-            resolved["value"] = str(resolved.get("value") or "").replace("{name}", lead["name"]).replace("{company}", cname)
-            citations[k] = resolved
+@app.post("/approval-queue/{event_id}/approve")
+async def approve_outreach(event_id: str):
+    """Mark an outreach email as approved — ready to send."""
+    found = outreach_queue.update_status(event_id, "approved")
+    if not found:
+        raise HTTPException(status_code=404, detail="Event not found")
+    return {"status": "approved", "event_id": event_id}
 
-        queue.append({
-            "event_id": f"evt_{lead['id'][:8]}",
-            "lead_id": lead["id"],
-            "lead_name": lead["name"],
-            "lead_title": lead["title"],
-            "company_name": cname,
-            "risk_level": item["risk"],
-            "risk_score": round(item["conf"] - 0.1 + (i * 0.03), 2),
-            "timestamp": f"2026-05-27T{10 + i}:{15 + i * 3:02d}:00Z",
-            "content_snippet": body,
-            "trigger": item["trigger"],
-            "policy": item["policy"],
-            "confidence": item["conf"],
-            "checkpoints": item["checkpoints"],
-            "citations": citations,
-        })
-    return queue
+
+@app.post("/approval-queue/{event_id}/reject")
+async def reject_outreach(event_id: str):
+    """Mark an outreach email as rejected."""
+    found = outreach_queue.update_status(event_id, "rejected")
+    if not found:
+        raise HTTPException(status_code=404, detail="Event not found")
+    return {"status": "rejected", "event_id": event_id}
+
+
+@app.post("/approval-queue/{event_id}/edit-email")
+async def edit_email(event_id: str, req: EditEmailRequest):
+    """Human manually edits the email subject + body before approving."""
+    found = outreach_queue.update_email(event_id, req.subject, req.body)
+    if not found:
+        raise HTTPException(status_code=404, detail="Event not found")
+    return {"status": "updated", "event_id": event_id}
+
+
+@app.post("/approval-queue/{event_id}/recheck-hallucination")
+async def recheck_hallucination(event_id: str):
+    """Re-run hallucination check on the current email body. Costs 1 credit."""
+    # Find the item
+    items = outreach_queue.get_queue()
+    item = next((i for i in items if i.get("event_id") == event_id), None)
+    if not item:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    # Deduct credit before calling Claude
+    try:
+        credits = credit_store.deduct(1)
+    except ValueError as exc:
+        raise HTTPException(status_code=402, detail=str(exc))
+
+    # Run hallucination check against grounding facts for this lead
+    from agents.conversation.memory_manager import GroundingMemory
+    lead_id = item.get("lead_id", "")
+    grounding_facts = GroundingMemory().read(lead_id) if lead_id else {}
+    email_body = (item.get("email") or {}).get("body", "")
+    hallucination = risk_engine.hallucination_checker.check(
+        email_body, {}, lead_id=lead_id
+    )
+
+    # Persist updated hallucination result in queue
+    outreach_queue.update_hallucination(event_id, hallucination)
+
+    return {
+        "event_id":          event_id,
+        "hallucination":     hallucination,
+        "credits_remaining": credits["remaining"],
+    }
+
+
+@app.get("/credits")
+async def get_credits():
+    """Return hallucination re-check credit balance."""
+    return credit_store.get_credits()
 
 
 def _compute_signals(company: dict) -> list[dict]:
@@ -1084,3 +1132,121 @@ async def inbound_email_reply(request: Request):
         "email_sent": result.get("email_sent", False),
         "conversation_length": result.get("conversation_length"),
     }
+
+
+# ── WhatsApp Endpoints ────────────────────────────────────────────────────────
+
+@app.post("/whatsapp")
+@app.post("/api/webhook/whatsapp-reply")
+async def inbound_whatsapp_reply(request: Request):
+    """Receive inbound WhatsApp replies from Twilio and queue for human review."""
+    content_type = request.headers.get("content-type", "")
+    if "application/json" in content_type:
+        payload = await request.json()
+    else:
+        payload = await request.form()
+
+    sender_phone = (payload.get("From") or payload.get("from") or payload.get("phone") or payload.get("sender") or "").strip()
+    reply_body = (payload.get("Body") or payload.get("body") or payload.get("message") or "").strip()
+
+    if not sender_phone or reply_body == "":
+        return {"stored": False, "reason": "missing sender or body"}
+
+    mailbox_message = render_whatsapp_mailbox.store_inbound(sender_phone, reply_body)
+    import_result = render_whatsapp_mailbox.import_messages([mailbox_message])
+    return {
+        "stored": import_result.get("imported", 0) > 0,
+        "message": mailbox_message,
+        "import": import_result,
+        "unread_count": whatsapp_conversation_store.unread_count(),
+    }
+
+
+@app.get("/whatsapp/conversations")
+async def whatsapp_conversations():
+    """List active WhatsApp conversations."""
+    sync_result = render_whatsapp_mailbox.import_remote_pending()
+    conversations = whatsapp_conversation_store.list_active()
+    return {
+        "unread_count": whatsapp_conversation_store.unread_count(),
+        "conversations": conversations,
+        "sync": sync_result,
+    }
+
+
+@app.get("/whatsapp/conversations/{conversation_id}")
+async def whatsapp_conversation(conversation_id: str):
+    record = whatsapp_conversation_store.get(conversation_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="WhatsApp conversation not found")
+    return {"conversation": whatsapp_conversation_store._summary(record)}
+
+
+@app.post("/whatsapp/conversations/{conversation_id}/open")
+async def open_whatsapp_conversation(conversation_id: str):
+    record = whatsapp_conversation_store.mark_opened(conversation_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="WhatsApp conversation not found")
+    return {
+        "unread_count": whatsapp_conversation_store.unread_count(),
+        "conversation": whatsapp_conversation_store._summary(record),
+    }
+
+
+@app.delete("/whatsapp/conversations/{conversation_id}")
+async def delete_whatsapp_conversation(conversation_id: str):
+    deleted = whatsapp_conversation_store.delete(conversation_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="WhatsApp conversation not found")
+    return {"deleted": True, "conversation_id": conversation_id, "unread_count": whatsapp_conversation_store.unread_count()}
+
+
+@app.post("/whatsapp/reply")
+async def send_whatsapp_reply(req: WhatsAppReplyRequest):
+    """Send a human-authored WhatsApp reply."""
+    if not req.message.strip():
+        raise HTTPException(status_code=400, detail="Message is required")
+
+    conversation_id = req.conversation_id or req.lead_id
+    record = whatsapp_conversation_store.get(conversation_id)
+    lead_id = (record or {}).get("lead_id") or req.lead_id
+
+    if not record:
+        followup = followup_scheduler.get(lead_id)
+        if followup:
+            record = {"phone": followup.get("phone"), "context": followup.get("context", {})}
+
+    phone = (record or {}).get("phone")
+    if not phone:
+        raise HTTPException(status_code=404, detail="WhatsApp phone number not found")
+
+    result = TwilioWhatsApp().send(phone=phone, message=req.message)
+    if not result.get("sent"):
+        raise HTTPException(status_code=502, detail=result.get("error"))
+
+    context = (record or {}).get("context", {})
+    updated = whatsapp_conversation_store.add_message(
+        lead_id=lead_id, context=context, direction="outbound", message=req.message, phone=phone,
+    )
+    return {
+        "sent": True,
+        "lead_id": lead_id,
+        "to": result.get("to") or phone,
+        "conversation": whatsapp_conversation_store._summary(updated),
+    }
+
+
+@app.get("/whatsapp/debug")
+async def whatsapp_debug():
+    return render_whatsapp_mailbox.debug_status()
+
+
+@app.get("/pending-messages")
+async def pending_messages():
+    messages = render_whatsapp_mailbox.local_pending()
+    return {"messages": messages, "count": len(messages)}
+
+
+@app.post("/followups/process-due")
+async def process_due_followups():
+    return {"processed": followup_scheduler.process_due()}

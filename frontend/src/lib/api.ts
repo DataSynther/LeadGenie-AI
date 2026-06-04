@@ -25,6 +25,12 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   return res.json();
 }
 
+async function del<T>(path: string): Promise<T> {
+  const res = await fetch(`${BASE_URL}${path}`, { method: "DELETE" });
+  if (!res.ok) throw new Error(`DELETE ${path} → ${res.status}`);
+  return res.json();
+}
+
 // ── Dashboard ────────────────────────────────────────────────────────────────
 
 export const dashboardStats = () => get<{
@@ -263,6 +269,53 @@ export const sendOutreach = (params: {
   });
 
 // ── Health ───────────────────────────────────────────────────────────────────
+
+// ── WhatsApp ──────────────────────────────────────────────────────────────────
+
+export type WhatsAppMessage = {
+  lead_id: string;
+  channel: "whatsapp";
+  direction: "inbound" | "outbound";
+  message: string;
+  timestamp: string;
+};
+
+export type WhatsAppConversation = {
+  conversation_id: string;
+  lead_id: string;
+  lead_name: string;
+  company_name: string;
+  phone?: string;
+  status: "awaiting_human" | "human_responded";
+  unread: boolean;
+  last_message: string;
+  last_direction?: "inbound" | "outbound";
+  updated_at?: string;
+  messages: WhatsAppMessage[];
+};
+
+export const whatsappConversations = () =>
+  get<{ unread_count: number; conversations: WhatsAppConversation[]; sync?: unknown }>("/whatsapp/conversations");
+
+export const whatsappConversation = (conversationId: string) =>
+  get<{ conversation: WhatsAppConversation }>(`/whatsapp/conversations/${encodeURIComponent(conversationId)}`);
+
+export const openWhatsAppConversation = (conversationId: string) =>
+  post<{ unread_count: number; conversation: WhatsAppConversation }>(
+    `/whatsapp/conversations/${encodeURIComponent(conversationId)}/open`, {}
+  );
+
+export const sendWhatsAppReply = (conversationId: string, message: string) =>
+  post<{ sent: boolean; lead_id: string; to: string; conversation: WhatsAppConversation }>(
+    "/whatsapp/reply", { lead_id: conversationId, conversation_id: conversationId, message }
+  );
+
+export const deleteWhatsAppConversation = (conversationId: string) =>
+  del<{ deleted: boolean; conversation_id: string; unread_count: number }>(
+    `/whatsapp/conversations/${encodeURIComponent(conversationId)}`
+  );
+
+// ── Health ────────────────────────────────────────────────────────────────────
 
 export const healthCheck = () => get<{ status: string; version: string }>("/health");
 
@@ -565,6 +618,11 @@ export const api = {
   conversationReply,
   generateOutreach,
   sendOutreach,
+  whatsappConversations,
+  whatsappConversation,
+  openWhatsAppConversation,
+  sendWhatsAppReply,
+  deleteWhatsAppConversation,
   healthCheck,
   devDiagnostics,
   devAgentMetrics,
