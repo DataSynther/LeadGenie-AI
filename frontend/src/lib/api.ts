@@ -120,21 +120,67 @@ export type ApprovalItem = {
   risk_level: "high" | "medium" | "low";
   risk_score: number;
   timestamp: string;
+  status: "pending" | "approved" | "rejected";
+  governance_passed: boolean;
+  total_attempts: number;
   content_snippet: string;
   trigger: string;
   policy: string;
   confidence: number;
+  email?: { subject: string; body: string; reasoning?: string };
   checkpoints?: ValidatorCheckpoints;
   citations?: Record<string, CitationEntry2>;
+  attempt_history?: {
+    attempt: number;
+    passed: boolean;
+    correction_note?: string;
+    prompt_preview?: string;
+    layers?: Record<string, {
+      consequence?: string;
+      issues?: string[];
+      violations?: string[];
+      passed?: boolean;
+      confidence?: number;
+      explanation?: string;
+    }>;
+  }[];
 };
 
 export const approvalQueue = () => get<ApprovalItem[]>("/approval-queue");
+async function action<T>(path: string): Promise<T> {
+  const res = await fetch(`${BASE_URL}${path}`, { method: "POST" });
+  if (!res.ok) throw new Error(`POST ${path} → ${res.status}`);
+  return res.json();
+}
+
+export const approveOutreach = (eventId: string) =>
+  action<{ status: string; event_id: string }>(`/approval-queue/${eventId}/approve`);
+export const rejectOutreach = (eventId: string) =>
+  action<{ status: string; event_id: string }>(`/approval-queue/${eventId}/reject`);
+
+export const editEmail = (eventId: string, subject: string, body: string) =>
+  post<{ status: string; event_id: string }>(
+    `/approval-queue/${eventId}/edit-email`,
+    { subject, body },
+  );
+
+export const recheckHallucination = (eventId: string) =>
+  action<{
+    event_id: string;
+    hallucination: { passed: boolean; violations: string[]; confidence: number; explanation: string };
+    credits_remaining: number;
+  }>(`/approval-queue/${eventId}/recheck-hallucination`);
+
+export type Credits = { total: number; used: number; remaining: number };
+export const getCredits = () => get<Credits>("/credits");
 
 // ── Company ──────────────────────────────────────────────────────────────────
 
 export const companyList = () => get<unknown[]>("/company/list");
 
 export type CompanyResearch = {
+  name?: string | null;
+  domain?: string | null;
   industry?: string | null;
   employee_count?: number | null;
   revenue?: string | null;
@@ -170,14 +216,51 @@ export const conversationReply = (leadId: string, reply: string, context: unknow
 
 // ── Outreach ─────────────────────────────────────────────────────────────────
 
+export type OutreachResult = {
+  lead: unknown;
+  company: unknown;
+  top_trends: unknown[];
+  queued_event_id: string;
+  email: { subject: string; body: string; reasoning: string };
+  governance: {
+    approved: boolean;
+    risk_score: number;
+    issues: string[];
+    total_attempts: number;
+    context_sufficient?: boolean;
+    governance_attempt_history: {
+      attempt: number;
+      passed: boolean;
+      layers: {
+        validator: { consequence: string; issues: string[] };
+        tone: { passed: boolean; issues: string[] };
+        hallucination: { passed: boolean; violations: string[]; skipped?: boolean };
+      };
+    }[];
+  };
+};
+
 export const generateOutreach = (leadId: string, companyDomain: string) =>
-  post<{
-    lead: unknown;
-    company: unknown;
-    top_trends: unknown[];
-    email: { subject: string; body: string; reasoning: string };
-    governance: { approved: boolean; risk_score: number; issues: string[] };
-  }>("/outreach/generate", { lead_id: leadId, company_domain: companyDomain });
+  post<OutreachResult>("/outreach/generate", { lead_id: leadId, company_domain: companyDomain });
+
+export const sendOutreach = (params: {
+  leadId: string;
+  toEmail?: string | null;
+  phone?: string;
+  subject: string;
+  body: string;
+  reasoning?: string;
+  context: unknown;
+}) =>
+  post<{ sent: boolean; to: string; lead_id: string }>("/outreach/send", {
+    lead_id: params.leadId,
+    to_email: params.toEmail,
+    phone: params.phone,
+    subject: params.subject,
+    body: params.body,
+    reasoning: params.reasoning,
+    context: params.context,
+  });
 
 // ── Health ───────────────────────────────────────────────────────────────────
 
@@ -277,6 +360,14 @@ export type MemoryGovernanceStats = {
   retrieval_policy:  { retrieved: number; accepted: number; rejected_below_threshold: number };
   decay_policy:      { expired_facts: number; reaffirmed_facts: number; stale_facts_detected: number };
   protection_policy: { cross_tenant_reads: number; blocked_access_attempts: number; namespace_violations: number };
+  grounding_memory:  {
+    writes: number;
+    reads: number;
+    cache_hits: number;
+    cache_misses: number;
+    leads_grounded: number;
+    avg_facts_stored: number;
+  };
   context_budget:    { current_task: number; research: number; memory: number; trends: number; other: number };
   total_memory_events: number;
 };
@@ -463,11 +554,17 @@ export const api = {
   pipeline,
   leadSearch,
   approvalQueue,
+  approveOutreach,
+  rejectOutreach,
+  editEmail,
+  recheckHallucination,
+  getCredits,
   companyList,
   companyResearch,
   auditTrail,
   conversationReply,
   generateOutreach,
+  sendOutreach,
   healthCheck,
   devDiagnostics,
   devAgentMetrics,
