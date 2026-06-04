@@ -4,6 +4,14 @@
 
 ---
 
+## Related docs
+
+- **[architecture.md](architecture.md)** — Full system flow diagrams, component quick reference, three-domain fact boundary
+- **[integration-flow.md](integration-flow.md)** — Frontend ↔ backend page-by-page data sources and wiring status
+- **[demo-flow.md](demo-flow.md)** — End-to-end pipeline walkthrough for demos
+
+---
+
 ## Table of Contents
 
 1. [Environment Setup](#1-environment-setup)
