@@ -55,6 +55,7 @@ from learning.learning_engine import LearningEngine
 from scheduling.scheduler import Scheduler
 from scheduling.followup_scheduler import FollowupScheduler
 from services.lead_context_store import LeadContextStore
+from services.email_sender import EmailSender
 from services.twilio_whatsapp import TwilioWhatsApp
 from services.whatsapp_conversation_store import WhatsAppConversationStore
 from services.render_whatsapp_mailbox import RenderWhatsAppMailbox
