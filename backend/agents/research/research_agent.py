@@ -8,7 +8,7 @@ from observability.validator import Validator
 from observability.self_evaluator import self_evaluate, context_to_summary
 
 client = Anthropic()
-MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
+MODEL = os.getenv("CLAUDE_MODEL_RESEARCH", "claude-haiku-4-5-20251001")
 
 
 class ResearchAgent:

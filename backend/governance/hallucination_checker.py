@@ -5,7 +5,7 @@ from typing import Optional
 from anthropic import Anthropic
 
 client = Anthropic()
-MODEL = os.getenv("CLAUDE_MODEL_HALLUCINATION") or os.getenv("CLAUDE_MODEL", "claude-haiku-4-5-20251001")
+MODEL = os.getenv("CLAUDE_MODEL_HALLUCINATION") or os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
 
 
 class HallucinationChecker:
