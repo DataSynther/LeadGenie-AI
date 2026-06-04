@@ -56,9 +56,9 @@ class OutreachAgent:
                     system=SYSTEM,
                     messages=[{"role": "user", "content": prompt}],
                 )
-                text = re.sub(r"^```(?:json)?\s*", "", response.content[0].text.strip())
-                text = re.sub(r"\s*```$", "", text)
-                result = json.loads(text)
+                raw = response.content[0].text.strip()
+                _m = re.search(r"\{[\s\S]*\}", raw)
+                result = json.loads(_m.group()) if _m else {}
                 t.finish(response)
                 t.set_retrieval_score(compute_retrieval_score(result.get("body", ""), context))
                 t.set_self_eval(self_evaluate("outreach", result.get("body", ""), context_to_summary(context)))
@@ -115,9 +115,9 @@ class OutreachAgent:
                 system=SYSTEM,
                 messages=[{"role": "user", "content": prompt}],
             )
-            text = re.sub(r"^```(?:json)?\s*", "", response.content[0].text.strip())
-            text = re.sub(r"\s*```$", "", text)
-            result = json.loads(text)
+            raw = response.content[0].text.strip()
+            _m = re.search(r"\{[\s\S]*\}", raw)
+            result = json.loads(_m.group()) if _m else {}
             t.finish(response)
             t.set_retrieval_score(compute_retrieval_score(result.get("body", ""), context))
             t.set_self_eval(self_evaluate("outreach", result.get("body", ""), context_to_summary(context)))
@@ -171,9 +171,9 @@ class OutreachAgent:
                 system=SYSTEM,
                 messages=[{"role": "user", "content": prompt}],
             )
-            text = re.sub(r"^```(?:json)?\s*", "", response.content[0].text.strip())
-            text = re.sub(r"\s*```$", "", text)
-            result = json.loads(text)
+            raw = response.content[0].text.strip()
+            _m = re.search(r"\{[\s\S]*\}", raw)
+            result = json.loads(_m.group()) if _m else {}
             t.finish(response)
             Validator("outreach", lead_id=lead_id, context=context).validate(result, tracker=t)
         return result
@@ -198,6 +198,47 @@ class OutreachAgent:
         }
         return {k: v for k, v in citations.items() if v}
 
+    def fix_shape(self, previous_email: dict, missing_fields: list, attempt: int) -> dict:
+        """Targeted fix-up for shape-only failures — much cheaper than full regeneration.
+
+        Takes the previous (incomplete) JSON output and asks Claude only to add the
+        missing fields, leaving all existing content unchanged.
+        """
+        if not previous_email or not missing_fields:
+            # Fallback: can't fix what we don't have
+            return {"_prompt_used": "", "_correction_note": "[shape fix-up: nothing to fix]"}
+
+        missing_str = ", ".join(missing_fields)
+        prev_json   = json.dumps(previous_email, indent=2)
+        prompt = (
+            f"The following JSON email response is missing required fields: {missing_str}\n\n"
+            f"Existing email:\n{prev_json}\n\n"
+            "Add ONLY the missing fields. Keep all existing content exactly as-is.\n"
+            "Required fields: subject (string), body (string), reasoning (string).\n"
+            "Return the complete corrected JSON only."
+        )
+
+        tracer = AgentTracer(
+            agent="outreach", lead_id=None, context={},
+            prompt_version="outreach_shape_fix_v1",
+        )
+        with tracer.trace(prompt=prompt, system=SYSTEM) as t:
+            response = client.messages.create(
+                model=MODEL,
+                max_tokens=256,
+                system=SYSTEM,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            raw = response.content[0].text.strip()
+            _m = re.search(r"\{[\s\S]*\}", raw)
+            result = json.loads(_m.group()) if _m else {}
+            t.finish(response)
+            t.set_attempt_info(attempt, [])
+
+        result["_prompt_used"]     = prompt
+        result["_correction_note"] = f"[shape fix-up: added {missing_str}]"
+        return result
+
     def respond_to_objection(self, context: dict, objection: str) -> dict:
         """Generate a response to a lead's objection."""
         lead = context["lead"]
@@ -221,9 +262,9 @@ class OutreachAgent:
                 system=SYSTEM,
                 messages=[{"role": "user", "content": prompt}],
             )
-            text = re.sub(r"^```(?:json)?\s*", "", response.content[0].text.strip())
-            text = re.sub(r"\s*```$", "", text)
-            result = json.loads(text)
+            raw = response.content[0].text.strip()
+            _m = re.search(r"\{[\s\S]*\}", raw)
+            result = json.loads(_m.group()) if _m else {}
             t.finish(response)
             Validator("outreach_objection", lead_id=lead_id, context=context).validate(result, tracker=t)
         return result

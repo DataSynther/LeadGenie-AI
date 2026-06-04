@@ -20,7 +20,7 @@ from anthropic import Anthropic
 logger = logging.getLogger(__name__)
 
 _client = Anthropic()
-_MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
+_MODEL = os.getenv("CLAUDE_MODEL_SELF_EVAL") or os.getenv("CLAUDE_MODEL", "claude-haiku-4-5-20251001")
 _ENABLED = os.getenv("OBSERVABILITY_SELF_EVAL", "true").lower() == "true"
 
 

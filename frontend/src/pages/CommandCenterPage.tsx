@@ -783,7 +783,7 @@ export function CommandCenterPage() {
         </div>
 
         {/* ── Row 5: Memory Governance ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
 
           {/* Write + Retrieval policies */}
           <Panel>
@@ -882,6 +882,63 @@ export function CommandCenterPage() {
                   <div className="mt-2 flex items-center gap-1.5">
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                     <span className="text-[10px] text-emerald-500">Namespace isolation active</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </Panel>
+
+          {/* Grounding Memory */}
+          <Panel>
+            <PanelTitle>Grounding Memory</PanelTitle>
+            {!memGov ? (
+              <div className="text-[12px] text-ink-mute animate-pulse">Loading…</div>
+            ) : !memGov.grounding_memory ? (
+              <div className="text-[12px] text-ink-mute">No grounding data yet.</div>
+            ) : (
+              <div className="space-y-4">
+                {/* Leads grounded + facts */}
+                <div>
+                  <div className="text-[10px] font-mono uppercase tracking-widest text-ink-mute mb-2">Coverage</div>
+                  <div className="space-y-1.5">
+                    {[
+                      { label: "Leads Grounded",    value: memGov.grounding_memory.leads_grounded,  colour: "text-brand" },
+                      { label: "Pipeline Writes",   value: memGov.grounding_memory.writes,          colour: "text-ink" },
+                      { label: "Avg Facts / Lead",  value: memGov.grounding_memory.avg_facts_stored, colour: "text-ink" },
+                    ].map(r => (
+                      <div key={r.label} className="flex items-center justify-between text-[11px]">
+                        <span className="text-ink-2">{r.label}</span>
+                        <span className={cn("font-semibold font-mono", r.colour)}>{r.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="border-t border-line-soft" />
+                {/* Cache hits */}
+                <div>
+                  <div className="text-[10px] font-mono uppercase tracking-widest text-ink-mute mb-2">Checker Lookups</div>
+                  <div className="space-y-1.5">
+                    {[
+                      { label: "Total Reads",   value: memGov.grounding_memory.reads,        colour: "text-ink" },
+                      { label: "Cache Hits",    value: memGov.grounding_memory.cache_hits,   colour: "text-emerald-500" },
+                      { label: "Cache Misses",  value: memGov.grounding_memory.cache_misses, colour: memGov.grounding_memory.cache_misses > 0 ? "text-amber-500" : "text-emerald-500" },
+                    ].map(r => (
+                      <div key={r.label} className="flex items-center justify-between text-[11px]">
+                        <span className="text-ink-2">{r.label}</span>
+                        <span className={cn("font-semibold font-mono", r.colour)}>{r.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {memGov.grounding_memory.reads > 0 && (
+                    <div className="mt-2">
+                      <MiniBar
+                        value={memGov.grounding_memory.cache_hits / memGov.grounding_memory.reads}
+                        colour="bg-brand"
+                      />
+                    </div>
+                  )}
+                  <div className="text-[9px] text-ink-mute mt-2">
+                    Apollo + Research + Trends · TTL 48h · no governance gate
                   </div>
                 </div>
               </div>

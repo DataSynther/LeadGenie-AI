@@ -258,6 +258,24 @@ for lead_id in _TEST_LEAD_IDS:
         else:
             _warn(f"Email send failed: {err[:80]}")
 
+    # Enqueue for human review (same path as HTTP endpoint)
+    try:
+        from governance.outreach_queue_store import OutreachQueueStore
+        from agents.conversation.memory_manager import GroundingMemory
+        grounding_facts = GroundingMemory().read(lead_id)
+        OutreachQueueStore().enqueue(
+            lead_id=lead_id,
+            lead_name=lead.get("name", ""),
+            lead_title=lead.get("title", ""),
+            company_name=company.get("name", ""),
+            email=email,
+            governance=gov,
+            attempt_history=history,
+            grounding_facts=grounding_facts,
+        )
+    except Exception as _eq:
+        _warn(f"Outreach queue enqueue failed: {_eq}")
+
     outreach_results[lead_id] = {
         "lead": lead, "company": company, "context": context,
         "email": email, "governance": gov, "attempts": attempts,

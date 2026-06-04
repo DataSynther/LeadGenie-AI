@@ -100,6 +100,25 @@ class MemoryEventStore:
             "allowed":    allowed,
         })
 
+    def record_grounding_write(self, lead_id: str, facts_count: int) -> None:
+        _append({
+            "ts":          datetime.now(timezone.utc).isoformat(),
+            "category":    "grounding",
+            "event_type":  "write",
+            "lead_id":     lead_id,
+            "facts_count": facts_count,
+        })
+
+    def record_grounding_read(self, lead_id: str, found: bool, facts_count: int) -> None:
+        _append({
+            "ts":          datetime.now(timezone.utc).isoformat(),
+            "category":    "grounding",
+            "event_type":  "read",
+            "lead_id":     lead_id,
+            "found":       found,
+            "facts_count": facts_count,
+        })
+
     # ── Aggregation ───────────────────────────────────────────────────────────
 
     def get_stats(self) -> dict:
@@ -132,6 +151,17 @@ class MemoryEventStore:
         blocked_access  = sum(1 for e in prot_ev if not e.get("allowed"))
         ns_violations   = sum(1 for e in prot_ev if not e.get("allowed") and e.get("event_type") == "write_attempt")
 
+        # Grounding memory
+        grounding_ev    = [e for e in events if e.get("category") == "grounding"]
+        g_writes        = [e for e in grounding_ev if e.get("event_type") == "write"]
+        g_reads         = [e for e in grounding_ev if e.get("event_type") == "read"]
+        g_hits          = sum(1 for e in g_reads if e.get("found"))
+        g_misses        = len(g_reads) - g_hits
+        g_leads         = len({e["lead_id"] for e in g_writes if e.get("lead_id")})
+        g_avg_facts     = round(
+            sum(e.get("facts_count", 0) for e in g_writes) / max(len(g_writes), 1), 1
+        )
+
         # Context budget — derived from real trace token distribution
         context_budget  = self._compute_context_budget()
 
@@ -155,6 +185,14 @@ class MemoryEventStore:
                 "cross_tenant_reads":      cross_tenant,
                 "blocked_access_attempts": blocked_access,
                 "namespace_violations":    ns_violations,
+            },
+            "grounding_memory": {
+                "writes":          len(g_writes),
+                "reads":           len(g_reads),
+                "cache_hits":      g_hits,
+                "cache_misses":    g_misses,
+                "leads_grounded":  g_leads,
+                "avg_facts_stored": g_avg_facts,
             },
             "context_budget":       context_budget,
             "total_memory_events":  len(events),

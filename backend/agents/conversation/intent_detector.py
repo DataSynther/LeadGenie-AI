@@ -11,7 +11,7 @@ from observability.validator import Validator
 from observability.self_evaluator import self_evaluate, context_to_summary
 
 client = Anthropic()
-MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
+MODEL = os.getenv("CLAUDE_MODEL_INTENT") or os.getenv("CLAUDE_MODEL", "claude-haiku-4-5-20251001")
 
 VALID_INTENTS = {"interested", "objection", "fact_question", "neutral", "meeting_request", "unsubscribe"}
 ANALYTICS_FILE = Path(__file__).parent.parent.parent / "storage" / "intent_analytics" / "events.jsonl"

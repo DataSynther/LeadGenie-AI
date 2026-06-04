@@ -23,8 +23,9 @@ _EPISODIC    = _STORAGE / "memory" / "episodic"
 _SEMANTIC    = _STORAGE / "memory" / "semantic"
 _ENTITY      = _STORAGE / "memory" / "entity"
 _SHORT_TERM  = _STORAGE / "memory" / "short_term"
+_GROUNDING   = _STORAGE / "memory" / "grounding"
 
-for _d in (_EPISODIC, _SEMANTIC, _ENTITY, _SHORT_TERM):
+for _d in (_EPISODIC, _SEMANTIC, _ENTITY, _SHORT_TERM, _GROUNDING):
     _d.mkdir(parents=True, exist_ok=True)
 
 _RAW_WINDOW  = 10   # keep last N messages as raw; older are summarised
@@ -323,6 +324,112 @@ class ShortTermMemory:
         return protected + evictable[:keep]
 
 
+# ── Grounding Memory ──────────────────────────────────────────────────────────
+
+class GroundingMemory:
+    """Verified external facts from Apollo + Research + Trends.
+
+    Written ONCE per lead when the pipeline runs.
+    Read by HallucinationChecker for any agent, any turn.
+
+    NOT governed — these are source-of-truth API responses, not inferences.
+    Never filtered by write policy, never decayed, never relevance-scored.
+    TTL = 48 h (facts go stale after 2 days; pipeline re-writes on next run).
+
+    Contrast with EntityMemory (updated from conversation — unverified).
+    """
+
+    _TTL_HOURS = 48
+
+    def write(self, lead_id: str, context: dict, top_trends: list) -> dict:
+        """Flatten Apollo + Research + Trends into a verified fact snapshot."""
+        from memory.event_store import MemoryEventStore
+        lead     = context.get("lead")     or {}
+        company  = context.get("company")  or {}
+        signals  = context.get("signals")  or {}
+        research = context.get("research") or {}
+
+        # Build flat facts — only include non-None / non-empty values
+        raw: dict = {
+            # Apollo — who
+            "lead_name":           lead.get("name"),
+            "lead_title":          lead.get("title"),
+            "lead_seniority":      lead.get("seniority"),
+            "lead_linkedin_url":   lead.get("linkedin_url"),
+            # Apollo — company
+            "company_name":        company.get("name"),
+            "industry":            company.get("industry"),
+            "employee_count":      company.get("employee_count"),
+            "funding_stage":       company.get("funding_stage"),
+            "technologies":        company.get("technologies") or [],
+            "description":         company.get("description"),
+            "company_linkedin_url":company.get("linkedin_url"),
+            "company_website":     company.get("website_url") or company.get("primary_domain") or (f"https://{company['domain']}" if company.get("domain") else None),
+            # Apollo signals
+            "open_roles":          signals.get("open_roles"),
+            "ai_hiring":           signals.get("ai_hiring"),
+            "scaling_signal":      signals.get("scaling"),
+            # Research agent
+            "summary":             research.get("summary"),
+            "pain_points":         research.get("pain_points") or [],
+            "growth_stage":        research.get("growth_stage"),
+            "ai_readiness":        research.get("ai_readiness_score"),
+            "priorities":          research.get("strategic_priorities") or [],
+            # Trends (titles + sources + urls)
+            "top_trends":          [
+                {
+                    "title":  t.get("title"),
+                    "source": t.get("source"),
+                    "url":    t.get("url") or t.get("link"),
+                }
+                for t in (top_trends or [])[:3]
+                if t.get("title")
+            ],
+        }
+        # Strip None scalars so the hallucination checker doesn't see empty keys
+        facts = {k: v for k, v in raw.items()
+                 if v is not None and v != [] and v != {}}
+
+        record = {
+            "_written_at": datetime.now(timezone.utc).isoformat(),
+            "_source":     "pipeline:apollo+research+trends",
+            **facts,
+        }
+        path = _GROUNDING / f"{lead_id}.json"
+        path.write_text(json.dumps(record, indent=2))
+
+        MemoryEventStore().record_grounding_write(lead_id, len(facts))
+        return facts
+
+    def read(self, lead_id: str) -> dict:
+        """Return verified facts, or {} if not found / expired."""
+        from memory.event_store import MemoryEventStore
+        es = MemoryEventStore()
+        path = _GROUNDING / f"{lead_id}.json"
+        if not path.exists():
+            es.record_grounding_read(lead_id, found=False, facts_count=0)
+            return {}
+        try:
+            record = json.loads(path.read_text())
+        except json.JSONDecodeError:
+            es.record_grounding_read(lead_id, found=False, facts_count=0)
+            return {}
+
+        written = datetime.fromisoformat(record["_written_at"])
+        age_h   = (datetime.now(timezone.utc) - written).total_seconds() / 3600
+        if age_h > self._TTL_HOURS:
+            path.unlink()
+            es.record_grounding_read(lead_id, found=False, facts_count=0)
+            return {}
+
+        facts = {k: v for k, v in record.items() if not k.startswith("_")}
+        es.record_grounding_read(lead_id, found=True, facts_count=len(facts))
+        return facts
+
+    def exists(self, lead_id: str) -> bool:
+        return (_GROUNDING / f"{lead_id}.json").exists()
+
+
 # ── MemoryManager facade ──────────────────────────────────────────────────────
 
 class MemoryManager:
@@ -336,6 +443,7 @@ class MemoryManager:
         self.semantic    = SemanticMemory()
         self.entity      = EntityMemory()
         self.short_term  = ShortTermMemory()
+        self.grounding   = GroundingMemory()
 
     # ── episodic ──────────────────────────────────────────────────────────────
 

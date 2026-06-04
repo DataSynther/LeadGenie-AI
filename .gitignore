@@ -37,6 +37,9 @@ backend/agents/trends/trend_store.json
 # Memory runtime data (persisted by app at runtime — not committed)
 backend/storage/memory/
 backend/storage/memory_governance/
+backend/storage/diagnostics/
+backend/storage/outreach_queue/
+backend/storage/credits.json
 
 # IDE
 .vscode/
