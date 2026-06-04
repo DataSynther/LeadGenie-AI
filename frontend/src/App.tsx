@@ -1,5 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AppShell } from "./components/layout/AppShell";
+import { PrivateLayout } from "./components/PrivateLayout";
+import { LoginPage } from "./pages/LoginPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LeadDiscoveryPage } from "./pages/LeadDiscoveryPage";
 import { CampaignsPage } from "./pages/CampaignsPage";
@@ -16,7 +18,8 @@ import { WhatsAppInboxPage } from "./pages/WhatsAppInboxPage";
 function App() {
   return (
     <Routes>
-      <Route element={<AppShell />}>
+      <Route path="/login" element={<LoginPage />} />
+      <Route element={<PrivateLayout />}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/discover" element={<LeadDiscoveryPage />} />

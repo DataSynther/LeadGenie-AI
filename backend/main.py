@@ -2,14 +2,39 @@ from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv(dotenv_path=Path(__file__).parent.parent / ".env")
 
+import hashlib
 import json
 import logging
-from fastapi import FastAPI, HTTPException, Request
+import secrets
+from datetime import datetime, timedelta
+from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from typing import Optional
 
 logger = logging.getLogger(__name__)
+
+# ── Auth store ─────────────────────────────────────────────────────────────────
+
+def _hash(password: str) -> str:
+    return hashlib.sha256(password.encode()).hexdigest()
+
+_USERS: dict[str, str] = {
+    "admin": _hash("leadgenie123"),
+    "demo":  _hash("demo123"),
+}
+_SESSIONS: dict[str, dict] = {}
+_bearer = HTTPBearer(auto_error=False)
+
+def _get_session(credentials: Optional[HTTPAuthorizationCredentials]) -> dict:
+    if not credentials:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    session = _SESSIONS.get(credentials.credentials)
+    if not session or datetime.utcnow() > session["expires_at"]:
+        _SESSIONS.pop(credentials.credentials, None)
+        raise HTTPException(status_code=401, detail="Session expired or invalid")
+    return session
 
 _COMPANIES_PATH = Path(__file__).parent.parent / "sample_data" / "demo_companies.json"
 _SAMPLE_COMPANIES: list[dict] = json.loads(_COMPANIES_PATH.read_text(encoding="utf-8")) if _COMPANIES_PATH.exists() else []
@@ -76,6 +101,11 @@ outreach_queue = OutreachQueueStore()
 credit_store = CreditStore()
 
 
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
 class LeadSearchRequest(BaseModel):
     company_names: list[str] = []
     titles: list[str] = []
@@ -125,6 +155,32 @@ class WhatsAppReplyRequest(BaseModel):
 async def health():
     """Health check endpoint."""
     return {"status": "ok", "version": "1.0.0"}
+
+
+# ── Auth endpoints ─────────────────────────────────────────────────────────────
+
+@app.post("/auth/login")
+def auth_login(req: LoginRequest):
+    username = req.username.strip().lower()
+    expected = _USERS.get(username)
+    if not expected or expected != _hash(req.password):
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    token = secrets.token_urlsafe(32)
+    _SESSIONS[token] = {"username": username, "expires_at": datetime.utcnow() + timedelta(hours=8)}
+    return {"token": token, "username": username}
+
+
+@app.get("/auth/me")
+def auth_me(credentials: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    session = _get_session(credentials)
+    return {"username": session["username"]}
+
+
+@app.post("/auth/logout")
+def auth_logout(credentials: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    if credentials:
+        _SESSIONS.pop(credentials.credentials, None)
+    return {"ok": True}
 
 
 @app.post("/leads/search")
