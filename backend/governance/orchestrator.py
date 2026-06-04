@@ -19,6 +19,9 @@ from typing import Optional
 from observability.validator import Validator
 from observability import diagnostic_store
 from agents.conversation.memory_manager import GroundingMemory
+from memory.sender_kb import SenderKnowledgeBase
+
+_sender_kb = SenderKnowledgeBase()
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +45,8 @@ class GovernanceOrchestrator:
         top_trends: list,
         source_facts: dict,
         lead_id: Optional[str] = None,
+        vertical_override: Optional[str] = None,
+        domain_override: Optional[str] = None,
     ) -> dict:
         """
         Full governed generation.
@@ -99,7 +104,9 @@ class GovernanceOrchestrator:
                 raw = outreach_agent.fix_shape(email, shape_missing_fields, attempt)
             else:
                 raw = outreach_agent.generate_single(
-                    context, top_trends, correction_note, attempt
+                    context, top_trends, correction_note, attempt,
+                    vertical_override=vertical_override,
+                    domain_override=domain_override,
                 )
 
             prompt_used     = raw.pop("_prompt_used", "")
@@ -179,8 +186,20 @@ class GovernanceOrchestrator:
                     correction_note = self._build_correction(layer_results, attempt)
 
         # ── 3. Single hallucination check on final output ────────────────────
+        # Merge verified KB sender claims into source_facts so the checker
+        # doesn't flag them as fabrications (Domain B — cite exactly).
+        enriched_source_facts = dict(source_facts or {})
+        kb_ids_used = email.get("kb_ids_used") or []
+        if kb_ids_used:
+            try:
+                kb_text = _sender_kb.get_claims_text(kb_ids_used)
+                if kb_text:
+                    enriched_source_facts["sender_kb_claims"] = kb_text
+            except Exception as exc:
+                logger.warning("Failed to enrich source_facts with KB claims: %s", exc)
+
         hallucination = self.hallucination_checker.check(
-            email.get("body", ""), source_facts, lead_id=lead_id
+            email, enriched_source_facts, lead_id=lead_id
         )
         halluc_layer = {
             "passed":      hallucination.get("passed", True),

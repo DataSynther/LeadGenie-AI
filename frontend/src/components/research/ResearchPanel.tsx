@@ -6,7 +6,7 @@ import {
   Building2, Users, DollarSign, Calendar, Zap, Cpu, RefreshCw, Send, MessageCircle,
 } from "lucide-react";
 import { api } from "../../lib/api";
-import type { Lead, OutreachResult } from "../../lib/api";
+import type { Lead, OutreachResult, OutreachSuggestion } from "../../lib/api";
 import { cn } from "../../lib/utils";
 
 interface ResearchPanelProps {
@@ -124,6 +124,9 @@ export function ResearchPanel({ lead, onClose, autoGenerate = false, defaultChan
   const [outreachResult, setOutreachResult] = useState<OutreachResult | null>(null);
   const [channel, setChannel] = useState<"email" | "whatsapp">(defaultChannel);
   const [editableEmail, setEditableEmail] = useState<{ subject: string; body: string; reasoning?: string } | null>(null);
+  const [suggestion, setSuggestion] = useState<OutreachSuggestion | null>(null);
+  const [selectedVertical, setSelectedVertical] = useState<string | null>(null);
+  const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
 
   const { data: company, isLoading, error } = useQuery({
     queryKey: ["companyResearch", lead?.company],
@@ -138,10 +141,20 @@ export function ResearchPanel({ lead, onClose, autoGenerate = false, defaultChan
     return (lead?.company ?? "").toLowerCase().replace(/[^a-z0-9]/g, "") + ".com";
   })();
 
+  const suggestMutation = useMutation({
+    mutationFn: () => api.suggestOutreachContext(lead!.id, companyDomain),
+    onSuccess: (data) => {
+      setSuggestion(data);
+      setSelectedVertical(data.vertical);
+      setSelectedDomain(data.domain);
+    },
+  });
+
   const generateMutation = useMutation({
-    mutationFn: () => api.generateOutreach(lead!.id, companyDomain),
+    mutationFn: () => api.generateOutreach(lead!.id, companyDomain, selectedVertical ?? undefined, selectedDomain ?? undefined),
     onSuccess: (data) => {
       setOutreachResult(data);
+      setSuggestion(null);
       setEditableEmail(data.email ? { subject: data.email.subject, body: data.email.body, reasoning: data.email.reasoning } : null);
     },
   });
@@ -161,7 +174,12 @@ export function ResearchPanel({ lead, onClose, autoGenerate = false, defaultChan
   const handleGenerate = () => {
     setOutreachResult(null);
     setEditableEmail(null);
+    setSuggestion(null);
     sendMutation.reset();
+    suggestMutation.mutate();
+  };
+
+  const handleConfirmGenerate = () => {
     generateMutation.mutate();
   };
 
@@ -418,29 +436,106 @@ export function ResearchPanel({ lead, onClose, autoGenerate = false, defaultChan
         {/* Footer CTAs */}
         {company && !sendMutation.data?.sent && (
           <div className="px-6 py-4 border-t border-line-soft flex flex-col gap-2 shrink-0 bg-surface">
-            {generateMutation.isError && (
+            {(generateMutation.isError || suggestMutation.isError) && (
               <div className="text-[10px] text-red-400 font-mono px-1">
-                ✗ {(generateMutation.error as Error).message || "Generation failed — check backend"}
+                ✗ {((generateMutation.error || suggestMutation.error) as Error)?.message || "Failed — check backend"}
               </div>
             )}
-            <div className="flex gap-2.5">
-              <button
-                onClick={handleGenerate}
-                disabled={generateMutation.isPending || !company}
-                className="btn-primary flex items-center gap-2 flex-1 justify-center disabled:opacity-60"
-              >
-                {generateMutation.isPending ? (
-                  <><RefreshCw size={13} className="animate-spin" /> Generating…</>
-                ) : (
-                  <><Zap size={13} /> Generate Outreach</>
+
+            {/* Suggestion chips — shown after /outreach/suggest returns */}
+            {suggestion && !generateMutation.isPending && (
+              <div className="bg-surface-2 border border-line rounded-md px-3 py-2.5 flex flex-col gap-2">
+                <div className="font-mono text-[9px] uppercase tracking-[0.08em] text-ink-2">Detected Context — confirm or change</div>
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-mono text-[9px] text-ink-2 w-12 shrink-0">Vertical</span>
+                    {suggestion.vertical_options.map(v => (
+                      <button
+                        key={v}
+                        onClick={() => setSelectedVertical(v)}
+                        className={`px-2 py-0.5 rounded text-[10px] font-medium border transition-colors ${
+                          selectedVertical === v
+                            ? "bg-brand text-white border-brand"
+                            : "bg-surface text-ink-2 border-line hover:border-brand hover:text-brand"
+                        }`}
+                      >
+                        {v.replace("_", " ")}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-mono text-[9px] text-ink-2 w-12 shrink-0">Domain</span>
+                    {suggestion.domain_options.map(d => (
+                      <button
+                        key={d}
+                        onClick={() => setSelectedDomain(d)}
+                        className={`px-2 py-0.5 rounded text-[10px] font-medium border transition-colors ${
+                          selectedDomain === d
+                            ? "bg-brand text-white border-brand"
+                            : "bg-surface text-ink-2 border-line hover:border-brand hover:text-brand"
+                        }`}
+                      >
+                        {d}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {suggestion.top_trends[0] && (
+                  <div className="text-[9px] text-ink-2 font-mono truncate">
+                    Trend: {suggestion.top_trends[0].title}
+                  </div>
                 )}
-              </button>
-              <button
-                onClick={() => navigate("/approval")}
-                className="flex items-center gap-2 px-4 py-2 rounded-md text-[12px] font-medium bg-surface-2 text-ink border border-line hover:border-brand hover:text-brand transition-colors"
-              >
-                View Queue
-              </button>
+              </div>
+            )}
+
+            <div className="flex gap-2.5">
+              {/* Phase 1: suggest not yet loaded → show "Generate Outreach" */}
+              {!suggestion && (
+                <button
+                  onClick={handleGenerate}
+                  disabled={suggestMutation.isPending || !company}
+                  className="btn-primary flex items-center gap-2 flex-1 justify-center disabled:opacity-60"
+                >
+                  {suggestMutation.isPending ? (
+                    <><RefreshCw size={13} className="animate-spin" /> Detecting context…</>
+                  ) : (
+                    <><Zap size={13} /> Generate Outreach</>
+                  )}
+                </button>
+              )}
+
+              {/* Phase 2: suggestion loaded → show "Confirm & Generate" */}
+              {suggestion && (
+                <>
+                  <button
+                    onClick={handleConfirmGenerate}
+                    disabled={generateMutation.isPending}
+                    className="btn-primary flex items-center gap-2 flex-1 justify-center disabled:opacity-60"
+                  >
+                    {generateMutation.isPending ? (
+                      <><RefreshCw size={13} className="animate-spin" /> Generating…</>
+                    ) : (
+                      <><Zap size={13} /> Confirm & Generate</>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setSuggestion(null)}
+                    disabled={generateMutation.isPending}
+                    className="px-3 py-2 rounded-md text-[11px] font-medium bg-surface-2 text-ink-2 border border-line hover:border-line-soft transition-colors disabled:opacity-40"
+                  >
+                    Cancel
+                  </button>
+                </>
+              )}
+
+              {!suggestion && (
+                <button
+                  onClick={() => navigate("/approval")}
+                  className="flex items-center gap-2 px-4 py-2 rounded-md text-[12px] font-medium bg-surface-2 text-ink border border-line hover:border-brand hover:text-brand transition-colors"
+                >
+                  View Queue
+                </button>
+              )}
             </div>
           </div>
         )}

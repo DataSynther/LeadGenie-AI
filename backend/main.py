@@ -61,6 +61,12 @@ from services.whatsapp_conversation_store import WhatsAppConversationStore
 from services.render_whatsapp_mailbox import RenderWhatsAppMailbox
 from observability import diagnostic_store
 from memory.memory_governance import governance as memory_governance
+from memory.industry_outreach_memory import IndustryOutreachMemory
+from agents.outreach.template_categorizer import TemplateCategorizer as _TemplateCategorizer, DomainDetector as _DomainDetector, STREAMS as _STREAMS, DOMAINS as _DOMAINS
+
+industry_memory = IndustryOutreachMemory()
+_categorizer_instance = _TemplateCategorizer()
+_domain_detector_instance = _DomainDetector()
 
 app = FastAPI(
     title="LeadGenie AI — Governed Adaptive SDR Platform",
@@ -115,6 +121,13 @@ class LeadSearchRequest(BaseModel):
 
 
 class OutreachRequest(BaseModel):
+    lead_id: str
+    company_domain: str
+    vertical_override: Optional[str] = None
+    domain_override: Optional[str] = None
+
+
+class OutreachSuggestRequest(BaseModel):
     lead_id: str
     company_domain: str
 
@@ -200,6 +213,34 @@ async def enrich_company(domain: str):
     return company
 
 
+@app.post("/outreach/suggest")
+async def suggest_outreach_context(req: OutreachSuggestRequest):
+    """Detect vertical + domain for a lead before generation so the user can confirm or override."""
+    lead = apollo_people.get_person_details(req.lead_id)
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    company = apollo_company.enrich_company(req.company_domain)
+
+    vertical = _categorizer_instance.categorize(lead, company or {})
+    domain = _domain_detector_instance.detect(company or {})
+
+    trends = trend_agent.get_current_trends()
+    context_stub = {"lead": lead, "company": company or {}, "research": {}}
+    top_trends = relevance_engine.rank_trends(context_stub, trends, top_k=3)
+
+    return {
+        "lead_name": lead.get("name", ""),
+        "lead_title": lead.get("title", ""),
+        "company_name": (company or {}).get("name", ""),
+        "vertical": vertical,
+        "domain": domain,
+        "vertical_options": list(_STREAMS),
+        "domain_options": list(_DOMAINS),
+        "top_trends": [{"title": t.get("title"), "relevance_score": t.get("relevance_score")} for t in top_trends],
+    }
+
+
 @app.post("/outreach/generate")
 async def generate_outreach(req: OutreachRequest):
     """Full pipeline: enrich → research → trends → relevance → outreach → governance."""
@@ -241,6 +282,8 @@ async def generate_outreach(req: OutreachRequest):
         top_trends=top_trends,
         source_facts=source_facts,
         lead_id=req.lead_id,
+        vertical_override=req.vertical_override,
+        domain_override=req.domain_override,
     )
 
     # Always enqueue for human review regardless of governance outcome
@@ -257,6 +300,33 @@ async def generate_outreach(req: OutreachRequest):
         attempt_history=result["governance_attempt_history"],
         grounding_facts=grounding_facts,
     )
+
+    # Write compact outreach example to industry memory for future few-shot learning
+    email_out = result["email"]
+    stream = email_out.get("stream", "generic")
+    hook = email_out.get("opening_hook") or (email_out.get("body", "") or "")[:120]
+    tech_tags = (company.get("technologies") or [])[:3]
+    emp = company.get("employee_count") or 0
+    size_bucket = (
+        "1-50" if emp < 50 else
+        "50-200" if emp < 200 else
+        "200-1000" if emp < 1000 else
+        "1000-5000" if emp < 5000 else
+        "5000+"
+    )
+    try:
+        industry_memory.write(
+            stream=stream,
+            lead_signals={
+                "title_keywords": (lead.get("title", "") or "").lower().split()[:3],
+                "company_size": size_bucket,
+                "tech_tags": tech_tags,
+            },
+            subject=email_out.get("subject", ""),
+            hook=hook,
+        )
+    except Exception as _mem_err:
+        logger.warning("industry_memory.write failed: %s", _mem_err)
 
     return {
         "lead": lead,

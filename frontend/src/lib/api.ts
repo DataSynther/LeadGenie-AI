@@ -246,8 +246,32 @@ export type OutreachResult = {
   };
 };
 
-export const generateOutreach = (leadId: string, companyDomain: string) =>
-  post<OutreachResult>("/outreach/generate", { lead_id: leadId, company_domain: companyDomain });
+export type OutreachSuggestion = {
+  lead_name: string;
+  lead_title: string;
+  company_name: string;
+  vertical: string;
+  domain: string;
+  vertical_options: string[];
+  domain_options: string[];
+  top_trends: { title: string; relevance_score: number }[];
+};
+
+export const suggestOutreachContext = (leadId: string, companyDomain: string) =>
+  post<OutreachSuggestion>("/outreach/suggest", { lead_id: leadId, company_domain: companyDomain });
+
+export const generateOutreach = (
+  leadId: string,
+  companyDomain: string,
+  verticalOverride?: string,
+  domainOverride?: string,
+) =>
+  post<OutreachResult>("/outreach/generate", {
+    lead_id: leadId,
+    company_domain: companyDomain,
+    vertical_override: verticalOverride ?? null,
+    domain_override: domainOverride ?? null,
+  });
 
 export const sendOutreach = (params: {
   leadId: string;
@@ -616,6 +640,7 @@ export const api = {
   companyResearch,
   auditTrail,
   conversationReply,
+  suggestOutreachContext,
   generateOutreach,
   sendOutreach,
   whatsappConversations,

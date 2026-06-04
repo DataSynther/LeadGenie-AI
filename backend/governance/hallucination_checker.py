@@ -23,7 +23,7 @@ class HallucinationChecker:
 
     def check(
         self,
-        content: str,
+        content,
         source_facts: Optional[dict] = None,
         lead_id: Optional[str] = None,
     ) -> dict:
@@ -48,6 +48,16 @@ class HallucinationChecker:
                 "confidence": 0.5,
                 "explanation": "No source facts available for verification — check skipped.",
             }
+
+        # Accept either a plain string or a structured email dict (new scaffold format)
+        if isinstance(content, dict):
+            slots = [
+                content.get("opening_hook", ""),
+                content.get("value_prop", ""),
+                content.get("social_proof", ""),
+                content.get("body", ""),
+            ]
+            content = "\n\n".join(s for s in slots if s) or str(content)
 
         facts_text = "\n".join(
             f"- {k}: {v}" for k, v in facts.items() if v is not None and v != []

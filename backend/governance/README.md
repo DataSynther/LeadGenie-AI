@@ -48,7 +48,13 @@ Returns `{ passed: bool, violations: list[str] }`.
 
 ## hallucination_checker.py
 
-Uses Claude to verify each factual claim in the generated email against a `source_facts` dict (company name, industry, lead title, etc.). Returns `{ verified: list, unverified: list, passed: bool }`.
+Uses Claude to verify each factual claim in the generated email against a `source_facts` dict. Fact resolution order (highest trust wins):
+
+1. `GroundingMemory[lead_id]` — full Apollo + Research + Trends snapshot written before generation
+2. `source_facts` (caller-supplied) — prospect facts: company name, industry, lead title, tech stack
+3. `sender_kb_claims` — verified sender proof points from `SenderKnowledgeBase`, merged in by the orchestrator when `email["kb_ids_used"]` is non-empty
+
+The KB merging step prevents Domain B facts (cited case study metrics) from being incorrectly flagged as fabrications. Only Domain C (generative prose) content without a backing source is flagged.
 
 ---
 

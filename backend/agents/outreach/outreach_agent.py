@@ -2,7 +2,14 @@ import json
 import os
 import re
 from anthropic import Anthropic
-from .prompt_templates import INITIAL_EMAIL_TEMPLATE, FOLLOW_UP_TEMPLATE, OBJECTION_RESPONSE_TEMPLATE
+from .prompt_templates import (
+    FOLLOW_UP_TEMPLATE,
+    OBJECTION_RESPONSE_TEMPLATE,
+    build_scaffold_template,
+)
+from .template_categorizer import TemplateCategorizer, DomainDetector
+from memory.industry_outreach_memory import IndustryOutreachMemory
+from memory.sender_kb import SenderKnowledgeBase
 
 from observability.agent_tracer import AgentTracer
 from observability.validator import Validator
@@ -14,22 +21,84 @@ MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
 SYSTEM = "You are a senior SDR. Always respond with valid JSON."
 MAX_CORRECTION_ATTEMPTS = 3
 
+_categorizer = TemplateCategorizer()
+_domain_detector = DomainDetector()
+_industry_memory = IndustryOutreachMemory()
+_sender_kb = SenderKnowledgeBase()
+
+
+_SENDER_INTRO = (
+    "I'm Prashant Biswas from Ganit. We are a full-stack Data & AI company, "
+    "recognized by Everest, Forrester, and Analytics India."
+)
+
+
+def _assemble_body(email: dict) -> dict:
+    """Assemble `body` from scaffold slots; always prepend fixed sender intro."""
+    if not email.get("body") and email.get("opening_hook"):
+        parts = [
+            email.get("opening_hook", ""),
+            email.get("value_prop", ""),
+            email.get("social_proof", ""),
+            email.get("cta", ""),
+        ]
+        email["body"] = "\n\n".join(p for p in parts if p)
+    if email.get("body") and not email["body"].startswith(_SENDER_INTRO):
+        email["body"] = _SENDER_INTRO + "\n\n" + email["body"]
+    return email
+
+
+def _format_few_shot(examples: list[dict]) -> str:
+    if not examples:
+        return ""
+    lines = ["\nPast examples — learn from these hooks and angles:"]
+    for i, ex in enumerate(examples, 1):
+        outcome_tag = f"outcome: {ex.get('outcome', 'sent')}"
+        lines.append(f"\nExample {i} ({outcome_tag}):")
+        lines.append(f'  Subject: "{ex.get("subject", "")}"')
+        lines.append(f'  Hook: "{ex.get("hook", "")}"')
+    return "\n".join(lines) + "\n"
+
 
 class OutreachAgent:
     """Generates personalized, market-aware outreach using Claude."""
 
-    def _build_base_prompt(self, context: dict, top_trends: list) -> str:
+    def _build_base_prompt(
+        self,
+        context: dict,
+        top_trends: list,
+        vertical_override: str | None = None,
+        domain_override: str | None = None,
+    ) -> str:
         lead = context["lead"]
         company = context["company"]
         research = context["research"]
         top_trend = top_trends[0]["title"] if top_trends else "AI adoption trends"
+        trend_tags = top_trends[0].get("relevance_tags", []) if top_trends else []
+
+        stream = vertical_override or _categorizer.categorize(lead, company)
+        domain = domain_override or _domain_detector.detect(company)
+
+        examples = _industry_memory.get_examples(stream, n=2)
+        few_shot_section = _format_few_shot(examples)
+
+        # Retrieve relevant sender KB claims (Domain B)
+        tech_stack = company.get("technologies") or []
+        kb_claims = _sender_kb.retrieve(
+            vertical=stream,
+            domain=domain,
+            technologies=tech_stack,
+            trend_tags=trend_tags,
+            n=2,
+        )
+        kb_section = _sender_kb.get_claims_text([r["id"] for r in kb_claims])
 
         location = ", ".join(filter(None, [lead.get("city"), lead.get("country")])) or "N/A"
         recent_roles = lead.get("recent_roles") or []
-        tech_stack = company.get("technologies") or []
         keywords = company.get("keywords") or []
 
-        return INITIAL_EMAIL_TEMPLATE.format(
+        template = build_scaffold_template(stream, few_shot_section, kb_section)
+        return template.format(
             name=lead.get("name"),
             title=lead.get("title"),
             headline=lead.get("headline") or "N/A",
@@ -43,8 +112,15 @@ class OutreachAgent:
             keywords=", ".join(keywords[:5]) if keywords else "N/A",
             company_summary=research.get("summary", ""),
             top_trend=top_trend,
-            pain_points=", ".join(research.get("pain_points", [])),
+            stream_label=stream,
+            domain_label=domain,
         )
+
+    def _get_stream(self, context: dict) -> str:
+        """Return the stream for a context — cached if already on the lead dict."""
+        lead = context.get("lead", {})
+        company = context.get("company", {})
+        return _categorizer.categorize(lead, company)
 
     def generate_email(self, context: dict, top_trends: list) -> dict:
         """Generate outreach email with up to 3 auto-correction attempts if validation fails."""
@@ -74,7 +150,7 @@ class OutreachAgent:
                 )
                 raw = response.content[0].text.strip()
                 _m = re.search(r"\{[\s\S]*\}", raw)
-                result = json.loads(_m.group()) if _m else {}
+                result = _assemble_body(json.loads(_m.group()) if _m else {})
                 t.finish(response)
                 t.set_retrieval_score(compute_retrieval_score(result.get("body", ""), context))
                 t.set_self_eval(self_evaluate("outreach", result.get("body", ""), context_to_summary(context)))
@@ -101,10 +177,12 @@ class OutreachAgent:
         top_trends: list,
         correction_note: str = None,
         attempt: int = 1,
+        vertical_override: str | None = None,
+        domain_override: str | None = None,
     ) -> dict:
         """One Claude call for outreach generation. Used by GovernanceOrchestrator."""
         lead_id = (context.get("lead") or {}).get("id")
-        prompt = self._build_base_prompt(context, top_trends) + (correction_note or "")
+        prompt = self._build_base_prompt(context, top_trends, vertical_override, domain_override) + (correction_note or "")
 
         tracer = AgentTracer(
             agent="outreach", lead_id=lead_id, context=context,
@@ -119,7 +197,7 @@ class OutreachAgent:
             )
             raw = response.content[0].text.strip()
             _m = re.search(r"\{[\s\S]*\}", raw)
-            result = json.loads(_m.group()) if _m else {}
+            result = _assemble_body(json.loads(_m.group()) if _m else {})
             t.finish(response)
             t.set_retrieval_score(compute_retrieval_score(result.get("body", ""), context))
             t.set_self_eval(self_evaluate("outreach", result.get("body", ""), context_to_summary(context)))
@@ -216,7 +294,8 @@ class OutreachAgent:
             f"The following JSON email response is missing required fields: {missing_str}\n\n"
             f"Existing email:\n{prev_json}\n\n"
             "Add ONLY the missing fields. Keep all existing content exactly as-is.\n"
-            "Required fields: subject (string), body (string), reasoning (string).\n"
+            "Required fields: subject (string), opening_hook (string), value_prop (string), "
+            "social_proof (string), cta (string), reasoning (string), stream (string).\n"
             "Return the complete corrected JSON only."
         )
 
@@ -233,7 +312,7 @@ class OutreachAgent:
             )
             raw = response.content[0].text.strip()
             _m = re.search(r"\{[\s\S]*\}", raw)
-            result = json.loads(_m.group()) if _m else {}
+            result = _assemble_body(json.loads(_m.group()) if _m else {})
             t.finish(response)
             t.set_attempt_info(attempt, [])
 

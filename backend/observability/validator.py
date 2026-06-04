@@ -6,7 +6,7 @@ from observability.diagnostic_store import write_validation, CATEGORY_VALIDATION
 # ── Required output shapes per agent ─────────────────────────────────────────
 
 SHAPES: dict[str, list[str]] = {
-    "outreach":           ["subject", "body"],
+    "outreach":           ["subject", "body", "opening_hook", "value_prop", "cta"],
     "outreach_objection": ["response_text"],    # objection responses have a different shape
     "research":    ["summary", "growth_stage", "strategic_priorities", "likely_pain_points", "ai_readiness_score"],
     "intent":      ["intent", "confidence"],
@@ -113,7 +113,17 @@ class Validator:
         ok = True
 
         if isinstance(output, dict):
-            body = output.get("body") or output.get("response") or output.get("summary") or ""
+            # For outreach, scan all fact-bearing text slots
+            if self.agent == "outreach":
+                body = " ".join(filter(None, [
+                    output.get("body", ""),
+                    output.get("opening_hook", ""),
+                    output.get("value_prop", ""),
+                    output.get("social_proof", ""),
+                    output.get("cta", ""),
+                ]))
+            else:
+                body = output.get("body") or output.get("response") or output.get("summary") or ""
         else:
             body = str(output)
 

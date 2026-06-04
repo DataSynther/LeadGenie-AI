@@ -240,14 +240,41 @@ print(score)   # e.g. 0.847
 
 **Location:** `backend/agents/outreach/`
 
-**What it does:** Calls Claude with the unified lead context and top relevant trends to generate personalized, constrained outreach emails.
+**What it does:** Calls Claude with the unified lead context, top relevant trends, and sender KB claims to generate personalized, constrained outreach emails. Uses a two-phase flow: a free `/outreach/suggest` call first detects the best vertical + domain, the user confirms or overrides, then the paid `/outreach/generate` call runs.
 
 #### Files
 
 | File | Class | Key Methods |
 |---|---|---|
-| `outreach_agent.py` | `OutreachAgent` | `generate_email()`, `generate_follow_up()`, `respond_to_objection()` |
-| `prompt_templates.py` | — | `INITIAL_EMAIL_TEMPLATE`, `FOLLOW_UP_TEMPLATE`, `OBJECTION_RESPONSE_TEMPLATE` |
+| `outreach_agent.py` | `OutreachAgent` | `generate_single()`, `generate_follow_up()`, `respond_to_objection()`, `fix_shape()` |
+| `prompt_templates.py` | — | `build_scaffold_template()`, per-stream scaffold with `{kb_section}` slot |
+| `template_categorizer.py` | `TemplateCategorizer`, `DomainDetector` | Keyword + Haiku LLM classification |
+
+#### Vertical × Domain taxonomy
+
+Verticals (lead job role): `data_science` · `data_engineering` · `product` · `devops` · `generic`
+
+Domains (company industry): `fintech` · `healthcare` · `ecommerce` · `saas` · `logistics` · `telecom` · `media` · `manufacturing` · `generic`
+
+#### Two-phase flow
+
+```
+POST /outreach/suggest  (free, ~1s)
+  → detects vertical + domain, returns options for UI chip selector
+
+User confirms or overrides vertical/domain
+
+POST /outreach/generate  (paid, ~45-60s)
+  → generates email with vertical_override + domain_override
+```
+
+#### Sender intro
+
+Every email body begins with a fixed sender introduction prepended in `_assemble_body()`:
+
+> *"I'm Prashant Biswas from Ganit. We are a full-stack Data & AI company, recognized by Everest, Forrester, and Analytics India."*
+
+This is hardcoded and cannot be overridden by Claude.
 
 #### Usage
 
@@ -256,9 +283,12 @@ from backend.agents.outreach.outreach_agent import OutreachAgent
 
 agent = OutreachAgent()
 
-# Generate initial cold email
-email = agent.generate_email(context, top_trends)
-# Returns: {subject, body, reasoning}
+# Generate initial cold email (with optional vertical/domain overrides)
+email = agent.generate_single(context, top_trends,
+                              vertical_override="data_engineering",
+                              domain_override="fintech")
+# Returns: {subject, opening_hook, value_prop, social_proof, cta, reasoning,
+#           stream, domain, kb_ids_used, body}
 
 # Generate follow-up
 follow_up = agent.generate_follow_up(context, conversation_summary="They opened but didn't reply.")
@@ -271,7 +301,65 @@ response = agent.respond_to_objection(context, "We already have a solution for t
 
 #### Customising Prompt Templates
 
-Edit `prompt_templates.py` to change tone, constraints, or CTA style. Template variables use `{variable_name}` format. All three templates expect a JSON response from Claude.
+Edit `prompt_templates.py` → `_SCAFFOLD_BASE` and `_STREAM_CONTEXTS`. Template variables use `{variable_name}` format. `build_scaffold_template(stream, few_shot_section, kb_section)` injects stream context and KB claims before `str.format()` so curly braces in injected content are safe.
+
+---
+
+### 2.5a Sender Knowledge Base
+
+**Location:** `backend/memory/sender_kb.py` · `backend/storage/knowledge_base/`
+
+**What it does:** Holds Ganit's verified case-study proof points (Domain B facts). Retrieved per-generation and injected into the scaffold prompt so Claude cites real metrics rather than inventing them.
+
+#### Knowledge base files
+
+| File | Records | Coverage |
+|---|---|---|
+| `data_science.jsonl` | 31 | BFSI fraud detection, insurance claims, semiconductor AOI, CPG ML |
+| `data_engineering.jsonl` | 8 | Databricks→EMR cost cut, data lake migrations, pipeline automation |
+| `generic.jsonl` | 6 | SOC-2/ISO certs, Everest/Forrester/PeMa recognition, AWS 6yr partner, 300+ team |
+
+#### Retrieval scoring
+
+Each record is scored against 5 signals (sum ≤ 1.0):
+
+| Signal | Weight |
+|---|---|
+| vertical match (`vertical == stream`) | 0.40 |
+| domain match (`domain == company domain`) | 0.30 |
+| technology overlap (0.10 per match, max 2) | 0.20 |
+| generic bonus (record is `domain=generic`) | 0.05 |
+| trend tag overlap (0.05 per match, max 2) | 0.10 |
+
+#### Usage
+
+```python
+from memory.sender_kb import SenderKnowledgeBase
+
+kb = SenderKnowledgeBase()
+
+# Top 3 records for a data_engineering lead at a fintech company using Databricks
+claims = kb.retrieve(
+    vertical="data_engineering",
+    domain="fintech",
+    technologies=["databricks", "snowflake"],
+    trend_tags=["cost", "migration"],
+    n=3,
+)
+
+# Get formatted text block for prompt injection
+text = kb.get_claims_text([r["id"] for r in claims])
+```
+
+#### Adding new KB records
+
+Append a JSON line to the relevant `.jsonl` file under `backend/storage/knowledge_base/`:
+
+```json
+{"id": "de_fintech_cs_003", "vertical": "data_engineering", "domain": "fintech",
+ "claim": "Reduced Snowflake spend by 40% for a mid-size bank by optimising clustering keys.",
+ "technologies": ["snowflake"], "tags": ["cost", "fintech"]}
+```
 
 ---
 
@@ -326,10 +414,33 @@ memory.clear("lead_001")
 
 | File | Class | Purpose |
 |---|---|---|
+| `orchestrator.py` | `GovernanceOrchestrator` | Retry loop (validator + tone), then single hallucination check |
 | `risk_engine.py` | `RiskEngine` | Orchestrates all checks, computes risk score, logs decision |
-| `tone_validator.py` | `ToneValidator` | Checks banned phrases, email length, excessive punctuation |
-| `hallucination_checker.py` | `HallucinationChecker` | Claude verifies no fabricated claims vs source facts |
+| `tone_validator.py` | `ToneValidator` | Rule-based: banned phrases, subject length, sentence count, exclamation marks |
+| `hallucination_checker.py` | `HallucinationChecker` | Claude verifies no fabricated claims vs source facts + KB claims |
 | `audit_logger.py` | `AuditLogger` | Writes/reads immutable JSONL audit events per lead |
+
+#### Three-domain fact boundary
+
+| Domain | What it is | Rule |
+|---|---|---|
+| **A — Prospect facts** | Apollo + Research Agent output | Read only — never invent |
+| **B — Sender KB claims** | `backend/storage/knowledge_base/` records | Cite exactly — include the metric verbatim |
+| **C — Generative content** | Transitions, framing, CTA prose | Write freely |
+
+#### Hallucination checker — KB awareness
+
+When Claude returns `kb_ids_used` in the email JSON, the orchestrator fetches those claim texts from `SenderKnowledgeBase` and adds them to `source_facts` as `sender_kb_claims` before calling `HallucinationChecker`. This prevents verified sender proof points (Domain B) from being incorrectly flagged as fabrications.
+
+#### Human-in-loop re-check
+
+Every generated email lands in the approval queue. If hallucination violations are detected, the reviewer can edit the email and trigger a re-check at:
+
+```
+POST /approval-queue/{event_id}/recheck-hallucination
+```
+
+Re-checks cost 1 credit each. The system is seeded with 50 credits.
 
 #### Usage
 
@@ -695,12 +806,12 @@ curl "http://localhost:8000/company/enrich?domain=acme.com"
 
 ---
 
-### `POST /outreach/generate`
+### `POST /outreach/suggest`
 
-Full pipeline: enriches lead → builds context → ranks trends → generates governed email.
+Free pre-generation call (~1 s, no Claude). Detects the best vertical and domain for a lead using keyword rules (Haiku LLM fallback for ambiguous industries). Call this before `/outreach/generate` to show the user a chip selector.
 
 ```bash
-curl -X POST http://localhost:8000/outreach/generate \
+curl -X POST http://localhost:8000/outreach/suggest \
   -H "Content-Type: application/json" \
   -d '{
     "lead_id": "apollo_lead_id_here",
@@ -708,11 +819,41 @@ curl -X POST http://localhost:8000/outreach/generate \
   }'
 ```
 
+**Response:**
+```json
+{
+  "vertical": "data_engineering",
+  "domain": "fintech",
+  "vertical_options": ["data_engineering", "data_science", "devops", "product", "generic"],
+  "domain_options":   ["fintech", "saas", "healthcare", "ecommerce", "logistics", "telecom", "media", "manufacturing", "generic"],
+  "top_trends": [{ "title": "...", "relevance_score": 0.91 }]
+}
+```
+
+---
+
+### `POST /outreach/generate`
+
+Full pipeline: enriches lead → builds context → ranks trends → retrieves KB claims → generates governed email.
+
+```bash
+curl -X POST http://localhost:8000/outreach/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "lead_id": "apollo_lead_id_here",
+    "company_domain": "acme.com",
+    "vertical_override": "data_engineering",
+    "domain_override": "fintech"
+  }'
+```
+
+`vertical_override` and `domain_override` are optional. If omitted, the engine auto-detects them.
+
 **Response includes:**
 - `lead` — normalized lead data
 - `company` — enriched company data
 - `top_trends` — top 3 semantically relevant trends
-- `email` — generated subject + body + reasoning
+- `email` — `subject`, `body` (always starts with sender intro), `opening_hook`, `value_prop`, `social_proof`, `cta`, `reasoning`, `stream`, `domain`, `kb_ids_used`
 - `governance` — approved/flagged, risk score, issues, event ID
 
 ---
@@ -1049,8 +1190,14 @@ backend/storage/
 │   └── validations.jsonl   # One line per validation event
 ├── feedback/
 │   └── outcomes.jsonl      # All recorded interaction outcomes
+├── industry_memory/        # Few-shot outreach examples by vertical
+│   └── *.jsonl
 ├── intent_analytics/
 │   └── events.jsonl        # Intent classification events
+├── knowledge_base/         # Sender proof-point KB (Domain B)
+│   ├── data_science.jsonl  # 31 records — ML/AI case studies
+│   ├── data_engineering.jsonl  # 8 records — pipeline/lakehouse
+│   └── generic.jsonl       # 6 records — certs, awards, differentiators
 └── lead_contexts/          # Email → lead context map (sanitized_email.json)
 ```
 
