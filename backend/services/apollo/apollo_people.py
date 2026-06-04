@@ -30,43 +30,52 @@ class ApolloPeopleService:
             "X-Api-Key": self._api_key,
         }
 
-    # Toggle this to switch between sample data and live Apollo
-    def _use_sample(self) -> bool:
-        return True  # MVP: always use sample data
-
     def search_people(self, filters: dict) -> list[dict]:
-        if self._use_sample():
-            return self._search_sample(filters)
-
-        payload = {
-            "q_organization_domains": filters.get("domains", []),
-            "person_titles": filters.get("titles", []),
-            "person_seniorities": filters.get("seniorities", []),
-            "page": filters.get("page", 1),
-            "per_page": filters.get("per_page", 25),
-        }
-        response = requests.post(
-            f"{APOLLO_BASE_URL}/mixed_people/api_search",
-            headers=self.headers,
-            json=payload,
-        )
-        response.raise_for_status()
-        data = response.json()
-        return [self._normalize_apollo(p) for p in data.get("people", [])]
+        """Search people — tries live Apollo, falls back to demo_leads.json on any error."""
+        try:
+            payload = {
+                "q_organization_domains": filters.get("domains", []),
+                "person_titles": filters.get("titles", []),
+                "person_seniorities": filters.get("seniorities", []),
+                "page": filters.get("page", 1),
+                "per_page": filters.get("per_page", 25),
+            }
+            response = requests.post(
+                f"{APOLLO_BASE_URL}/mixed_people/search",
+                headers=self.headers,
+                json=payload,
+                timeout=10,
+            )
+            response.raise_for_status()
+            data = response.json()
+            people = data.get("people", [])
+            if people:
+                return [self._normalize_apollo(p) for p in people]
+            # Empty result from API — fall through to sample
+        except Exception:
+            pass
+        return self._search_sample(filters)
 
     def get_person_details(self, person_id: str) -> Optional[dict]:
-        if self._use_sample():
-            match = next((p for p in _SAMPLE_LEADS if p["id"] == person_id), None)
-            return self._normalize_sample(match) if match else None
+        """Get person by ID — checks demo file first, then live Apollo, returns None on miss."""
+        # Sample IDs are always resolved locally (fast, no API cost)
+        sample_match = next((p for p in _SAMPLE_LEADS if p["id"] == person_id), None)
+        if sample_match:
+            return self._normalize_sample(sample_match)
 
-        response = requests.get(
-            f"{APOLLO_BASE_URL}/people/{person_id}",
-            headers=self.headers,
-        )
-        if response.status_code == 404:
+        # Unknown ID — try live Apollo
+        try:
+            response = requests.get(
+                f"{APOLLO_BASE_URL}/people/{person_id}",
+                headers=self.headers,
+                timeout=10,
+            )
+            if response.status_code == 404:
+                return None
+            response.raise_for_status()
+            return self._normalize_apollo(response.json().get("person", {}))
+        except Exception:
             return None
-        response.raise_for_status()
-        return self._normalize_apollo(response.json().get("person", {}))
 
     # ── Sample data helpers ──────────────────────────────────────────────────
 

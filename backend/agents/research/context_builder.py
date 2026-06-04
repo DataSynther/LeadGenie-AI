@@ -7,9 +7,18 @@ class ContextBuilder:
         emp = lead.get("employment_history") or []
         recent_roles = [f"{j['title']} at {j['company']}" for j in emp if j.get("title") and j.get("company")]
 
-        # headcount growth as readable percentage
-        growth_raw = lead.get("org_headcount_growth_12m")
-        headcount_growth = f"{round(growth_raw * 100, 1)}%" if growth_raw else None
+        # headcount growth: prefer live-enriched lead value, fall back to company record
+        def _pct(raw):
+            if raw is None:
+                return None
+            if isinstance(raw, str):
+                return raw  # already formatted (e.g. "6.5%")
+            return f"{round(raw * 100, 1)}%"
+
+        headcount_growth = (
+            _pct(lead.get("org_headcount_growth_12m"))
+            or _pct(company.get("headcount_growth_12m"))
+        )
 
         return {
             "lead": {

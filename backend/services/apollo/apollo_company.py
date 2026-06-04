@@ -33,49 +33,53 @@ class ApolloCompanyService:
         return None
 
     def enrich_company(self, domain: str) -> Optional[dict]:
-        """Enrich company data from Apollo /organizations/enrich by domain."""
-        # Try sample data first (covers demo mode and avoids API quota burns)
-        sample = self._search_sample(domain)
-        if sample:
-            return sample
-
+        """Enrich company — tries live Apollo first, falls back to demo_companies.json on any error."""
         try:
             response = requests.get(
                 f"{APOLLO_BASE_URL}/organizations/enrich",
                 headers=self.headers,
                 params={"domain": domain},
+                timeout=10,
+            )
+            if response.status_code == 404:
+                return self._search_sample(domain)
+            response.raise_for_status()
+            return self._normalize_company(response.json().get("organization", {}))
+        except Exception:
+            return self._search_sample(domain)
+
+    def get_company_by_id(self, org_id: str) -> Optional[dict]:
+        """Fetch company by Apollo org ID — falls back to sample on any error."""
+        try:
+            response = requests.get(
+                f"{APOLLO_BASE_URL}/organizations/{org_id}",
+                headers=self.headers,
+                timeout=10,
             )
             if response.status_code == 404:
                 return None
             response.raise_for_status()
             return self._normalize_company(response.json().get("organization", {}))
-        except requests.HTTPError as exc:
-            if exc.response is not None and exc.response.status_code < 500:
-                return None
-            raise
-
-    def get_company_by_id(self, org_id: str) -> Optional[dict]:
-        """Fetch company details by Apollo organization ID."""
-        response = requests.get(
-            f"{APOLLO_BASE_URL}/organizations/{org_id}",
-            headers=self.headers,
-        )
-        if response.status_code == 404:
+        except Exception:
             return None
-        response.raise_for_status()
-        return self._normalize_company(response.json().get("organization", {}))
 
     def _normalize_company(self, raw: dict) -> dict:
+        growth_raw = raw.get("organization_headcount_twelve_month_growth")
         return {
             "id": raw.get("id"),
             "name": raw.get("name"),
             "domain": raw.get("primary_domain"),
             "industry": raw.get("industry"),
             "employee_count": raw.get("estimated_num_employees"),
-            "revenue_estimate": raw.get("annual_revenue"),
+            "revenue": raw.get("annual_revenue_printed"),
             "funding_stage": raw.get("latest_funding_stage"),
             "technologies": raw.get("technology_names", []),
             "description": raw.get("short_description"),
-            "headquarters": raw.get("primary_phone", {}).get("country"),
             "linkedin_url": raw.get("linkedin_url"),
+            "founded_year": raw.get("founded_year"),
+            "city": raw.get("city"),
+            "country": raw.get("country"),
+            "headcount_growth_12m": (
+                f"{round(growth_raw * 100, 1)}%" if growth_raw else None
+            ),
         }
