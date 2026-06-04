@@ -7,8 +7,17 @@ The email must feel human, reference specific company context, and tie in a rele
 Lead:
 - Name: {name}
 - Title: {title}
+- Headline: {headline}
 - Company: {company}
 - Industry: {industry}
+- Location: {location}
+- Recent roles: {recent_roles}
+
+Company Signals:
+- Revenue: {revenue}
+- Headcount growth (12m): {headcount_growth}
+- Tech stack: {tech_stack}
+- Keywords: {keywords}
 
 Company Context:
 {company_summary}
@@ -22,10 +31,12 @@ Key Pain Points:
 Instructions:
 - Subject line: compelling, under 8 words
 - Body: 3-4 sentences max
-- Personalized hook referencing their company specifically
+- Open with a specific, personalised hook — reference their headline, a past role, growth signal, or a tech they use
+- Tie in the market trend or a company-specific signal naturally
 - One clear CTA (suggest a 20-min call)
 - Do not use buzzwords like "synergy", "revolutionary", "game-changer"
 - Tone: professional but conversational
+- If location is available, you may reference it naturally (e.g. "your team in San Francisco")
 
 Respond as JSON with keys: subject, body, reasoning (why this angle works).
 """

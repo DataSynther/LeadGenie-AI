@@ -18,23 +18,39 @@ MAX_CORRECTION_ATTEMPTS = 3
 class OutreachAgent:
     """Generates personalized, market-aware outreach using Claude."""
 
-    def generate_email(self, context: dict, top_trends: list) -> dict:
-        """Generate outreach email with up to 3 auto-correction attempts if validation fails."""
+    def _build_base_prompt(self, context: dict, top_trends: list) -> str:
         lead = context["lead"]
         company = context["company"]
         research = context["research"]
         top_trend = top_trends[0]["title"] if top_trends else "AI adoption trends"
-        lead_id = (context.get("lead") or {}).get("id")
 
-        base_prompt = INITIAL_EMAIL_TEMPLATE.format(
+        location = ", ".join(filter(None, [lead.get("city"), lead.get("country")])) or "N/A"
+        recent_roles = lead.get("recent_roles") or []
+        tech_stack = company.get("technologies") or []
+        keywords = company.get("keywords") or []
+
+        return INITIAL_EMAIL_TEMPLATE.format(
             name=lead.get("name"),
             title=lead.get("title"),
+            headline=lead.get("headline") or "N/A",
             company=company.get("name"),
-            industry=company.get("industry"),
+            industry=company.get("industry") or "N/A",
+            location=location,
+            recent_roles="; ".join(recent_roles) if recent_roles else "N/A",
+            revenue=company.get("revenue") or "N/A",
+            headcount_growth=company.get("headcount_growth_12m") or "N/A",
+            tech_stack=", ".join(tech_stack[:6]) if tech_stack else "N/A",
+            keywords=", ".join(keywords[:5]) if keywords else "N/A",
             company_summary=research.get("summary", ""),
             top_trend=top_trend,
             pain_points=", ".join(research.get("pain_points", [])),
         )
+
+    def generate_email(self, context: dict, top_trends: list) -> dict:
+        """Generate outreach email with up to 3 auto-correction attempts if validation fails."""
+        lead_id = (context.get("lead") or {}).get("id")
+
+        base_prompt = self._build_base_prompt(context, top_trends)
 
         attempt_history = []
         result = {}
@@ -87,22 +103,8 @@ class OutreachAgent:
         attempt: int = 1,
     ) -> dict:
         """One Claude call for outreach generation. Used by GovernanceOrchestrator."""
-        lead = context["lead"]
-        company = context["company"]
-        research = context["research"]
-        top_trend = top_trends[0]["title"] if top_trends else "AI adoption trends"
         lead_id = (context.get("lead") or {}).get("id")
-
-        base_prompt = INITIAL_EMAIL_TEMPLATE.format(
-            name=lead.get("name"),
-            title=lead.get("title"),
-            company=company.get("name"),
-            industry=company.get("industry"),
-            company_summary=research.get("summary", ""),
-            top_trend=top_trend,
-            pain_points=", ".join(research.get("pain_points", [])),
-        )
-        prompt = base_prompt + (correction_note or "")
+        prompt = self._build_base_prompt(context, top_trends) + (correction_note or "")
 
         tracer = AgentTracer(
             agent="outreach", lead_id=lead_id, context=context,

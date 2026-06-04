@@ -109,17 +109,63 @@ class ApolloPeopleService:
             "company": raw.get("company"),
         }
 
+    def enrich_by_name(self, name: str, org_name: str) -> Optional[dict]:
+        """Live enrichment via /people/match — called at outreach-generation time."""
+        parts = name.strip().split(" ", 1)
+        first = parts[0]
+        last = parts[1] if len(parts) > 1 else ""
+        try:
+            response = requests.post(
+                f"{APOLLO_BASE_URL}/people/match",
+                headers=self.headers,
+                json={"first_name": first, "last_name": last, "organization_name": org_name},
+                timeout=10,
+            )
+            if response.status_code == 200:
+                person = response.json().get("person")
+                if person:
+                    return self._normalize_apollo(person)
+        except Exception:
+            pass
+        return None
+
     # ── Live Apollo normalizer (for when real key is active) ─────────────────
 
     def _normalize_apollo(self, raw: dict) -> dict:
+        org = raw.get("organization") or {}
+        emp_history = raw.get("employment_history") or []
+        recent_jobs = [
+            {
+                "title": j.get("title"),
+                "company": j.get("organization_name"),
+                "current": j.get("current", False),
+            }
+            for j in emp_history[:3]
+        ]
         return {
             "id": raw.get("id"),
             "name": raw.get("name"),
             "title": raw.get("title"),
+            "headline": raw.get("headline"),
             "seniority": raw.get("seniority"),
-            "department": raw.get("departments", [None])[0],
+            "department": (raw.get("departments") or [None])[0],
+            "departments": raw.get("departments", []),
             "email": raw.get("email"),
+            "email_status": raw.get("email_status"),
             "linkedin_url": raw.get("linkedin_url"),
+            "photo_url": raw.get("photo_url"),
+            "city": raw.get("city"),
+            "country": raw.get("country"),
             "organization_id": raw.get("organization_id"),
-            "company": raw.get("organization", {}).get("name"),
+            "company": org.get("name") or raw.get("organization", {}).get("name"),
+            "employment_history": recent_jobs,
+            "org_tech_stack": [
+                t.get("name") for t in (org.get("current_technologies") or [])[:8]
+            ],
+            "org_headcount_growth_12m": org.get("organization_headcount_twelve_month_growth"),
+            "org_revenue": org.get("annual_revenue_printed"),
+            "org_keywords": (org.get("keywords") or [])[:6],
+            "org_description": org.get("short_description"),
+            "org_employees": org.get("estimated_num_employees"),
+            "org_industry": org.get("industry"),
         }

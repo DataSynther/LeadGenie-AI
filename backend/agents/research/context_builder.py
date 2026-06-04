@@ -3,21 +3,37 @@ class ContextBuilder:
 
     def build_lead_context(self, lead: dict, company: dict, signals: dict, research: dict) -> dict:
         """Combine lead, company, signal, and research data into a single context payload."""
+        # employment_history: keep only current + most recent past role for prompt brevity
+        emp = lead.get("employment_history") or []
+        recent_roles = [f"{j['title']} at {j['company']}" for j in emp if j.get("title") and j.get("company")]
+
+        # headcount growth as readable percentage
+        growth_raw = lead.get("org_headcount_growth_12m")
+        headcount_growth = f"{round(growth_raw * 100, 1)}%" if growth_raw else None
+
         return {
             "lead": {
+                "id": lead.get("id"),
                 "name": lead.get("name"),
                 "title": lead.get("title"),
+                "headline": lead.get("headline"),
                 "seniority": lead.get("seniority"),
                 "department": lead.get("department"),
+                "city": lead.get("city"),
+                "country": lead.get("country"),
                 "linkedin_url": lead.get("linkedin_url"),
+                "recent_roles": recent_roles,
             },
             "company": {
-                "name": company.get("name"),
-                "industry": company.get("industry"),
-                "employee_count": company.get("employee_count"),
+                "name": company.get("name") or lead.get("company"),
+                "industry": company.get("industry") or lead.get("org_industry"),
+                "employee_count": company.get("employee_count") or lead.get("org_employees"),
                 "funding_stage": company.get("funding_stage"),
-                "technologies": company.get("technologies", []),
-                "description": company.get("description"),
+                "technologies": company.get("technologies") or lead.get("org_tech_stack", []),
+                "description": company.get("description") or lead.get("org_description"),
+                "revenue": company.get("revenue") or lead.get("org_revenue"),
+                "headcount_growth_12m": headcount_growth,
+                "keywords": lead.get("org_keywords", []),
             },
             "signals": {
                 "open_roles": signals.get("total_open_roles"),

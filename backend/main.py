@@ -206,6 +206,17 @@ async def generate_outreach(req: OutreachRequest):
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
 
+    # Live Apollo enrichment — merge extra fields onto the sample lead when available
+    enriched = apollo_people.enrich_by_name(lead.get("name", ""), lead.get("company", ""))
+    if enriched:
+        # Prefer live data for rich fields; keep sample id/email if live truncates them
+        for field in ("headline", "city", "country", "photo_url", "employment_history",
+                      "org_tech_stack", "org_headcount_growth_12m", "org_revenue",
+                      "org_keywords", "org_description", "org_employees", "org_industry",
+                      "email_status", "departments"):
+            if enriched.get(field) is not None:
+                lead[field] = enriched[field]
+
     company = apollo_company.enrich_company(req.company_domain)
     signals = apollo_signals.detect_hiring_trends(lead.get("organization_id", ""))
     research = research_agent.research_company(company, signals)
