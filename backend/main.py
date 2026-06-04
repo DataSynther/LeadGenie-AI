@@ -250,6 +250,7 @@ async def generate_outreach(req: OutreachRequest):
         lead_name=lead.get("name", ""),
         lead_title=lead.get("title", ""),
         company_name=company.get("name", ""),
+        lead_email=lead.get("email", ""),
         email=result["email"],
         governance=result["governance"],
         attempt_history=result["governance_attempt_history"],
@@ -426,11 +427,25 @@ async def approval_queue():
 
 @app.post("/approval-queue/{event_id}/approve")
 async def approve_outreach(event_id: str):
-    """Mark an outreach email as approved — ready to send."""
-    found = outreach_queue.update_status(event_id, "approved")
-    if not found:
+    """Approve and immediately send the outreach email."""
+    item = outreach_queue.get_item(event_id)
+    if not item:
         raise HTTPException(status_code=404, detail="Event not found")
-    return {"status": "approved", "event_id": event_id}
+
+    email = item.get("email") or {}
+    to_email = item.get("lead_email") or email.get("to")
+    subject  = email.get("subject", "")
+    body     = email.get("body", "")
+
+    if not to_email:
+        raise HTTPException(status_code=400, detail="No recipient email on queued item")
+
+    send_result = EmailSender().send(to_email=to_email, subject=subject, body=body)
+    if not send_result.get("sent"):
+        raise HTTPException(status_code=502, detail=f"Email send failed: {send_result.get('error')}")
+
+    outreach_queue.update_status(event_id, "approved")
+    return {"status": "approved", "sent": True, "to": to_email, "event_id": event_id}
 
 
 @app.post("/approval-queue/{event_id}/reject")

@@ -122,6 +122,7 @@ class OutreachQueueStore:
         governance: dict,
         attempt_history: list[dict],
         grounding_facts: Optional[dict] = None,
+        lead_email: str = "",
     ) -> str:
         """Write an email to the queue. Returns the event_id."""
         passed = attempt_history[-1].get("passed", True) if attempt_history else True
@@ -166,6 +167,7 @@ class OutreachQueueStore:
             "lead_name":     lead_name,
             "lead_title":    lead_title,
             "company_name":  company_name,
+            "lead_email":    lead_email,
             "timestamp":     datetime.now(timezone.utc).isoformat(),
             "status":        "pending",
             "governance_passed": passed,
@@ -183,6 +185,15 @@ class OutreachQueueStore:
         }
         _append(record)
         return event_id
+
+    def get_item(self, event_id: str) -> Optional[dict]:
+        """Return the latest record for a single event_id."""
+        items = _read_all()
+        match = None
+        for item in items:
+            if item.get("event_id") == event_id:
+                match = item
+        return match
 
     def get_queue(self, status: Optional[str] = None) -> list[dict]:
         """Return items sorted by risk_score desc, then timestamp desc."""
