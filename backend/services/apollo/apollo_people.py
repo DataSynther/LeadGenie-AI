@@ -101,12 +101,16 @@ class ApolloPeopleService:
             "id": raw.get("id"),
             "name": raw.get("name"),
             "title": raw.get("title"),
+            "headline": raw.get("headline"),
             "seniority": raw.get("seniority"),
             "department": raw.get("department"),
             "email": raw.get("email"),
             "linkedin_url": raw.get("linkedin_url"),
             "organization_id": raw.get("organization_id"),
             "company": raw.get("company"),
+            "city": raw.get("city"),
+            "country": raw.get("country"),
+            "phone": raw.get("phone"),
         }
 
     def enrich_by_name(self, name: str, org_name: str) -> Optional[dict]:
