@@ -16,13 +16,13 @@ export function KpiCard({ label, value, delta, sub, gold }: KpiCardProps) {
         gold ? "bg-gradient-to-b from-gold-tint to-surface" : "bg-surface",
       )}
     >
-      <div className="label-mono mb-3.5">{label}</div>
-      <div className="font-serif text-display-xl text-ink flex items-baseline gap-1.5">
-        <span>{value}</span>
+      <div className="text-[10px] text-ink-mute uppercase tracking-wide font-mono mb-2">{label}</div>
+      <div className="flex items-baseline gap-1.5">
+        <span className={cn("text-2xl font-bold leading-tight", gold ? "text-gold-dark" : "text-ink")}>{value}</span>
         {delta && (
           <span
             className={cn(
-              "ml-auto font-mono text-[11px]",
+              "ml-auto font-mono text-[11px] font-semibold",
               delta.direction === "down"
                 ? "text-danger"
                 : gold
@@ -34,7 +34,7 @@ export function KpiCard({ label, value, delta, sub, gold }: KpiCardProps) {
           </span>
         )}
       </div>
-      {sub && <div className="mt-2 text-[11px] text-ink-2">{sub}</div>}
+      {sub && <div className="mt-1.5 text-[10px] text-ink-mute">{sub}</div>}
       <div
         className={cn(
           "absolute bottom-0 left-0 right-0 h-[3px] opacity-50",
