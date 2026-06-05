@@ -132,9 +132,10 @@ UI shows chip selector — user confirms or overrides vertical + domain
 │    │               social_proof, cta, reasoning,                      │
 │    │               stream, domain, kb_ids_used                        │
 │    │                                                                   │
-│    ├── _assemble_body()                                                │
-│    │   └─ prepends fixed sender intro:                                │
+│    ├── _assemble_body(add_intro=True)                                  │
+│    │   └─ prepends fixed sender intro (initial cold email only):      │
 │    │      "I'm Prashant Biswas from Ganit…"                          │
+│    │   Note: follow-up and objection replies use add_intro=False      │
 │    │                                                                   │
 │    ├── Validator  (rule-based, free)                                   │
 │    │   ├── shape check  — required JSON fields present?               │
@@ -214,11 +215,37 @@ ConversationAgent.handle_reply(lead_id, reply_text, context)
         ├── Route by intent:
         │   ├── unsubscribed     → canned opt-out, stop sequence
         │   ├── meeting_request  → Scheduler.generate_scheduling_link()
-        │   ├── objection        → OutreachAgent.respond_to_objection()
-        │   └── other            → Claude with context-grounded system prompt
+        │   ├── objection        → OutreachAgent.respond_to_objection(add_intro=False)
+        │   └── other            → Claude with two-block system prompt (see below)
         │
         └── EmailSender.send(to=lead_email, subject=..., body=response)
 ```
+
+### Sender vs recipient fact separation in replies
+
+Every Claude-handled reply (fact_question / neutral / interested) receives a system
+prompt with two explicitly labelled fact blocks and a CRITICAL RULE:
+
+```
+CRITICAL RULES:
+  1. Questions about THEIR company  → use PROSPECT FACTS only.
+     Questions about Ganit          → use GANIT'S CAPABILITIES only.
+     Never cross-attribute metrics between the two orgs.
+  2. Do NOT open with "I'm Prashant Biswas from Ganit…" —
+     that intro is for the initial cold email only.
+
+== PROSPECT FACTS (about THEIR organisation — <Company>) ==
+  summary, pain points, growth stage, AI readiness...   ← Domain A
+
+== GANIT'S CAPABILITIES (about YOUR organisation) ==
+  Ganit identity (Everest/Forrester/Analytics India,
+  SOC-2/ISO, AWS 6yr, 300+ team)
+  + verified KB proof points matched to this lead's
+    vertical + domain + tech stack                       ← Domain B
+```
+
+Without this separation, Claude had only one "company" in context (the prospect's)
+and would answer "what has your company done for banks?" using the target's own data.
 
 ---
 
@@ -356,7 +383,7 @@ DevDashboard  (http://localhost:5173/dev)  auto-refreshes every 10 s
 | **RiskEngine** | `governance/risk_engine.py` | Composite risk score, approve/flag decision | Free |
 | **AuditLogger** | `governance/audit_logger.py` | Immutable JSONL audit trail per lead | Free |
 | **IntentDetector** | `agents/conversation/intent_detector.py` | Classifies reply intent (Haiku) | ~$0.001 (Haiku) |
-| **ConversationAgent** | `agents/conversation/conversation_agent.py` | Routes and responds to inbound replies | ~$0.004 (Sonnet) |
+| **ConversationAgent** | `agents/conversation/conversation_agent.py` | Routes and responds to inbound replies; injects two-block system prompt (PROSPECT FACTS vs GANIT'S CAPABILITIES) to prevent sender/recipient fact confusion; suppresses sender intro in replies | ~$0.004 (Sonnet) |
 | **MemoryManager** | `agents/conversation/memory_manager.py` | Per-lead conversation history JSONL | Free |
 | **GroundingMemory** | `agents/conversation/memory_manager.py` | Pre-generation fact snapshot per lead | Free |
 | **Scheduler** | `scheduling/scheduler.py` | Calendly booking links + meeting copy | Calendly API |

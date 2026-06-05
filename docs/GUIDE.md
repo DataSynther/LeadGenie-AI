@@ -278,11 +278,11 @@ POST /outreach/generate  (paid, ~45-60s)
 
 #### Sender intro
 
-Every email body begins with a fixed sender introduction prepended in `_assemble_body()`:
+The fixed sender introduction is prepended by `_assemble_body(add_intro=True)`:
 
 > *"I'm Prashant Biswas from Ganit. We are a full-stack Data & AI company, recognized by Everest, Forrester, and Analytics India."*
 
-This is hardcoded and cannot be overridden by Claude.
+This applies **only to the initial cold email**. Follow-up emails and objection responses call `_assemble_body(add_intro=False)` so the intro never appears in an ongoing thread. The `ConversationAgent` system prompt also explicitly instructs Claude not to repeat the intro line in replies.
 
 #### Usage
 
@@ -383,6 +383,19 @@ Append a JSON line to the relevant `.jsonl` file under `backend/storage/knowledg
 |---|---|---|
 | `conversation_agent.py` | `ConversationAgent` | `handle_reply(lead_id, reply, context)`, `handle_objection(lead_id, objection, context)` |
 | `memory_manager.py` | `MemoryManager` | `store_message()`, `get_history()`, `summarize_history()`, `clear()` |
+
+#### Sender vs recipient fact separation
+
+When a lead asks about Ganit's capabilities (e.g. *"what experience does your team have with bank migrations?"*), the system prompt contains two explicitly labelled blocks so Claude always picks from the right source:
+
+| Block | Contents | When to use |
+|---|---|---|
+| `PROSPECT FACTS` | Apollo + ResearchAgent data about the target company | Questions about their org, industry, pain points |
+| `GANIT'S CAPABILITIES` | Ganit identity + verified KB proof points matched to the lead's vertical/domain | Questions about Ganit's experience, case studies, credentials |
+
+A `CRITICAL RULE` in the system prompt forbids cross-attributing metrics between the two organisations. Without this, Claude only had the prospect's company data in context and would answer questions about Ganit using the target's own facts.
+
+The `context["_vertical"]` and `context["_domain"]` fields (set during outreach generation) are forwarded through to `ConversationAgent` so KB retrieval stays consistent with the email that was sent.
 
 #### Usage
 

@@ -37,9 +37,20 @@ Cached to `backend/agents/trends/trend_store.json` to avoid re-fetching on every
 
 ## outreach/
 
-**`outreach_agent.py`** — Generates a personalized cold email using Claude. Takes the full context + top trends and returns `{subject, body, reasoning}`. Also handles objection responses via `respond_to_objection()`.
+**`outreach_agent.py`** — Generates personalized outreach using Claude. Key methods:
 
-**`prompt_templates.py`** — Prompt string constants used by the outreach agent. Separated to make prompt iteration easier without touching business logic.
+| Method | `add_intro` | Purpose |
+|---|---|---|
+| `generate_single()` / `generate_email()` | `True` | Initial cold email — sender intro prepended |
+| `fix_shape()` | `True` | Shape-only retry of initial email |
+| `generate_follow_up()` | `False` | Follow-up in an ongoing thread — no re-intro |
+| `respond_to_objection()` | `False` | Objection response — no re-intro |
+
+**Sender intro** (`_SENDER_INTRO`) — *"I'm Prashant Biswas from Ganit. We are a full-stack Data & AI company, recognized by Everest, Forrester, and Analytics India."* — is prepended in `_assemble_body(add_intro=True)`. The `add_intro` flag is `False` for all follow-up and reply paths so the intro never appears beyond the first email.
+
+**`prompt_templates.py`** — Scaffold templates per vertical stream. `build_scaffold_template(stream, few_shot_section, kb_section)` injects verified sender KB claims into the prompt before Claude runs.
+
+**`template_categorizer.py`** — `TemplateCategorizer` maps lead title → vertical; `DomainDetector` maps company industry → domain. Both use keyword rules with a Haiku LLM fallback for ambiguous cases.
 
 ---
 
@@ -59,8 +70,22 @@ Cached to `backend/agents/trends/trend_store.json` to avoid re-fetching on every
 | `meeting_request` | Calendly URL inserted directly |
 | `objection` | Routed to `OutreachAgent.respond_to_objection()` |
 | `interested` | Claude with context — acknowledges situation, suggests 15-min call |
-| `fact_question` | Claude with context — answers from research data honestly |
+| `fact_question` | Claude with context — answers using the correct fact block (see below) |
 | `neutral` | Claude with context — adds one relevant insight, no meeting push |
+
+**Sender vs recipient fact separation** — the system prompt for every Claude-handled intent contains two explicitly labelled blocks:
+
+```
+== PROSPECT FACTS (about THEIR organisation — <Company>) ==
+  pain points, growth stage, industry, AI readiness...  ← Domain A
+
+== GANIT'S CAPABILITIES (about YOUR organisation) ==
+  Ganit identity + verified KB proof points...           ← Domain B
+```
+
+A `CRITICAL RULE` in the prompt tells Claude: questions about the prospect's company → use PROSPECT FACTS; questions about Ganit → use GANIT'S CAPABILITIES only. This prevents the agent from answering "what has your company done for banks?" with the target company's own data.
+
+The system prompt also explicitly instructs Claude **not** to open replies with the sender intro line ("I'm Prashant Biswas from Ganit…") — that line is for the initial cold email only.
 
 **`intent_detector.py`** — Classifies a reply into one of 6 intent categories using Claude. Logs every classification event to `backend/storage/intent_analytics/events.jsonl` for analytics.
 
