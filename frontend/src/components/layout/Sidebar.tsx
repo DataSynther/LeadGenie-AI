@@ -32,7 +32,7 @@ const WORKSPACE: NavItem[] = [
   { to: "/command-center",  label: "Command Center",   icon: ShieldCheck },
   { to: "/approval",        label: "Outreach Queue",   icon: InboxIcon,    liveBadge: true },
   { to: "/finops",          label: "AI FinOps",        icon: DollarSign },
-  { to: "/dev",             label: "AI Observability", icon: Activity,     badge: { text: "DEV", tone: "brand" } },
+  { to: "/dev",             label: "AI Observability", icon: Activity },
   { to: "/lineage",         label: "Pipeline Lineage", icon: GitBranch },
   { to: "/prompt-versions", label: "Prompt Versions",  icon: BarChart2 },
   { to: "/whatsapp",        label: "WhatsApp Inbox",   icon: MessageCircle },
