@@ -33,8 +33,13 @@ _SENDER_INTRO = (
 )
 
 
-def _assemble_body(email: dict) -> dict:
-    """Assemble `body` from scaffold slots; always prepend fixed sender intro."""
+def _assemble_body(email: dict, add_intro: bool = True) -> dict:
+    """Assemble `body` from scaffold slots.
+
+    add_intro=True (default) for initial cold outreach only.
+    Pass add_intro=False for follow-ups, objection responses, and
+    any reply in an ongoing conversation thread.
+    """
     if not email.get("body") and email.get("opening_hook"):
         parts = [
             email.get("opening_hook", ""),
@@ -43,7 +48,7 @@ def _assemble_body(email: dict) -> dict:
             email.get("cta", ""),
         ]
         email["body"] = "\n\n".join(p for p in parts if p)
-    if email.get("body") and not email["body"].startswith(_SENDER_INTRO):
+    if add_intro and email.get("body") and not email["body"].startswith(_SENDER_INTRO):
         email["body"] = _SENDER_INTRO + "\n\n" + email["body"]
     return email
 
@@ -253,7 +258,7 @@ class OutreachAgent:
             )
             raw = response.content[0].text.strip()
             _m = re.search(r"\{[\s\S]*\}", raw)
-            result = json.loads(_m.group()) if _m else {}
+            result = _assemble_body(json.loads(_m.group()) if _m else {}, add_intro=False)
             t.finish(response)
             Validator("outreach", lead_id=lead_id, context=context).validate(result, tracker=t)
         return result
@@ -345,7 +350,7 @@ class OutreachAgent:
             )
             raw = response.content[0].text.strip()
             _m = re.search(r"\{[\s\S]*\}", raw)
-            result = json.loads(_m.group()) if _m else {}
+            result = _assemble_body(json.loads(_m.group()) if _m else {}, add_intro=False)
             t.finish(response)
             Validator("outreach_objection", lead_id=lead_id, context=context).validate(result, tracker=t)
         return result
