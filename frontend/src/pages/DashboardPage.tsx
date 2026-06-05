@@ -532,7 +532,7 @@ function KbInsightsPanel({ data }: { data: KbInsights }) {
                   </span>
                 </div>
                 {/* Claim text */}
-                <p className="text-[10px] text-ink-2 font-medium leading-relaxed line-clamp-3">{claim.claim}</p>
+                <p className="text-[10px] text-ink font-semibold leading-relaxed line-clamp-3">{claim.claim}</p>
                 {/* Metric pill */}
                 {claim.metric && (
                   <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded bg-brand/8 border border-brand/20">
