@@ -3,18 +3,24 @@
   "phone": "+91 8056498879",
   "context": {
     "lead": {
-      "name": "Ajay",
+      "id": "696cb6c2d4cef40001c3cd64",
+      "name": "Ravi Sharma",
       "title": "VP- Operations and CTO",
       "seniority": "c_suite",
       "department": "engineering",
-      "linkedin_url": "https://linkedin.com/in/ravi-sharma-demo",
       "email": "ajaykumar130721@gmail.com",
-      "phone": "+91 8056498879"
+      "phone": "+91 8056498879",
+      "linkedin_url": "https://linkedin.com/in/ravi-sharma-demo",
+      "organization_id": "696cb6c2d4cef40001c3cd64",
+      "company": "Britannia Industries Limited"
     },
     "company": {
+      "id": "5569cecd7369642525a89600",
       "name": "Britannia Industries Limited",
+      "domain": "britannia.co.in",
       "industry": "food & beverages",
       "employee_count": 5400,
+      "revenue": "2.1B",
       "funding_stage": null,
       "technologies": [
         "AboveNet",
@@ -28,35 +34,264 @@
         "Excel4Apps",
         "GRIN"
       ],
-      "description": "Britannia Industries Limited is a prominent Indian food and beverage company founded in 1892 in Kolkata. It specializes in bakery, dairy, and snacking products and operates in over 80 countries. As part of the Wadia Group, Britannia has grown to become a household name in India, employing over 4,500 people and achieving a market capitalization of \u20b91.08 trillion.\n\nThe company's diverse product portfolio includes a wide range of biscuits under popular brands like Good Day, NutriChoice, and Bourbon, as well as breads, cakes, and rusk products. In the dairy segment, Britannia produces milk, butter, cheese, ghee, and curd, with offerings like Winkin' Cow. With annual revenues exceeding \u20b99,000 crore, Britannia maintains a strong market presence in the food and beverage sector, focusing on providing tasty yet healthy products that fit into consumers' daily lives."
+      "description": "Britannia Industries Limited is a prominent Indian food and beverage company founded in 1892 in Kolkata. It specializes in bakery, dairy, and snacking products and operates in over 80 countries. As part of the Wadia Group, Britannia has grown to become a household name in India, employing over 4,500 people and achieving a market capitalization of \u20b91.08 trillion.\n\nThe company's diverse product portfolio includes a wide range of biscuits under popular brands like Good Day, NutriChoice, and Bourbon, as well as breads, cakes, and rusk products. In the dairy segment, Britannia produces milk, butter, cheese, ghee, and curd, with offerings like Winkin' Cow. With annual revenues exceeding \u20b99,000 crore, Britannia maintains a strong market presence in the food and beverage sector, focusing on providing tasty yet healthy products that fit into consumers' daily lives.",
+      "linkedin_url": "http://www.linkedin.com/company/britannia-industries-limited",
+      "founded_year": 1892,
+      "headcount_growth_6m": -0.001456664238892935,
+      "headcount_growth_12m": 0.02313432835820895,
+      "phone": "+91 99999 00006"
     },
-    "signals": {
-      "open_roles": 0,
-      "ai_hiring": null,
-      "scaling": null
+    "top_trends": [
+      {
+        "id": "t004",
+        "title": "Cost Optimization Trend in Enterprise Tech",
+        "category": "business",
+        "relevance_tags": [
+          "cost",
+          "efficiency",
+          "enterprise",
+          "saas"
+        ],
+        "source": "curated",
+        "date": "2026-05-15",
+        "relevance_score": 0.312
+      },
+      {
+        "id": "t001",
+        "title": "AI Governance Concerns Increasing",
+        "category": "regulatory",
+        "relevance_tags": [
+          "ai",
+          "governance",
+          "compliance",
+          "risk"
+        ],
+        "source": "curated",
+        "date": "2026-05-01",
+        "relevance_score": 0.2535
+      },
+      {
+        "id": "t003",
+        "title": "Snowflake AI Usage Accelerating",
+        "category": "technology",
+        "relevance_tags": [
+          "snowflake",
+          "data",
+          "ai",
+          "analytics"
+        ],
+        "source": "curated",
+        "date": "2026-05-12",
+        "relevance_score": 0.2044
+      }
+    ],
+    "email": {
+      "subject": "Britannia's supply chain costs \u2014 quick question",
+      "body": "Hi Ravi, managing demand forecasting across Britannia Industries Limited's 80+ country operations and a sprawling SKU portfolio is no small task \u2014 especially when input costs for wheat and dairy keep compressing margins. With enterprise teams increasingly consolidating tech spend while squeezing more visibility out of existing infrastructure, I've been speaking with ops and supply chain leaders at similar FMCG companies about how they're reducing forecast errors and cutting operational overhead without adding headcount. Would you have 20 minutes this week to explore whether there's a fit for Britannia's context?",
+      "reasoning": "This angle works because it leads with a highly specific operational challenge Ravi owns directly \u2014 cross-border supply chain complexity and input cost pressure \u2014 both of which are documented pain points for Britannia Industries Limited. Referencing the 80+ country footprint and SKU diversity shows genuine research rather than a templated pitch. Tying it to the cost optimization trend makes it timely without being alarmist. The CTA is low-friction and framed around relevance to their specific situation, which increases response likelihood from a senior ops/tech leader."
     },
-    "research": {
-      "summary": "Research generated for Britannia Industries Limited",
-      "growth_stage": null,
-      "pain_points": [],
-      "ai_readiness_score": null,
-      "strategic_priorities": []
+    "governance": {
+      "approved": true,
+      "risk_score": 0.010000000000000009,
+      "issues": [],
+      "event_id": "c2baac35-10fd-46f9-b597-67f3815b4cdc",
+      "requires_human_review": false,
+      "governance_attempt_history": [
+        {
+          "attempt": 1,
+          "passed": false,
+          "prompt_preview": "\nYou are a world-class B2B sales development representative.\n\nWrite a highly personalized, concise cold outreach email for the following lead.\nThe email must feel human, reference specific company context, and tie in a relevant market trend.\n\nLead:\n- Name: Ravi Sharma\n- Title: VP- Operations and CTO\n- Headline: N/A\n- Company: Britannia Industries Limited\n- Industry: food & beverages\n- Location: N/A\n- Recent roles: N/A\n\nCompany Signals:\n- Revenue: 2.1B\n- Headcount growth (12m): N/A\n- Tech stack: AboveNet, Amazon AWS, Amazon CloudFront, Amazon Elastic Load Balancer, Blinkit, Bootstrap Framework\n- Keywords: N/A\n\nCompany Context:\nBritannia Industries Limited is a legacy Indian FMCG giant founded in 1892, operating under the Wadia Group conglomerate. With over 130 years of market presence, the ",
+          "correction_note": "",
+          "email": {
+            "subject": "Britannia's supply chain visibility across 80+ markets",
+            "body": "Hi Ravi, managing demand forecasting and supply chain visibility across 80+ countries with a portfolio as diverse as Britannia's is genuinely complex \u2014 especially when rising wheat and dairy input costs are already compressing margins. Many enterprise ops and tech leaders we speak with are finding that spreadsheet-heavy workflows and fragmented data pipelines are quietly eroding the cost savings they're working hard to protect elsewhere. Given Britannia's current focus on operational consolidation rather than expansion, there's often a real window to reduce that friction without a heavy lift. Would you be open to a 20-minute call to explore whether there's a fit worth discussing?",
+            "reasoning": "The hook is grounded in Ravi's dual role as VP Operations and CTO \u2014 two functions that directly own the pain of supply chain complexity and tech infrastructure simultaneously, making him the ideal contact for this angle. The reference to 80+ country operations and rising input costs is specific to Britannia's publicly known business context, not generic FMCG language, which signals research rather than a templated blast. Tying in the 'operational consolidation' phase (no hiring signals) aligns with the Cost Optimization trend \u2014 this framing respects that they're not in growth mode, repositioning the conversation as efficiency-focused rather than a new spend. The spreadsheet workflow reference is a subtle nod to the Excel4Apps signal without being presumptuous, making it feel observational. The CTA is low-commitment and time-bounded, reducing friction for a senior executive."
+          },
+          "layers": {
+            "validator": {
+              "consequence": "defer",
+              "issues": [
+                "context:company_name_absent:Britannia Industries Limited"
+              ],
+              "checkpoints": {
+                "shape": {
+                  "ok": true,
+                  "issues": []
+                },
+                "context": {
+                  "ok": false,
+                  "issues": [
+                    "context:company_name_absent:Britannia Industries Limited"
+                  ]
+                },
+                "policy": {
+                  "ok": true,
+                  "issues": []
+                }
+              }
+            },
+            "tone": {
+              "passed": true,
+              "issues": []
+            },
+            "hallucination": {
+              "passed": true,
+              "violations": [],
+              "skipped": true
+            }
+          }
+        },
+        {
+          "attempt": 2,
+          "passed": true,
+          "prompt_preview": "\nYou are a world-class B2B sales development representative.\n\nWrite a highly personalized, concise cold outreach email for the following lead.\nThe email must feel human, reference specific company con\n\u2026\nr CTA (suggest a 20-min call)\n- Do not use buzzwords like \"synergy\", \"revolutionary\", \"game-changer\"\n- Tone: professional but conversational\n- If location is available, you may reference it naturally (e.g. \"your team in San Francisco\")\n\nRespond as JSON with keys: subject, body, reasoning (why this angle works).\n\n\n=== GOVERNANCE CORRECTION (Attempt 2/3) ===\nThe previous email FAILED governance. Fix every issue below before responding:\n  \u2717 CONTEXT: Company name 'Britannia Industries Limited' not mentioned. Reference it explicitly.\n\nRegenerate the COMPLETE email JSON addressing every issue above.",
+          "correction_note": "\n\n=== GOVERNANCE CORRECTION (Attempt 2/3) ===\nThe previous email FAILED governance. Fix every issue below before responding:\n  \u2717 CONTEXT: Company name 'Britannia Industries Limited' not mentioned. Reference it explicitly.\n\nRegenerate the COMPLETE email JSON addressing every issue above.",
+          "email": {
+            "subject": "Britannia's supply chain costs \u2014 quick question",
+            "body": "Hi Ravi, managing demand forecasting across Britannia Industries Limited's 80+ country operations and a sprawling SKU portfolio is no small task \u2014 especially when input costs for wheat and dairy keep compressing margins. With enterprise teams increasingly consolidating tech spend while squeezing more visibility out of existing infrastructure, I've been speaking with ops and supply chain leaders at similar FMCG companies about how they're reducing forecast errors and cutting operational overhead without adding headcount. Would you have 20 minutes this week to explore whether there's a fit for Britannia's context?",
+            "reasoning": "This angle works because it leads with a highly specific operational challenge Ravi owns directly \u2014 cross-border supply chain complexity and input cost pressure \u2014 both of which are documented pain points for Britannia Industries Limited. Referencing the 80+ country footprint and SKU diversity shows genuine research rather than a templated pitch. Tying it to the cost optimization trend makes it timely without being alarmist. The CTA is low-friction and framed around relevance to their specific situation, which increases response likelihood from a senior ops/tech leader."
+          },
+          "layers": {
+            "validator": {
+              "consequence": "allow",
+              "issues": [],
+              "checkpoints": {
+                "shape": {
+                  "ok": true,
+                  "issues": []
+                },
+                "context": {
+                  "ok": true,
+                  "issues": []
+                },
+                "policy": {
+                  "ok": true,
+                  "issues": []
+                }
+              }
+            },
+            "tone": {
+              "passed": true,
+              "issues": []
+            },
+            "hallucination": {
+              "passed": true,
+              "violations": [],
+              "confidence": 0.97,
+              "explanation": "All factual claims in the email \u2014 the 80+ country operations, wheat and dairy input cost pressures, and the ops/supply chain leadership framing \u2014 are directly supported by the verified known facts, and no specific unverifiable numbers, fabricated events, or misrepresentations are present."
+            }
+          }
+        }
+      ],
+      "total_attempts": 2,
+      "context_sufficient": true
     },
+    "governance_attempt_history": [
+      {
+        "attempt": 1,
+        "passed": false,
+        "prompt_preview": "\nYou are a world-class B2B sales development representative.\n\nWrite a highly personalized, concise cold outreach email for the following lead.\nThe email must feel human, reference specific company context, and tie in a relevant market trend.\n\nLead:\n- Name: Ravi Sharma\n- Title: VP- Operations and CTO\n- Headline: N/A\n- Company: Britannia Industries Limited\n- Industry: food & beverages\n- Location: N/A\n- Recent roles: N/A\n\nCompany Signals:\n- Revenue: 2.1B\n- Headcount growth (12m): N/A\n- Tech stack: AboveNet, Amazon AWS, Amazon CloudFront, Amazon Elastic Load Balancer, Blinkit, Bootstrap Framework\n- Keywords: N/A\n\nCompany Context:\nBritannia Industries Limited is a legacy Indian FMCG giant founded in 1892, operating under the Wadia Group conglomerate. With over 130 years of market presence, the ",
+        "correction_note": "",
+        "email": {
+          "subject": "Britannia's supply chain visibility across 80+ markets",
+          "body": "Hi Ravi, managing demand forecasting and supply chain visibility across 80+ countries with a portfolio as diverse as Britannia's is genuinely complex \u2014 especially when rising wheat and dairy input costs are already compressing margins. Many enterprise ops and tech leaders we speak with are finding that spreadsheet-heavy workflows and fragmented data pipelines are quietly eroding the cost savings they're working hard to protect elsewhere. Given Britannia's current focus on operational consolidation rather than expansion, there's often a real window to reduce that friction without a heavy lift. Would you be open to a 20-minute call to explore whether there's a fit worth discussing?",
+          "reasoning": "The hook is grounded in Ravi's dual role as VP Operations and CTO \u2014 two functions that directly own the pain of supply chain complexity and tech infrastructure simultaneously, making him the ideal contact for this angle. The reference to 80+ country operations and rising input costs is specific to Britannia's publicly known business context, not generic FMCG language, which signals research rather than a templated blast. Tying in the 'operational consolidation' phase (no hiring signals) aligns with the Cost Optimization trend \u2014 this framing respects that they're not in growth mode, repositioning the conversation as efficiency-focused rather than a new spend. The spreadsheet workflow reference is a subtle nod to the Excel4Apps signal without being presumptuous, making it feel observational. The CTA is low-commitment and time-bounded, reducing friction for a senior executive."
+        },
+        "layers": {
+          "validator": {
+            "consequence": "defer",
+            "issues": [
+              "context:company_name_absent:Britannia Industries Limited"
+            ],
+            "checkpoints": {
+              "shape": {
+                "ok": true,
+                "issues": []
+              },
+              "context": {
+                "ok": false,
+                "issues": [
+                  "context:company_name_absent:Britannia Industries Limited"
+                ]
+              },
+              "policy": {
+                "ok": true,
+                "issues": []
+              }
+            }
+          },
+          "tone": {
+            "passed": true,
+            "issues": []
+          },
+          "hallucination": {
+            "passed": true,
+            "violations": [],
+            "skipped": true
+          }
+        }
+      },
+      {
+        "attempt": 2,
+        "passed": true,
+        "prompt_preview": "\nYou are a world-class B2B sales development representative.\n\nWrite a highly personalized, concise cold outreach email for the following lead.\nThe email must feel human, reference specific company con\n\u2026\nr CTA (suggest a 20-min call)\n- Do not use buzzwords like \"synergy\", \"revolutionary\", \"game-changer\"\n- Tone: professional but conversational\n- If location is available, you may reference it naturally (e.g. \"your team in San Francisco\")\n\nRespond as JSON with keys: subject, body, reasoning (why this angle works).\n\n\n=== GOVERNANCE CORRECTION (Attempt 2/3) ===\nThe previous email FAILED governance. Fix every issue below before responding:\n  \u2717 CONTEXT: Company name 'Britannia Industries Limited' not mentioned. Reference it explicitly.\n\nRegenerate the COMPLETE email JSON addressing every issue above.",
+        "correction_note": "\n\n=== GOVERNANCE CORRECTION (Attempt 2/3) ===\nThe previous email FAILED governance. Fix every issue below before responding:\n  \u2717 CONTEXT: Company name 'Britannia Industries Limited' not mentioned. Reference it explicitly.\n\nRegenerate the COMPLETE email JSON addressing every issue above.",
+        "email": {
+          "subject": "Britannia's supply chain costs \u2014 quick question",
+          "body": "Hi Ravi, managing demand forecasting across Britannia Industries Limited's 80+ country operations and a sprawling SKU portfolio is no small task \u2014 especially when input costs for wheat and dairy keep compressing margins. With enterprise teams increasingly consolidating tech spend while squeezing more visibility out of existing infrastructure, I've been speaking with ops and supply chain leaders at similar FMCG companies about how they're reducing forecast errors and cutting operational overhead without adding headcount. Would you have 20 minutes this week to explore whether there's a fit for Britannia's context?",
+          "reasoning": "This angle works because it leads with a highly specific operational challenge Ravi owns directly \u2014 cross-border supply chain complexity and input cost pressure \u2014 both of which are documented pain points for Britannia Industries Limited. Referencing the 80+ country footprint and SKU diversity shows genuine research rather than a templated pitch. Tying it to the cost optimization trend makes it timely without being alarmist. The CTA is low-friction and framed around relevance to their specific situation, which increases response likelihood from a senior ops/tech leader."
+        },
+        "layers": {
+          "validator": {
+            "consequence": "allow",
+            "issues": [],
+            "checkpoints": {
+              "shape": {
+                "ok": true,
+                "issues": []
+              },
+              "context": {
+                "ok": true,
+                "issues": []
+              },
+              "policy": {
+                "ok": true,
+                "issues": []
+              }
+            }
+          },
+          "tone": {
+            "passed": true,
+            "issues": []
+          },
+          "hallucination": {
+            "passed": true,
+            "violations": [],
+            "confidence": 0.97,
+            "explanation": "All factual claims in the email \u2014 the 80+ country operations, wheat and dairy input cost pressures, and the ops/supply chain leadership framing \u2014 are directly supported by the verified known facts, and no specific unverifiable numbers, fabricated events, or misrepresentations are present."
+          }
+        }
+      }
+    ],
+    "queued_event_id": "evt_e9948ac1a33e",
     "outreach": {
-      "subject": "Britannia's operations + AI \u2014 quick thought",
-      "body": "Hi Ajay,\n\nBritannia moves an enormous volume of SKUs across India daily, and I imagine keeping production efficiency and supply chain visibility tight is a constant balancing act at that scale. A lot of F&B manufacturers we speak with are starting to quietly pilot AI-driven demand forecasting and ops automation \u2014 not as a big transformation project, but as small, targeted wins that reduce waste and improve fill rates. Given your dual role across Operations and Technology, I thought it might be worth a 20-minute conversation to share what's working for similar companies and get your take on where Britannia is focusing. Would next week work for a quick call?",
-      "reasoning": "Ajay holds both an Operations and CTO title, meaning he sits at the intersection of technology decisions and day-to-day operational accountability \u2014 a rare and powerful combination to address simultaneously. By referencing Britannia's massive distribution scale (a publicly known operational complexity), the email demonstrates genuine context rather than generic flattery. Anchoring the AI angle around practical, incremental wins (demand forecasting, waste reduction) rather than hype respects his seniority and avoids the 'big transformation' fatigue common at large FMCG companies. The CTA is low-commitment and framed as a value exchange (sharing what works + getting his perspective), which reduces friction for a busy executive."
+      "subject": "Britannia's supply chain costs \u2014 quick question",
+      "body": "Hi Ravi, managing demand forecasting across Britannia Industries Limited's 80+ country operations and a sprawling SKU portfolio is no small task \u2014 especially when input costs for wheat and dairy keep compressing margins. With enterprise teams increasingly consolidating tech spend while squeezing more visibility out of existing infrastructure, I've been speaking with ops and supply chain leaders at similar FMCG companies about how they're reducing forecast errors and cutting operational overhead without adding headcount. Would you have 20 minutes this week to explore whether there's a fit for Britannia's context?",
+      "reasoning": "This angle works because it leads with a highly specific operational challenge Ravi owns directly \u2014 cross-border supply chain complexity and input cost pressure \u2014 both of which are documented pain points for Britannia Industries Limited. Referencing the 80+ country footprint and SKU diversity shows genuine research rather than a templated pitch. Tying it to the cost optimization trend makes it timely without being alarmist. The CTA is low-friction and framed around relevance to their specific situation, which increases response likelihood from a senior ops/tech leader."
     }
   },
   "outreach": {
-    "subject": "Britannia's operations + AI \u2014 quick thought",
-    "body": "Hi Ajay,\n\nBritannia moves an enormous volume of SKUs across India daily, and I imagine keeping production efficiency and supply chain visibility tight is a constant balancing act at that scale. A lot of F&B manufacturers we speak with are starting to quietly pilot AI-driven demand forecasting and ops automation \u2014 not as a big transformation project, but as small, targeted wins that reduce waste and improve fill rates. Given your dual role across Operations and Technology, I thought it might be worth a 20-minute conversation to share what's working for similar companies and get your take on where Britannia is focusing. Would next week work for a quick call?",
-    "reasoning": "Ajay holds both an Operations and CTO title, meaning he sits at the intersection of technology decisions and day-to-day operational accountability \u2014 a rare and powerful combination to address simultaneously. By referencing Britannia's massive distribution scale (a publicly known operational complexity), the email demonstrates genuine context rather than generic flattery. Anchoring the AI angle around practical, incremental wins (demand forecasting, waste reduction) rather than hype respects his seniority and avoids the 'big transformation' fatigue common at large FMCG companies. The CTA is low-commitment and framed as a value exchange (sharing what works + getting his perspective), which reduces friction for a busy executive."
+    "subject": "Britannia's supply chain costs \u2014 quick question",
+    "body": "Hi Ravi, managing demand forecasting across Britannia Industries Limited's 80+ country operations and a sprawling SKU portfolio is no small task \u2014 especially when input costs for wheat and dairy keep compressing margins. With enterprise teams increasingly consolidating tech spend while squeezing more visibility out of existing infrastructure, I've been speaking with ops and supply chain leaders at similar FMCG companies about how they're reducing forecast errors and cutting operational overhead without adding headcount. Would you have 20 minutes this week to explore whether there's a fit for Britannia's context?",
+    "reasoning": "This angle works because it leads with a highly specific operational challenge Ravi owns directly \u2014 cross-border supply chain complexity and input cost pressure \u2014 both of which are documented pain points for Britannia Industries Limited. Referencing the 80+ country footprint and SKU diversity shows genuine research rather than a templated pitch. Tying it to the cost optimization trend makes it timely without being alarmist. The CTA is low-friction and framed around relevance to their specific situation, which increases response likelihood from a senior ops/tech leader."
   },
-  "email_sent_at": "2026-06-03T11:18:02.994391",
-  "due_at": "2026-06-03T11:20:02.994391",
-  "status": "replied",
-  "whatsapp_sent_at": null,
+  "email_sent_at": "2026-06-04T19:36:35.787537",
+  "due_at": "2026-06-04T19:38:35.787537",
+  "status": "whatsapp_sent",
+  "whatsapp_sent_at": "2026-06-04T19:38:42.389616",
   "whatsapp_error": null,
-  "replied_at": "2026-06-03T11:23:22.312924"
+  "whatsapp_traceback": null,
+  "whatsapp_status_code": 200,
+  "whatsapp_elapsed_seconds": 0.75,
+  "whatsapp_normalized_to": "+918056498879"
 }

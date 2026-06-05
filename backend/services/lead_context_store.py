@@ -26,6 +26,28 @@ class LeadContextStore:
         with open(path) as f:
             return json.load(f)
 
+    def get_by_phone(self, phone: str) -> Optional[dict]:
+        normalized = self._normalize_phone(phone)
+        if not normalized:
+            return None
+
+        for path in STORE_DIR.glob("*.json"):
+            with open(path) as f:
+                record = json.load(f)
+            context = record.get("context") or {}
+            lead = context.get("lead") or {}
+            candidate = lead.get("phone")
+            if self._normalize_phone(candidate) == normalized:
+                return record
+        return None
+
     @staticmethod
     def _key(email: str) -> str:
         return email.lower().replace("@", "_at_").replace(".", "_")
+
+    @staticmethod
+    def _normalize_phone(phone: str) -> str:
+        normalized = (phone or "").replace(" ", "").strip()
+        if normalized.lower().startswith("whatsapp:"):
+            normalized = normalized.split(":", 1)[1]
+        return normalized
