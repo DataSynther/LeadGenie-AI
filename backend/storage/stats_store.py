@@ -647,3 +647,129 @@ def get_extended_stats() -> dict:
         "validation_stats":    validation_stats,
         "governance_summary":  governance_summary,
     }
+
+
+# ── KB Insights ────────────────────────────────────────────────────────────────
+
+def get_kb_insights() -> dict:
+    """Return knowledge-base retrieval insights for the Mission Control dashboard."""
+    import os, collections
+
+    # ── 1. Load KB claim catalogue ─────────────────────────────────────────────
+    kb_dir = STORAGE_DIR / "knowledge_base"
+    kb_claims: list[dict] = []
+    if kb_dir.exists():
+        for fpath in sorted(kb_dir.glob("*.jsonl")):
+            with open(fpath) as f:
+                for line in f:
+                    if line.strip():
+                        kb_claims.append(json.loads(line))
+
+    by_vertical: collections.Counter = collections.Counter(r["vertical"] for r in kb_claims)
+    by_domain:   collections.Counter = collections.Counter(r["domain"]   for r in kb_claims)
+
+    # Top claims: prefer case_study with a metric, sorted by metric length (proxy for richness)
+    top_claims_raw = sorted(
+        [r for r in kb_claims if r.get("category") == "case_study" and r.get("metric")],
+        key=lambda r: len(r.get("metric", "")), reverse=True,
+    )[:6]
+    top_claims = [
+        {
+            "id":       r["id"],
+            "vertical": r["vertical"],
+            "domain":   r["domain"],
+            "category": r["category"],
+            "claim":    r["claim"],
+            "metric":   r.get("metric", ""),
+            "tone_use": r.get("tone_use", ""),
+        }
+        for r in top_claims_raw
+    ]
+
+    # ── 2. Retrieval context from outreach traces ──────────────────────────────
+    traces_file = STORAGE_DIR / "diagnostics" / "traces.jsonl"
+    industries:    collections.Counter = collections.Counter()
+    pain_points:   collections.Counter = collections.Counter()
+    prompt_vers:   collections.Counter = collections.Counter()
+    retrieval_scores: list[float] = []
+
+    if traces_file.exists():
+        with open(traces_file) as f:
+            for line in f:
+                if not line.strip():
+                    continue
+                t = json.loads(line)
+                if t.get("agent") != "outreach":
+                    continue
+                meta = t.get("metadata") or {}
+                cit  = meta.get("citations") or {}
+
+                ind = cit.get("industry")
+                if isinstance(ind, dict):
+                    industries[ind.get("value", "unknown")] += 1
+
+                pp = cit.get("pain_points")
+                if isinstance(pp, dict) and isinstance(pp.get("value"), list):
+                    for p in pp["value"]:
+                        if isinstance(p, str) and len(p) < 100:
+                            pain_points[p.strip()] += 1
+
+                pv = meta.get("prompt_version")
+                if pv:
+                    prompt_vers[pv] += 1
+
+                rs = meta.get("retrieval_score")
+                if rs is not None:
+                    try:
+                        retrieval_scores.append(float(rs))
+                    except (TypeError, ValueError):
+                        pass
+
+    avg_retrieval = round(sum(retrieval_scores) / max(len(retrieval_scores), 1), 3)
+    below_thresh  = sum(1 for s in retrieval_scores if s < 0.55)
+
+    # ── 3. Industry memory (learned few-shot patterns) ────────────────────────
+    mem_dir = STORAGE_DIR / "industry_memory"
+    mem_records: list[dict] = []
+    if mem_dir.exists():
+        for fpath in sorted(mem_dir.glob("*.jsonl")):
+            stream = fpath.stem
+            with open(fpath) as f:
+                for line in f:
+                    if line.strip():
+                        r = json.loads(line)
+                        r["_stream"] = stream
+                        mem_records.append(r)
+
+    mem_records.sort(key=lambda r: r.get("ts", ""), reverse=True)
+    recent_patterns = [
+        {
+            "stream":   r.get("stream", r["_stream"]),
+            "subject":  r.get("subject", ""),
+            "hook":     (r.get("hook") or "")[:130],
+            "outcome":  r.get("outcome", "sent"),
+            "tech_tags": ((r.get("lead_signals") or {}).get("tech_tags") or [])[:3],
+        }
+        for r in mem_records[:6]
+    ]
+
+    return {
+        "kb_coverage": {
+            "total_claims": len(kb_claims),
+            "by_vertical":  [{"vertical": k, "count": v} for k, v in by_vertical.most_common()],
+            "by_domain":    [{"domain": k,   "count": v} for k, v in by_domain.most_common()],
+        },
+        "top_claims": top_claims,
+        "retrieval_context": {
+            "top_industries":  [{"label": k, "count": v} for k, v in industries.most_common(6)],
+            "top_pain_points": [{"label": k, "count": v} for k, v in pain_points.most_common(8)],
+            "prompt_versions": [{"label": k, "count": v} for k, v in prompt_vers.most_common()],
+            "avg_retrieval_score": avg_retrieval,
+            "scored_calls":        len(retrieval_scores),
+            "below_threshold":     below_thresh,
+        },
+        "industry_memory": {
+            "total":            len(mem_records),
+            "recent_patterns":  recent_patterns,
+        },
+    }

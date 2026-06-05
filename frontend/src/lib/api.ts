@@ -786,6 +786,47 @@ export type DashboardExtendedStats = {
 
 export const dashboardExtendedStats = () => get<DashboardExtendedStats>("/dashboard/extended-stats");
 
+// ── KB Insights ───────────────────────────────────────────────────────────────
+
+export type KbClaimEntry = {
+  id: string;
+  vertical: string;
+  domain: string;
+  category: string;
+  claim: string;
+  metric: string;
+  tone_use: string;
+};
+
+export type KbInsights = {
+  kb_coverage: {
+    total_claims: number;
+    by_vertical: { vertical: string; count: number }[];
+    by_domain:   { domain: string;   count: number }[];
+  };
+  top_claims: KbClaimEntry[];
+  retrieval_context: {
+    top_industries:       { label: string; count: number }[];
+    top_pain_points:      { label: string; count: number }[];
+    prompt_versions:      { label: string; count: number }[];
+    avg_retrieval_score:  number;
+    scored_calls:         number;
+    below_threshold:      number;
+  };
+  industry_memory: {
+    total: number;
+    recent_patterns: {
+      stream: string;
+      subject: string;
+      hook: string;
+      outcome: string;
+      tech_tags: string[];
+    }[];
+  };
+};
+
+export const dashboardKbInsights = () => get<KbInsights>("/dashboard/kb-insights");
+
 // ── Engagement Runs (per-lead outreach/reply with per-attempt detail) ──────────
 
 export type EngagementRun = {
@@ -846,6 +887,7 @@ export const api = {
   dashboardStatsRaw,
   devFinOps,
   dashboardExtendedStats,
+  dashboardKbInsights,
 };
 
 export default api;

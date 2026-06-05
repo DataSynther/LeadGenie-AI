@@ -6,7 +6,7 @@ import { KpiCard } from "../components/dashboard/KpiCard";
 import { FunnelCard } from "../components/dashboard/FunnelCard";
 import { AgentFeedCard } from "../components/dashboard/AgentFeedCard";
 import { RiskDistributionCard } from "../components/dashboard/RiskDistributionCard";
-import { api, type DashboardExtendedStats, type FinOpsSummary } from "../lib/api";
+import { api, type DashboardExtendedStats, type FinOpsSummary, type KbInsights } from "../lib/api";
 import { formatNumber, cn } from "../lib/utils";
 
 // ── Design tokens (CommandCenter palette) ─────────────────────────────────────
@@ -401,6 +401,227 @@ function RetryEfficiencyCard({ finops, extended }: {
   );
 }
 
+// ── KB Insights panel ─────────────────────────────────────────────────────────
+
+const VERTICAL_C: Record<string, string> = {
+  data_science:      "#8b5cf6",
+  data_engineering:  "#0ea5e9",
+  generic:           "#94a3b8",
+};
+const DOMAIN_C: Record<string, string> = {
+  fintech:           "#f59e0b",
+  ecommerce:         "#10b981",
+  manufacturing:     "#0ea5e9",
+  logistics:         "#8b5cf6",
+  healthcare:        "#f87171",
+  generic:           "#94a3b8",
+};
+const CATEGORY_BADGE: Record<string, string> = {
+  case_study:   "bg-violet-500/10 text-violet-400",
+  capability:   "bg-sky-500/10 text-sky-400",
+  social_proof: "bg-emerald-500/10 text-emerald-400",
+  differentiator:"bg-amber-500/10 text-amber-500",
+};
+
+function KbInsightsPanel({ data }: { data: KbInsights }) {
+  const { kb_coverage, top_claims, retrieval_context, industry_memory } = data;
+  const maxVertical = Math.max(...kb_coverage.by_vertical.map(v => v.count), 1);
+  const maxIndustry = Math.max(...retrieval_context.top_industries.map(i => i.count), 1);
+  const maxPain     = Math.max(...retrieval_context.top_pain_points.map(p => p.count), 1);
+  const scoreColour = retrieval_context.avg_retrieval_score >= 0.7
+    ? "text-emerald-500" : retrieval_context.avg_retrieval_score >= 0.5
+    ? "text-amber-500" : "text-red-400";
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+      {/* ── Col 1: KB Coverage + Top Claims ───────────────────────────────── */}
+      <Panel className="md:col-span-1 flex flex-col gap-4">
+        <PanelTitle
+          title="Knowledge Base"
+          sub={`${kb_coverage.total_claims} verified claims · retrieval grounding`}
+        />
+
+        {/* Coverage by vertical */}
+        <div>
+          <div className="text-[10px] uppercase tracking-widest text-ink font-semibold mb-2">By Vertical</div>
+          <div className="space-y-2">
+            {kb_coverage.by_vertical.map(v => {
+              const colour = VERTICAL_C[v.vertical] ?? "#94a3b8";
+              return (
+                <div key={v.vertical}>
+                  <div className="flex items-center justify-between text-[10px] mb-0.5">
+                    <span className="font-medium text-ink-2 capitalize">{v.vertical.replace(/_/g, " ")}</span>
+                    <span className="font-mono font-semibold text-ink">{v.count}</span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-surface-2 overflow-hidden">
+                    <div className="h-full rounded-full" style={{ width: `${(v.count / maxVertical) * 100}%`, background: colour }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Coverage by domain */}
+        <div>
+          <div className="text-[10px] uppercase tracking-widest text-ink font-semibold mb-2">By Domain</div>
+          <div className="flex flex-wrap gap-1.5">
+            {kb_coverage.by_domain.map(d => {
+              const colour = DOMAIN_C[d.domain] ?? "#94a3b8";
+              return (
+                <div key={d.domain} className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold border border-line-soft"
+                  style={{ background: `${colour}14`, color: colour }}>
+                  <span className="capitalize">{d.domain}</span>
+                  <span className="opacity-70">{d.count}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Retrieval score */}
+        <div className="mt-auto pt-3 border-t border-line-soft">
+          <div className="text-[10px] uppercase tracking-widest text-ink font-semibold mb-2">Grounding Score</div>
+          <div className="flex items-center gap-3">
+            <div className="relative w-12 h-12 flex-shrink-0">
+              <svg viewBox="0 0 48 48" className="w-full h-full -rotate-90">
+                <circle cx="24" cy="24" r="18" fill="none" stroke="rgb(var(--c-surface-2))" strokeWidth="7" />
+                <circle cx="24" cy="24" r="18" fill="none"
+                  stroke={retrieval_context.avg_retrieval_score >= 0.7 ? "#10b981" : retrieval_context.avg_retrieval_score >= 0.5 ? "#f59e0b" : "#f87171"}
+                  strokeWidth="7" strokeDasharray={`${retrieval_context.avg_retrieval_score * 113} 113`} strokeLinecap="butt" />
+              </svg>
+              <span className={cn("absolute inset-0 flex items-center justify-center text-[10px] font-bold", scoreColour)}>
+                {(retrieval_context.avg_retrieval_score * 100).toFixed(0)}%
+              </span>
+            </div>
+            <div className="space-y-0.5">
+              <div className="text-[11px] font-semibold text-ink">{retrieval_context.scored_calls} scored calls</div>
+              <div className="text-[10px] text-ink-2 font-medium">{retrieval_context.below_threshold} below threshold</div>
+              <div className="text-[9px] text-ink-mute">Threshold: 0.55</div>
+            </div>
+          </div>
+        </div>
+      </Panel>
+
+      {/* ── Col 2: Top Retrieved Claims ───────────────────────────────────── */}
+      <Panel className="md:col-span-1 flex flex-col">
+        <PanelTitle
+          title="Top Retrieved Facts"
+          sub="Case studies surfaced during email generation"
+        />
+        <div className="space-y-3 flex-1">
+          {top_claims.map(claim => {
+            const vColour = VERTICAL_C[claim.vertical] ?? "#94a3b8";
+            const dColour = DOMAIN_C[claim.domain]     ?? "#94a3b8";
+            const badge   = CATEGORY_BADGE[claim.category] ?? "bg-surface-2 text-ink-2";
+            return (
+              <div key={claim.id} className="rounded-lg border border-line-soft bg-surface-2/40 p-3">
+                {/* Tags row */}
+                <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+                  <span className="text-[9px] px-1.5 py-0.5 rounded font-semibold capitalize"
+                    style={{ background: `${vColour}18`, color: vColour }}>
+                    {claim.vertical.replace(/_/g, " ")}
+                  </span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded font-semibold capitalize"
+                    style={{ background: `${dColour}18`, color: dColour }}>
+                    {claim.domain}
+                  </span>
+                  <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-semibold capitalize", badge)}>
+                    {claim.category.replace(/_/g, " ")}
+                  </span>
+                </div>
+                {/* Claim text */}
+                <p className="text-[10px] text-ink-2 font-medium leading-relaxed line-clamp-3">{claim.claim}</p>
+                {/* Metric pill */}
+                {claim.metric && (
+                  <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded bg-brand/8 border border-brand/20">
+                    <span className="text-[9px] text-brand font-mono font-semibold">{claim.metric}</span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </Panel>
+
+      {/* ── Col 3: Retrieval Context + Industry Memory ────────────────────── */}
+      <Panel className="md:col-span-1 flex flex-col gap-4">
+
+        {/* Target Industries */}
+        <div>
+          <PanelTitle title="Target Industries" sub="Outreach distribution across sectors" />
+          <div className="space-y-1.5">
+            {retrieval_context.top_industries.map(ind => {
+              const pct = (ind.count / maxIndustry) * 100;
+              const label = ind.label.length > 32 ? ind.label.slice(0, 30) + "…" : ind.label;
+              return (
+                <div key={ind.label}>
+                  <div className="flex items-center justify-between text-[10px] mb-0.5">
+                    <span className="text-ink-2 font-medium capitalize">{label}</span>
+                    <span className="font-mono font-semibold text-ink flex-shrink-0 ml-1">{ind.count}</span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-surface-2 overflow-hidden">
+                    <div className="h-full rounded-full bg-brand/60" style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Top Pain Points */}
+        <div>
+          <div className="text-[10px] uppercase tracking-widest text-ink font-semibold mb-2">Top Pain Points Surfaced</div>
+          <div className="space-y-1.5">
+            {retrieval_context.top_pain_points.slice(0, 5).map((p, i) => {
+              const pct = (p.count / maxPain) * 100;
+              return (
+                <div key={i}>
+                  <div className="flex items-start justify-between gap-2 text-[10px] mb-0.5">
+                    <span className="text-ink-2 font-medium leading-snug line-clamp-2">{p.label}</span>
+                    <span className="font-mono font-bold text-amber-500 flex-shrink-0">{p.count}×</span>
+                  </div>
+                  <div className="h-1 rounded-full bg-surface-2 overflow-hidden">
+                    <div className="h-full rounded-full bg-amber-500/50" style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Industry Memory (learned patterns) */}
+        {industry_memory.recent_patterns.length > 0 && (
+          <div className="border-t border-line-soft pt-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-[10px] uppercase tracking-widest text-ink font-semibold">Learned Patterns</div>
+              <span className="text-[9px] font-mono text-ink-mute">{industry_memory.total} in memory</span>
+            </div>
+            <div className="space-y-2.5">
+              {industry_memory.recent_patterns.slice(0, 3).map((p, i) => (
+                <div key={i} className="rounded-lg border border-line-soft bg-surface-2/30 p-2.5">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="text-[9px] px-1.5 py-px rounded font-semibold capitalize bg-violet-500/10 text-violet-400">
+                      {p.stream}
+                    </span>
+                    {p.tech_tags.map(t => (
+                      <span key={t} className="text-[9px] px-1.5 py-px rounded font-mono bg-surface border border-line-soft text-ink-mute">{t}</span>
+                    ))}
+                  </div>
+                  <div className="text-[10px] font-semibold text-ink mb-0.5 truncate">{p.subject}</div>
+                  <p className="text-[9px] text-ink-2 leading-snug line-clamp-2">{p.hook}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </Panel>
+
+    </div>
+  );
+}
+
 // ── Intent distribution chart ─────────────────────────────────────────────────
 
 function IntentDistPanel({ data }: { data: DashboardExtendedStats["intent_distribution"] }) {
@@ -642,6 +863,12 @@ export function DashboardPage() {
     refetchInterval: 60_000,
   });
 
+  const { data: kbInsights } = useQuery({
+    queryKey: ["kbInsights"],
+    queryFn: api.dashboardKbInsights,
+    refetchInterval: 120_000,
+  });
+
   const empty = !stats || stats.messages_sent.value === 0;
 
   return (
@@ -740,6 +967,13 @@ export function DashboardPage() {
                   gov={extended.governance_summary}
                   intent={extended.intent_distribution}
                 />
+              </div>
+            )}
+
+            {/* ── KB Retrieval Insights ─────────────────────────────────────── */}
+            {kbInsights && (
+              <div className="mb-5">
+                <KbInsightsPanel data={kbInsights} />
               </div>
             )}
 

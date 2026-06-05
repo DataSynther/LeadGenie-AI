@@ -477,6 +477,12 @@ async def dashboard_extended_stats():
     return stats_store.get_extended_stats()
 
 
+@app.get("/dashboard/kb-insights")
+async def dashboard_kb_insights():
+    """KB retrieval insights: claim catalogue, top pain-points, industry memory."""
+    return stats_store.get_kb_insights()
+
+
 @app.get("/dashboard/stats/raw")
 async def dashboard_stats_raw():
     """Raw table rows for validating dashboard numbers."""
