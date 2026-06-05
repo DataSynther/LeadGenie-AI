@@ -7,10 +7,19 @@ from .intent_detector import IntentDetector
 from observability.agent_tracer import AgentTracer
 from observability.validator import Validator
 from observability.self_evaluator import self_evaluate, context_to_summary
+from memory.sender_kb import SenderKnowledgeBase
 
 client = Anthropic()
 MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
 CALENDLY_URL = os.getenv("CALENDLY_URL", "https://calendly.com/leadgenie-demo/30min")
+
+_sender_kb = SenderKnowledgeBase()
+
+_GANIT_IDENTITY = (
+    "You represent Ganit — a full-stack Data & AI company recognized by Everest Group, "
+    "Forrester, and Analytics India Magazine. Ganit has 300+ data specialists and is an "
+    "AWS 6-year partner, SOC-2 and ISO 27001 certified."
+)
 
 
 class ConversationAgent:
@@ -114,8 +123,9 @@ class ConversationAgent:
         priorities_text = "; ".join(priorities[:2]) if priorities else "not specified"
         scaling = signals.get("scaling", False)
 
-        facts_block = (
-            f"Company context you know:\n"
+        # ── Domain A: prospect facts (THEIR org) ────────────────────────────
+        prospect_block = (
+            f"== PROSPECT FACTS (about THEIR organisation — {company.get('name')}) ==\n"
             f"  - Summary: {summary}\n"
             f"  - Pain points: {pain_text}\n"
             f"  - Strategic priorities: {priorities_text}\n"
@@ -123,33 +133,60 @@ class ConversationAgent:
             f"  - Industry: {company.get('industry')} | Size: {company.get('employee_count')} employees\n"
         )
 
+        # ── Domain B: sender KB (YOUR org — Ganit's verified proof points) ──
+        tech_stack = company.get("technologies") or []
+        vertical = context.get("_vertical") or ""
+        domain = context.get("_domain") or ""
+        try:
+            kb_claims = _sender_kb.retrieve(
+                vertical=vertical or "generic",
+                domain=domain or "generic",
+                technologies=tech_stack,
+                n=3,
+            )
+            kb_text = _sender_kb.get_claims_text([r["id"] for r in kb_claims])
+        except Exception:
+            kb_text = "(no KB claims available)"
+
+        sender_block = (
+            f"== GANIT'S CAPABILITIES (about YOUR organisation — cite these when asked about Ganit's experience) ==\n"
+            f"{_GANIT_IDENTITY}\n"
+            f"Verified proof points you may cite:\n{kb_text}\n"
+        )
+
         base = (
-            f"You are an expert SDR conversing with {lead.get('name')}, "
-            f"{lead.get('title')} at {company.get('name')}.\n"
-            f"{facts_block}"
+            f"You are an expert SDR at Ganit, conversing with {lead.get('name')}, "
+            f"{lead.get('title')} at {company.get('name')}.\n\n"
+            f"CRITICAL RULE: Keep these two sources completely separate.\n"
+            f"  - Questions about THEIR company → use PROSPECT FACTS.\n"
+            f"  - Questions about YOUR company (Ganit) → use GANIT'S CAPABILITIES only.\n"
+            f"  - Never attribute Ganit's work or metrics to {company.get('name')}, "
+            f"and never attribute {company.get('name')}'s data to Ganit.\n\n"
+            f"{prospect_block}\n"
+            f"{sender_block}"
         )
 
         if intent == "fact_question":
             return base + (
-                "\nThe prospect asked a factual question. "
-                "Answer it using the company context above — be specific and honest. "
-                "If you don't have the exact data, acknowledge that and offer to cover it on a call. "
-                "After answering, only suggest a follow-up if it feels completely natural — don't force it."
+                "\nThe prospect asked a factual question. First decide: is this about "
+                "THEIR company or about Ganit? Then answer using only the matching block above. "
+                "If asked about Ganit's experience, cite the verified proof points — do not invent metrics. "
+                "If you lack specific data, say so and offer to cover it on a call."
             )
 
         if intent == "neutral":
             return base + (
                 "\nThe prospect gave a neutral acknowledgment. "
-                "Respond warmly, add one genuinely relevant insight from their context above, "
+                "Respond warmly, add one genuinely relevant insight from their PROSPECT FACTS, "
                 "and keep the conversation open. Do NOT push for a meeting yet."
             )
 
         if intent == "interested":
             return base + (
                 "\nThe prospect is showing genuine interest. "
-                "Acknowledge their specific situation using the context above. "
-                "Reinforce why this is relevant to their pain points. "
-                "Suggest a brief 15-minute call to go deeper — keep it warm and natural, not salesy."
+                "Acknowledge their specific situation using the PROSPECT FACTS. "
+                "Reinforce relevance by citing one matching Ganit proof point from GANIT'S CAPABILITIES. "
+                "Suggest a brief 15-minute call — warm and natural, not salesy."
             )
 
         return base + (

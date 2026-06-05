@@ -263,6 +263,11 @@ async def generate_outreach(req: OutreachRequest):
     signals = apollo_signals.detect_hiring_trends(lead.get("organization_id", ""))
     research = research_agent.research_company(company, signals)
     context = context_builder.build_lead_context(lead, company, signals, research)
+    # Stash resolved vertical/domain on context so ConversationAgent can use
+    # them for KB retrieval when the lead asks about Ganit's capabilities.
+    from agents.outreach.template_categorizer import TemplateCategorizer, DomainDetector
+    context["_vertical"] = req.vertical_override or TemplateCategorizer().categorize(lead, company)
+    context["_domain"]   = req.domain_override   or DomainDetector().detect(company)
 
     trends = trend_agent.get_current_trends()
     top_trends = relevance_engine.rank_trends(context, trends, top_k=3)
