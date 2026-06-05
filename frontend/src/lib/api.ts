@@ -701,6 +701,7 @@ export type FinOpsDailyEntry = {
   cost_usd: number;
   avg_tokens: number;
   success_calls: number;
+  retry_success: number;
 };
 
 export type FinOpsSummary = {

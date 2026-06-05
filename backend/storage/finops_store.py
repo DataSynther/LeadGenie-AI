@@ -85,7 +85,8 @@ def get_finops_summary() -> dict:
     lead_acc:  dict[str, dict] = defaultdict(lambda: {"tokens": 0, "cost": 0.0, "agents": set()})
     pv_acc:    dict[tuple, dict] = defaultdict(lambda: {"calls": 0, "tokens": 0, "cost": 0.0})
     agent_day: dict[tuple, dict] = defaultdict(lambda: {
-        "calls": 0, "tokens": 0, "cost": 0.0, "success_calls": 0
+        "calls": 0, "tokens": 0, "cost": 0.0, "success_calls": 0,
+        "retry_calls": 0, "retry_success": 0,
     })
 
     retry_traces:   list[dict] = []
@@ -174,6 +175,10 @@ def get_finops_summary() -> dict:
         ad["cost"]          += cost
         if success:
             ad["success_calls"] += 1
+        if attempt > 1:
+            ad["retry_calls"] += 1
+            if success:
+                ad["retry_success"] += 1
 
     # ── Derive job-level outreach stats ───────────────────────────────────────
     total_jobs              = len(outreach_jobs)
@@ -328,6 +333,7 @@ def get_finops_summary() -> dict:
             "cost_usd":          round(v["cost"], 5),
             "avg_tokens":        round(v["tokens"] / max(v["calls"], 1)),
             "success_calls":     v["success_calls"],
+            "retry_success":     v["retry_success"],
         }
         for k, v in sorted(agent_day.items())
         if k[1]  # skip blank dates

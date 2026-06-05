@@ -225,7 +225,7 @@ function CostToSuccessCard({ row }: { row: C2SRow }) {
       <div className="flex items-start justify-between">
         <div>
           <div className={cn("text-[12px] font-bold capitalize", ac.text)}>{row.agent}</div>
-          <div className="text-[10px] text-ink-mute mt-0.5 leading-snug max-w-[140px]">{row.success_criteria}</div>
+          <div className="text-[10px] text-ink-2 font-medium mt-0.5 leading-snug max-w-[140px]">{row.success_criteria}</div>
         </div>
         <EfficiencyArc score={row.efficiency_score} />
       </div>
@@ -233,24 +233,24 @@ function CostToSuccessCard({ row }: { row: C2SRow }) {
       {/* Metrics grid */}
       <div className="grid grid-cols-2 gap-2">
         <div className="p-2.5 rounded-lg bg-surface-2">
-          <div className="text-[9px] uppercase tracking-widest text-ink-mute mb-1">Success Rate</div>
+          <div className="text-[9px] uppercase tracking-widest text-ink font-semibold mb-1">Success Rate</div>
           <div className={cn("text-[18px] font-bold", effColour)}>
             {(row.success_rate * 100).toFixed(0)}%
           </div>
-          <div className="text-[10px] text-ink-mute">{row.success_count}/{row.calls} calls</div>
+          <div className="text-[10px] text-ink-2 font-medium">{row.success_count}/{row.calls} calls</div>
         </div>
         <div className="p-2.5 rounded-lg bg-surface-2">
-          <div className="text-[9px] uppercase tracking-widest text-ink-mute mb-1">Cost / Success</div>
+          <div className="text-[9px] uppercase tracking-widest text-ink font-semibold mb-1">Cost / Success</div>
           <div className="text-[18px] font-bold font-mono text-ink">{fmt(row.cost_per_success, 5)}</div>
-          <div className="text-[10px] text-ink-mute">per outcome</div>
+          <div className="text-[10px] text-ink-2 font-medium">per outcome</div>
         </div>
       </div>
 
       {/* Three-tier attempt bar */}
       <div>
         <div className="flex justify-between text-[10px] mb-1.5">
-          <span className="text-ink-2 font-medium">Attempt breakdown</span>
-          <span className="text-ink-mute font-mono">{total} {row.agent === "outreach" && row.jobs_total != null ? "jobs" : "calls"}</span>
+          <span className="text-ink font-semibold">Attempt breakdown</span>
+          <span className="text-ink-2 font-mono font-medium">{total} {row.agent === "outreach" && row.jobs_total != null ? "jobs" : "calls"}</span>
         </div>
         <div className="h-2.5 rounded-full bg-surface-2 overflow-hidden flex">
           {firstOkPct > 0.5 && (
@@ -267,20 +267,20 @@ function CostToSuccessCard({ row }: { row: C2SRow }) {
           )}
         </div>
         <div className="flex gap-3 mt-1.5 flex-wrap">
-          <div className="flex items-center gap-1 text-[10px] text-ink-mute">
+          <div className="flex items-center gap-1 text-[10px] text-ink-2 font-medium">
             <div className="w-2 h-2 rounded-sm bg-emerald-500" />
-            <span>1st pass <span className="font-mono font-semibold text-emerald-500">{firstOk}</span></span>
+            <span>1st pass <span className="font-mono font-bold text-emerald-500">{firstOk}</span></span>
           </div>
           {retryOk > 0 && (
-            <div className="flex items-center gap-1 text-[10px] text-ink-mute">
+            <div className="flex items-center gap-1 text-[10px] text-ink-2 font-medium">
               <div className="w-2 h-2 rounded-sm bg-amber-500" />
-              <span>Retry ✓ <span className="font-mono font-semibold text-amber-500">{retryOk}</span></span>
+              <span>Retry ✓ <span className="font-mono font-bold text-amber-500">{retryOk}</span></span>
             </div>
           )}
           {failed > 0 && (
-            <div className="flex items-center gap-1 text-[10px] text-ink-mute">
+            <div className="flex items-center gap-1 text-[10px] text-ink-2 font-medium">
               <div className="w-2 h-2 rounded-sm bg-red-500/70" />
-              <span>Failed <span className="font-mono font-semibold text-red-400">{failed}</span></span>
+              <span>Failed <span className="font-mono font-bold text-red-400">{failed}</span></span>
             </div>
           )}
         </div>
@@ -289,15 +289,15 @@ function CostToSuccessCard({ row }: { row: C2SRow }) {
       {/* Retry cost */}
       {row.retry_calls > 0 && (
         <div className="flex items-center justify-between text-[10px] px-2 py-1.5 rounded bg-amber-500/8 border border-amber-500/20">
-          <span className="text-amber-500 font-medium">{row.retry_calls} retry calls</span>
-          <span className="font-mono text-amber-500">{fmt(row.retry_cost_usd)} wasted</span>
+          <span className="text-amber-500 font-semibold">{row.retry_calls} retry calls</span>
+          <span className="font-mono font-semibold text-amber-500">{fmt(row.retry_cost_usd)} wasted</span>
         </div>
       )}
 
       {/* Total cost pill */}
       <div className={cn("text-[10px] font-mono px-2.5 py-1.5 rounded-lg border text-center", ac.bg)}>
         <span className={ac.text}>{fmt(row.cost_usd)}</span>
-        <span className="text-ink-mute"> total · {fmtK(row.calls)} calls</span>
+        <span className="text-ink-2 font-semibold"> total · {fmtK(row.calls)} calls</span>
       </div>
     </Panel>
   );
@@ -415,9 +415,11 @@ function MultiAgentTrendChart({ series }: { series: DailyEntry[] }) {
   for (const entry of series) {
     if (!AGENTS_SHOW.includes(entry.agent)) continue;
     if (!byAgentDate[entry.agent]) byAgentDate[entry.agent] = {};
+    // Mirror CostToSuccess logic: retries = unsuccessful, only first-attempt passes count
+    const firstAttemptSuccess = entry.success_calls - (entry.retry_success ?? 0);
     byAgentDate[entry.agent][entry.date] = {
       tokens:      entry.avg_tokens,
-      successRate: entry.calls > 0 ? entry.success_calls / entry.calls : 1,
+      successRate: entry.calls > 0 ? firstAttemptSuccess / entry.calls : 1,
     };
   }
 
