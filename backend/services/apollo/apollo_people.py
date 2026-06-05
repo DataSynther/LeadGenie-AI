@@ -33,13 +33,19 @@ class ApolloPeopleService:
     def search_people(self, filters: dict) -> list[dict]:
         """Search people — tries live Apollo, falls back to demo_leads.json on any error."""
         try:
-            payload = {
-                "q_organization_domains": filters.get("domains", []),
-                "person_titles": filters.get("titles", []),
+            payload: dict = {
+                "person_titles":      filters.get("titles", []),
                 "person_seniorities": filters.get("seniorities", []),
-                "page": filters.get("page", 1),
-                "per_page": filters.get("per_page", 25),
+                "person_locations":   filters.get("locations", []),
+                "page":               filters.get("page", 1),
+                "per_page":           filters.get("per_page", 25),
             }
+            company_names = [c for c in filters.get("company_names", []) if c]
+            if company_names:
+                payload["organization_names"] = company_names
+            industries = [i for i in filters.get("industries", []) if i]
+            if industries:
+                payload["q_keywords"] = " ".join(industries)
             response = requests.post(
                 f"{APOLLO_BASE_URL}/mixed_people/search",
                 headers=self.headers,
@@ -83,8 +89,10 @@ class ApolloPeopleService:
         results = list(_SAMPLE_LEADS)
 
         company_names = [c.strip().lower() for c in filters.get("company_names", []) if c.strip()]
-        titles = [t.strip().lower() for t in filters.get("titles", []) if t.strip()]
-        seniorities = [s.strip().lower() for s in filters.get("seniorities", []) if s.strip()]
+        titles        = [t.strip().lower() for t in filters.get("titles", [])        if t.strip()]
+        seniorities   = [s.strip().lower() for s in filters.get("seniorities", [])   if s.strip()]
+        locations     = [l.strip().lower() for l in filters.get("locations", [])     if l.strip()]
+        industries    = [i.strip().lower() for i in filters.get("industries", [])    if i.strip()]
 
         if company_names:
             results = [
@@ -100,6 +108,23 @@ class ApolloPeopleService:
             results = [
                 p for p in results
                 if p.get("seniority", "").lower() in seniorities
+            ]
+        if locations:
+            results = [
+                p for p in results
+                if p.get("country", "").lower() in locations
+            ]
+        if industries:
+            # Sample data has no company-industry field; match against
+            # department, title, and company name as a best-effort proxy.
+            results = [
+                p for p in results
+                if any(
+                    ind in p.get("department", "").lower()
+                    or ind in p.get("title", "").lower()
+                    or ind in p.get("company", "").lower()
+                    for ind in industries
+                )
             ]
 
         per_page = filters.get("per_page", 25)
