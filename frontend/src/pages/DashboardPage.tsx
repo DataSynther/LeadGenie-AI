@@ -6,7 +6,7 @@ import { KpiCard } from "../components/dashboard/KpiCard";
 import { FunnelCard } from "../components/dashboard/FunnelCard";
 import { AgentFeedCard } from "../components/dashboard/AgentFeedCard";
 import { RiskDistributionCard } from "../components/dashboard/RiskDistributionCard";
-import { api, type DashboardExtendedStats, type FinOpsSummary, type KbInsights } from "../lib/api";
+import { api, type DashboardExtendedStats, type FinOpsSummary, type KbInsights, type ApprovalItem } from "../lib/api";
 import { formatNumber, cn } from "../lib/utils";
 
 // ── Design tokens (CommandCenter palette) ─────────────────────────────────────
@@ -836,6 +836,89 @@ function ValidationGovernanceRow({ val, gov, intent }: {
   );
 }
 
+// ── Sent Emails panel ─────────────────────────────────────────────────────────
+
+const RISK_C: Record<string, { text: string; bg: string }> = {
+  high:   { text: "text-red-400",    bg: "bg-red-500/10"    },
+  medium: { text: "text-amber-500",  bg: "bg-amber-500/10"  },
+  low:    { text: "text-emerald-500",bg: "bg-emerald-500/10" },
+};
+
+function SentEmailsPanel({ items }: { items: ApprovalItem[] }) {
+  const fmtDate = (ts: string) => {
+    const d = new Date(ts);
+    return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" }) +
+      " · " + d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  };
+
+  return (
+    <Panel>
+      <div className="flex items-center justify-between mb-4">
+        <PanelTitle
+          title="Sent Emails"
+          sub={`${items.length} outreach email${items.length !== 1 ? "s" : ""} delivered · most recent first`}
+        />
+      </div>
+
+      {items.length === 0 ? (
+        <p className="text-[11px] text-ink-mute py-6 text-center">No sent emails yet.</p>
+      ) : (
+        <div className="divide-y divide-line-soft">
+          {items.map((item) => {
+            const rc = RISK_C[item.risk_level] ?? RISK_C.low;
+            const sentAt = item.status_updated_at ?? item.timestamp;
+            return (
+              <div key={item.event_id} className="py-3 flex items-start gap-3 group">
+                {/* Avatar initials */}
+                <div className="w-8 h-8 rounded-full bg-brand/10 border border-brand/20 flex items-center justify-center text-[10px] font-bold text-brand flex-shrink-0 mt-0.5">
+                  {(item.lead_name ?? "?").split(" ").map(w => w[0]).slice(0, 2).join("")}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  {/* Header row */}
+                  <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                    <span className="text-[12px] font-semibold text-ink">{item.lead_name}</span>
+                    <span className="text-[10px] text-ink-mute">·</span>
+                    <span className="text-[11px] text-ink-2 font-medium truncate">{item.lead_title}</span>
+                    <span className="text-[10px] text-ink-mute">@</span>
+                    <span className="text-[11px] font-semibold text-brand truncate">{item.company_name}</span>
+                    <span className={cn("ml-auto text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded flex-shrink-0", rc.text, rc.bg)}>
+                      {item.risk_level}
+                    </span>
+                  </div>
+
+                  {/* Subject */}
+                  {item.email?.subject && (
+                    <div className="text-[11px] font-semibold text-ink mb-0.5 truncate">
+                      {item.email.subject}
+                    </div>
+                  )}
+
+                  {/* Snippet */}
+                  {item.content_snippet && (
+                    <p className="text-[10px] text-ink-2 leading-snug line-clamp-2">{item.content_snippet}</p>
+                  )}
+
+                  {/* Footer */}
+                  <div className="flex items-center gap-3 mt-1 text-[9px] text-ink-mute font-mono">
+                    <span>{fmtDate(sentAt)}</span>
+                    {item.total_attempts > 1 && (
+                      <span className="text-amber-500">{item.total_attempts} attempts</span>
+                    )}
+                    {item.confidence != null && (
+                      <span>conf {(item.confidence * 100).toFixed(0)}%</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </Panel>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 function DeltaLabel({ value, direction }: { value: number; direction?: "up" | "down" }) {
@@ -867,6 +950,12 @@ export function DashboardPage() {
     queryKey: ["kbInsights"],
     queryFn: api.dashboardKbInsights,
     refetchInterval: 120_000,
+  });
+
+  const { data: sentEmailItems = [] } = useQuery({
+    queryKey: ["sentEmails"],
+    queryFn: api.sentEmails,
+    refetchInterval: 30_000,
   });
 
   const empty = !stats || stats.messages_sent.value === 0;
@@ -951,6 +1040,12 @@ export function DashboardPage() {
               <AgentFeedCard />
             </div>
 
+            {/* ── Retry Efficiency + Risk distribution ─────────────────────── */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
+              {finops && extended && <RetryEfficiencyCard finops={finops} extended={extended} />}
+              <RiskDistributionCard hallucCategories={extended?.validation_stats.hallucination_categories} />
+            </div>
+
             {/* ── Domain Insights + Mini FinOps ────────────────────────────── */}
             {(extended || finops) && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
@@ -977,11 +1072,8 @@ export function DashboardPage() {
               </div>
             )}
 
-            {/* ── Retry Efficiency + Risk distribution ─────────────────────── */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              {finops && extended && <RetryEfficiencyCard finops={finops} extended={extended} />}
-              <RiskDistributionCard hallucCategories={extended?.validation_stats.hallucination_categories} />
-            </div>
+            {/* ── Sent Emails ───────────────────────────────────────────────── */}
+            <SentEmailsPanel items={sentEmailItems} />
           </>
         )}
       </div>

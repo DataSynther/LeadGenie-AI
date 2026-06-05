@@ -155,6 +155,7 @@ export type ApprovalItem = {
   policy: string;
   confidence: number;
   email?: { subject: string; body: string; reasoning?: string };
+  status_updated_at?: string;
   checkpoints?: ValidatorCheckpoints;
   citations?: Record<string, CitationEntry2>;
   attempt_history?: {
@@ -174,6 +175,7 @@ export type ApprovalItem = {
 };
 
 export const approvalQueue = () => get<ApprovalItem[]>("/approval-queue");
+export const sentEmails    = () => get<ApprovalItem[]>("/approval-queue/sent");
 async function action<T>(path: string): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, { method: "POST" });
   if (!res.ok) throw new Error(`POST ${path} → ${res.status}`);
@@ -852,6 +854,7 @@ export const api = {
   pipeline,
   leadSearch,
   approvalQueue,
+  sentEmails,
   approveOutreach,
   rejectOutreach,
   editEmail,

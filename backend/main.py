@@ -558,6 +558,12 @@ async def approval_queue():
     return outreach_queue.get_queue(status="pending")
 
 
+@app.get("/approval-queue/sent")
+async def sent_emails():
+    """Return approved/sent outreach emails sorted by recency."""
+    return outreach_queue.get_queue(status="approved")
+
+
 @app.post("/approval-queue/{event_id}/approve")
 async def approve_outreach(event_id: str):
     """Approve and immediately send the outreach email."""
