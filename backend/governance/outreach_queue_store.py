@@ -196,7 +196,7 @@ class OutreachQueueStore:
         return match
 
     def get_queue(self, status: Optional[str] = None) -> list[dict]:
-        """Return items sorted by risk_score desc, then timestamp desc."""
+        """Return items sorted by timestamp desc (most recent first), risk_score desc as tiebreaker."""
         items = _read_all()
         # Deduplicate: keep latest record per event_id
         seen: dict[str, dict] = {}
@@ -207,7 +207,7 @@ class OutreachQueueStore:
         if status:
             items = [i for i in items if i.get("status") == status]
 
-        items.sort(key=lambda x: (-x.get("risk_score", 0), x.get("timestamp", "")), reverse=False)
+        items.sort(key=lambda x: (x.get("timestamp", ""), -x.get("risk_score", 0)), reverse=True)
         return items
 
     def update_email(self, event_id: str, subject: str, body: str) -> bool:
