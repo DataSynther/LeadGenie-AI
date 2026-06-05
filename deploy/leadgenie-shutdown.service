@@ -1,0 +1,11 @@
+[Unit]
+Description=LeadGenie idle instance shutdown check
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/leadgenie/idle_shutdown.sh
+Environment=IDLE_MINUTES=60
+Environment=ACTIVITY_FILE=/tmp/leadgenie_last_activity
+StandardOutput=journal
+StandardError=journal
