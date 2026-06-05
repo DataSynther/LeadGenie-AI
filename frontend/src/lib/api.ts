@@ -43,6 +43,27 @@ export const dashboardStats = () => get<{
   blocked_patterns: { label: string; count: number }[];
 }>("/dashboard/stats");
 
+export type RawOutreachEvent = {
+  event_id: string; lead_id: string; lead_name: string; company_name: string;
+  risk_score: number; risk_level: string; status: string;
+  tone_passed: number; hallucination_passed: number;
+  tone_issues: string; hallucination_violations: string;
+  total_attempts: number; timestamp: string;
+};
+export type RawConversationEvent = {
+  id: number; lead_id: string; intent: string; confidence: number; timestamp: string;
+};
+export type RawAgentEvent = {
+  id: number; agent: string; message: string; lead_id: string;
+  latency_ms: number; success: number; timestamp: string;
+};
+
+export const dashboardStatsRaw = () => get<{
+  outreach_events: RawOutreachEvent[];
+  conversation_events: RawConversationEvent[];
+  agent_events: RawAgentEvent[];
+}>("/dashboard/stats/raw");
+
 export type AgentFeedEvent = {
   timestamp: string;
   agent: "research" | "outreach" | "reply" | "gov" | "schedule";
@@ -663,6 +684,7 @@ export const api = {
   devSelfEvalStats,
   devPromptVersions,
   devEngagementRuns,
+  dashboardStatsRaw,
 };
 
 export default api;

@@ -63,10 +63,14 @@ from observability import diagnostic_store
 from memory.memory_governance import governance as memory_governance
 from memory.industry_outreach_memory import IndustryOutreachMemory
 from agents.outreach.template_categorizer import TemplateCategorizer as _TemplateCategorizer, DomainDetector as _DomainDetector, STREAMS as _STREAMS, DOMAINS as _DOMAINS
+from storage import stats_store
 
 industry_memory = IndustryOutreachMemory()
 _categorizer_instance = _TemplateCategorizer()
 _domain_detector_instance = _DomainDetector()
+
+# Initialise stats DB and sync existing JSONL history on startup
+stats_store.init()
 
 app = FastAPI(
     title="LeadGenie AI — Governed Adaptive SDR Platform",
@@ -333,6 +337,36 @@ async def generate_outreach(req: OutreachRequest):
     except Exception as _mem_err:
         logger.warning("industry_memory.write failed: %s", _mem_err)
 
+    # ── Record to stats store for Mission Control dashboard ───────────────────
+    try:
+        gov = result["governance"]
+        attempt_hist = result["governance_attempt_history"]
+        last = attempt_hist[-1] if attempt_hist else {}
+        layers = last.get("layers", {})
+        tone_layer = layers.get("tone", {})
+        halluc_layer = layers.get("hallucination", {})
+        stats_store.record_outreach(
+            event_id=event_id,
+            lead_id=req.lead_id,
+            lead_name=lead.get("name", ""),
+            company_name=company.get("name", ""),
+            risk_score=gov.get("risk_score", 0.0),
+            risk_level=gov.get("risk_level", "low"),
+            status="pending",
+            tone_passed=not tone_layer.get("issues"),
+            hallucination_passed=halluc_layer.get("passed", True),
+            tone_issues=tone_layer.get("issues", []),
+            hallucination_violations=halluc_layer.get("violations", []),
+            total_attempts=gov.get("total_attempts", 1),
+        )
+        stats_store.record_agent_event(
+            agent="outreach",
+            message=f"Generated outreach for {lead.get('name', '')} at {company.get('name', '')}",
+            lead_id=req.lead_id,
+        )
+    except Exception as _stats_err:
+        logger.warning("stats_store.record_outreach failed: %s", _stats_err)
+
     return {
         "lead": lead,
         "company": company,
@@ -379,12 +413,39 @@ async def send_outreach(req: SendOutreachRequest):
 
 @app.post("/conversation/reply")
 async def handle_reply(req: ConversationRequest):
-    return conversation_agent.handle_reply(req.lead_id, req.reply, req.context)
+    result = conversation_agent.handle_reply(req.lead_id, req.reply, req.context)
+    try:
+        stats_store.record_conversation(
+            lead_id=req.lead_id,
+            intent=result.get("intent", "neutral"),
+            confidence=result.get("intent_confidence"),
+        )
+        stats_store.record_agent_event(
+            agent="conversation",
+            message=f"Replied to {req.lead_id} (intent: {result.get('intent', 'neutral')})",
+            lead_id=req.lead_id,
+        )
+    except Exception as _stats_err:
+        logger.warning("stats_store.record_conversation failed: %s", _stats_err)
+    return result
 
 
 @app.post("/feedback/record")
 async def record_feedback(req: FeedbackRequest):
     feedback_collector.record_outcome(req.lead_id, req.outcome, req.metadata)
+    try:
+        if req.outcome == "meeting_booked":
+            stats_store.record_conversation(
+                lead_id=req.lead_id,
+                intent="meeting_request",
+            )
+        stats_store.record_agent_event(
+            agent="gov",
+            message=f"Outcome recorded: {req.outcome} for {req.lead_id}",
+            lead_id=req.lead_id,
+        )
+    except Exception as _stats_err:
+        logger.warning("stats_store.record_feedback failed: %s", _stats_err)
     return {"status": "recorded"}
 
 
@@ -406,47 +467,31 @@ async def get_audit_trail(lead_id: str):
 
 @app.get("/dashboard/stats")
 async def dashboard_stats():
-    """Dashboard statistics."""
+    """Dashboard statistics derived from real event data."""
+    return stats_store.get_dashboard_stats()
+
+
+@app.get("/dashboard/stats/raw")
+async def dashboard_stats_raw():
+    """Raw table rows for validating dashboard numbers."""
     return {
-        "prospects_discovered": {"value": 1250, "delta_pct": 12.5},
-        "messages_sent": {"value": 487, "delta_pct": 8.2},
-        "reply_rate": {"value": 0.28, "delta_pct": 3.1},
-        "meetings_booked": {"value": 42, "delta_abs": 5},
-        "funnel": [
-            {"label": "New", "count": 500, "pct": 40},
-            {"label": "Sent", "count": 400, "pct": 32},
-            {"label": "Engaged", "count": 200, "pct": 16},
-            {"label": "Meeting Booked", "count": 100, "pct": 8},
-        ],
-        "risk_distribution": {"low": 800, "medium": 350, "high": 100},
-        "blocked_patterns": [
-            {"label": "Generic greetings", "count": 45},
-            {"label": "Excessive links", "count": 23},
-            {"label": "Compliance issues", "count": 12},
-        ],
+        "outreach_events":      stats_store.get_raw_outreach(limit=200),
+        "conversation_events":  stats_store.get_raw_conversations(limit=200),
+        "agent_events":         stats_store.get_raw_agent_events(limit=200),
     }
 
 
 @app.get("/agent-feed/recent")
 async def agent_feed_recent():
-    """Recent agent activity feed."""
-    return [
-        {
-            "timestamp": "2026-05-27T10:15:00Z",
-            "agent": "research",
-            "message": "Researched TechCorp Inc hiring trends",
-        },
-        {
-            "timestamp": "2026-05-27T10:12:00Z",
-            "agent": "outreach",
-            "message": "Generated email for Sarah Chen at Acme Corp",
-        },
-        {
-            "timestamp": "2026-05-27T10:10:00Z",
-            "agent": "gov",
-            "message": "Compliance check passed for outreach batch",
-        },
-    ]
+    """Recent agent activity from the stats store."""
+    events = stats_store.get_recent_agent_events(limit=20)
+    # Normalise agent label to known frontend keys
+    _agent_map = {"research": "research", "outreach": "outreach",
+                  "conversation": "reply", "intent": "gov", "gov": "gov",
+                  "governance": "gov", "schedule": "schedule"}
+    for e in events:
+        e["agent"] = _agent_map.get(e["agent"], "gov")
+    return events
 
 
 def _person_to_pipeline_item(person: dict) -> dict:
@@ -521,6 +566,8 @@ async def approve_outreach(event_id: str):
         raise HTTPException(status_code=502, detail=f"Email send failed: {send_result.get('error')}")
 
     outreach_queue.update_status(event_id, "approved")
+    stats_store.update_outreach_status(event_id, "approved")
+    stats_store.record_agent_event(agent="gov", message=f"Outreach approved & sent to {to_email}", lead_id=item.get("lead_id", ""))
     return {"status": "approved", "sent": True, "to": to_email, "event_id": event_id}
 
 
@@ -530,6 +577,8 @@ async def reject_outreach(event_id: str):
     found = outreach_queue.update_status(event_id, "rejected")
     if not found:
         raise HTTPException(status_code=404, detail="Event not found")
+    stats_store.update_outreach_status(event_id, "rejected")
+    stats_store.record_agent_event(agent="gov", message=f"Outreach rejected: {event_id}")
     return {"status": "rejected", "event_id": event_id}
 
 
