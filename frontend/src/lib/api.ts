@@ -755,6 +755,36 @@ export type FinOpsSummary = {
 
 export const devFinOps = () => get<FinOpsSummary>("/dev/finops");
 
+// ── Dashboard Extended Stats ──────────────────────────────────────────────────
+
+export type DashboardCompanyRow = {
+  company: string;
+  outreach_count: number;
+  approved_count: number;
+  blocked_count: number;
+  avg_risk: number;
+  reply_count: number;
+};
+
+export type DashboardExtendedStats = {
+  company_breakdown: DashboardCompanyRow[];
+  intent_distribution: { intent: string; count: number; pct: number }[];
+  validation_stats: {
+    total_checks: number;
+    tone_pass_count: number; tone_fail_count: number; tone_pass_rate: number;
+    halluc_pass_count: number; halluc_fail_count: number; halluc_pass_rate: number;
+    both_passed: number; neither_passed: number;
+    violation_types: { label: string; count: number }[];
+  };
+  governance_summary: {
+    total_outreach: number; approved: number; blocked: number; pending: number;
+    avg_attempts: number; multi_attempt_count: number; multi_attempt_pct: number;
+    attempts_distribution: { attempts: number; count: number }[];
+  };
+};
+
+export const dashboardExtendedStats = () => get<DashboardExtendedStats>("/dashboard/extended-stats");
+
 // ── Engagement Runs (per-lead outreach/reply with per-attempt detail) ──────────
 
 export type EngagementRun = {
@@ -814,6 +844,7 @@ export const api = {
   devEngagementRuns,
   dashboardStatsRaw,
   devFinOps,
+  dashboardExtendedStats,
 };
 
 export default api;

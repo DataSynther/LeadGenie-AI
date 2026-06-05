@@ -32,7 +32,7 @@ export function AgentFeedCard() {
         <div className="label-mono">Live</div>
       </div>
       <div className="px-5 pt-2 pb-5">
-        <div className="flex flex-col">
+        <div className="flex flex-col max-h-[300px] overflow-y-auto">
           {events.map((event, i) => (
             <div
               key={i}

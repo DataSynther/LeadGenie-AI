@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { Topbar } from "../components/layout/Topbar";
 import { StatusPill } from "../components/StatusPill";
 import { KpiCard } from "../components/dashboard/KpiCard";
@@ -6,8 +7,419 @@ import { FunnelCard } from "../components/dashboard/FunnelCard";
 import { AgentFeedCard } from "../components/dashboard/AgentFeedCard";
 import { ApprovalPreviewCard } from "../components/dashboard/ApprovalPreviewCard";
 import { RiskDistributionCard } from "../components/dashboard/RiskDistributionCard";
-import { api } from "../lib/api";
-import { formatNumber } from "../lib/utils";
+import { api, type DashboardExtendedStats, type FinOpsSummary } from "../lib/api";
+import { formatNumber, cn } from "../lib/utils";
+
+// ── Design tokens (CommandCenter palette) ─────────────────────────────────────
+
+const INTENT_C: Record<string, { text: string; bg: string; line: string }> = {
+  meeting_request:  { text: "text-emerald-500", bg: "bg-emerald-500/10", line: "#10b981" },
+  pricing_inquiry:  { text: "text-sky-500",     bg: "bg-sky-500/10",     line: "#0ea5e9" },
+  interested:       { text: "text-violet-500",  bg: "bg-violet-500/10",  line: "#8b5cf6" },
+  not_interested:   { text: "text-red-400",     bg: "bg-red-500/10",     line: "#f87171" },
+  out_of_office:    { text: "text-amber-500",   bg: "bg-amber-500/10",   line: "#f59e0b" },
+  default:          { text: "text-ink-2",       bg: "bg-surface-2",      line: "#94a3b8" },
+};
+const getIC = (intent: string) => INTENT_C[intent] ?? INTENT_C.default;
+
+const fmtPct = (n: number) => `${n.toFixed(1)}%`;
+
+// ── Shared primitives ─────────────────────────────────────────────────────────
+
+function Panel({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <div className={cn("rounded-xl border border-line-soft bg-surface p-5", className)}>{children}</div>;
+}
+function PanelTitle({ title, sub }: { title: string; sub?: string }) {
+  return (
+    <div className="mb-4">
+      <div className="text-[13px] font-semibold text-ink">{title}</div>
+      {sub && <div className="text-[10px] text-ink-mute mt-0.5">{sub}</div>}
+    </div>
+  );
+}
+
+// ── Tiny donut ────────────────────────────────────────────────────────────────
+
+function MiniDonut({ pass, fail, passColour, center }: {
+  pass: number; fail: number; passColour: string; center?: string;
+}) {
+  const total = pass + fail || 1;
+  const r = 28; const cx = 36; const cy = 36;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const passSweep = (pass / total) * 360;
+  const s1x = cx + r * Math.cos(toRad(-90));
+  const s1y = cy + r * Math.sin(toRad(-90));
+  const s2x = cx + r * Math.cos(toRad(-90 + passSweep));
+  const s2y = cy + r * Math.sin(toRad(-90 + passSweep));
+  const passArc = passSweep > 1
+    ? `M ${s1x} ${s1y} A ${r} ${r} 0 ${passSweep > 180 ? 1 : 0} 1 ${s2x} ${s2y}`
+    : "";
+  return (
+    <svg width={72} height={72} viewBox="0 0 72 72">
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgb(var(--c-line-soft))" strokeWidth="10" />
+      {passArc && (
+        <path d={passArc} fill="none" stroke={passColour} strokeWidth="10" strokeLinecap="butt" />
+      )}
+      {center && (
+        <text x={cx} y={cy + 4} textAnchor="middle" fill="rgb(var(--c-ink))" fontSize="11" fontWeight="700">
+          {center}
+        </text>
+      )}
+    </svg>
+  );
+}
+
+// ── Company domain breakdown ──────────────────────────────────────────────────
+
+function CompanyInsightsPanel({ data }: { data: DashboardExtendedStats["company_breakdown"] }) {
+  if (!data.length) return (
+    <Panel><PanelTitle title="Domain Insights" /><p className="text-[11px] text-ink-mute">No outreach data yet.</p></Panel>
+  );
+  const maxCount = Math.max(...data.map(r => r.outreach_count), 1);
+  return (
+    <Panel>
+      <PanelTitle title="Domain Insights" sub="Top companies by outreach volume · reply rate shows engagement quality" />
+      <div className="space-y-3">
+        {data.map(row => {
+          const replyRate = row.outreach_count > 0 ? row.reply_count / row.outreach_count : 0;
+          const riskColour = row.avg_risk >= 0.7 ? "text-red-400" : row.avg_risk >= 0.4 ? "text-amber-500" : "text-emerald-500";
+          return (
+            <div key={row.company}>
+              <div className="flex items-center justify-between mb-1 text-[11px]">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-1.5 h-1.5 rounded-full bg-brand flex-shrink-0" />
+                  <span className="font-medium text-ink truncate">{row.company}</span>
+                  <span className={cn("font-mono text-[10px] flex-shrink-0", riskColour)}>
+                    risk {fmtPct(row.avg_risk * 100)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 flex-shrink-0 text-[10px]">
+                  <span className="text-emerald-500 font-mono font-semibold">{row.reply_count} replies</span>
+                  <span className="text-ink-2 font-mono">{row.outreach_count} sent</span>
+                </div>
+              </div>
+              <div className="h-2 rounded-full bg-surface-2 overflow-hidden flex">
+                <div className="h-full bg-brand/60 rounded-l-full"
+                  style={{ width: `${(row.approved_count / maxCount) * 100}%` }}
+                  title={`Approved: ${row.approved_count}`} />
+                {row.blocked_count > 0 && (
+                  <div className="h-full bg-red-500/40"
+                    style={{ width: `${(row.blocked_count / maxCount) * 100}%` }}
+                    title={`Blocked: ${row.blocked_count}`} />
+                )}
+              </div>
+              <div className="flex justify-between text-[9px] text-ink-mute mt-0.5 font-mono">
+                <span className="text-brand/70">{row.approved_count} approved</span>
+                {row.blocked_count > 0 && <span className="text-red-400">{row.blocked_count} blocked</span>}
+                <span>{(replyRate * 100).toFixed(0)}% reply rate</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex gap-4 mt-3 pt-3 border-t border-line-soft">
+        <div className="flex items-center gap-1.5 text-[10px] text-ink-mute">
+          <div className="w-3 h-2 rounded-sm bg-brand/60" /> Approved
+        </div>
+        <div className="flex items-center gap-1.5 text-[10px] text-ink-mute">
+          <div className="w-3 h-2 rounded-sm bg-red-500/40" /> Blocked
+        </div>
+      </div>
+    </Panel>
+  );
+}
+
+// ── Mini FinOps widget ────────────────────────────────────────────────────────
+
+const AGENT_LINE: Record<string, string> = {
+  research: "#0ea5e9", outreach: "#8b5cf6", conversation: "#10b981",
+  intent: "#f59e0b", gov: "#f87171", governance: "#f87171",
+};
+
+function MiniFinOpsPanel({ data }: { data: FinOpsSummary }) {
+  const agentEntries = Object.entries(data.cost_by_agent).slice(0, 4);
+  const totalCost = data.total_cost_usd;
+  const wastedPct = totalCost > 0 ? (data.wasted_cost_usd / totalCost) * 100 : 0;
+  const effPct = 100 - wastedPct;
+  const effColour = effPct >= 90 ? "text-emerald-500" : effPct >= 70 ? "text-amber-500" : "text-red-400";
+  return (
+    <Panel>
+      <div className="flex items-start justify-between mb-4">
+        <PanelTitle
+          title="AI Spend Summary"
+          sub="Cost efficiency · agent breakdown · wasted spend"
+        />
+        <Link to="/finops" className="text-[10px] text-brand font-medium hover:underline flex-shrink-0">
+          Full FinOps →
+        </Link>
+      </div>
+
+      {/* Top-line KPIs */}
+      <div className="grid grid-cols-3 gap-2 mb-4">
+        {[
+          { label: "Total Cost",    value: `$${totalCost.toFixed(4)}`,          colour: "text-brand"       },
+          { label: "Efficiency",    value: `${effPct.toFixed(0)}%`,              colour: effColour          },
+          { label: "Wasted",        value: `$${data.wasted_cost_usd.toFixed(4)}`, colour: "text-amber-500" },
+        ].map(k => (
+          <div key={k.label} className="p-2 rounded-lg bg-surface-2 text-center">
+            <div className="text-[9px] uppercase tracking-widest text-ink font-semibold mb-0.5">{k.label}</div>
+            <div className={cn("text-[15px] font-bold font-mono", k.colour)}>{k.value}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Agent cost bars */}
+      <div className="space-y-2.5">
+        {agentEntries.map(([agent, v]) => {
+          const pct = totalCost > 0 ? (v.cost_usd / totalCost) * 100 : 0;
+          const colour = AGENT_LINE[agent] ?? "#94a3b8";
+          return (
+            <div key={agent}>
+              <div className="flex items-center justify-between text-[11px] mb-1">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: colour }} />
+                  <span className="font-medium text-ink capitalize">{agent}</span>
+                </div>
+                <span className="font-mono text-ink-2 text-[10px]">${v.cost_usd.toFixed(5)}</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-surface-2 overflow-hidden">
+                <div className="h-full rounded-full" style={{ width: `${pct}%`, background: colour, opacity: 0.8 }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Model routing strip */}
+      <div className="mt-3 pt-3 border-t border-line-soft flex items-center gap-2 text-[10px]">
+        <span className="text-ink-mute">Model split:</span>
+        {Object.entries(data.model_routing).map(([m, v]) => (
+          <span key={m} className={cn("font-mono font-semibold px-1.5 py-0.5 rounded",
+            m === "sonnet" ? "bg-brand/10 text-brand" : "bg-amber-500/10 text-amber-500")}>
+            {m} {v.pct_cost}%
+          </span>
+        ))}
+        <span className="text-ink-mute ml-auto">{data.total_traces} traces</span>
+      </div>
+    </Panel>
+  );
+}
+
+// ── Intent distribution chart ─────────────────────────────────────────────────
+
+function IntentDistPanel({ data }: { data: DashboardExtendedStats["intent_distribution"] }) {
+  if (!data.length) return null;
+  const max = Math.max(...data.map(r => r.count), 1);
+  const intentLabel = (i: string) => i.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+  return (
+    <div>
+      <div className="text-[11px] font-semibold text-ink mb-2">Reply Intent Breakdown</div>
+      <div className="space-y-2">
+        {data.map(r => {
+          const ic = getIC(r.intent);
+          return (
+            <div key={r.intent}>
+              <div className="flex items-center justify-between text-[10px] mb-0.5">
+                <span className={cn("font-medium", ic.text)}>{intentLabel(r.intent)}</span>
+                <span className="font-mono text-ink-2 font-semibold">{r.count} <span className="text-ink-mute">({r.pct}%)</span></span>
+              </div>
+              <div className="h-1.5 rounded-full bg-surface-2 overflow-hidden">
+                <div className="h-full rounded-full" style={{ width: `${(r.count / max) * 100}%`, background: ic.line }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── Validation & Governance stats (full-width 3-col) ─────────────────────────
+
+type ValStats = DashboardExtendedStats["validation_stats"];
+type GovStats = DashboardExtendedStats["governance_summary"];
+
+function ValidationGovernanceRow({ val, gov, intent }: {
+  val: ValStats; gov: GovStats; intent: DashboardExtendedStats["intent_distribution"];
+}) {
+  const maxViol = Math.max(...val.violation_types.map(v => v.count), 1);
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+      {/* ── Tone Validator ──────────────────────────────────────────────────── */}
+      <Panel>
+        <PanelTitle title="Tone Validator" sub="Checks language, banned phrases, subject line quality" />
+        <div className="flex items-start gap-4 mb-4">
+          <MiniDonut pass={val.tone_pass_count} fail={val.tone_fail_count}
+            passColour="#10b981" center={`${val.tone_pass_rate}%`} />
+          <div className="space-y-2 flex-1">
+            <div className="flex justify-between text-[11px]">
+              <span className="text-ink-2 font-medium">Passed</span>
+              <span className="font-mono font-bold text-emerald-500">{val.tone_pass_count}</span>
+            </div>
+            <div className="h-1.5 rounded-full bg-surface-2 overflow-hidden">
+              <div className="h-full rounded-full bg-emerald-500"
+                style={{ width: `${val.tone_pass_rate}%` }} />
+            </div>
+            <div className="flex justify-between text-[11px]">
+              <span className="text-ink-2 font-medium">Failed</span>
+              <span className="font-mono font-bold text-red-400">{val.tone_fail_count}</span>
+            </div>
+            <div className="h-1.5 rounded-full bg-surface-2 overflow-hidden">
+              <div className="h-full rounded-full bg-red-400"
+                style={{ width: `${100 - val.tone_pass_rate}%` }} />
+            </div>
+          </div>
+        </div>
+        <div className="text-[10px] font-semibold text-ink mb-2">Top Issues Flagged</div>
+        <div className="space-y-1.5">
+          {val.violation_types.filter(v =>
+            !v.label.toLowerCase().includes("hallucin") && !v.label.toLowerCase().includes("unverifi")
+          ).slice(0, 4).map(v => (
+            <div key={v.label}>
+              <div className="flex justify-between text-[10px] mb-0.5">
+                <span className="text-ink-2 font-medium truncate max-w-[140px]">{v.label}</span>
+                <span className="font-mono font-semibold text-ink flex-shrink-0 ml-1">{v.count}</span>
+              </div>
+              <div className="h-1 rounded-full bg-surface-2 overflow-hidden">
+                <div className="h-full rounded-full bg-amber-500/70"
+                  style={{ width: `${(v.count / maxViol) * 100}%` }} />
+              </div>
+            </div>
+          ))}
+          {val.violation_types.length === 0 && (
+            <p className="text-[10px] text-emerald-500 font-medium">No tone issues detected</p>
+          )}
+        </div>
+      </Panel>
+
+      {/* ── Hallucination Guard ──────────────────────────────────────────────── */}
+      <Panel>
+        <PanelTitle title="Hallucination Guard" sub="Verifies factual claims: revenue, headcount, technology stack" />
+        <div className="flex items-start gap-4 mb-4">
+          <MiniDonut pass={val.halluc_pass_count} fail={val.halluc_fail_count}
+            passColour="#8b5cf6" center={`${val.halluc_pass_rate}%`} />
+          <div className="space-y-2 flex-1">
+            <div className="flex justify-between text-[11px]">
+              <span className="text-ink-2 font-medium">Passed</span>
+              <span className="font-mono font-bold text-violet-500">{val.halluc_pass_count}</span>
+            </div>
+            <div className="h-1.5 rounded-full bg-surface-2 overflow-hidden">
+              <div className="h-full rounded-full bg-violet-500"
+                style={{ width: `${val.halluc_pass_rate}%` }} />
+            </div>
+            <div className="flex justify-between text-[11px]">
+              <span className="text-ink-2 font-medium">Failed</span>
+              <span className="font-mono font-bold text-red-400">{val.halluc_fail_count}</span>
+            </div>
+            <div className="h-1.5 rounded-full bg-surface-2 overflow-hidden">
+              <div className="h-full rounded-full bg-red-400"
+                style={{ width: `${100 - val.halluc_pass_rate}%` }} />
+            </div>
+          </div>
+        </div>
+        {/* What's checked */}
+        <div className="text-[10px] font-semibold text-ink mb-2">What Gets Checked</div>
+        <div className="space-y-1.5">
+          {[
+            { label: "Revenue / funding claims", colour: "bg-violet-500/60" },
+            { label: "Headcount & growth stats", colour: "bg-sky-500/60" },
+            { label: "Technology stack mentions", colour: "bg-emerald-500/60" },
+            { label: "Unverified product claims", colour: "bg-amber-500/60" },
+            { label: "Company name accuracy",    colour: "bg-red-500/60" },
+          ].map(item => (
+            <div key={item.label} className="flex items-center gap-2 text-[10px]">
+              <div className={cn("w-2 h-2 rounded-sm flex-shrink-0", item.colour)} />
+              <span className="text-ink-2 font-medium">{item.label}</span>
+            </div>
+          ))}
+        </div>
+        <div className="mt-3 pt-2 border-t border-line-soft flex justify-between text-[10px]">
+          <span className="text-ink-mute">Both checks passed:</span>
+          <span className="font-mono font-bold text-emerald-500">{val.both_passed} / {val.total_checks}</span>
+        </div>
+      </Panel>
+
+      {/* ── Governance Decisions + Intent ───────────────────────────────────── */}
+      <Panel>
+        <PanelTitle title="Governance Outcomes" sub="Decisions across all outreach · retry overhead · reply intent" />
+
+        {/* Decision donut */}
+        <div className="flex items-start gap-4 mb-4">
+          <div className="flex-shrink-0">
+            <svg width={72} height={72} viewBox="0 0 72 72">
+              {(() => {
+                const total = (gov.approved + gov.blocked + gov.pending) || 1;
+                const segs = [
+                  { v: gov.approved, c: "#10b981" },
+                  { v: gov.blocked,  c: "#f87171" },
+                  { v: gov.pending,  c: "#f59e0b" },
+                ];
+                const r = 28; const cx = 36; const cy = 36;
+                const toRad = (d: number) => (d * Math.PI) / 180;
+                let ang = -90;
+                return segs.map((s, i) => {
+                  const sweep = (s.v / total) * 360;
+                  const sa = ang; ang += sweep;
+                  if (sweep < 2) return null;
+                  const x1 = cx + r * Math.cos(toRad(sa));
+                  const y1 = cy + r * Math.sin(toRad(sa));
+                  const x2 = cx + r * Math.cos(toRad(sa + sweep));
+                  const y2 = cy + r * Math.sin(toRad(sa + sweep));
+                  return (
+                    <path key={i} d={`M ${x1} ${y1} A ${r} ${r} 0 ${sweep > 180 ? 1 : 0} 1 ${x2} ${y2}`}
+                      fill="none" stroke={s.c} strokeWidth="10" strokeLinecap="butt">
+                      <title>{["Approved","Blocked","Pending"][i]}: {s.v}</title>
+                    </path>
+                  );
+                });
+              })()}
+              <circle cx={36} cy={36} r={28} fill="none" stroke="rgb(var(--c-line-soft))" strokeWidth="10"
+                style={{ display: (gov.approved + gov.blocked + gov.pending) === 0 ? "block" : "none" }} />
+            </svg>
+          </div>
+          <div className="space-y-2 flex-1">
+            {[
+              { label: "Approved", value: gov.approved, colour: "text-emerald-500", bar: "bg-emerald-500" },
+              { label: "Blocked",  value: gov.blocked,  colour: "text-red-400",     bar: "bg-red-400"     },
+              { label: "Pending",  value: gov.pending,  colour: "text-amber-500",   bar: "bg-amber-500"   },
+            ].map(item => {
+              const total = gov.total_outreach || 1;
+              return (
+                <div key={item.label}>
+                  <div className="flex justify-between text-[10px] mb-0.5">
+                    <span className="text-ink-2 font-medium">{item.label}</span>
+                    <span className={cn("font-mono font-bold", item.colour)}>{item.value}</span>
+                  </div>
+                  <div className="h-1 rounded-full bg-surface-2 overflow-hidden">
+                    <div className={cn("h-full rounded-full", item.bar)}
+                      style={{ width: `${(item.value / total) * 100}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Retry overhead */}
+        <div className="flex items-center justify-between p-2 rounded-lg bg-amber-500/8 border border-amber-500/20 mb-3">
+          <div className="text-[10px]">
+            <span className="text-ink font-semibold">Retry overhead</span>
+            <span className="text-ink-mute ml-1">— avg {gov.avg_attempts} attempts</span>
+          </div>
+          <span className="font-mono text-[11px] font-bold text-amber-500">{gov.multi_attempt_pct}%</span>
+        </div>
+
+        {/* Intent dist */}
+        <IntentDistPanel data={intent} />
+      </Panel>
+
+    </div>
+  );
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 
 function DeltaLabel({ value, direction }: { value: number; direction?: "up" | "down" }) {
   if (value === 0) return null;
@@ -20,6 +432,18 @@ export function DashboardPage() {
     queryKey: ["dashboardStats"],
     queryFn: api.dashboardStats,
     refetchInterval: 30_000,
+  });
+
+  const { data: extended } = useQuery({
+    queryKey: ["dashboardExtended"],
+    queryFn: api.dashboardExtendedStats,
+    refetchInterval: 60_000,
+  });
+
+  const { data: finops } = useQuery({
+    queryKey: ["finops"],
+    queryFn: api.devFinOps,
+    refetchInterval: 60_000,
   });
 
   const empty = !stats || stats.messages_sent.value === 0;
@@ -57,6 +481,7 @@ export function DashboardPage() {
               </div>
             )}
 
+            {/* ── KPI strip ─────────────────────────────────────────────────── */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 mb-7">
               <KpiCard
                 label="Prospects Discovered"
@@ -97,11 +522,32 @@ export function DashboardPage() {
               />
             </div>
 
+            {/* ── Funnel + Agent Feed ───────────────────────────────────────── */}
             <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-5 mb-5">
               <FunnelCard rows={stats.funnel} />
               <AgentFeedCard />
             </div>
 
+            {/* ── Domain Insights + Mini FinOps ────────────────────────────── */}
+            {(extended || finops) && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+                {extended && <CompanyInsightsPanel data={extended.company_breakdown} />}
+                {finops && <MiniFinOpsPanel data={finops} />}
+              </div>
+            )}
+
+            {/* ── Validation & Governance stats ────────────────────────────── */}
+            {extended && (
+              <div className="mb-5">
+                <ValidationGovernanceRow
+                  val={extended.validation_stats}
+                  gov={extended.governance_summary}
+                  intent={extended.intent_distribution}
+                />
+              </div>
+            )}
+
+            {/* ── Approval preview + Risk distribution ─────────────────────── */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <ApprovalPreviewCard />
               <RiskDistributionCard />

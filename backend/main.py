@@ -471,6 +471,12 @@ async def dashboard_stats():
     return stats_store.get_dashboard_stats()
 
 
+@app.get("/dashboard/extended-stats")
+async def dashboard_extended_stats():
+    """Extended Mission Control stats: company breakdown, validation, governance, intent."""
+    return stats_store.get_extended_stats()
+
+
 @app.get("/dashboard/stats/raw")
 async def dashboard_stats_raw():
     """Raw table rows for validating dashboard numbers."""

@@ -483,3 +483,131 @@ def get_raw_agent_events(limit: int = 100) -> list[dict]:
         ).fetchall()
         conn.close()
     return [dict(r) for r in rows]
+
+
+def get_extended_stats() -> dict:
+    """Extended Mission Control stats: company breakdown, validation, intent, governance."""
+    with _lock:
+        conn = _connect()
+        now_30 = _iso_days_ago(30)
+
+        def scalar(sql: str, params: tuple = ()) -> int | float:
+            row = conn.execute(sql, params).fetchone()
+            return row[0] if row and row[0] is not None else 0
+
+        # ── Top companies by outreach volume ──────────────────────────────────
+        company_rows = conn.execute("""
+            SELECT
+                company_name,
+                COUNT(*) AS outreach_count,
+                AVG(risk_score) AS avg_risk,
+                SUM(CASE WHEN status='approved' THEN 1 ELSE 0 END) AS approved_count,
+                SUM(CASE WHEN tone_passed=0 OR hallucination_passed=0 THEN 1 ELSE 0 END) AS blocked_count
+            FROM outreach_events
+            WHERE company_name != '' AND timestamp >= ?
+            GROUP BY company_name
+            ORDER BY outreach_count DESC
+            LIMIT 8
+        """, (now_30,)).fetchall()
+
+        company_breakdown = []
+        for r in company_rows:
+            reply_c = scalar("""
+                SELECT COUNT(DISTINCT ce.lead_id)
+                FROM conversation_events ce
+                JOIN outreach_events oe ON ce.lead_id = oe.lead_id
+                WHERE oe.company_name=? AND ce.timestamp>=?
+            """, (r["company_name"], now_30))
+            company_breakdown.append({
+                "company":        r["company_name"],
+                "outreach_count": r["outreach_count"],
+                "approved_count": int(r["approved_count"] or 0),
+                "blocked_count":  int(r["blocked_count"]  or 0),
+                "avg_risk":       round(float(r["avg_risk"] or 0), 2),
+                "reply_count":    int(reply_c),
+            })
+
+        # ── Intent distribution ───────────────────────────────────────────────
+        intent_rows = conn.execute("""
+            SELECT intent, COUNT(*) AS cnt
+            FROM conversation_events
+            WHERE timestamp>=? AND intent != ''
+            GROUP BY intent
+            ORDER BY cnt DESC
+        """, (now_30,)).fetchall()
+        total_intents = sum(r["cnt"] for r in intent_rows) or 1
+        intent_distribution = [
+            {"intent": r["intent"], "count": r["cnt"], "pct": round(r["cnt"] / total_intents * 100, 1)}
+            for r in intent_rows
+        ]
+
+        # ── Validation stats ──────────────────────────────────────────────────
+        total_checks = int(scalar("SELECT COUNT(*) FROM outreach_events WHERE timestamp>=?", (now_30,)))
+        tone_pass    = int(scalar("SELECT COUNT(*) FROM outreach_events WHERE tone_passed=1 AND timestamp>=?", (now_30,)))
+        halluc_pass  = int(scalar("SELECT COUNT(*) FROM outreach_events WHERE hallucination_passed=1 AND timestamp>=?", (now_30,)))
+        both_pass    = int(scalar("SELECT COUNT(*) FROM outreach_events WHERE tone_passed=1 AND hallucination_passed=1 AND timestamp>=?", (now_30,)))
+        neither      = int(scalar("SELECT COUNT(*) FROM outreach_events WHERE tone_passed=0 AND hallucination_passed=0 AND timestamp>=?", (now_30,)))
+
+        viol_rows = conn.execute(
+            "SELECT tone_issues, hallucination_violations FROM outreach_events WHERE timestamp>=?", (now_30,)
+        ).fetchall()
+        viol_counts: dict[str, int] = {}
+        for row in viol_rows:
+            for field in ("tone_issues", "hallucination_violations"):
+                try:
+                    for issue in json.loads(row[field] or "[]"):
+                        label = _normalise_issue_label(issue)
+                        viol_counts[label] = viol_counts.get(label, 0) + 1
+                except (json.JSONDecodeError, TypeError):
+                    pass
+        violation_types = sorted(
+            [{"label": k, "count": v} for k, v in viol_counts.items()],
+            key=lambda x: -x["count"]
+        )[:6]
+
+        validation_stats = {
+            "total_checks":      total_checks,
+            "tone_pass_count":   tone_pass,
+            "tone_fail_count":   total_checks - tone_pass,
+            "tone_pass_rate":    round(tone_pass   / max(total_checks, 1) * 100, 1),
+            "halluc_pass_count": halluc_pass,
+            "halluc_fail_count": total_checks - halluc_pass,
+            "halluc_pass_rate":  round(halluc_pass / max(total_checks, 1) * 100, 1),
+            "both_passed":       both_pass,
+            "neither_passed":    neither,
+            "violation_types":   violation_types,
+        }
+
+        # ── Governance summary ────────────────────────────────────────────────
+        approved = int(scalar("SELECT COUNT(*) FROM outreach_events WHERE status='approved' AND timestamp>=?", (now_30,)))
+        blocked  = int(scalar("SELECT COUNT(*) FROM outreach_events WHERE (tone_passed=0 OR hallucination_passed=0) AND timestamp>=?", (now_30,)))
+        pending  = int(scalar("SELECT COUNT(*) FROM outreach_events WHERE status='pending' AND timestamp>=?", (now_30,)))
+        multi_attempt = int(scalar("SELECT COUNT(*) FROM outreach_events WHERE total_attempts > 1 AND timestamp>=?", (now_30,)))
+        avg_att_row = conn.execute("SELECT AVG(total_attempts) FROM outreach_events WHERE timestamp>=?", (now_30,)).fetchone()
+        avg_attempts = round(float(avg_att_row[0] or 1.0), 2)
+
+        attempt_rows = conn.execute("""
+            SELECT total_attempts, COUNT(*) AS cnt
+            FROM outreach_events WHERE timestamp>=?
+            GROUP BY total_attempts ORDER BY total_attempts
+        """, (now_30,)).fetchall()
+
+        governance_summary = {
+            "total_outreach":     total_checks,
+            "approved":           approved,
+            "blocked":            blocked,
+            "pending":            pending,
+            "avg_attempts":       avg_attempts,
+            "multi_attempt_count": multi_attempt,
+            "multi_attempt_pct":  round(multi_attempt / max(total_checks, 1) * 100, 1),
+            "attempts_distribution": [{"attempts": r["total_attempts"], "count": r["cnt"]} for r in attempt_rows],
+        }
+
+        conn.close()
+
+    return {
+        "company_breakdown":   company_breakdown,
+        "intent_distribution": intent_distribution,
+        "validation_stats":    validation_stats,
+        "governance_summary":  governance_summary,
+    }
