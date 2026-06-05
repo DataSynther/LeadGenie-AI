@@ -5,7 +5,6 @@ import { StatusPill } from "../components/StatusPill";
 import { KpiCard } from "../components/dashboard/KpiCard";
 import { FunnelCard } from "../components/dashboard/FunnelCard";
 import { AgentFeedCard } from "../components/dashboard/AgentFeedCard";
-import { ApprovalPreviewCard } from "../components/dashboard/ApprovalPreviewCard";
 import { RiskDistributionCard } from "../components/dashboard/RiskDistributionCard";
 import { api, type DashboardExtendedStats, type FinOpsSummary } from "../lib/api";
 import { formatNumber, cn } from "../lib/utils";
@@ -273,6 +272,130 @@ function MiniFinOpsPanel({ data }: { data: FinOpsSummary }) {
           </span>
         ))}
         <span className="text-ink-mute ml-auto">{data.total_traces} traces</span>
+      </div>
+    </Panel>
+  );
+}
+
+// ── Retry Efficiency card ─────────────────────────────────────────────────────
+
+function RetryEfficiencyCard({ finops, extended }: {
+  finops: FinOpsSummary;
+  extended: DashboardExtendedStats;
+}) {
+  const c2s = finops.cost_to_success;
+  const outreach = c2s.find(r => r.agent === "outreach");
+  const agentRetries = c2s
+    .filter(r => r.agent !== "outreach" && r.retry_calls > 0)
+    .sort((a, b) => b.retry_cost_usd - a.retry_cost_usd);
+  const val = extended.validation_stats;
+  const fmt5 = (n: number) => n < 0.0001 ? `$${n.toFixed(6)}` : `$${n.toFixed(5)}`;
+
+  return (
+    <Panel>
+      <PanelTitle
+        title="Retry Efficiency"
+        sub="Per-layer success rates · cost of unsuccessful first attempts"
+      />
+
+      {/* ── Governance pipeline ──────────────────────────────────────────── */}
+      {outreach && outreach.jobs_total != null && (
+        <div className="mb-4">
+          <div className="text-[10px] uppercase tracking-widest text-ink font-semibold mb-2">Governance Pipeline</div>
+          {([
+            { label: "First Pass",   value: outreach.jobs_first_attempt_ok ?? 0, bar: "bg-emerald-500", text: "text-emerald-500" },
+            { label: "Retry → OK",   value: outreach.jobs_retry_succeeded  ?? 0, bar: "bg-amber-500",   text: "text-amber-500"   },
+            { label: "Retry → Fail", value: outreach.jobs_retry_failed     ?? 0, bar: "bg-red-400",     text: "text-red-400"     },
+          ] as const).map(item => {
+            const pct = outreach.jobs_total! > 0 ? (item.value / outreach.jobs_total!) * 100 : 0;
+            return (
+              <div key={item.label} className="mb-2">
+                <div className="flex items-center justify-between text-[10px] mb-0.5">
+                  <span className="text-ink-2 font-medium">{item.label}</span>
+                  <span className={cn("font-mono font-semibold", item.text)}>
+                    {item.value} <span className="text-ink-mute">({pct.toFixed(0)}%)</span>
+                  </span>
+                </div>
+                <div className="h-1.5 rounded-full bg-surface-2 overflow-hidden">
+                  <div className={cn("h-full rounded-full", item.bar)} style={{ width: `${pct}%` }} />
+                </div>
+              </div>
+            );
+          })}
+          <div className="flex justify-between text-[10px] pt-1.5 border-t border-line-soft">
+            <span className="text-ink-mute">Gov retry cost</span>
+            <span className="font-mono font-semibold text-amber-500">{fmt5(outreach.retry_cost_usd)}</span>
+          </div>
+        </div>
+      )}
+
+      {/* ── Validation layers ────────────────────────────────────────────── */}
+      <div className="mb-4">
+        <div className="text-[10px] uppercase tracking-widest text-ink font-semibold mb-2">Validation Layers</div>
+        {[
+          { label: "Tone Check",   pass: val.tone_pass_count,   fail: val.tone_fail_count,   rate: val.tone_pass_rate,   passBar: "bg-sky-500",    text: "text-sky-500"    },
+          { label: "Halluc Guard", pass: val.halluc_pass_count, fail: val.halluc_fail_count, rate: val.halluc_pass_rate, passBar: "bg-violet-500", text: "text-violet-500" },
+        ].map(layer => (
+          <div key={layer.label} className="mb-2.5">
+            <div className="flex items-center justify-between text-[10px] mb-0.5">
+              <span className="text-ink-2 font-medium">{layer.label}</span>
+              <div className="flex items-center gap-2">
+                <span className={cn("font-mono font-bold", layer.text)}>{layer.rate}%</span>
+                <span className="text-ink-mute">pass rate</span>
+              </div>
+            </div>
+            <div className="h-1.5 rounded-full bg-surface-2 overflow-hidden flex">
+              <div className={cn("h-full rounded-l-full", layer.passBar)} style={{ width: `${layer.rate}%` }} />
+              <div className="h-full bg-red-400/40" style={{ width: `${100 - layer.rate}%` }} />
+            </div>
+            <div className="text-[9px] text-ink-mute font-mono mt-0.5">
+              {layer.pass} passed ·{" "}
+              <span className="text-red-400 font-semibold">{layer.fail} failed</span>
+              {" "}→ triggered retries
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Per-agent retries ────────────────────────────────────────────── */}
+      {agentRetries.length > 0 && (
+        <div className="mb-3">
+          <div className="text-[10px] uppercase tracking-widest text-ink font-semibold mb-2">Agent Retries</div>
+          <div className="space-y-2">
+            {agentRetries.map(r => {
+              const firstOkPct = r.calls > 0 ? ((r.raw_success_calls - r.retry_success) / r.calls) * 100 : 0;
+              const retryOkPct = r.calls > 0 ? (r.retry_success / r.calls) * 100 : 0;
+              const failedPct  = r.calls > 0 ? ((r.calls - r.raw_success_calls) / r.calls) * 100 : 0;
+              const colour = AGENT_LINE[r.agent] ?? "#94a3b8";
+              return (
+                <div key={r.agent}>
+                  <div className="flex items-center justify-between text-[10px] mb-0.5">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full" style={{ background: colour }} />
+                      <span className="font-medium text-ink capitalize">{r.agent}</span>
+                      <span className="text-ink-mute">({r.calls} calls · {r.retry_calls} retries)</span>
+                    </div>
+                    <span className="font-mono font-semibold text-amber-500">{fmt5(r.retry_cost_usd)}</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-surface-2 overflow-hidden flex">
+                    {firstOkPct > 0.5 && <div className="h-full bg-emerald-500" style={{ width: `${firstOkPct}%` }} title="1st pass" />}
+                    {retryOkPct > 0.5 && <div className="h-full bg-amber-500"   style={{ width: `${retryOkPct}%` }} title="Retry OK" />}
+                    {failedPct  > 0.5 && <div className="h-full bg-red-400/70"  style={{ width: `${failedPct}%`  }} title="Failed"   />}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Total footer ─────────────────────────────────────────────────── */}
+      <div className="pt-2 border-t border-line-soft flex justify-between items-center text-[10px]">
+        <span className="text-ink-mute">Total retry overhead</span>
+        <div className="flex items-center gap-2">
+          <span className="font-mono font-bold text-amber-500">{fmt5(finops.retry_info.retry_cost_usd)}</span>
+          <span className="text-ink-mute">· {finops.retry_info.retry_calls} retries</span>
+        </div>
       </div>
     </Panel>
   );
@@ -620,10 +743,10 @@ export function DashboardPage() {
               </div>
             )}
 
-            {/* ── Approval preview + Risk distribution ─────────────────────── */}
+            {/* ── Retry Efficiency + Risk distribution ─────────────────────── */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <ApprovalPreviewCard />
-              <RiskDistributionCard />
+              {finops && extended && <RetryEfficiencyCard finops={finops} extended={extended} />}
+              <RiskDistributionCard hallucCategories={extended?.validation_stats.hallucination_categories} />
             </div>
           </>
         )}

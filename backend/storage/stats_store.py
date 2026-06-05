@@ -398,6 +398,23 @@ def get_dashboard_stats() -> dict:
     }
 
 
+def _normalise_halluc_category(issue: str) -> str:
+    il = issue.lower()
+    if any(w in il for w in ("revenue", "funding", "valuation", "investment", "raised")):
+        return "Revenue / Funding"
+    if any(w in il for w in ("headcount", "employee", "team size", "staff", "growth", "workforce")):
+        return "Headcount / Growth"
+    if any(w in il for w in ("technolog", "stack", "platform", "tool", "software", "integrat")):
+        return "Tech Stack"
+    if any(w in il for w in ("product", "feature", "capability", "service", "offering")):
+        return "Product Claims"
+    if any(w in il for w in ("company", "brand", "founded", "headquarter", "location")):
+        return "Company Facts"
+    if any(w in il for w in ("award", "recogni", "certif", "partner")):
+        return "Awards / Partnerships"
+    return "Other Claims"
+
+
 def _normalise_issue_label(issue: str) -> str:
     issue_lower = issue.lower()
     if "banned" in issue_lower or "phrase" in issue_lower:
@@ -565,17 +582,36 @@ def get_extended_stats() -> dict:
             key=lambda x: -x["count"]
         )[:6]
 
+        # Hallucination-specific category breakdown (from failed halluc checks only)
+        halluc_viol_rows = conn.execute(
+            "SELECT hallucination_violations FROM outreach_events WHERE hallucination_passed=0 AND timestamp>=?",
+            (now_30,),
+        ).fetchall()
+        halluc_cat_counts: dict[str, int] = {}
+        for row in halluc_viol_rows:
+            try:
+                for issue in json.loads(row["hallucination_violations"] or "[]"):
+                    cat = _normalise_halluc_category(issue)
+                    halluc_cat_counts[cat] = halluc_cat_counts.get(cat, 0) + 1
+            except (json.JSONDecodeError, TypeError):
+                pass
+        hallucination_categories = sorted(
+            [{"label": k, "count": v} for k, v in halluc_cat_counts.items()],
+            key=lambda x: -x["count"]
+        )
+
         validation_stats = {
-            "total_checks":      total_checks,
-            "tone_pass_count":   tone_pass,
-            "tone_fail_count":   total_checks - tone_pass,
-            "tone_pass_rate":    round(tone_pass   / max(total_checks, 1) * 100, 1),
-            "halluc_pass_count": halluc_pass,
-            "halluc_fail_count": total_checks - halluc_pass,
-            "halluc_pass_rate":  round(halluc_pass / max(total_checks, 1) * 100, 1),
-            "both_passed":       both_pass,
-            "neither_passed":    neither,
-            "violation_types":   violation_types,
+            "total_checks":           total_checks,
+            "tone_pass_count":        tone_pass,
+            "tone_fail_count":        total_checks - tone_pass,
+            "tone_pass_rate":         round(tone_pass   / max(total_checks, 1) * 100, 1),
+            "halluc_pass_count":      halluc_pass,
+            "halluc_fail_count":      total_checks - halluc_pass,
+            "halluc_pass_rate":       round(halluc_pass / max(total_checks, 1) * 100, 1),
+            "both_passed":            both_pass,
+            "neither_passed":         neither,
+            "violation_types":        violation_types,
+            "hallucination_categories": hallucination_categories,
         }
 
         # ── Governance summary ────────────────────────────────────────────────

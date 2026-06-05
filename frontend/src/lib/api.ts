@@ -775,6 +775,7 @@ export type DashboardExtendedStats = {
     halluc_pass_count: number; halluc_fail_count: number; halluc_pass_rate: number;
     both_passed: number; neither_passed: number;
     violation_types: { label: string; count: number }[];
+    hallucination_categories: { label: string; count: number }[];
   };
   governance_summary: {
     total_outreach: number; approved: number; blocked: number; pending: number;
