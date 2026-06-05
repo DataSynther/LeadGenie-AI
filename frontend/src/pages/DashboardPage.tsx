@@ -138,18 +138,32 @@ const AGENT_LINE: Record<string, string> = {
 
 function MiniFinOpsPanel({ data }: { data: FinOpsSummary }) {
   const agentEntries = Object.entries(data.cost_by_agent).slice(0, 4);
-  const totalCost = data.total_cost_usd;
-  const wastedPct = totalCost > 0 ? (data.wasted_cost_usd / totalCost) * 100 : 0;
-  const effPct = 100 - wastedPct;
+  const totalCost = data.total_cost_usd || 1e-9;
+  const wastedPct = (data.wasted_cost_usd / totalCost) * 100;
+  const effPct    = 100 - wastedPct;
   const effColour = effPct >= 90 ? "text-emerald-500" : effPct >= 70 ? "text-amber-500" : "text-red-400";
+
+  // Governance spend: gov + governance agent costs combined
+  const govEntry  = data.cost_by_agent["gov"]        ?? data.cost_by_agent["governance"];
+  const govCost   = govEntry?.cost_usd ?? data.governance_info.governance_cost_usd;
+  const govPct    = (govCost / totalCost) * 100;
+  const govChecks = data.governance_info.hallucination_check_calls;
+
+  // Efficacy: success cost vs wasted, cost-per-outcome
+  const successPct = (data.success_cost_usd / totalCost) * 100;
+  const outcome    = data.cost_per_outcome;
+  const valRate    = data.validator_success?.both_success_rate ?? null;
+
+  const fmt5 = (n: number) => n < 0.0001 ? `$${n.toFixed(6)}` : `$${n.toFixed(4)}`;
+
   return (
     <Panel>
-      <div className="flex items-start justify-between mb-4">
+      <div className="flex items-start justify-between mb-3">
         <PanelTitle
           title="AI Spend Summary"
-          sub="Cost efficiency · agent breakdown · wasted spend"
+          sub="Governance overhead · efficacy · cost per outcome"
         />
-        <Link to="/finops" className="text-[10px] text-brand font-medium hover:underline flex-shrink-0">
+        <Link to="/finops" className="text-[10px] text-brand font-medium hover:underline flex-shrink-0 mt-1">
           Full FinOps →
         </Link>
       </div>
@@ -157,9 +171,9 @@ function MiniFinOpsPanel({ data }: { data: FinOpsSummary }) {
       {/* Top-line KPIs */}
       <div className="grid grid-cols-3 gap-2 mb-4">
         {[
-          { label: "Total Cost",    value: `$${totalCost.toFixed(4)}`,          colour: "text-brand"       },
-          { label: "Efficiency",    value: `${effPct.toFixed(0)}%`,              colour: effColour          },
-          { label: "Wasted",        value: `$${data.wasted_cost_usd.toFixed(4)}`, colour: "text-amber-500" },
+          { label: "Total Cost",  value: `$${data.total_cost_usd.toFixed(4)}`, colour: "text-brand"    },
+          { label: "Efficiency",  value: `${effPct.toFixed(0)}%`,              colour: effColour        },
+          { label: "Wasted",      value: `$${data.wasted_cost_usd.toFixed(4)}`, colour: "text-amber-500"},
         ].map(k => (
           <div key={k.label} className="p-2 rounded-lg bg-surface-2 text-center">
             <div className="text-[9px] uppercase tracking-widest text-ink font-semibold mb-0.5">{k.label}</div>
@@ -169,16 +183,18 @@ function MiniFinOpsPanel({ data }: { data: FinOpsSummary }) {
       </div>
 
       {/* Agent cost bars */}
-      <div className="space-y-2.5">
+      <div className="space-y-2 mb-4">
         {agentEntries.map(([agent, v]) => {
-          const pct = totalCost > 0 ? (v.cost_usd / totalCost) * 100 : 0;
+          const pct    = (v.cost_usd / totalCost) * 100;
           const colour = AGENT_LINE[agent] ?? "#94a3b8";
+          const isGov  = agent === "gov" || agent === "governance";
           return (
             <div key={agent}>
-              <div className="flex items-center justify-between text-[11px] mb-1">
+              <div className="flex items-center justify-between text-[11px] mb-0.5">
                 <div className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: colour }} />
                   <span className="font-medium text-ink capitalize">{agent}</span>
+                  {isGov && <span className="text-[9px] px-1 py-px rounded font-mono font-semibold bg-red-500/10 text-red-400">gov</span>}
                 </div>
                 <span className="font-mono text-ink-2 text-[10px]">${v.cost_usd.toFixed(5)}</span>
               </div>
@@ -190,9 +206,66 @@ function MiniFinOpsPanel({ data }: { data: FinOpsSummary }) {
         })}
       </div>
 
+      {/* ── Governance overhead ────────────────────────────────────────────── */}
+      <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-3 mb-3">
+        <div className="text-[10px] font-semibold text-ink mb-2">Governance Overhead</div>
+        <div className="flex items-center justify-between mb-2">
+          <div className="text-[10px] text-ink-2 font-medium">Gov agent cost</div>
+          <div className="flex items-center gap-2">
+            <span className="font-mono font-bold text-red-400 text-[11px]">${govCost.toFixed(5)}</span>
+            <span className="text-[9px] font-mono text-ink-mute">({govPct.toFixed(1)}% of spend)</span>
+          </div>
+        </div>
+        <div className="h-1.5 rounded-full bg-surface-2 overflow-hidden mb-2">
+          <div className="h-full rounded-full bg-red-400/70" style={{ width: `${Math.min(govPct, 100)}%` }} />
+        </div>
+        <div className="flex items-center justify-between text-[10px]">
+          <span className="text-ink-2 font-medium">Hallucination checks run</span>
+          <span className="font-mono font-semibold text-ink">{govChecks}</span>
+        </div>
+        {valRate !== null && (
+          <div className="flex items-center justify-between text-[10px] mt-1">
+            <span className="text-ink-2 font-medium">Validator → reply rate</span>
+            <span className={cn("font-mono font-semibold", valRate >= 0.5 ? "text-emerald-500" : "text-amber-500")}>
+              {(valRate * 100).toFixed(0)}%
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* ── Spend efficacy ────────────────────────────────────────────────── */}
+      <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 mb-3">
+        <div className="text-[10px] font-semibold text-ink mb-2">Spend Efficacy</div>
+        {/* Success vs wasted stacked bar */}
+        <div className="h-3 rounded-full bg-surface-2 overflow-hidden flex mb-1.5">
+          <div className="h-full bg-emerald-500" style={{ width: `${successPct}%` }}
+            title={`Effective: $${data.success_cost_usd.toFixed(4)}`} />
+          <div className="h-full bg-amber-500/70" style={{ width: `${Math.min(wastedPct, 100 - successPct)}%` }}
+            title={`Wasted: $${data.wasted_cost_usd.toFixed(4)}`} />
+        </div>
+        <div className="flex gap-3 text-[9px] text-ink-mute mb-2">
+          <span className="flex items-center gap-1"><span className="w-2 h-1.5 rounded-sm bg-emerald-500 inline-block" />Effective {successPct.toFixed(0)}%</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-1.5 rounded-sm bg-amber-500/70 inline-block" />Wasted {wastedPct.toFixed(0)}%</span>
+        </div>
+        {/* Cost per outcome */}
+        {outcome?.total_outreach_leads > 0 && (
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { label: "Per Approved",   value: fmt5(outcome.per_approved_outreach),   colour: "text-emerald-500" },
+              { label: "Per Meeting",    value: fmt5(outcome.per_meeting_booked),       colour: "text-amber-500"   },
+            ].map(item => (
+              <div key={item.label} className="p-1.5 rounded bg-surface/60 border border-line-soft text-center">
+                <div className="text-[8px] uppercase tracking-widest text-ink font-semibold">{item.label}</div>
+                <div className={cn("text-[12px] font-bold font-mono mt-0.5", item.colour)}>{item.value}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Model routing strip */}
-      <div className="mt-3 pt-3 border-t border-line-soft flex items-center gap-2 text-[10px]">
-        <span className="text-ink-mute">Model split:</span>
+      <div className="pt-2 border-t border-line-soft flex items-center gap-2 text-[10px]">
+        <span className="text-ink-mute">Model:</span>
         {Object.entries(data.model_routing).map(([m, v]) => (
           <span key={m} className={cn("font-mono font-semibold px-1.5 py-0.5 rounded",
             m === "sonnet" ? "bg-brand/10 text-brand" : "bg-amber-500/10 text-amber-500")}>
