@@ -27,14 +27,14 @@ interface NavItem {
 }
 
 const WORKSPACE: NavItem[] = [
-  { to: "/dashboard",       label: "Mission Control",  icon: LayoutDashboard },
   { to: "/discover",        label: "Discover Leads",   icon: Search },
-  { to: "/command-center",  label: "Command Center",   icon: ShieldCheck,  badge: { text: "NEW", tone: "brand" } },
+  { to: "/dashboard",       label: "Mission Control",  icon: LayoutDashboard },
+  { to: "/command-center",  label: "Command Center",   icon: ShieldCheck },
   { to: "/approval",        label: "Outreach Queue",   icon: InboxIcon,    liveBadge: true },
-  { to: "/finops",          label: "AI FinOps",        icon: DollarSign,   badge: { text: "NEW", tone: "brand" } },
+  { to: "/finops",          label: "AI FinOps",        icon: DollarSign },
   { to: "/dev",             label: "AI Observability", icon: Activity,     badge: { text: "DEV", tone: "brand" } },
   { to: "/lineage",         label: "Pipeline Lineage", icon: GitBranch },
-  { to: "/prompt-versions", label: "Prompt Versions",  icon: BarChart2,    badge: { text: "NEW", tone: "brand" } },
+  { to: "/prompt-versions", label: "Prompt Versions",  icon: BarChart2 },
   { to: "/whatsapp",        label: "WhatsApp Inbox",   icon: MessageCircle },
 ];
 
