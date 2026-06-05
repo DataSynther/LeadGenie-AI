@@ -63,7 +63,7 @@ from observability import diagnostic_store
 from memory.memory_governance import governance as memory_governance
 from memory.industry_outreach_memory import IndustryOutreachMemory
 from agents.outreach.template_categorizer import TemplateCategorizer as _TemplateCategorizer, DomainDetector as _DomainDetector, STREAMS as _STREAMS, DOMAINS as _DOMAINS
-from storage import stats_store
+from storage import stats_store, finops_store
 
 industry_memory = IndustryOutreachMemory()
 _categorizer_instance = _TemplateCategorizer()
@@ -675,6 +675,12 @@ async def company_list():
 
 
 # ── Developer Observability Endpoints ────────────────────────────────────────
+
+@app.get("/dev/finops")
+async def dev_finops():
+    """AI FinOps report: cost per agent, model routing, per-lead costs, outcome unit economics."""
+    return finops_store.get_finops_summary()
+
 
 @app.get("/dev/diagnostics")
 async def dev_diagnostics():

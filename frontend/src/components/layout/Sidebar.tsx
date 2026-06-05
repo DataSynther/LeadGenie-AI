@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   InboxIcon,
   MessageCircle,
+  DollarSign,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
@@ -30,6 +31,7 @@ const WORKSPACE: NavItem[] = [
   { to: "/discover",        label: "Discover Leads",   icon: Search },
   { to: "/command-center",  label: "Command Center",   icon: ShieldCheck,  badge: { text: "NEW", tone: "brand" } },
   { to: "/approval",        label: "Outreach Queue",   icon: InboxIcon,    liveBadge: true },
+  { to: "/finops",          label: "AI FinOps",        icon: DollarSign,   badge: { text: "NEW", tone: "brand" } },
   { to: "/dev",             label: "AI Observability", icon: Activity,     badge: { text: "DEV", tone: "brand" } },
   { to: "/lineage",         label: "Pipeline Lineage", icon: GitBranch },
   { to: "/prompt-versions", label: "Prompt Versions",  icon: BarChart2,    badge: { text: "NEW", tone: "brand" } },

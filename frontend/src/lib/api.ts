@@ -627,6 +627,133 @@ export type PromptVersionStats = {
 export const devPromptVersions = () =>
   get<Record<string, PromptVersionStats>>("/dev/prompt-versions");
 
+// ── AI FinOps ─────────────────────────────────────────────────────────────────
+
+export type FinOpsAgentEntry = {
+  calls: number;
+  tokens: number;
+  cost_usd: number;
+  avg_cost_per_call: number;
+  model: string;
+  failures: number;
+  success_calls: number;
+  failure_calls: number;
+  success_cost_usd: number;
+  failure_cost_usd: number;
+  first_attempt_calls: number;
+  high_conf_calls: number;
+};
+
+export type FinOpsModelEntry = {
+  calls: number;
+  tokens: number;
+  cost_usd: number;
+  pct_calls: number;
+  pct_cost: number;
+};
+
+export type FinOpsLeadEntry = {
+  lead_id: string;
+  tokens: number;
+  cost_usd: number;
+  agents: string[];
+};
+
+export type FinOpsPromptEntry = {
+  date: string;
+  prompt_version: string;
+  calls: number;
+  tokens: number;
+  cost_usd: number;
+  avg_tokens_per_call: number;
+};
+
+export type FinOpsCostToSuccess = {
+  agent: string;
+  success_criteria: string;
+  calls: number;
+  success_count: number;
+  success_rate: number;
+  cost_usd: number;
+  cost_per_success: number;
+  wasted_cost_usd: number;
+  wasted_pct: number;
+  efficiency_score: number;
+  retry_calls: number;
+  retry_success: number;
+  retry_failure: number;
+  retry_cost_usd: number;
+  first_attempt_calls: number;
+  raw_success_calls: number;
+  // outreach-specific job-level fields
+  jobs_total?: number;
+  jobs_first_attempt_ok?: number;
+  jobs_needed_retry?: number;
+  jobs_retry_succeeded?: number;
+  jobs_retry_failed?: number;
+};
+
+export type FinOpsDailyEntry = {
+  agent: string;
+  date: string;
+  calls: number;
+  tokens: number;
+  cost_usd: number;
+  avg_tokens: number;
+  success_calls: number;
+};
+
+export type FinOpsSummary = {
+  total_traces: number;
+  total_tokens: number;
+  total_cost_usd: number;
+  success_cost_usd: number;
+  wasted_cost_usd: number;
+  cost_by_agent: Record<string, FinOpsAgentEntry>;
+  cost_to_success: FinOpsCostToSuccess[];
+  model_routing: Record<string, FinOpsModelEntry>;
+  cost_by_lead: FinOpsLeadEntry[];
+  retry_info: {
+    retry_calls: number;
+    failed_calls: number;
+    retry_cost_usd: number;
+    failure_cost_usd: number;
+    failure_rate_pct: number;
+  };
+  governance_info: {
+    hallucination_check_calls: number;
+    governance_cost_usd: number;
+  };
+  prompt_savings: FinOpsPromptEntry[];
+  agent_daily_series: FinOpsDailyEntry[];
+  cost_per_outcome: {
+    per_outreach_generated: number;
+    per_approved_outreach: number;
+    per_blocked_outreach: number;
+    per_meeting_booked: number;
+    total_approved_leads: number;
+    total_blocked_leads: number;
+    total_meeting_leads: number;
+    total_outreach_leads: number;
+  };
+  validator_success: {
+    tone_passed_total: number;
+    tone_passed_replied: number;
+    tone_success_rate: number;
+    halluc_passed_total: number;
+    halluc_passed_replied: number;
+    halluc_success_rate: number;
+    both_passed_total: number;
+    both_passed_replied: number;
+    both_success_rate: number;
+    false_positives: number;
+    false_positive_rate: number;
+    replied_total: number;
+  } | null;
+};
+
+export const devFinOps = () => get<FinOpsSummary>("/dev/finops");
+
 // ── Engagement Runs (per-lead outreach/reply with per-attempt detail) ──────────
 
 export type EngagementRun = {
@@ -685,6 +812,7 @@ export const api = {
   devPromptVersions,
   devEngagementRuns,
   dashboardStatsRaw,
+  devFinOps,
 };
 
 export default api;
