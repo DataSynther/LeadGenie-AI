@@ -24,6 +24,28 @@ const SIGNAL_STYLES: Record<string, string> = {
 };
 
 const TECH_AI_KEYWORDS = ["AI", "Anthropic Claude", "machine learning", "TensorFlow", "PyTorch", "OpenAI"];
+const WHATSAPP_SENDER_INTRO = "I am Prasant from Ganit.";
+
+function leadFirstName(name?: string | null) {
+  return (name || "").trim().split(/\s+/)[0] || "there";
+}
+
+function stripOpeningGreeting(body: string) {
+  return body.trimStart().replace(/^Hi\s+[^,\n]+,\s*/i, "");
+}
+
+function buildInitialWhatsAppBody(body: string, leadName?: string | null) {
+  const intro = `Hi ${leadFirstName(leadName)}, ${WHATSAPP_SENDER_INTRO}`;
+  const content = stripOpeningGreeting(body);
+  return content ? `${intro}\n\n${content}` : intro;
+}
+
+function stripInitialWhatsAppIntro(body: string, leadName?: string | null) {
+  const intro = `Hi ${leadFirstName(leadName)}, ${WHATSAPP_SENDER_INTRO}`;
+  const trimmed = body.trimStart();
+  if (!trimmed.startsWith(intro)) return body;
+  return trimmed.slice(intro.length).replace(/^\s+/, "");
+}
 
 // ── Result notification banner ─────────────────────────────────────────────
 
@@ -165,7 +187,9 @@ export function ResearchPanel({ lead, onClose, autoGenerate = false, defaultChan
       toEmail: lead!.email,
       phone: (lead as any).phone,
       subject: editableEmail!.subject,
-      body: editableEmail!.body,
+      body: channel === "whatsapp"
+        ? buildInitialWhatsAppBody(editableEmail!.body, lead?.name)
+        : editableEmail!.body,
       reasoning: editableEmail?.reasoning,
       context: outreachResult,
     }),
@@ -374,8 +398,13 @@ export function ResearchPanel({ lead, onClose, autoGenerate = false, defaultChan
             <label className="block mt-2.5">
               <div className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-2 mb-1">Body</div>
               <textarea
-                value={editableEmail.body}
-                onChange={(e) => setEditableEmail((cur) => cur ? { ...cur, body: e.target.value } : cur)}
+                value={channel === "whatsapp" ? buildInitialWhatsAppBody(editableEmail.body, lead?.name) : editableEmail.body}
+                onChange={(e) => setEditableEmail((cur) => cur ? {
+                  ...cur,
+                  body: channel === "whatsapp"
+                    ? stripInitialWhatsAppIntro(e.target.value, lead?.name)
+                    : e.target.value,
+                } : cur)}
                 rows={7}
                 className="w-full resize-none rounded-md border border-line bg-surface px-3 py-2.5 text-[12px] leading-relaxed text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-soft"
               />
