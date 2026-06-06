@@ -4,42 +4,174 @@
   "context": {
     "lead": {
       "id": "696cb6c2d4cef40001c3cd64",
-      "name": "Ravi Sharma",
-      "title": "VP- Operations and CTO",
+      "name": "Maria Chen",
+      "title": "Chief Product Officer",
+      "headline": "CPO at HubSpot | Scaling product-led growth",
       "seniority": "c_suite",
-      "department": "engineering",
+      "department": "product",
       "email": "ajaykumar130721@gmail.com",
       "phone": "+91 8056498879",
-      "linkedin_url": "https://linkedin.com/in/ravi-sharma-demo",
-      "organization_id": "696cb6c2d4cef40001c3cd64",
-      "company": "Britannia Industries Limited"
+      "linkedin_url": "https://linkedin.com/in/sarah-chen-hubspot",
+      "organization_id": "5e7f9c2a1b3d4e5f6a7b8c9d",
+      "company": "HubSpot",
+      "city": "Cambridge",
+      "country": "United States"
     },
     "company": {
-      "id": "5569cecd7369642525a89600",
-      "name": "Britannia Industries Limited",
-      "domain": "britannia.co.in",
-      "industry": "food & beverages",
-      "employee_count": 5400,
-      "revenue": "2.1B",
+      "id": "5f49cce978959f0001c33e5c",
+      "name": "HubSpot",
+      "domain": "hubspot.com",
+      "industry": "information technology & services",
+      "employee_count": 8600,
+      "revenue": "3.1B",
       "funding_stage": null,
       "technologies": [
-        "AboveNet",
-        "Amazon AWS",
-        "Amazon CloudFront",
-        "Amazon Elastic Load Balancer",
-        "Blinkit",
-        "Bootstrap Framework",
+        "AI",
+        "ANGEL LMS",
+        "AWS Analytics",
+        "AWS SDK for JavaScript",
+        "AWS Trusted Advisor",
+        "AdMetrics",
+        "Adobe After Effects",
+        "Adobe Fonts",
+        "Adobe Illustrator",
+        "Adobe Marketing Cloud",
+        "Adobe Photoshop",
+        "Adobe Premiere Pro",
+        "Alteryx",
+        "Amazon Managed Streaming for Apache Kafka (Amazon MSK)",
+        "Amazon Simple Storage Service (S3)",
+        "Anaplan",
+        "Anthropic Claude",
+        "Apache",
+        "Apache Hadoop HDFS",
+        "Apache Iceberg",
+        "Apache Kafka",
+        "Asana",
+        "Automic Automation",
+        "Azure Analysis Services",
+        "Azure Data Lake Storage",
+        "Barracuda Email Security Service",
+        "Bash",
+        "Bing Webmaster Tools",
+        "CAT",
+        "CPX Interactive",
+        "CallMiner Eureka",
+        "Canal",
+        "Canvas by Instructure",
+        "ChatGPT",
+        "CloudFlare Hosting",
+        "Cloudflare Bot Management",
         "Cloudflare DNS",
-        "ExactTarget",
-        "Excel4Apps",
-        "GRIN"
+        "Compete",
+        "Copilot",
+        "Coupa",
+        "Crossbeam",
+        "CrowdStrike",
+        "Cursor",
+        "Elasticsearch",
+        "Figma",
+        "FloQast",
+        "Flywheel",
+        "Gem",
+        "Gemini",
+        "GitHub",
+        "GitHub Copilot",
+        "Gmail",
+        "Google",
+        "Google Ads",
+        "Google Analytics",
+        "Google Apps",
+        "Google Calendar",
+        "Google Play",
+        "Google Search Console",
+        "Google Tag Manager",
+        "Google Workspace",
+        "GraphQL",
+        "Greenhouse",
+        "HREF Lang",
+        "Hadoop HDFS",
+        "Hbase",
+        "HubSpot Content Hub",
+        "HubSpot Marketing Hub",
+        "HubSpot Service Hub",
+        "Hubspot",
+        "IBM ILOG CPLEX Optimization Studio",
+        "Ironclad",
+        "Javascript",
+        "Jupyter",
+        "Kubernetes",
+        "LangGraph",
+        "LeadIQ",
+        "LinkedIn Sales Navigator",
+        "Linkedin Marketing Solutions",
+        "Looker",
+        "Loom",
+        "McAfee Total Protection for Data Loss (DLP)",
+        "Meta Ads",
+        "Metadata Hub",
+        "Microsoft 365",
+        "Microsoft Excel",
+        "Microsoft Office 365",
+        "Microsoft PowerPoint",
+        "Microsoft PowerShell",
+        "Mobile Friendly",
+        "Mode",
+        "Modern Health",
+        "Multilingual",
+        "MySQL",
+        "MySQL",
+        "NetSuite",
+        "Netskope",
+        "Open AdStream (Appnexus)",
+        "OpenAI",
+        "Pipedrive",
+        "Python",
+        "REST",
+        "React",
+        "Redis",
+        "Ruby On Rails",
+        "SAP ERP Central Component (ECC)",
+        "SWIFT",
+        "Salesforce",
+        "Sass",
+        "SentinelOne",
+        "ServiceNow",
+        "Shopify",
+        "Siemens PROFIBUS",
+        "Slack",
+        "Snowflake",
+        "Spark",
+        "Specific Media",
+        "Strato",
+        "TikTok",
+        "Tor",
+        "TypeScript",
+        "Typekit",
+        "Vidyard",
+        "Viewport Meta",
+        "Vitess",
+        "Wistia",
+        "Wiz",
+        "Workato",
+        "Workday",
+        "X (Twitter)",
+        "YouTube",
+        "ZooKeeper",
+        "ZoomInfo",
+        "Zoomdata",
+        "Zscaler",
+        "dbt",
+        "go+",
+        "jQuery",
+        "reCAPTCHA"
       ],
-      "description": "Britannia Industries Limited is a prominent Indian food and beverage company founded in 1892 in Kolkata. It specializes in bakery, dairy, and snacking products and operates in over 80 countries. As part of the Wadia Group, Britannia has grown to become a household name in India, employing over 4,500 people and achieving a market capitalization of \u20b91.08 trillion.\n\nThe company's diverse product portfolio includes a wide range of biscuits under popular brands like Good Day, NutriChoice, and Bourbon, as well as breads, cakes, and rusk products. In the dairy segment, Britannia produces milk, butter, cheese, ghee, and curd, with offerings like Winkin' Cow. With annual revenues exceeding \u20b99,000 crore, Britannia maintains a strong market presence in the food and beverage sector, focusing on providing tasty yet healthy products that fit into consumers' daily lives.",
-      "linkedin_url": "http://www.linkedin.com/company/britannia-industries-limited",
-      "founded_year": 1892,
-      "headcount_growth_6m": -0.001456664238892935,
-      "headcount_growth_12m": 0.02313432835820895,
-      "phone": "+91 99999 00006"
+      "description": "HubSpot, Inc. is a software company based in Cambridge, Massachusetts, founded in 2006 by Brian Halligan and Dharmesh Shah. The company specializes in developing cloud-based platforms for inbound marketing, sales, customer service, and revenue operations. HubSpot pioneered the inbound marketing methodology, focusing on attracting customers through valuable content rather than traditional outbound marketing tactics.\n\nThe company offers an all-in-one SaaS platform that integrates various tools across the customer journey. Its core hubs include the Marketing Hub for lead generation, the Sales Hub featuring a CRM and AI sales aids, the Service Hub for customer support, and the CMS Hub for website building. HubSpot also launched HubSpot AI in 2023, enhancing its offerings with AI-powered features. With over 7,400 employees and $1.7 billion in revenue, HubSpot serves businesses of all sizes, from small to large enterprises, and emphasizes a customer-first culture.",
+      "linkedin_url": "http://www.linkedin.com/company/hubspot",
+      "founded_year": 2006,
+      "city": "Cambridge",
+      "country": "United States",
+      "headcount_growth_12m": "6.5%"
     },
     "top_trends": [
       {
@@ -54,21 +186,21 @@
         ],
         "source": "curated",
         "date": "2026-05-15",
-        "relevance_score": 0.312
+        "relevance_score": 0.3681
       },
       {
-        "id": "t001",
-        "title": "AI Governance Concerns Increasing",
-        "category": "regulatory",
+        "id": "t002",
+        "title": "AI Agents Adoption Growing Rapidly",
+        "category": "technology",
         "relevance_tags": [
           "ai",
-          "governance",
-          "compliance",
-          "risk"
+          "agents",
+          "automation",
+          "llm"
         ],
         "source": "curated",
-        "date": "2026-05-01",
-        "relevance_score": 0.2535
+        "date": "2026-05-10",
+        "relevance_score": 0.339
       },
       {
         "id": "t003",
@@ -82,74 +214,46 @@
         ],
         "source": "curated",
         "date": "2026-05-12",
-        "relevance_score": 0.2044
+        "relevance_score": 0.304
       }
     ],
     "email": {
-      "subject": "Britannia's supply chain costs \u2014 quick question",
-      "body": "Hi Ravi, managing demand forecasting across Britannia Industries Limited's 80+ country operations and a sprawling SKU portfolio is no small task \u2014 especially when input costs for wheat and dairy keep compressing margins. With enterprise teams increasingly consolidating tech spend while squeezing more visibility out of existing infrastructure, I've been speaking with ops and supply chain leaders at similar FMCG companies about how they're reducing forecast errors and cutting operational overhead without adding headcount. Would you have 20 minutes this week to explore whether there's a fit for Britannia's context?",
-      "reasoning": "This angle works because it leads with a highly specific operational challenge Ravi owns directly \u2014 cross-border supply chain complexity and input cost pressure \u2014 both of which are documented pain points for Britannia Industries Limited. Referencing the 80+ country footprint and SKU diversity shows genuine research rather than a templated pitch. Tying it to the cost optimization trend makes it timely without being alarmist. The CTA is low-friction and framed around relevance to their specific situation, which increases response likelihood from a senior ops/tech leader."
+      "subject": "HubSpot's experimentation velocity \u2014 keeping pace?",
+      "opening_hook": "Maria, scaling product-led growth at HubSpot means your team in Cambridge is under constant pressure to ship with precision \u2014 and in an enterprise tech market doubling down on cost consolidation, slow feedback loops become a direct tax on roadmap velocity.",
+      "value_prop": "We help CPOs close the gap between customer signals and roadmap decisions, so your team ships features that drive adoption rather than ones that require costly course-correction cycles.",
+      "social_proof": "We're SOC-2 and ISO 27001 certified, and featured in the Forrester Landscape Report and PEAK Matrix for data solutions \u2014 giving enterprise product teams a trusted foundation for real-time analytics infrastructure.",
+      "cta": "Would a focused 20-minute call next week be useful to explore where this fits HubSpot's current priorities?",
+      "reasoning": "Maria is a CPO explicitly focused on product-led growth at a $3.1B SaaS company in a consolidation phase \u2014 she's accountable for shipping efficiently with tight feedback loops, not headcount expansion. The cost optimization trend creates urgency around experimentation velocity and data-driven prioritization, making the roadmap misalignment pain point immediately relevant. Citing Forrester and ISO credentials builds trust without over-claiming.",
+      "stream": "product",
+      "domain": "saas",
+      "kb_ids_used": [
+        "gen_gen_sp_001"
+      ],
+      "body": "I'm Prashant Biswas from Ganit. We are a full-stack Data & AI company, recognized by Everest, Forrester, and Analytics India.\n\nMaria, scaling product-led growth at HubSpot means your team in Cambridge is under constant pressure to ship with precision \u2014 and in an enterprise tech market doubling down on cost consolidation, slow feedback loops become a direct tax on roadmap velocity.\n\nWe help CPOs close the gap between customer signals and roadmap decisions, so your team ships features that drive adoption rather than ones that require costly course-correction cycles.\n\nWe're SOC-2 and ISO 27001 certified, and featured in the Forrester Landscape Report and PEAK Matrix for data solutions \u2014 giving enterprise product teams a trusted foundation for real-time analytics infrastructure.\n\nWould a focused 20-minute call next week be useful to explore where this fits HubSpot's current priorities?"
     },
     "governance": {
-      "approved": true,
-      "risk_score": 0.010000000000000009,
-      "issues": [],
-      "event_id": "c2baac35-10fd-46f9-b597-67f3815b4cdc",
-      "requires_human_review": false,
+      "approved": false,
+      "risk_score": 0.624,
+      "issues": [
+        "Body too long (7 sentences, max 5)",
+        "HubSpot employee count described as consistent with 'enterprise' framing \u2014 minor note, but the email references no specific number so this is fine; however, the description mentions '$1.7 billion in revenue' while known facts state 8,600 employees vs. the description's '7,400 employees' \u2014 the email itself does not cite these, so no violation here",
+        "'Ganit is recognized by Everest, Forrester, and Analytics India' \u2014 this is a claim about the sender's company that cannot be verified from the known facts provided; while not directly contradicting known facts, it is a specific reputational claim with no basis in the provided data",
+        "'SOC-2 and ISO 27001 certified' (referring to Ganit) \u2014 specific compliance certifications claimed for the sender's company with no verifiable basis in the known facts",
+        "'Featured in the Forrester Landscape Report and PEAK Matrix for data solutions' \u2014 the PEAK Matrix is an Everest Group product, not a Forrester product; attributing the PEAK Matrix to Forrester is a factual error, as these are two distinct analyst firms",
+        "'enterprise tech market doubling down on cost consolidation' \u2014 a specific market characterization presented as fact with no verifiable basis in the known facts provided"
+      ],
+      "event_id": "76ba0f59-5045-4d6b-a2e9-c4544d53a105",
+      "requires_human_review": true,
       "governance_attempt_history": [
         {
           "attempt": 1,
           "passed": false,
-          "prompt_preview": "\nYou are a world-class B2B sales development representative.\n\nWrite a highly personalized, concise cold outreach email for the following lead.\nThe email must feel human, reference specific company context, and tie in a relevant market trend.\n\nLead:\n- Name: Ravi Sharma\n- Title: VP- Operations and CTO\n- Headline: N/A\n- Company: Britannia Industries Limited\n- Industry: food & beverages\n- Location: N/A\n- Recent roles: N/A\n\nCompany Signals:\n- Revenue: 2.1B\n- Headcount growth (12m): N/A\n- Tech stack: AboveNet, Amazon AWS, Amazon CloudFront, Amazon Elastic Load Balancer, Blinkit, Bootstrap Framework\n- Keywords: N/A\n\nCompany Context:\nBritannia Industries Limited is a legacy Indian FMCG giant founded in 1892, operating under the Wadia Group conglomerate. With over 130 years of market presence, the ",
+          "prompt_preview": "You are a world-class B2B sales development representative.\n\nWrite a highly personalized cold outreach email for the following lead.\nThe email must feel human, reference specific company context, and tie in a relevant market trend.\n\nLead:\n- Name: Maria Chen\n- Title: Chief Product Officer\n- Headline: CPO at HubSpot | Scaling product-led growth\n- Company: HubSpot\n- Industry: information technology & services\n- Location: Cambridge, United States\n- Recent roles: N/A\n\nCompany Signals:\n- Revenue: 3.1B\n- Headcount growth (12m): 6.5%\n- Tech stack: AI, ANGEL LMS, AWS Analytics, AWS SDK for JavaScript, AWS Trusted Advisor, AdMetrics\n- Keywords: N/A\n\nCompany Context:\nHubSpot is a mature, well-established SaaS platform company with 8,600 employees specializing in cloud-based inbound marketing, sales, ",
           "correction_note": "",
           "email": {
-            "subject": "Britannia's supply chain visibility across 80+ markets",
-            "body": "Hi Ravi, managing demand forecasting and supply chain visibility across 80+ countries with a portfolio as diverse as Britannia's is genuinely complex \u2014 especially when rising wheat and dairy input costs are already compressing margins. Many enterprise ops and tech leaders we speak with are finding that spreadsheet-heavy workflows and fragmented data pipelines are quietly eroding the cost savings they're working hard to protect elsewhere. Given Britannia's current focus on operational consolidation rather than expansion, there's often a real window to reduce that friction without a heavy lift. Would you be open to a 20-minute call to explore whether there's a fit worth discussing?",
-            "reasoning": "The hook is grounded in Ravi's dual role as VP Operations and CTO \u2014 two functions that directly own the pain of supply chain complexity and tech infrastructure simultaneously, making him the ideal contact for this angle. The reference to 80+ country operations and rising input costs is specific to Britannia's publicly known business context, not generic FMCG language, which signals research rather than a templated blast. Tying in the 'operational consolidation' phase (no hiring signals) aligns with the Cost Optimization trend \u2014 this framing respects that they're not in growth mode, repositioning the conversation as efficiency-focused rather than a new spend. The spreadsheet workflow reference is a subtle nod to the Excel4Apps signal without being presumptuous, making it feel observational. The CTA is low-commitment and time-bounded, reducing friction for a senior executive."
-          },
-          "layers": {
-            "validator": {
-              "consequence": "defer",
-              "issues": [
-                "context:company_name_absent:Britannia Industries Limited"
-              ],
-              "checkpoints": {
-                "shape": {
-                  "ok": true,
-                  "issues": []
-                },
-                "context": {
-                  "ok": false,
-                  "issues": [
-                    "context:company_name_absent:Britannia Industries Limited"
-                  ]
-                },
-                "policy": {
-                  "ok": true,
-                  "issues": []
-                }
-              }
-            },
-            "tone": {
-              "passed": true,
-              "issues": []
-            },
-            "hallucination": {
-              "passed": true,
-              "violations": [],
-              "skipped": true
-            }
-          }
-        },
-        {
-          "attempt": 2,
-          "passed": true,
-          "prompt_preview": "\nYou are a world-class B2B sales development representative.\n\nWrite a highly personalized, concise cold outreach email for the following lead.\nThe email must feel human, reference specific company con\n\u2026\nr CTA (suggest a 20-min call)\n- Do not use buzzwords like \"synergy\", \"revolutionary\", \"game-changer\"\n- Tone: professional but conversational\n- If location is available, you may reference it naturally (e.g. \"your team in San Francisco\")\n\nRespond as JSON with keys: subject, body, reasoning (why this angle works).\n\n\n=== GOVERNANCE CORRECTION (Attempt 2/3) ===\nThe previous email FAILED governance. Fix every issue below before responding:\n  \u2717 CONTEXT: Company name 'Britannia Industries Limited' not mentioned. Reference it explicitly.\n\nRegenerate the COMPLETE email JSON addressing every issue above.",
-          "correction_note": "\n\n=== GOVERNANCE CORRECTION (Attempt 2/3) ===\nThe previous email FAILED governance. Fix every issue below before responding:\n  \u2717 CONTEXT: Company name 'Britannia Industries Limited' not mentioned. Reference it explicitly.\n\nRegenerate the COMPLETE email JSON addressing every issue above.",
-          "email": {
-            "subject": "Britannia's supply chain costs \u2014 quick question",
-            "body": "Hi Ravi, managing demand forecasting across Britannia Industries Limited's 80+ country operations and a sprawling SKU portfolio is no small task \u2014 especially when input costs for wheat and dairy keep compressing margins. With enterprise teams increasingly consolidating tech spend while squeezing more visibility out of existing infrastructure, I've been speaking with ops and supply chain leaders at similar FMCG companies about how they're reducing forecast errors and cutting operational overhead without adding headcount. Would you have 20 minutes this week to explore whether there's a fit for Britannia's context?",
-            "reasoning": "This angle works because it leads with a highly specific operational challenge Ravi owns directly \u2014 cross-border supply chain complexity and input cost pressure \u2014 both of which are documented pain points for Britannia Industries Limited. Referencing the 80+ country footprint and SKU diversity shows genuine research rather than a templated pitch. Tying it to the cost optimization trend makes it timely without being alarmist. The CTA is low-friction and framed around relevance to their specific situation, which increases response likelihood from a senior ops/tech leader."
+            "subject": "HubSpot's roadmap velocity \u2014 a quick thought",
+            "body": "I'm Prashant Biswas from Ganit. We are a full-stack Data & AI company, recognized by Everest, Forrester, and Analytics India.\n\nMaria, scaling product-led growth at HubSpot means your team in Cambridge is under constant pressure to ship with precision \u2014 and in an enterprise tech market doubling down on cost consolidation, slow feedback loops quietly become a direct tax on roadmap velocity.\n\nWhen experimentation infrastructure is tight and real-time customer signals feed directly into prioritization, product teams at your scale can cut wasted sprint cycles and align releases more closely to actual adoption patterns \u2014 less guesswork, faster compounding impact on retention and expansion.\n\nWe recently built a holistic AWS Data Lake and Snowflake Lakehouse for a CPG company, integrating SAP, Salesforce, and multiple source systems into a scalable three-tier architecture (raw, curated, refined) \u2014 the same foundational approach that enables real-time product signal pipelines at enterprise scale.\n\nWould a focused 20-minute call next week make sense to explore whether this kind of data infrastructure could sharpen HubSpot's experimentation velocity?",
+            "reasoning": "Maria is a CPO explicitly focused on product-led growth at a mature, $3.1B SaaS company in a consolidation phase. This means she is not hiring broadly \u2014 she is being asked to do more with what she has. The cost optimization trend creates internal pressure to justify roadmap decisions with data, not intuition. The angle hits her real constraint: slow feedback loops and roadmap misalignment are costly when budgets are scrutinized. Referencing Cambridge grounds the message personally, and the AWS/data infrastructure proof point is credible given HubSpot's own AWS-heavy tech stack \u2014 making the solution feel directly relevant rather than generic."
           },
           "layers": {
             "validator": {
@@ -171,75 +275,123 @@
               }
             },
             "tone": {
-              "passed": true,
-              "issues": []
+              "passed": false,
+              "issues": [
+                "Body too long (7 sentences, max 5)"
+              ]
             },
             "hallucination": {
               "passed": true,
               "violations": [],
-              "confidence": 0.97,
-              "explanation": "All factual claims in the email \u2014 the 80+ country operations, wheat and dairy input cost pressures, and the ops/supply chain leadership framing \u2014 are directly supported by the verified known facts, and no specific unverifiable numbers, fabricated events, or misrepresentations are present."
+              "skipped": true
+            }
+          }
+        },
+        {
+          "attempt": 2,
+          "passed": false,
+          "prompt_preview": "You are a world-class B2B sales development representative.\n\nWrite a highly personalized cold outreach email for the following lead.\nThe email must feel human, reference specific company context, and \n\u2026\n_proof\": \"1 sentence \u2014 quantified claim or peer-company reference from Sender Proof Points\",\n  \"cta\": \"1 sentence \u2014 suggest a specific 20-min call\",\n  \"reasoning\": \"why this angle works for this lead\",\n  \"stream\": \"product\",\n  \"domain\": \"saas\",\n  \"kb_ids_used\": [\"list of claim IDs from Sender Proof Points that were used\"]\n}\n\n=== GOVERNANCE CORRECTION (Attempt 2/3) ===\nThe previous email FAILED governance. Fix every issue below before responding:\n  \u2717 TONE: Body too long (7 sentences, max 5). Cut sentences to stay under the limit.\n\nRegenerate the COMPLETE email JSON addressing every issue above.",
+          "correction_note": "\n\n=== GOVERNANCE CORRECTION (Attempt 2/3) ===\nThe previous email FAILED governance. Fix every issue below before responding:\n  \u2717 TONE: Body too long (7 sentences, max 5). Cut sentences to stay under the limit.\n\nRegenerate the COMPLETE email JSON addressing every issue above.",
+          "email": {
+            "subject": "HubSpot's experimentation velocity \u2014 keeping pace?",
+            "body": "I'm Prashant Biswas from Ganit. We are a full-stack Data & AI company, recognized by Everest, Forrester, and Analytics India.\n\nMaria, scaling product-led growth at HubSpot means your team in Cambridge is under constant pressure to ship with precision \u2014 and in an enterprise tech market doubling down on cost consolidation, slow feedback loops become a direct tax on roadmap velocity.\n\nWe help CPOs close the gap between customer signals and roadmap decisions, cutting the time from experiment to confident feature rollout \u2014 without adding infrastructure overhead.\n\nWe're SOC-2 and ISO 27001 certified, and featured in the Forrester Landscape Report and PEAK Matrix for data solutions \u2014 so enterprise-grade trust is already built in.\n\nWould a focused 20-minute call this week make sense to explore whether this fits where HubSpot's product org is headed?",
+            "reasoning": "Maria is a CPO at a $3.1B consolidation-phase SaaS company actively building on AWS \u2014 the cost optimization trend creates urgency around eliminating slow feedback loops. The angle targets her core mandate (product-led growth) while speaking to a pain she owns directly: roadmap misalignment caused by lagging data. Keeping the email tight respects her seniority and time."
+          },
+          "layers": {
+            "validator": {
+              "consequence": "allow",
+              "issues": [],
+              "checkpoints": {
+                "shape": {
+                  "ok": true,
+                  "issues": []
+                },
+                "context": {
+                  "ok": true,
+                  "issues": []
+                },
+                "policy": {
+                  "ok": true,
+                  "issues": []
+                }
+              }
+            },
+            "tone": {
+              "passed": false,
+              "issues": [
+                "Body too long (7 sentences, max 5)"
+              ]
+            },
+            "hallucination": {
+              "passed": true,
+              "violations": [],
+              "skipped": true
+            }
+          }
+        },
+        {
+          "attempt": 3,
+          "passed": false,
+          "prompt_preview": "You are a world-class B2B sales development representative.\n\nWrite a highly personalized cold outreach email for the following lead.\nThe email must feel human, reference specific company context, and \n\u2026\n_proof\": \"1 sentence \u2014 quantified claim or peer-company reference from Sender Proof Points\",\n  \"cta\": \"1 sentence \u2014 suggest a specific 20-min call\",\n  \"reasoning\": \"why this angle works for this lead\",\n  \"stream\": \"product\",\n  \"domain\": \"saas\",\n  \"kb_ids_used\": [\"list of claim IDs from Sender Proof Points that were used\"]\n}\n\n=== GOVERNANCE CORRECTION (Attempt 3/3) ===\nThe previous email FAILED governance. Fix every issue below before responding:\n  \u2717 TONE: Body too long (7 sentences, max 5). Cut sentences to stay under the limit.\n\nRegenerate the COMPLETE email JSON addressing every issue above.",
+          "correction_note": "\n\n=== GOVERNANCE CORRECTION (Attempt 3/3) ===\nThe previous email FAILED governance. Fix every issue below before responding:\n  \u2717 TONE: Body too long (7 sentences, max 5). Cut sentences to stay under the limit.\n\nRegenerate the COMPLETE email JSON addressing every issue above.",
+          "email": {
+            "subject": "HubSpot's experimentation velocity \u2014 keeping pace?",
+            "body": "I'm Prashant Biswas from Ganit. We are a full-stack Data & AI company, recognized by Everest, Forrester, and Analytics India.\n\nMaria, scaling product-led growth at HubSpot means your team in Cambridge is under constant pressure to ship with precision \u2014 and in an enterprise tech market doubling down on cost consolidation, slow feedback loops become a direct tax on roadmap velocity.\n\nWe help CPOs close the gap between customer signals and roadmap decisions, so your team ships features that drive adoption rather than ones that require costly course-correction cycles.\n\nWe're SOC-2 and ISO 27001 certified, and featured in the Forrester Landscape Report and PEAK Matrix for data solutions \u2014 giving enterprise product teams a trusted foundation for real-time analytics infrastructure.\n\nWould a focused 20-minute call next week be useful to explore where this fits HubSpot's current priorities?",
+            "reasoning": "Maria is a CPO explicitly focused on product-led growth at a $3.1B SaaS company in a consolidation phase \u2014 she's accountable for shipping efficiently with tight feedback loops, not headcount expansion. The cost optimization trend creates urgency around experimentation velocity and data-driven prioritization, making the roadmap misalignment pain point immediately relevant. Citing Forrester and ISO credentials builds trust without over-claiming."
+          },
+          "layers": {
+            "validator": {
+              "consequence": "allow",
+              "issues": [],
+              "checkpoints": {
+                "shape": {
+                  "ok": true,
+                  "issues": []
+                },
+                "context": {
+                  "ok": true,
+                  "issues": []
+                },
+                "policy": {
+                  "ok": true,
+                  "issues": []
+                }
+              }
+            },
+            "tone": {
+              "passed": false,
+              "issues": [
+                "Body too long (7 sentences, max 5)"
+              ]
+            },
+            "hallucination": {
+              "passed": false,
+              "violations": [
+                "Email body is duplicated verbatim \u2014 the opening value proposition and certifications paragraph appears twice, which is a structural/content error in the generated email.",
+                "'scaling product-led growth at HubSpot' \u2014 HubSpot's known growth stage is 'mature/consolidation' with no active hiring or scaling signals; framing it as actively scaling product-led growth misrepresents the company's current phase.",
+                "'your team in Cambridge' \u2014 HubSpot is indeed based in Cambridge, MA per known facts, so this is verifiable and not a violation.",
+                "'enterprise tech market doubling down on cost consolidation' \u2014 this is supported by the known trend 'Cost Optimization Trend in Enterprise Tech', so acceptable.",
+                "No specific fabricated numbers or names detected beyond the structural duplication and mischaracterization of growth stage."
+              ],
+              "confidence": 0.82,
+              "explanation": "The email contains a critical structural defect (full body duplicated verbatim) and misrepresents HubSpot's current growth phase as actively scaling when known facts indicate a mature/consolidation stage with no open roles or hiring signals; all certification and analyst recognition claims are consistent with verified sender KB facts."
             }
           }
         }
       ],
-      "total_attempts": 2,
+      "total_attempts": 3,
       "context_sufficient": true
     },
     "governance_attempt_history": [
       {
         "attempt": 1,
         "passed": false,
-        "prompt_preview": "\nYou are a world-class B2B sales development representative.\n\nWrite a highly personalized, concise cold outreach email for the following lead.\nThe email must feel human, reference specific company context, and tie in a relevant market trend.\n\nLead:\n- Name: Ravi Sharma\n- Title: VP- Operations and CTO\n- Headline: N/A\n- Company: Britannia Industries Limited\n- Industry: food & beverages\n- Location: N/A\n- Recent roles: N/A\n\nCompany Signals:\n- Revenue: 2.1B\n- Headcount growth (12m): N/A\n- Tech stack: AboveNet, Amazon AWS, Amazon CloudFront, Amazon Elastic Load Balancer, Blinkit, Bootstrap Framework\n- Keywords: N/A\n\nCompany Context:\nBritannia Industries Limited is a legacy Indian FMCG giant founded in 1892, operating under the Wadia Group conglomerate. With over 130 years of market presence, the ",
+        "prompt_preview": "You are a world-class B2B sales development representative.\n\nWrite a highly personalized cold outreach email for the following lead.\nThe email must feel human, reference specific company context, and tie in a relevant market trend.\n\nLead:\n- Name: Maria Chen\n- Title: Chief Product Officer\n- Headline: CPO at HubSpot | Scaling product-led growth\n- Company: HubSpot\n- Industry: information technology & services\n- Location: Cambridge, United States\n- Recent roles: N/A\n\nCompany Signals:\n- Revenue: 3.1B\n- Headcount growth (12m): 6.5%\n- Tech stack: AI, ANGEL LMS, AWS Analytics, AWS SDK for JavaScript, AWS Trusted Advisor, AdMetrics\n- Keywords: N/A\n\nCompany Context:\nHubSpot is a mature, well-established SaaS platform company with 8,600 employees specializing in cloud-based inbound marketing, sales, ",
         "correction_note": "",
         "email": {
-          "subject": "Britannia's supply chain visibility across 80+ markets",
-          "body": "Hi Ravi, managing demand forecasting and supply chain visibility across 80+ countries with a portfolio as diverse as Britannia's is genuinely complex \u2014 especially when rising wheat and dairy input costs are already compressing margins. Many enterprise ops and tech leaders we speak with are finding that spreadsheet-heavy workflows and fragmented data pipelines are quietly eroding the cost savings they're working hard to protect elsewhere. Given Britannia's current focus on operational consolidation rather than expansion, there's often a real window to reduce that friction without a heavy lift. Would you be open to a 20-minute call to explore whether there's a fit worth discussing?",
-          "reasoning": "The hook is grounded in Ravi's dual role as VP Operations and CTO \u2014 two functions that directly own the pain of supply chain complexity and tech infrastructure simultaneously, making him the ideal contact for this angle. The reference to 80+ country operations and rising input costs is specific to Britannia's publicly known business context, not generic FMCG language, which signals research rather than a templated blast. Tying in the 'operational consolidation' phase (no hiring signals) aligns with the Cost Optimization trend \u2014 this framing respects that they're not in growth mode, repositioning the conversation as efficiency-focused rather than a new spend. The spreadsheet workflow reference is a subtle nod to the Excel4Apps signal without being presumptuous, making it feel observational. The CTA is low-commitment and time-bounded, reducing friction for a senior executive."
-        },
-        "layers": {
-          "validator": {
-            "consequence": "defer",
-            "issues": [
-              "context:company_name_absent:Britannia Industries Limited"
-            ],
-            "checkpoints": {
-              "shape": {
-                "ok": true,
-                "issues": []
-              },
-              "context": {
-                "ok": false,
-                "issues": [
-                  "context:company_name_absent:Britannia Industries Limited"
-                ]
-              },
-              "policy": {
-                "ok": true,
-                "issues": []
-              }
-            }
-          },
-          "tone": {
-            "passed": true,
-            "issues": []
-          },
-          "hallucination": {
-            "passed": true,
-            "violations": [],
-            "skipped": true
-          }
-        }
-      },
-      {
-        "attempt": 2,
-        "passed": true,
-        "prompt_preview": "\nYou are a world-class B2B sales development representative.\n\nWrite a highly personalized, concise cold outreach email for the following lead.\nThe email must feel human, reference specific company con\n\u2026\nr CTA (suggest a 20-min call)\n- Do not use buzzwords like \"synergy\", \"revolutionary\", \"game-changer\"\n- Tone: professional but conversational\n- If location is available, you may reference it naturally (e.g. \"your team in San Francisco\")\n\nRespond as JSON with keys: subject, body, reasoning (why this angle works).\n\n\n=== GOVERNANCE CORRECTION (Attempt 2/3) ===\nThe previous email FAILED governance. Fix every issue below before responding:\n  \u2717 CONTEXT: Company name 'Britannia Industries Limited' not mentioned. Reference it explicitly.\n\nRegenerate the COMPLETE email JSON addressing every issue above.",
-        "correction_note": "\n\n=== GOVERNANCE CORRECTION (Attempt 2/3) ===\nThe previous email FAILED governance. Fix every issue below before responding:\n  \u2717 CONTEXT: Company name 'Britannia Industries Limited' not mentioned. Reference it explicitly.\n\nRegenerate the COMPLETE email JSON addressing every issue above.",
-        "email": {
-          "subject": "Britannia's supply chain costs \u2014 quick question",
-          "body": "Hi Ravi, managing demand forecasting across Britannia Industries Limited's 80+ country operations and a sprawling SKU portfolio is no small task \u2014 especially when input costs for wheat and dairy keep compressing margins. With enterprise teams increasingly consolidating tech spend while squeezing more visibility out of existing infrastructure, I've been speaking with ops and supply chain leaders at similar FMCG companies about how they're reducing forecast errors and cutting operational overhead without adding headcount. Would you have 20 minutes this week to explore whether there's a fit for Britannia's context?",
-          "reasoning": "This angle works because it leads with a highly specific operational challenge Ravi owns directly \u2014 cross-border supply chain complexity and input cost pressure \u2014 both of which are documented pain points for Britannia Industries Limited. Referencing the 80+ country footprint and SKU diversity shows genuine research rather than a templated pitch. Tying it to the cost optimization trend makes it timely without being alarmist. The CTA is low-friction and framed around relevance to their specific situation, which increases response likelihood from a senior ops/tech leader."
+          "subject": "HubSpot's roadmap velocity \u2014 a quick thought",
+          "body": "I'm Prashant Biswas from Ganit. We are a full-stack Data & AI company, recognized by Everest, Forrester, and Analytics India.\n\nMaria, scaling product-led growth at HubSpot means your team in Cambridge is under constant pressure to ship with precision \u2014 and in an enterprise tech market doubling down on cost consolidation, slow feedback loops quietly become a direct tax on roadmap velocity.\n\nWhen experimentation infrastructure is tight and real-time customer signals feed directly into prioritization, product teams at your scale can cut wasted sprint cycles and align releases more closely to actual adoption patterns \u2014 less guesswork, faster compounding impact on retention and expansion.\n\nWe recently built a holistic AWS Data Lake and Snowflake Lakehouse for a CPG company, integrating SAP, Salesforce, and multiple source systems into a scalable three-tier architecture (raw, curated, refined) \u2014 the same foundational approach that enables real-time product signal pipelines at enterprise scale.\n\nWould a focused 20-minute call next week make sense to explore whether this kind of data infrastructure could sharpen HubSpot's experimentation velocity?",
+          "reasoning": "Maria is a CPO explicitly focused on product-led growth at a mature, $3.1B SaaS company in a consolidation phase. This means she is not hiring broadly \u2014 she is being asked to do more with what she has. The cost optimization trend creates internal pressure to justify roadmap decisions with data, not intuition. The angle hits her real constraint: slow feedback loops and roadmap misalignment are costly when budgets are scrutinized. Referencing Cambridge grounds the message personally, and the AWS/data infrastructure proof point is credible given HubSpot's own AWS-heavy tech stack \u2014 making the solution feel directly relevant rather than generic."
         },
         "layers": {
           "validator": {
@@ -261,37 +413,126 @@
             }
           },
           "tone": {
-            "passed": true,
-            "issues": []
+            "passed": false,
+            "issues": [
+              "Body too long (7 sentences, max 5)"
+            ]
           },
           "hallucination": {
             "passed": true,
             "violations": [],
-            "confidence": 0.97,
-            "explanation": "All factual claims in the email \u2014 the 80+ country operations, wheat and dairy input cost pressures, and the ops/supply chain leadership framing \u2014 are directly supported by the verified known facts, and no specific unverifiable numbers, fabricated events, or misrepresentations are present."
+            "skipped": true
+          }
+        }
+      },
+      {
+        "attempt": 2,
+        "passed": false,
+        "prompt_preview": "You are a world-class B2B sales development representative.\n\nWrite a highly personalized cold outreach email for the following lead.\nThe email must feel human, reference specific company context, and \n\u2026\n_proof\": \"1 sentence \u2014 quantified claim or peer-company reference from Sender Proof Points\",\n  \"cta\": \"1 sentence \u2014 suggest a specific 20-min call\",\n  \"reasoning\": \"why this angle works for this lead\",\n  \"stream\": \"product\",\n  \"domain\": \"saas\",\n  \"kb_ids_used\": [\"list of claim IDs from Sender Proof Points that were used\"]\n}\n\n=== GOVERNANCE CORRECTION (Attempt 2/3) ===\nThe previous email FAILED governance. Fix every issue below before responding:\n  \u2717 TONE: Body too long (7 sentences, max 5). Cut sentences to stay under the limit.\n\nRegenerate the COMPLETE email JSON addressing every issue above.",
+        "correction_note": "\n\n=== GOVERNANCE CORRECTION (Attempt 2/3) ===\nThe previous email FAILED governance. Fix every issue below before responding:\n  \u2717 TONE: Body too long (7 sentences, max 5). Cut sentences to stay under the limit.\n\nRegenerate the COMPLETE email JSON addressing every issue above.",
+        "email": {
+          "subject": "HubSpot's experimentation velocity \u2014 keeping pace?",
+          "body": "I'm Prashant Biswas from Ganit. We are a full-stack Data & AI company, recognized by Everest, Forrester, and Analytics India.\n\nMaria, scaling product-led growth at HubSpot means your team in Cambridge is under constant pressure to ship with precision \u2014 and in an enterprise tech market doubling down on cost consolidation, slow feedback loops become a direct tax on roadmap velocity.\n\nWe help CPOs close the gap between customer signals and roadmap decisions, cutting the time from experiment to confident feature rollout \u2014 without adding infrastructure overhead.\n\nWe're SOC-2 and ISO 27001 certified, and featured in the Forrester Landscape Report and PEAK Matrix for data solutions \u2014 so enterprise-grade trust is already built in.\n\nWould a focused 20-minute call this week make sense to explore whether this fits where HubSpot's product org is headed?",
+          "reasoning": "Maria is a CPO at a $3.1B consolidation-phase SaaS company actively building on AWS \u2014 the cost optimization trend creates urgency around eliminating slow feedback loops. The angle targets her core mandate (product-led growth) while speaking to a pain she owns directly: roadmap misalignment caused by lagging data. Keeping the email tight respects her seniority and time."
+        },
+        "layers": {
+          "validator": {
+            "consequence": "allow",
+            "issues": [],
+            "checkpoints": {
+              "shape": {
+                "ok": true,
+                "issues": []
+              },
+              "context": {
+                "ok": true,
+                "issues": []
+              },
+              "policy": {
+                "ok": true,
+                "issues": []
+              }
+            }
+          },
+          "tone": {
+            "passed": false,
+            "issues": [
+              "Body too long (7 sentences, max 5)"
+            ]
+          },
+          "hallucination": {
+            "passed": true,
+            "violations": [],
+            "skipped": true
+          }
+        }
+      },
+      {
+        "attempt": 3,
+        "passed": false,
+        "prompt_preview": "You are a world-class B2B sales development representative.\n\nWrite a highly personalized cold outreach email for the following lead.\nThe email must feel human, reference specific company context, and \n\u2026\n_proof\": \"1 sentence \u2014 quantified claim or peer-company reference from Sender Proof Points\",\n  \"cta\": \"1 sentence \u2014 suggest a specific 20-min call\",\n  \"reasoning\": \"why this angle works for this lead\",\n  \"stream\": \"product\",\n  \"domain\": \"saas\",\n  \"kb_ids_used\": [\"list of claim IDs from Sender Proof Points that were used\"]\n}\n\n=== GOVERNANCE CORRECTION (Attempt 3/3) ===\nThe previous email FAILED governance. Fix every issue below before responding:\n  \u2717 TONE: Body too long (7 sentences, max 5). Cut sentences to stay under the limit.\n\nRegenerate the COMPLETE email JSON addressing every issue above.",
+        "correction_note": "\n\n=== GOVERNANCE CORRECTION (Attempt 3/3) ===\nThe previous email FAILED governance. Fix every issue below before responding:\n  \u2717 TONE: Body too long (7 sentences, max 5). Cut sentences to stay under the limit.\n\nRegenerate the COMPLETE email JSON addressing every issue above.",
+        "email": {
+          "subject": "HubSpot's experimentation velocity \u2014 keeping pace?",
+          "body": "I'm Prashant Biswas from Ganit. We are a full-stack Data & AI company, recognized by Everest, Forrester, and Analytics India.\n\nMaria, scaling product-led growth at HubSpot means your team in Cambridge is under constant pressure to ship with precision \u2014 and in an enterprise tech market doubling down on cost consolidation, slow feedback loops become a direct tax on roadmap velocity.\n\nWe help CPOs close the gap between customer signals and roadmap decisions, so your team ships features that drive adoption rather than ones that require costly course-correction cycles.\n\nWe're SOC-2 and ISO 27001 certified, and featured in the Forrester Landscape Report and PEAK Matrix for data solutions \u2014 giving enterprise product teams a trusted foundation for real-time analytics infrastructure.\n\nWould a focused 20-minute call next week be useful to explore where this fits HubSpot's current priorities?",
+          "reasoning": "Maria is a CPO explicitly focused on product-led growth at a $3.1B SaaS company in a consolidation phase \u2014 she's accountable for shipping efficiently with tight feedback loops, not headcount expansion. The cost optimization trend creates urgency around experimentation velocity and data-driven prioritization, making the roadmap misalignment pain point immediately relevant. Citing Forrester and ISO credentials builds trust without over-claiming."
+        },
+        "layers": {
+          "validator": {
+            "consequence": "allow",
+            "issues": [],
+            "checkpoints": {
+              "shape": {
+                "ok": true,
+                "issues": []
+              },
+              "context": {
+                "ok": true,
+                "issues": []
+              },
+              "policy": {
+                "ok": true,
+                "issues": []
+              }
+            }
+          },
+          "tone": {
+            "passed": false,
+            "issues": [
+              "Body too long (7 sentences, max 5)"
+            ]
+          },
+          "hallucination": {
+            "passed": false,
+            "violations": [
+              "Email body is duplicated verbatim \u2014 the opening value proposition and certifications paragraph appears twice, which is a structural/content error in the generated email.",
+              "'scaling product-led growth at HubSpot' \u2014 HubSpot's known growth stage is 'mature/consolidation' with no active hiring or scaling signals; framing it as actively scaling product-led growth misrepresents the company's current phase.",
+              "'your team in Cambridge' \u2014 HubSpot is indeed based in Cambridge, MA per known facts, so this is verifiable and not a violation.",
+              "'enterprise tech market doubling down on cost consolidation' \u2014 this is supported by the known trend 'Cost Optimization Trend in Enterprise Tech', so acceptable.",
+              "No specific fabricated numbers or names detected beyond the structural duplication and mischaracterization of growth stage."
+            ],
+            "confidence": 0.82,
+            "explanation": "The email contains a critical structural defect (full body duplicated verbatim) and misrepresents HubSpot's current growth phase as actively scaling when known facts indicate a mature/consolidation stage with no open roles or hiring signals; all certification and analyst recognition claims are consistent with verified sender KB facts."
           }
         }
       }
     ],
-    "queued_event_id": "evt_e9948ac1a33e",
+    "queued_event_id": "evt_6506c9db314c",
     "outreach": {
-      "subject": "Britannia's supply chain costs \u2014 quick question",
-      "body": "Hi Ravi, managing demand forecasting across Britannia Industries Limited's 80+ country operations and a sprawling SKU portfolio is no small task \u2014 especially when input costs for wheat and dairy keep compressing margins. With enterprise teams increasingly consolidating tech spend while squeezing more visibility out of existing infrastructure, I've been speaking with ops and supply chain leaders at similar FMCG companies about how they're reducing forecast errors and cutting operational overhead without adding headcount. Would you have 20 minutes this week to explore whether there's a fit for Britannia's context?",
-      "reasoning": "This angle works because it leads with a highly specific operational challenge Ravi owns directly \u2014 cross-border supply chain complexity and input cost pressure \u2014 both of which are documented pain points for Britannia Industries Limited. Referencing the 80+ country footprint and SKU diversity shows genuine research rather than a templated pitch. Tying it to the cost optimization trend makes it timely without being alarmist. The CTA is low-friction and framed around relevance to their specific situation, which increases response likelihood from a senior ops/tech leader."
+      "subject": "HubSpot's experimentation velocity \u2014 keeping pace?",
+      "body": "I'm Prashant Biswas from Ganit. We are a full-stack Data & AI company, recognized by Everest, Forrester, and Analytics India.\n\nMaria, scaling product-led growth at HubSpot means your team in Cambridge is under constant pressure to ship with precision \u2014 and in an enterprise tech market doubling down on cost consolidation, slow feedback loops become a direct tax on roadmap velocity.\n\nWe help CPOs close the gap between customer signals and roadmap decisions, so your team ships features that drive adoption rather than ones that require costly course-correction cycles.\n\nWe're SOC-2 and ISO 27001 certified, and featured in the Forrester Landscape Report and PEAK Matrix for data solutions \u2014 giving enterprise product teams a trusted foundation for real-time analytics infrastructure.\n\nWould a focused 20-minute call next week be useful to explore where this fits HubSpot's current priorities?",
+      "reasoning": "Maria is a CPO explicitly focused on product-led growth at a $3.1B SaaS company in a consolidation phase \u2014 she's accountable for shipping efficiently with tight feedback loops, not headcount expansion. The cost optimization trend creates urgency around experimentation velocity and data-driven prioritization, making the roadmap misalignment pain point immediately relevant. Citing Forrester and ISO credentials builds trust without over-claiming."
     }
   },
   "outreach": {
-    "subject": "Britannia's supply chain costs \u2014 quick question",
-    "body": "Hi Ravi, managing demand forecasting across Britannia Industries Limited's 80+ country operations and a sprawling SKU portfolio is no small task \u2014 especially when input costs for wheat and dairy keep compressing margins. With enterprise teams increasingly consolidating tech spend while squeezing more visibility out of existing infrastructure, I've been speaking with ops and supply chain leaders at similar FMCG companies about how they're reducing forecast errors and cutting operational overhead without adding headcount. Would you have 20 minutes this week to explore whether there's a fit for Britannia's context?",
-    "reasoning": "This angle works because it leads with a highly specific operational challenge Ravi owns directly \u2014 cross-border supply chain complexity and input cost pressure \u2014 both of which are documented pain points for Britannia Industries Limited. Referencing the 80+ country footprint and SKU diversity shows genuine research rather than a templated pitch. Tying it to the cost optimization trend makes it timely without being alarmist. The CTA is low-friction and framed around relevance to their specific situation, which increases response likelihood from a senior ops/tech leader."
+    "subject": "HubSpot's experimentation velocity \u2014 keeping pace?",
+    "body": "I'm Prashant Biswas from Ganit. We are a full-stack Data & AI company, recognized by Everest, Forrester, and Analytics India.\n\nMaria, scaling product-led growth at HubSpot means your team in Cambridge is under constant pressure to ship with precision \u2014 and in an enterprise tech market doubling down on cost consolidation, slow feedback loops become a direct tax on roadmap velocity.\n\nWe help CPOs close the gap between customer signals and roadmap decisions, so your team ships features that drive adoption rather than ones that require costly course-correction cycles.\n\nWe're SOC-2 and ISO 27001 certified, and featured in the Forrester Landscape Report and PEAK Matrix for data solutions \u2014 giving enterprise product teams a trusted foundation for real-time analytics infrastructure.\n\nWould a focused 20-minute call next week be useful to explore where this fits HubSpot's current priorities?",
+    "reasoning": "Maria is a CPO explicitly focused on product-led growth at a $3.1B SaaS company in a consolidation phase \u2014 she's accountable for shipping efficiently with tight feedback loops, not headcount expansion. The cost optimization trend creates urgency around experimentation velocity and data-driven prioritization, making the roadmap misalignment pain point immediately relevant. Citing Forrester and ISO credentials builds trust without over-claiming."
   },
-  "email_sent_at": "2026-06-04T19:36:35.787537",
-  "due_at": "2026-06-04T19:38:35.787537",
-  "status": "whatsapp_sent",
-  "whatsapp_sent_at": "2026-06-04T19:38:42.389616",
+  "email_sent_at": "2026-06-06T09:35:36.848476",
+  "due_at": "2026-06-06T09:37:36.848476",
+  "status": "replied",
+  "whatsapp_sent_at": null,
   "whatsapp_error": null,
-  "whatsapp_traceback": null,
-  "whatsapp_status_code": 200,
-  "whatsapp_elapsed_seconds": 0.75,
-  "whatsapp_normalized_to": "+918056498879"
+  "replied_at": "2026-06-06T09:37:09.672813"
 }

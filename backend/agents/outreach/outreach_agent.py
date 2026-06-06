@@ -263,6 +263,51 @@ class OutreachAgent:
             Validator("outreach", lead_id=lead_id, context=context).validate(result, tracker=t)
         return result
 
+    def generate_whatsapp_followup(self, context: dict, outreach: dict | None = None) -> str:
+        """Generate a short personalized WhatsApp follow-up.
+
+        The scheduler catches any exception from this method and falls back to
+        its deterministic contextual message, so API/configuration failures do
+        not block WhatsApp delivery.
+        """
+        lead = context.get("lead") or {}
+        company = context.get("company") or {}
+        research = context.get("research") or {}
+        outreach = outreach or context.get("outreach") or {}
+
+        prompt = (
+            "Write a concise WhatsApp follow-up after a prior cold email.\n"
+            "Return valid JSON only with one field: message.\n"
+            "Rules: 1-2 sentences, under 450 characters, conversational, no subject line, "
+            "no markdown, no invented facts, ask for a quick 15-minute chat.\n\n"
+            f"Lead name: {lead.get('name') or 'there'}\n"
+            f"Lead title: {lead.get('title') or 'N/A'}\n"
+            f"Company: {company.get('name') or 'their team'}\n"
+            f"Company summary: {research.get('summary') or 'N/A'}\n"
+            f"Prior email subject: {outreach.get('subject') or 'N/A'}\n"
+            f"Prior email body: {outreach.get('body') or outreach.get('opening_hook') or 'N/A'}"
+        )
+
+        lead_id = lead.get("id")
+        tracer = AgentTracer(agent="outreach", lead_id=lead_id, context=context, prompt_version="whatsapp_followup_v1")
+        with tracer.trace(prompt=prompt, system=SYSTEM) as t:
+            response = client.messages.create(
+                model=MODEL,
+                max_tokens=256,
+                system=SYSTEM,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            raw = response.content[0].text.strip()
+            _m = re.search(r"\{[\s\S]*\}", raw)
+            parsed = json.loads(_m.group()) if _m else {"message": raw}
+            message = str(parsed.get("message") or "").strip()
+            if not message:
+                raise ValueError("WhatsApp follow-up generation returned an empty message")
+            t.finish(response)
+            t.set_retrieval_score(compute_retrieval_score(message, context))
+            t.set_self_eval(self_evaluate("outreach", message, context_to_summary(context)))
+        return message[:450]
+
     def _build_citations(self, context: dict, top_trends: list) -> dict:
         """Build source attribution map for each fact used in outreach generation."""
         lead = context.get("lead") or {}

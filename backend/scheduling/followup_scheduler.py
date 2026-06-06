@@ -189,20 +189,26 @@ class FollowupScheduler:
             record["status"] = "whatsapp_sent" if result.get("sent") else "failed"
             self._write(lead_id, record)
             if result.get("sent"):
-                MemoryManager().store_message(
-                    lead_id,
-                    "sdr",
-                    message,
-                    channel="whatsapp",
-                    direction="outbound",
-                )
-                WhatsAppConversationStore().add_message(
-                    lead_id=lead_id,
-                    context=record.get("context", {}),
-                    direction="outbound",
-                    message=message,
-                    phone=phone,
-                )
+                try:
+                    MemoryManager().store_message(
+                        lead_id,
+                        "sdr",
+                        message,
+                        channel="whatsapp",
+                        direction="outbound",
+                    )
+                except Exception:
+                    logger.exception("Unable to store WhatsApp follow-up in memory lead_id=%s", lead_id)
+                try:
+                    WhatsAppConversationStore().add_message(
+                        lead_id=lead_id,
+                        context=record.get("context", {}),
+                        direction="outbound",
+                        message=message,
+                        phone=phone,
+                    )
+                except Exception:
+                    logger.exception("Unable to store WhatsApp follow-up conversation lead_id=%s", lead_id)
             results.append({"lead_id": lead_id, **result})
         return results
 

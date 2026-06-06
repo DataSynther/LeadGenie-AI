@@ -447,15 +447,20 @@ class MemoryManager:
 
     # ── episodic ──────────────────────────────────────────────────────────────
 
-    def store_message(self, lead_id: str, role: str, content: str) -> None:
-        self.episodic.append(lead_id, role, content)
+    def store_message(self, lead_id: str, role: str, content: str, **meta) -> None:
+        self.episodic.append(lead_id, role, content, meta=meta or None)
 
     def get_history(self, lead_id: str) -> list[dict]:
         """Return governed episodic history (relevance-filtered)."""
         raw = self.episodic.get(lead_id)
         # Flatten to the shape callers expect: [{role, content, timestamp}]
         return [
-            {"role": m.get("role"), "content": m.get("content"), "timestamp": m.get("ts", "")}
+            {
+                "role": m.get("role"),
+                "content": m.get("content"),
+                "timestamp": m.get("ts", ""),
+                **{k: v for k, v in m.items() if k not in {"role", "content", "ts", "confidence"}},
+            }
             for m in raw
         ]
 

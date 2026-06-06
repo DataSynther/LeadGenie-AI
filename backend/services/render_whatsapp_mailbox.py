@@ -9,6 +9,7 @@ from uuid import uuid4
 
 import requests
 
+from agents.conversation.memory_manager import MemoryManager
 from scheduling.followup_scheduler import FollowupScheduler
 from services.lead_context_store import LeadContextStore
 from services.whatsapp_conversation_store import WhatsAppConversationStore
@@ -152,6 +153,14 @@ class RenderWhatsAppMailbox:
                 context=context,
                 direction="inbound",
                 message=body,
+                phone=sender,
+            )
+            MemoryManager().store_message(
+                lead_id,
+                "prospect",
+                body,
+                channel="whatsapp",
+                direction="inbound",
                 phone=sender,
             )
             processed.add(key)

@@ -341,8 +341,16 @@ export type WhatsAppConversation = {
   messages: WhatsAppMessage[];
 };
 
+export type WhatsAppSyncResult = {
+  remote_url?: string;
+  fetched: number;
+  imported: number;
+  skipped: number;
+  error?: string | null;
+};
+
 export const whatsappConversations = () =>
-  get<{ unread_count: number; conversations: WhatsAppConversation[]; sync?: unknown }>("/whatsapp/conversations");
+  get<{ unread_count: number; conversations: WhatsAppConversation[]; sync?: WhatsAppSyncResult }>("/whatsapp/conversations");
 
 export const whatsappConversation = (conversationId: string) =>
   get<{ conversation: WhatsAppConversation }>(`/whatsapp/conversations/${encodeURIComponent(conversationId)}`);

@@ -25,7 +25,7 @@ export function WhatsAppInboxPage() {
   const inbox = useQuery({
     queryKey: ["whatsappConversations"],
     queryFn: api.whatsappConversations,
-    refetchInterval: 30_000,
+    refetchInterval: 5_000,
   });
 
   const conversations = inbox.data?.conversations ?? [];
@@ -37,6 +37,7 @@ export function WhatsAppInboxPage() {
     queryKey: ["whatsappConversation", selectedSummary?.conversation_id],
     queryFn: () => api.whatsappConversation(selectedSummary!.conversation_id),
     enabled: Boolean(selectedSummary?.conversation_id),
+    refetchInterval: selectedSummary?.conversation_id ? 5_000 : false,
   });
   const selected = thread.data?.conversation ?? selectedSummary;
 
@@ -46,11 +47,34 @@ export function WhatsAppInboxPage() {
     }
   }, [conversations, selectedId]);
 
+  useEffect(() => {
+    if (!selectedSummary?.conversation_id) return;
+
+    queryClient.setQueryData<{ conversation: WhatsAppConversation }>(
+      ["whatsappConversation", selectedSummary.conversation_id],
+      (current) => {
+        if (!current) return { conversation: selectedSummary };
+        const currentUpdated = current.conversation.updated_at ?? "";
+        const summaryUpdated = selectedSummary.updated_at ?? "";
+        return summaryUpdated > currentUpdated ? { conversation: selectedSummary } : current;
+      },
+    );
+  }, [queryClient, selectedSummary]);
+
   const openConversation = useMutation({
     mutationFn: (conversationId: string) => api.openWhatsAppConversation(conversationId),
-    onSuccess: (_data, conversationId) => {
-      queryClient.invalidateQueries({ queryKey: ["whatsappConversations"] });
-      queryClient.invalidateQueries({ queryKey: ["whatsappConversation", conversationId] });
+    onSuccess: (data, conversationId) => {
+      queryClient.setQueryData(["whatsappConversation", conversationId], { conversation: data.conversation });
+      queryClient.setQueryData<typeof inbox.data>(["whatsappConversations"], (current) => {
+        if (!current) return current;
+        return {
+          ...current,
+          unread_count: data.unread_count,
+          conversations: current.conversations.map((conv) =>
+            conv.conversation_id === conversationId ? data.conversation : conv,
+          ),
+        };
+      });
     },
   });
 
@@ -58,8 +82,20 @@ export function WhatsAppInboxPage() {
     mutationFn: () => api.sendWhatsAppReply(selected!.conversation_id, reply.trim()),
     onSuccess: (data) => {
       setReply("");
+      queryClient.setQueryData(["whatsappConversation", data.conversation.conversation_id], {
+        conversation: data.conversation,
+      });
+      queryClient.setQueryData<typeof inbox.data>(["whatsappConversations"], (current) => {
+        if (!current) return current;
+        return {
+          ...current,
+          conversations: current.conversations.map((conv) =>
+            conv.conversation_id === data.conversation.conversation_id ? data.conversation : conv,
+          ),
+        };
+      });
       queryClient.invalidateQueries({ queryKey: ["whatsappConversations"] });
-      queryClient.invalidateQueries({ queryKey: ["whatsappConversation", data.conversation_id] });
+      queryClient.invalidateQueries({ queryKey: ["whatsappConversation", data.conversation.conversation_id] });
     },
   });
 
@@ -82,6 +118,12 @@ export function WhatsAppInboxPage() {
       openConversation.mutate(conv.conversation_id);
     }
   }
+
+  useEffect(() => {
+    if (selectedSummary?.unread && !openConversation.isPending) {
+      openConversation.mutate(selectedSummary.conversation_id);
+    }
+  }, [selectedSummary?.conversation_id, selectedSummary?.unread, openConversation.isPending]);
 
   function removeConversation(event: React.MouseEvent, conv: WhatsAppConversation) {
     event.stopPropagation();
