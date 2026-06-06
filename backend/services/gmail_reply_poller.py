@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 
 from services.lead_context_store import LeadContextStore
 from agents.conversation.conversation_agent import ConversationAgent
+from scheduling.followup_scheduler import FollowupScheduler
 
 logger = logging.getLogger(__name__)
 
@@ -132,6 +133,7 @@ class GmailReplyPoller:
 
             lead_id = stored["lead_id"]
             context = stored["context"]
+            FollowupScheduler().mark_replied(lead_id)
 
             logger.info("Processing reply from %s (lead_id=%s)", sender_email, lead_id)
             result = self.agent.handle_reply(

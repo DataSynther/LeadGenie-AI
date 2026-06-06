@@ -3,8 +3,11 @@ from dotenv import load_dotenv
 load_dotenv(dotenv_path=Path(__file__).parent.parent / ".env")
 
 import hashlib
+import asyncio
+import contextlib
 import json
 import logging
+import os
 import secrets
 from datetime import datetime, timedelta
 from fastapi import FastAPI, HTTPException, Request, Depends
@@ -58,6 +61,7 @@ from services.lead_context_store import LeadContextStore
 from services.email_sender import EmailSender
 from services.twilio_whatsapp import TwilioWhatsApp
 from services.whatsapp_conversation_store import WhatsAppConversationStore
+from services.email_sender import EmailSender
 from services.render_whatsapp_mailbox import RenderWhatsAppMailbox
 from observability import diagnostic_store
 from memory.memory_governance import governance as memory_governance
@@ -110,6 +114,38 @@ whatsapp_conversation_store = WhatsAppConversationStore()
 render_whatsapp_mailbox = RenderWhatsAppMailbox()
 outreach_queue = OutreachQueueStore()
 credit_store = CreditStore()
+_followup_task = None
+
+
+async def _followup_scheduler_loop():
+    interval = int(os.getenv("FOLLOWUP_SCHEDULER_INTERVAL_SECONDS", "15"))
+    logger.info("WhatsApp follow-up scheduler loop started; interval=%ss", interval)
+    while True:
+        try:
+            await asyncio.to_thread(followup_scheduler.process_due)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception("WhatsApp follow-up scheduler loop failed")
+        await asyncio.sleep(interval)
+
+
+@app.on_event("startup")
+async def start_followup_scheduler():
+    global _followup_task
+    enabled = os.getenv("FOLLOWUP_SCHEDULER_AUTOSTART", "true").lower() not in {"0", "false", "no"}
+    if enabled and _followup_task is None:
+        _followup_task = asyncio.create_task(_followup_scheduler_loop())
+
+
+@app.on_event("shutdown")
+async def stop_followup_scheduler():
+    global _followup_task
+    if _followup_task:
+        _followup_task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await _followup_task
+        _followup_task = None
 
 
 class LoginRequest(BaseModel):
@@ -391,7 +427,9 @@ async def send_outreach(req: SendOutreachRequest):
     if not result.get("sent"):
         raise HTTPException(status_code=502, detail=result.get("error"))
 
-    lead_phone = req.phone or lead.get("phone")
+    req_lead = req.context.get("lead", {}) if isinstance(req.context, dict) else {}
+    req_company = req.context.get("company", {}) if isinstance(req.context, dict) else {}
+    lead_phone = req.phone or lead.get("phone") or req_lead.get("phone") or req_company.get("phone")
     enriched_context = {
         **req.context,
         "lead": {**req.context.get("lead", {}), "email": req.to_email, "phone": lead_phone},
@@ -413,6 +451,7 @@ async def send_outreach(req: SendOutreachRequest):
 
 @app.post("/conversation/reply")
 async def handle_reply(req: ConversationRequest):
+    followup_scheduler.mark_replied(req.lead_id)
     result = conversation_agent.handle_reply(req.lead_id, req.reply, req.context)
     try:
         stats_store.record_conversation(
@@ -1346,6 +1385,7 @@ async def inbound_email_reply(request: Request):
 
     lead_id = stored["lead_id"]
     context = stored["context"]
+    followup_scheduler.mark_replied(lead_id)
 
     result = conversation_agent.handle_reply(
         lead_id=lead_id,

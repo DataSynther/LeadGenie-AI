@@ -1,0 +1,308 @@
+{
+  "conversation_id": "whatsapp_def4c3e7f283ce6f",
+  "lead_id": "696cb6c2d4cef40001c3cd64",
+  "phone": "whatsapp:+918056498879",
+  "context": {
+    "lead": {
+      "id": "696cb6c2d4cef40001c3cd64",
+      "name": "Ravi Sharma",
+      "title": "VP- Operations and CTO",
+      "seniority": "c_suite",
+      "department": "engineering",
+      "email": "ajaykumar130721@gmail.com",
+      "phone": "+91 8056498879",
+      "linkedin_url": "https://linkedin.com/in/ravi-sharma-demo",
+      "organization_id": "696cb6c2d4cef40001c3cd64",
+      "company": "Britannia Industries Limited"
+    },
+    "company": {
+      "id": "5569cecd7369642525a89600",
+      "name": "Britannia Industries Limited",
+      "domain": "britannia.co.in",
+      "industry": "food & beverages",
+      "employee_count": 5400,
+      "revenue": "2.1B",
+      "funding_stage": null,
+      "technologies": [
+        "AboveNet",
+        "Amazon AWS",
+        "Amazon CloudFront",
+        "Amazon Elastic Load Balancer",
+        "Blinkit",
+        "Bootstrap Framework",
+        "Cloudflare DNS",
+        "ExactTarget",
+        "Excel4Apps",
+        "GRIN"
+      ],
+      "description": "Britannia Industries Limited is a prominent Indian food and beverage company founded in 1892 in Kolkata. It specializes in bakery, dairy, and snacking products and operates in over 80 countries. As part of the Wadia Group, Britannia has grown to become a household name in India, employing over 4,500 people and achieving a market capitalization of \u20b91.08 trillion.\n\nThe company's diverse product portfolio includes a wide range of biscuits under popular brands like Good Day, NutriChoice, and Bourbon, as well as breads, cakes, and rusk products. In the dairy segment, Britannia produces milk, butter, cheese, ghee, and curd, with offerings like Winkin' Cow. With annual revenues exceeding \u20b99,000 crore, Britannia maintains a strong market presence in the food and beverage sector, focusing on providing tasty yet healthy products that fit into consumers' daily lives.",
+      "linkedin_url": "http://www.linkedin.com/company/britannia-industries-limited",
+      "founded_year": 1892,
+      "headcount_growth_6m": -0.001456664238892935,
+      "headcount_growth_12m": 0.02313432835820895,
+      "phone": "+91 99999 00006"
+    },
+    "top_trends": [
+      {
+        "id": "t004",
+        "title": "Cost Optimization Trend in Enterprise Tech",
+        "category": "business",
+        "relevance_tags": [
+          "cost",
+          "efficiency",
+          "enterprise",
+          "saas"
+        ],
+        "source": "curated",
+        "date": "2026-05-15",
+        "relevance_score": 0.3138
+      },
+      {
+        "id": "t001",
+        "title": "AI Governance Concerns Increasing",
+        "category": "regulatory",
+        "relevance_tags": [
+          "ai",
+          "governance",
+          "compliance",
+          "risk"
+        ],
+        "source": "curated",
+        "date": "2026-05-01",
+        "relevance_score": 0.2478
+      },
+      {
+        "id": "t002",
+        "title": "AI Agents Adoption Growing Rapidly",
+        "category": "technology",
+        "relevance_tags": [
+          "ai",
+          "agents",
+          "automation",
+          "llm"
+        ],
+        "source": "curated",
+        "date": "2026-05-10",
+        "relevance_score": 0.2217
+      }
+    ],
+    "email": {
+      "subject": "Britannia's supply chain data \u2014 quick thought",
+      "body": "Hi Ravi, running operations and tech simultaneously at Britannia Industries Limited \u2014 at \u20b99,000+ crore revenue across 80+ countries \u2014 means you're likely navigating a real tension: legacy ERP dependencies sitting alongside newer cloud infrastructure like AWS, while raw material costs keep squeezing margins. Most FMCG leaders at this scale tell us that fragmented data across those systems makes cost optimization feel reactive rather than deliberate. We've helped similar-scale food manufacturers consolidate operational data flows to cut decision latency and reduce waste without a heavy re-platforming lift. Would a 20-minute call this week be worth it to see if there's a fit?",
+      "reasoning": "The hook directly names Britannia Industries Limited and acknowledges Ravi's dual VP Operations + CTO role, which signals both operational and technical ownership \u2014 making him the ideal decision-maker. Referencing AWS alongside legacy ERP ties to their actual tech stack and mirrors the data fragmentation pain point. The cost optimization angle is timely given FMCG margin pressure from commodity inputs. The CTA is low-commitment and specific. No buzzwords are used, and the tone stays peer-level and direct."
+    },
+    "governance": {
+      "approved": true,
+      "risk_score": 0.010000000000000009,
+      "issues": [],
+      "event_id": "00567e14-591d-4a1d-a0af-4592cc56cf3d",
+      "requires_human_review": false,
+      "governance_attempt_history": [
+        {
+          "attempt": 1,
+          "passed": false,
+          "prompt_preview": "\nYou are a world-class B2B sales development representative.\n\nWrite a highly personalized, concise cold outreach email for the following lead.\nThe email must feel human, reference specific company context, and tie in a relevant market trend.\n\nLead:\n- Name: Ravi Sharma\n- Title: VP- Operations and CTO\n- Headline: N/A\n- Company: Britannia Industries Limited\n- Industry: food & beverages\n- Location: N/A\n- Recent roles: N/A\n\nCompany Signals:\n- Revenue: 2.1B\n- Headcount growth (12m): N/A\n- Tech stack: AboveNet, Amazon AWS, Amazon CloudFront, Amazon Elastic Load Balancer, Blinkit, Bootstrap Framework\n- Keywords: N/A\n\nCompany Context:\nBritannia Industries Limited is a legacy Indian FMCG giant founded in 1892, operating under the Wadia Group conglomerate. With a market cap of \u20b91.08 trillion and reve",
+          "correction_note": "",
+          "email": {
+            "subject": "Britannia's distribution complexity \u2014 a quick thought",
+            "body": "Hi Ravi, managing multi-channel distribution across traditional trade, modern trade, and quick-commerce partners like Blinkit \u2014 while keeping margins intact against rising wheat and palm oil costs \u2014 is a genuinely hard operational problem at Britannia's scale. Most legacy FMCG tech stacks weren't built for that kind of channel fragmentation, and we're seeing a lot of $1B+ food companies quietly consolidating their data pipelines to cut operational overhead without adding headcount. I'd love to share a specific example from a comparable food manufacturer that reduced distribution reconciliation time by 40% \u2014 would a 20-minute call this week make sense?",
+            "reasoning": "The hook is grounded in Britannia's actual operational reality \u2014 multi-channel complexity with Blinkit as a named tech signal \u2014 rather than generic flattery. The cost optimization trend is introduced naturally through the lens of margin pressure (a known pain for FMCG players facing commodity volatility), not as a sales pitch. Referencing 'without adding headcount' directly addresses the consolidation signal from the absence of engineering/AI hiring, making it feel observant rather than presumptuous. The CTA is low-friction and anchored to a concrete proof point, which builds credibility without overpromising."
+          },
+          "layers": {
+            "validator": {
+              "consequence": "defer",
+              "issues": [
+                "context:company_name_absent:Britannia Industries Limited"
+              ],
+              "checkpoints": {
+                "shape": {
+                  "ok": true,
+                  "issues": []
+                },
+                "context": {
+                  "ok": false,
+                  "issues": [
+                    "context:company_name_absent:Britannia Industries Limited"
+                  ]
+                },
+                "policy": {
+                  "ok": true,
+                  "issues": []
+                }
+              }
+            },
+            "tone": {
+              "passed": true,
+              "issues": []
+            },
+            "hallucination": {
+              "passed": true,
+              "violations": [],
+              "skipped": true
+            }
+          }
+        },
+        {
+          "attempt": 2,
+          "passed": true,
+          "prompt_preview": "\nYou are a world-class B2B sales development representative.\n\nWrite a highly personalized, concise cold outreach email for the following lead.\nThe email must feel human, reference specific company con\n\u2026\nr CTA (suggest a 20-min call)\n- Do not use buzzwords like \"synergy\", \"revolutionary\", \"game-changer\"\n- Tone: professional but conversational\n- If location is available, you may reference it naturally (e.g. \"your team in San Francisco\")\n\nRespond as JSON with keys: subject, body, reasoning (why this angle works).\n\n\n=== GOVERNANCE CORRECTION (Attempt 2/3) ===\nThe previous email FAILED governance. Fix every issue below before responding:\n  \u2717 CONTEXT: Company name 'Britannia Industries Limited' not mentioned. Reference it explicitly.\n\nRegenerate the COMPLETE email JSON addressing every issue above.",
+          "correction_note": "\n\n=== GOVERNANCE CORRECTION (Attempt 2/3) ===\nThe previous email FAILED governance. Fix every issue below before responding:\n  \u2717 CONTEXT: Company name 'Britannia Industries Limited' not mentioned. Reference it explicitly.\n\nRegenerate the COMPLETE email JSON addressing every issue above.",
+          "email": {
+            "subject": "Britannia's supply chain data \u2014 quick thought",
+            "body": "Hi Ravi, running operations and tech simultaneously at Britannia Industries Limited \u2014 at \u20b99,000+ crore revenue across 80+ countries \u2014 means you're likely navigating a real tension: legacy ERP dependencies sitting alongside newer cloud infrastructure like AWS, while raw material costs keep squeezing margins. Most FMCG leaders at this scale tell us that fragmented data across those systems makes cost optimization feel reactive rather than deliberate. We've helped similar-scale food manufacturers consolidate operational data flows to cut decision latency and reduce waste without a heavy re-platforming lift. Would a 20-minute call this week be worth it to see if there's a fit?",
+            "reasoning": "The hook directly names Britannia Industries Limited and acknowledges Ravi's dual VP Operations + CTO role, which signals both operational and technical ownership \u2014 making him the ideal decision-maker. Referencing AWS alongside legacy ERP ties to their actual tech stack and mirrors the data fragmentation pain point. The cost optimization angle is timely given FMCG margin pressure from commodity inputs. The CTA is low-commitment and specific. No buzzwords are used, and the tone stays peer-level and direct."
+          },
+          "layers": {
+            "validator": {
+              "consequence": "allow",
+              "issues": [],
+              "checkpoints": {
+                "shape": {
+                  "ok": true,
+                  "issues": []
+                },
+                "context": {
+                  "ok": true,
+                  "issues": []
+                },
+                "policy": {
+                  "ok": true,
+                  "issues": []
+                }
+              }
+            },
+            "tone": {
+              "passed": true,
+              "issues": []
+            },
+            "hallucination": {
+              "passed": true,
+              "violations": [],
+              "confidence": 0.95,
+              "explanation": "All factual claims in the email \u2014 Ravi's dual role, Britannia's \u20b99,000+ crore revenue, 80+ country presence, legacy ERP dependencies (supported by Excel4Apps signal), and AWS cloud infrastructure \u2014 are directly verifiable from the known facts, and no specific numbers, names, or events are fabricated or misrepresented."
+            }
+          }
+        }
+      ],
+      "total_attempts": 2,
+      "context_sufficient": true
+    },
+    "governance_attempt_history": [
+      {
+        "attempt": 1,
+        "passed": false,
+        "prompt_preview": "\nYou are a world-class B2B sales development representative.\n\nWrite a highly personalized, concise cold outreach email for the following lead.\nThe email must feel human, reference specific company context, and tie in a relevant market trend.\n\nLead:\n- Name: Ravi Sharma\n- Title: VP- Operations and CTO\n- Headline: N/A\n- Company: Britannia Industries Limited\n- Industry: food & beverages\n- Location: N/A\n- Recent roles: N/A\n\nCompany Signals:\n- Revenue: 2.1B\n- Headcount growth (12m): N/A\n- Tech stack: AboveNet, Amazon AWS, Amazon CloudFront, Amazon Elastic Load Balancer, Blinkit, Bootstrap Framework\n- Keywords: N/A\n\nCompany Context:\nBritannia Industries Limited is a legacy Indian FMCG giant founded in 1892, operating under the Wadia Group conglomerate. With a market cap of \u20b91.08 trillion and reve",
+        "correction_note": "",
+        "email": {
+          "subject": "Britannia's distribution complexity \u2014 a quick thought",
+          "body": "Hi Ravi, managing multi-channel distribution across traditional trade, modern trade, and quick-commerce partners like Blinkit \u2014 while keeping margins intact against rising wheat and palm oil costs \u2014 is a genuinely hard operational problem at Britannia's scale. Most legacy FMCG tech stacks weren't built for that kind of channel fragmentation, and we're seeing a lot of $1B+ food companies quietly consolidating their data pipelines to cut operational overhead without adding headcount. I'd love to share a specific example from a comparable food manufacturer that reduced distribution reconciliation time by 40% \u2014 would a 20-minute call this week make sense?",
+          "reasoning": "The hook is grounded in Britannia's actual operational reality \u2014 multi-channel complexity with Blinkit as a named tech signal \u2014 rather than generic flattery. The cost optimization trend is introduced naturally through the lens of margin pressure (a known pain for FMCG players facing commodity volatility), not as a sales pitch. Referencing 'without adding headcount' directly addresses the consolidation signal from the absence of engineering/AI hiring, making it feel observant rather than presumptuous. The CTA is low-friction and anchored to a concrete proof point, which builds credibility without overpromising."
+        },
+        "layers": {
+          "validator": {
+            "consequence": "defer",
+            "issues": [
+              "context:company_name_absent:Britannia Industries Limited"
+            ],
+            "checkpoints": {
+              "shape": {
+                "ok": true,
+                "issues": []
+              },
+              "context": {
+                "ok": false,
+                "issues": [
+                  "context:company_name_absent:Britannia Industries Limited"
+                ]
+              },
+              "policy": {
+                "ok": true,
+                "issues": []
+              }
+            }
+          },
+          "tone": {
+            "passed": true,
+            "issues": []
+          },
+          "hallucination": {
+            "passed": true,
+            "violations": [],
+            "skipped": true
+          }
+        }
+      },
+      {
+        "attempt": 2,
+        "passed": true,
+        "prompt_preview": "\nYou are a world-class B2B sales development representative.\n\nWrite a highly personalized, concise cold outreach email for the following lead.\nThe email must feel human, reference specific company con\n\u2026\nr CTA (suggest a 20-min call)\n- Do not use buzzwords like \"synergy\", \"revolutionary\", \"game-changer\"\n- Tone: professional but conversational\n- If location is available, you may reference it naturally (e.g. \"your team in San Francisco\")\n\nRespond as JSON with keys: subject, body, reasoning (why this angle works).\n\n\n=== GOVERNANCE CORRECTION (Attempt 2/3) ===\nThe previous email FAILED governance. Fix every issue below before responding:\n  \u2717 CONTEXT: Company name 'Britannia Industries Limited' not mentioned. Reference it explicitly.\n\nRegenerate the COMPLETE email JSON addressing every issue above.",
+        "correction_note": "\n\n=== GOVERNANCE CORRECTION (Attempt 2/3) ===\nThe previous email FAILED governance. Fix every issue below before responding:\n  \u2717 CONTEXT: Company name 'Britannia Industries Limited' not mentioned. Reference it explicitly.\n\nRegenerate the COMPLETE email JSON addressing every issue above.",
+        "email": {
+          "subject": "Britannia's supply chain data \u2014 quick thought",
+          "body": "Hi Ravi, running operations and tech simultaneously at Britannia Industries Limited \u2014 at \u20b99,000+ crore revenue across 80+ countries \u2014 means you're likely navigating a real tension: legacy ERP dependencies sitting alongside newer cloud infrastructure like AWS, while raw material costs keep squeezing margins. Most FMCG leaders at this scale tell us that fragmented data across those systems makes cost optimization feel reactive rather than deliberate. We've helped similar-scale food manufacturers consolidate operational data flows to cut decision latency and reduce waste without a heavy re-platforming lift. Would a 20-minute call this week be worth it to see if there's a fit?",
+          "reasoning": "The hook directly names Britannia Industries Limited and acknowledges Ravi's dual VP Operations + CTO role, which signals both operational and technical ownership \u2014 making him the ideal decision-maker. Referencing AWS alongside legacy ERP ties to their actual tech stack and mirrors the data fragmentation pain point. The cost optimization angle is timely given FMCG margin pressure from commodity inputs. The CTA is low-commitment and specific. No buzzwords are used, and the tone stays peer-level and direct."
+        },
+        "layers": {
+          "validator": {
+            "consequence": "allow",
+            "issues": [],
+            "checkpoints": {
+              "shape": {
+                "ok": true,
+                "issues": []
+              },
+              "context": {
+                "ok": true,
+                "issues": []
+              },
+              "policy": {
+                "ok": true,
+                "issues": []
+              }
+            }
+          },
+          "tone": {
+            "passed": true,
+            "issues": []
+          },
+          "hallucination": {
+            "passed": true,
+            "violations": [],
+            "confidence": 0.95,
+            "explanation": "All factual claims in the email \u2014 Ravi's dual role, Britannia's \u20b99,000+ crore revenue, 80+ country presence, legacy ERP dependencies (supported by Excel4Apps signal), and AWS cloud infrastructure \u2014 are directly verifiable from the known facts, and no specific numbers, names, or events are fabricated or misrepresented."
+          }
+        }
+      }
+    ],
+    "queued_event_id": "evt_6abdf2581f85",
+    "outreach": {
+      "subject": "Britannia's supply chain data \u2014 quick thought",
+      "body": "Hi Ravi, running operations and tech simultaneously at Britannia Industries Limited \u2014 at \u20b99,000+ crore revenue across 80+ countries \u2014 means you're likely navigating a real tension: legacy ERP dependencies sitting alongside newer cloud infrastructure like AWS, while raw material costs keep squeezing margins. Most FMCG leaders at this scale tell us that fragmented data across those systems makes cost optimization feel reactive rather than deliberate. We've helped similar-scale food manufacturers consolidate operational data flows to cut decision latency and reduce waste without a heavy re-platforming lift. Would a 20-minute call this week be worth it to see if there's a fit?",
+      "reasoning": "The hook directly names Britannia Industries Limited and acknowledges Ravi's dual VP Operations + CTO role, which signals both operational and technical ownership \u2014 making him the ideal decision-maker. Referencing AWS alongside legacy ERP ties to their actual tech stack and mirrors the data fragmentation pain point. The cost optimization angle is timely given FMCG margin pressure from commodity inputs. The CTA is low-commitment and specific. No buzzwords are used, and the tone stays peer-level and direct."
+    }
+  },
+  "status": "human_responded",
+  "unread": false,
+  "messages": [
+    {
+      "conversation_id": "whatsapp_def4c3e7f283ce6f",
+      "lead_id": "696cb6c2d4cef40001c3cd64",
+      "channel": "whatsapp",
+      "direction": "inbound",
+      "message": "Hi yes we will schedule it",
+      "phone": "whatsapp:+918056498879",
+      "timestamp": "2026-06-04T19:19:18.523827"
+    },
+    {
+      "conversation_id": "whatsapp_def4c3e7f283ce6f",
+      "lead_id": "696cb6c2d4cef40001c3cd64",
+      "channel": "whatsapp",
+      "direction": "outbound",
+      "message": "Can you please let me know when you are available?",
+      "phone": "whatsapp:+918056498879",
+      "timestamp": "2026-06-04T19:19:59.876664"
+    }
+  ],
+  "created_at": "2026-06-04T19:19:18.523827",
+  "updated_at": "2026-06-04T19:19:59.876664"
+}
