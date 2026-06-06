@@ -80,12 +80,24 @@ const queue = await api.approvalQueue()
 | `api.auditTrail(leadId)` | GET | `/audit/:lead_id` |
 | `api.conversationReply(leadId, reply, context)` | POST | `/conversation/reply` |
 | `api.generateOutreach(leadId, companyDomain)` | POST | `/outreach/generate` |
+| `api.sendOutreach(params)` | POST | `/outreach/send` |
+| `api.whatsappConversations()` | GET | `/whatsapp/conversations` |
+| `api.whatsappConversation(conversationId)` | GET | `/whatsapp/conversations/:conversation_id` |
+| `api.openWhatsAppConversation(conversationId)` | POST | `/whatsapp/conversations/:conversation_id/open` |
+| `api.sendWhatsAppReply(conversationId, message)` | POST | `/whatsapp/reply` |
+| `api.deleteWhatsAppConversation(conversationId)` | DELETE | `/whatsapp/conversations/:conversation_id` |
 | `api.devDiagnostics()` | GET | `/dev/diagnostics` |
 | `api.devAgentMetrics()` | GET | `/dev/agent-metrics` |
 | `api.devTraces(limit?)` | GET | `/dev/traces` |
 | `api.devValidationLog(limit?)` | GET | `/dev/validation-log` |
 
 ---
+
+## WhatsApp Inbox
+
+`WhatsAppInboxPage.tsx` is mounted at `/whatsapp`. It uses `src/lib/api.ts` to list WhatsApp conversations, fetch the selected thread, mark conversations open, delete threads, and send human-authored replies through `/whatsapp/reply`.
+
+The page polls active WhatsApp data, keeps the selected conversation synchronized with the sidebar preview, shows unread state, and appends successfully sent replies to the active thread immediately.
 
 ## Pages and what they show
 

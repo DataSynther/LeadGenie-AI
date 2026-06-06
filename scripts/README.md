@@ -29,6 +29,29 @@ python3 scripts/process_reply_now.py
 
 ---
 
+## run_followup_scheduler.py
+
+Starts the WhatsApp follow-up scheduler as a standalone long-running process. This is useful when `FOLLOWUP_SCHEDULER_AUTOSTART=false`, when debugging due follow-ups without running the full FastAPI app, or when you want scheduler logs in a separate terminal.
+
+```bash
+python scripts/run_followup_scheduler.py
+```
+
+What it does:
+- Reads due records from `backend/storage/followups/`
+- Generates a personalized WhatsApp follow-up through `OutreachAgent.generate_whatsapp_followup()`
+- Falls back to the scheduler's contextual message if generation fails
+- Sends through `TwilioWhatsApp`
+- Stores successful outbound messages in memory and `backend/storage/whatsapp_conversations/`
+
+Environment variables:
+- `FOLLOWUP_SCHEDULER_INTERVAL_SECONDS` - loop interval, default `15`
+- `FOLLOWUP_SCHEDULER_LOG_LEVEL` - log level, default `INFO`
+- `WHATSAPP_FOLLOWUP_WAIT_MINUTES` - delay used when follow-ups are scheduled, default `2`
+- `WHATSAPP_API_URL` - outbound WhatsApp endpoint
+
+---
+
 ## debug_gmail_poller.py
 
 Connects to Gmail IMAP and prints what the poller sees — number of known leads, which emails match, raw subjects and senders. Use this to diagnose why a reply isn't being picked up.

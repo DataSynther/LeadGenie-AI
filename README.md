@@ -26,6 +26,8 @@ Existing SDR workflows force teams to choose between slow manual prospecting and
 | Intent Detection | Classifies replies: interested / objection / fact_question / neutral / meeting_request / unsubscribe |
 | Intent Analytics | Logs every classification to JSONL for pattern analysis |
 | Gmail Reply Loop | Sends outreach via Gmail SMTP; IMAP poller catches replies and triggers conversation agent |
+| WhatsApp Follow-up Loop | Schedules personalized WhatsApp fallbacks after email outreach when a phone number is available |
+| WhatsApp Inbox | Human-controlled WhatsApp inbox with unread state, active-thread refresh, and outbound replies |
 | Governance Engine | Tone validation, hallucination checks, risk scoring |
 | Audit Lineage | Immutable per-lead JSONL audit trail for all decisions |
 | Continuous Learning | Feedback-driven pattern analysis and prompt improvement |
@@ -79,6 +81,38 @@ Governance Layer ────────────────── Tone →
                 │
                 ▼
         Intent Analytics logged ─────── events.jsonl for analysis
+```
+
+---
+
+### WhatsApp Follow-up Flow
+
+```
+Email sent through /outreach/send
+        |
+        v
+FollowupScheduler writes backend/storage/followups/{lead_id}.json
+        |
+        v
+Due follow-up triggers personalized WhatsApp generation
+        |
+        v
+Twilio/Render WhatsApp service sends message
+        |
+        v
+Outbound message is stored in memory + backend/storage/whatsapp_conversations
+        |
+        v
+Lead replies on WhatsApp
+        |
+        v
+Twilio webhook posts to /whatsapp or /api/webhook/whatsapp-reply
+        |
+        v
+Render mailbox importer persists inbound message + marks follow-up replied
+        |
+        v
+WhatsApp Inbox at /whatsapp shows the active conversation
 ```
 
 ---
@@ -237,6 +271,7 @@ Once both servers are running:
 | **Pipeline** | http://localhost:5173/pipeline |
 | **Approval Queue** | http://localhost:5173/approval |
 | **Conversations** | http://localhost:5173/conversations |
+| **WhatsApp Inbox** | http://localhost:5173/whatsapp |
 | **Audit Trail** | http://localhost:5173/audit |
 | **Backend API (interactive docs)** | http://localhost:8000/docs |
 | **Backend API (ReDoc)** | http://localhost:8000/redoc |
@@ -248,6 +283,13 @@ python3 scripts/run_reply_poller.py
 # Watches LEADGENIE_GMAIL inbox every 60s for lead replies
 ```
 
+
+### 5. WhatsApp Follow-up Scheduler (optional — for no-reply fallback)
+
+```bash
+python3 scripts/run_followup_scheduler.py
+# After email send, waits WHATSAPP_FOLLOWUP_WAIT_MINUTES, then sends WhatsApp if no reply was detected
+```
 ### Docker (runs everything)
 
 ```bash
@@ -270,6 +312,17 @@ Copy `.env.example` to `.env` and fill in:
 | `CLAUDE_MODEL` | No | Model override (default: `claude-sonnet-4-6`) |
 | `CALENDLY_URL` | No | Meeting booking link sent on meeting requests |
 | `REPLY_POLL_INTERVAL` | No | Gmail poll frequency in seconds (default: `60`) |
+| `FOLLOWUP_SCHEDULER_AUTOSTART` | No | Enable backend WhatsApp follow-up scheduler on startup (default: `true`) |
+| `FOLLOWUP_SCHEDULER_INTERVAL_SECONDS` | No | Scheduler polling interval for due WhatsApp follow-ups (default: `15`) |
+| `WHATSAPP_FOLLOWUP_WAIT_MINUTES` | No | Delay after email before WhatsApp fallback is due (default: `2`) |
+| `WHATSAPP_API_URL` | No | Outbound WhatsApp send endpoint, usually the Render `/send-whatsapp` service |
+| `WHATSAPP_REQUEST_TIMEOUT_SECONDS` | No | Timeout for outbound WhatsApp sends (default: `90`) |
+| `WHATSAPP_PENDING_MESSAGES_URL` | No | Remote Render mailbox `/pending-messages` URL used by inbox sync |
+| `WHATSAPP_PENDING_REQUEST_TIMEOUT_SECONDS` | No | Timeout for fetching remote pending WhatsApp replies (default: `20`) |
+| `WHATSAPP_LOCAL_MAILBOX_DIR` | No | Local pending-message cache directory for backend imports |
+| `TWILIO_ACCOUNT_SID` | Render mailbox | Twilio Account SID used by `backend/render_whatsapp_mailbox_app.py` |
+| `TWILIO_AUTH_TOKEN` | Render mailbox | Twilio auth token used by the Render mailbox app |
+| `TWILIO_WHATSAPP_FROM` | Render mailbox | Twilio WhatsApp sender, default `whatsapp:+14155238886` |
 | `CALENDLY_API_TOKEN` | No | Calendly API for automated scheduling |
 | `CALENDLY_ORG_URI` | No | Calendly organization URI |
 
@@ -308,6 +361,12 @@ All routes are defined in `backend/main.py`. Interactive docs available at `http
 |---|---|---|---|
 | POST | `/outreach/generate` | `{lead_id, company_domain}` | Full pipeline: enrich → research → trends → relevance → email → governance |
 
+Additional outreach send endpoint:
+
+| Method | Endpoint | Body | Description |
+|---|---|---|---|
+| POST | `/outreach/send` | `{lead_id, to_email, phone, subject, body, reasoning, context}` | Send approved email and schedule WhatsApp fallback when phone is available |
+
 **Response includes:**
 ```json
 {
@@ -339,6 +398,31 @@ All routes are defined in `backend/main.py`. Interactive docs available at `http
   "email_sent": true
 }
 ```
+
+### WhatsApp Follow-ups & Inbox
+| Method | Endpoint | Body / Params | Description |
+|---|---|---|---|
+| POST | `/whatsapp` | Twilio form payload or JSON with `From`/`Body` | Inbound WhatsApp webhook; stores and imports the lead reply |
+| POST | `/api/webhook/whatsapp-reply` | Same as `/whatsapp` | Alternate inbound WhatsApp webhook path |
+| GET | `/whatsapp/conversations` | - | List active WhatsApp inbox conversations; also syncs remote pending Render messages |
+| GET | `/whatsapp/conversations/{conversation_id}` | - | Fetch one WhatsApp conversation thread |
+| POST | `/whatsapp/conversations/{conversation_id}/open` | `{}` | Mark a conversation as read/opened |
+| DELETE | `/whatsapp/conversations/{conversation_id}` | - | Delete a WhatsApp inbox conversation |
+| POST | `/whatsapp/reply` | `{conversation_id, lead_id, message}` | Send a human-authored WhatsApp reply and append it to the thread |
+| GET | `/whatsapp/debug` | - | Debug remote/local mailbox status and inbox counts |
+| GET | `/pending-messages` | - | Inspect locally cached pending WhatsApp messages |
+
+The WhatsApp Inbox UI uses these endpoints from `frontend/src/lib/api.ts` and is available at `/whatsapp`.
+
+### Render WhatsApp Mailbox App
+`backend/render_whatsapp_mailbox_app.py` is the lightweight Twilio-facing service usually deployed separately on Render.
+
+| Method | Endpoint | Body / Params | Description |
+|---|---|---|---|
+| GET | `/` | - | Render mailbox health/status |
+| POST | `/send-whatsapp` | `{phone, message}` | Send outbound WhatsApp through Twilio |
+| POST | `/whatsapp` | Twilio form payload or JSON with `From`/`Body` | Receive inbound Twilio WhatsApp replies and queue them |
+| GET | `/pending-messages` | - | Expose queued inbound messages for the main backend importer |
 
 ### Governance & Audit
 | Method | Endpoint | Description |
