@@ -30,6 +30,7 @@
 4. [API Endpoint Reference](#4-api-endpoint-reference)
 5. [End-to-End Pipeline Example](#5-end-to-end-pipeline-example)
 6. [Deployment](#6-deployment)
+   - [AWS V2 Production — ECS Fargate + GitHub Actions](#60-aws-v2-production-recommended--ecs-fargate--github-actions)
    - [Local with Docker Compose](#61-local-with-docker-compose)
    - [Deploy to AWS EC2](#62-deploy-to-aws-ec2)
    - [Deploy to Railway](#63-deploy-to-railway)
@@ -1083,6 +1084,50 @@ for cat, data in diag["by_category"].items():
 ---
 
 ## 6. Deployment
+
+---
+
+### 6.0 AWS V2 Production (Recommended — ECS Fargate + GitHub Actions)
+
+The primary production deployment target. Full infrastructure-as-code on AWS with auto-sleep, CloudWatch alerts, and one-command CI/CD.
+
+**Branch:** `aws/deploy-v2` | **Full guide:** [`infrastructure/DEPLOY.md`](../infrastructure/DEPLOY.md)
+
+#### One-time setup
+
+```bash
+# 1. Create ECR repositories
+aws ecr create-repository --repository-name leadgenie-api    --region us-east-1
+aws ecr create-repository --repository-name leadgenie-worker --region us-east-1
+
+# 2. Create OIDC trust + deploy role (see infrastructure/DEPLOY.md for full commands)
+
+# 3. Add GitHub secrets: AWS_DEPLOY_ROLE_ARN, AWS_ACCOUNT_ID, ALERT_EMAIL + all API keys
+```
+
+#### Deploy
+
+```bash
+git checkout aws/deploy-v2
+git push origin aws/deploy-v2
+# GitHub Actions runs automatically — takes ~8–12 min for a full deploy
+```
+
+#### What gets deployed
+
+| Component | AWS Service | Config |
+|---|---|---|
+| React SPA | S3 + CloudFront | HTTPS, SPA fallback |
+| FastAPI backend | ECS Fargate | 2 tasks, auto-scale |
+| Agent workers | ECS Fargate Spot | 0–8 tasks, SQS-driven |
+| Database | RDS Postgres Multi-AZ | t3.medium, pgvector |
+| Cache | ElastiCache Redis | t3.small, vector search |
+| Secrets | AWS Secrets Manager | All API keys |
+| Monitoring | CloudWatch + SNS | Alarms + budget alerts |
+
+#### Auto-sleep
+
+After **15 minutes of inactivity** the system scales ECS to 0 tasks and emails you a wake URL. Opening the URL restarts services in ~30–60 seconds.
 
 ---
 

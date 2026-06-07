@@ -457,3 +457,142 @@ backend/storage/
 └── lead_contexts/               # Email → lead context map
     └── {sanitized_email}.json
 ```
+
+---
+
+## 8. AWS Architecture
+
+### Memory Categories → AWS Storage Mapping
+
+| Memory type | What it holds | AWS service |
+|---|---|---|
+| **Working memory** | In-flight agent context, partial results | ElastiCache Redis (volatile, TTL 30min) |
+| **Episodic memory** | Conversation turns, reply history, intent log | RDS Postgres |
+| **Semantic memory** | KB facts, company research (vector similarity) | RDS Postgres + pgvector |
+| **Procedural memory** | Email templates, prompt templates, governance rules | S3 (read at startup, cached in task memory) |
+| **Lead profile** | Enriched lead data, risk scores, engagement state | RDS Postgres |
+| **Outreach record** | Sent emails, governance audit trail, approval queue | RDS Postgres |
+| **FinOps counters** | Real-time token/cost tracking, budget limits | DynamoDB (atomic ADD, on-demand) |
+| **FinOps reporting** | Daily agent series, cost_to_success aggregates | RDS Postgres (FinOps dashboard reads) |
+| **Semantic cache** | Input embedding → LLM response (TTL per agent) | ElastiCache Redis vector search |
+| **Activity tracking** | Last request timestamp for auto-sleep | DynamoDB (single item, TTL 24h) |
+
+---
+
+### V1 — Demo Architecture (Serverless, No ECS)
+
+> Diagram: `docs/architecture/aws_v1_demo.png` | `aws_v1_demo.svg`
+
+```
+Browser
+  ├── CloudFront → S3 (React SPA)
+  └── API Gateway (HTTP API)
+        ├── Lambda — FastAPI/Mangum (API handler)
+        │     ├── RDS Postgres t3.micro (all durable memory + pgvector)
+        │     ├── DynamoDB on-demand   (FinOps counters + simple string cache)
+        │     └── S3                   (templates, KB docs)
+        └── Lambda — Agent Runner (15-min timeout, async via SQS)
+              └── [same stores as API Lambda]
+
+Budget layer:
+  Agent Lambda → Lambda (budget middleware) → DynamoDB counter → SNS → SES email
+
+Secrets Manager — all API keys
+CloudWatch Logs + Metrics
+```
+
+**Cost: ~$1.50 for a 3-day / 5-hour-per-day test.**
+
+---
+
+### V2 — Production Architecture (ECS Fargate)
+
+> Diagram: `docs/architecture/aws_v2_production.png` | `aws_v2_production.svg`
+
+```
+Browser
+  ├── CloudFront → S3 (React SPA)
+  │     └── /api/* proxied → ALB
+  └── ALB
+        └── ECS Fargate — API Service (2 tasks, auto-scale CPU + requests)
+              ├── ElastiCache Redis t3.small  (working memory + semantic cache)
+              ├── RDS Postgres t3.medium Multi-AZ + pgvector
+              ├── S3                          (templates, KB docs)
+              └── SQS → ECS Fargate Workers (1–8 tasks, Fargate Spot)
+                         [research · outreach · governance · intent agents]
+
+API Gateway WebSocket → Lambda → DynamoDB (connection registry)  [live agent feed]
+
+Budget layer:
+  ECS tasks → DynamoDB (atomic token counter) → SNS → SES + Slack Lambda
+  EventBridge daily 00:00 UTC → Lambda (reset counter + daily summary)
+
+Auto-sleep layer:
+  ActivityTrackerMiddleware → DynamoDB last_activity  (every request, max 1 write/60s)
+  EventBridge every 5 min  → sleep_checker Lambda
+    if idle > 15 min AND tasks > 0 → scale ECS to 0 → SNS alert with wake URL
+  API Gateway GET /wake → wake Lambda → scale ECS to 2+1 → HTML status page
+
+Secrets Manager — all API keys
+SSM Parameter Store — model names, budget limits, cache TTLs
+CloudWatch Logs + Metrics + Dashboard + Alarms
+X-Ray — distributed tracing across agent chains
+AWS Budgets — $30/mo limit, alerts at 50% and 90%
+```
+
+**Cost: ~$14 for a 3-day / 5-hour-per-day test. ~$160–190/mo always-on.**
+
+---
+
+### Auto-Sleep Flow
+
+```
+Every API request (non-health, non-metrics)
+        │
+        ▼
+ActivityTrackerMiddleware.dispatch()
+  └── if time since last DynamoDB write > 60s:
+        PUT leadgenie-activity { pk: "last_activity", timestamp: now, ttl: now+24h }
+
+EventBridge cron (every 5 min)
+        │
+        ▼
+sleep_checker Lambda
+  ├── GET leadgenie-activity item
+  ├── idle_minutes = now - last_activity.timestamp
+  ├── idle_minutes < 15 → exit (no action)
+  ├── ECS running count == 0 → exit (already sleeping)
+  └── idle_minutes >= 15 AND tasks > 0:
+        ├── ECS update-service API desiredCount=0 (API + Worker)
+        └── SNS publish → email: "💤 LeadGenie sleeping — open {wake_url} to restart"
+
+GET {wake_url}  (API Gateway → wake Lambda)
+  ├── ECS update-service desiredCount=2 (API), 1 (Worker)
+  ├── SNS publish → "☀️ LeadGenie waking up"
+  └── Return HTML: animated page, refreshes every 20s until running count ≥ 1
+```
+
+---
+
+### GitHub Actions CI/CD Pipeline
+
+```
+Push to aws/deploy-v2
+        │
+        ├── Job 1: Build & push Docker images → ECR
+        │         (API image + Worker image, tagged with git SHA + latest)
+        │
+        ├── Job 2: CDK deploy all stacks
+        │         (VpcStack → DataStack → ComputeStack → FrontendStack → MonitoringStack)
+        │         Outputs: ALB DNS, CloudFront URL, Wake URL
+        │
+        ├── Job 3: Sync React SPA → S3 + CloudFront invalidation
+        │         (VITE_API_URL set to ALB DNS from CDK outputs)
+        │
+        ├── Job 4: Rolling ECS deploy
+        │         (render task definition with new image → deploy + wait for stability)
+        │
+        └── Job 5: Smoke test → SNS notification (success or failure)
+
+Manual trigger with input destroy="destroy" → CDK destroy all stacks
+```

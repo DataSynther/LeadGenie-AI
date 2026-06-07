@@ -1,7 +1,74 @@
 # LeadGenie AI — Update Document
 
-**Date:** 2026-06-03  
-**Session scope:** Memory architecture, dashboard live data, UI sync, E2E test suite, embedding fallback
+---
+
+## Session: 2026-06-08 — FinOps Dashboard + AWS V2 Deployment
+
+**Branch:** `aws/deploy-v2` (deploy target) · `av-alen-endtoend-final` (feature work)
+
+### FinOps Dashboard (`FinOpsDashboardPage.tsx`)
+
+- **OutreachCostTrendChart** — Y-axis changed from raw daily cost to **avg cost per outreach email per day** (total cost ÷ outreach `success_calls`). Added **red dotted retry cost line** per day.
+- **SystemCostToSuccessChart** — rebalanced 4-column grid to `[110px_1fr_1fr_1fr]` (equal thirds for middle cols). No Retry / 2 Retries legend moved tight to pie chart (removed `flex-1` stretch). Pies enlarged to 130px.
+- **`api.ts`** — `FinOpsDailyEntry` extended with `retry_calls?: number` and `retry_cost_usd?: number`.
+- **`finops_store.py`** — tracks `retry_cost` per agent per day; exports `retry_calls` and `retry_cost_usd` in `agent_daily_series`.
+
+### AWS Architecture Diagrams
+
+Generated and committed to `docs/architecture/`:
+- `aws_v1_demo.{png,svg,py}` — serverless Lambda architecture (no ECS, ~$1.50 for 3-day test)
+- `aws_v2_production.{png,svg,py}` — ECS Fargate production architecture (~$14 for 3-day test)
+- Source files are Diagrams-as-Code (Python) — re-run to regenerate.
+
+### AWS V2 Deployment Infrastructure (`infrastructure/`, `aws/deploy-v2` branch)
+
+**GitHub Actions** (`.github/workflows/deploy-v2.yml`):
+- OIDC auth (no stored AWS keys in GitHub)
+- Build + push API and Worker Docker images to ECR
+- CDK deploy all 5 stacks (VPC → Data → Compute → Frontend → Monitoring)
+- React SPA sync to S3 + CloudFront cache invalidation
+- Rolling ECS service update with stability wait
+- Smoke test → SNS success/failure notification
+- Manual `destroy` trigger for full teardown
+
+**CDK Stacks:**
+
+| Stack | Resources |
+|---|---|
+| `VpcStack` | VPC, 2 AZs, 1 NAT, security groups |
+| `DataStack` | RDS Postgres Multi-AZ + pgvector, ElastiCache Redis, DynamoDB ×2, S3, Secrets Manager |
+| `ComputeStack` | ECS cluster, API Fargate service (2 tasks), Worker Fargate Spot (0–8), ALB, SQS |
+| `FrontendStack` | CloudFront + S3, `/api/*` proxied to ALB |
+| `MonitoringStack` | CloudWatch alarms, SNS, AWS Budget ($30/mo), sleep/wake Lambdas, EventBridge |
+
+**Auto-Sleep mechanism:**
+- `ActivityTrackerMiddleware` — FastAPI middleware writes `last_activity` to DynamoDB on every non-health request (rate-limited to 1 write/60s)
+- `sleep_checker` Lambda — EventBridge fires every 5 min; if idle > 15 min → scale ECS to 0 → SNS email alert with wake URL
+- `wake` Lambda — API Gateway `GET` endpoint; scales services to 2+1, returns animated HTML "Waking up…" page that auto-refreshes every 20s
+
+**CloudWatch alerts:** service sleeping, high CPU (>80%), error rate spike (>10 5xx/5min), AWS budget at 50% and 90%.
+
+### Quick start (local)
+
+```bash
+# Terminal 1
+cd backend && uvicorn main:app --reload --port 8000
+
+# Terminal 2
+cd frontend && VITE_API_URL=http://localhost:8000 npm run dev
+```
+
+| Service | URL |
+|---|---|
+| UI (Mission Control) | http://localhost:5173 |
+| Backend API | http://localhost:8000 |
+| API docs | http://localhost:8000/docs |
+
+> **Note:** Requires Python 3.10+ (uses `X | None` union type syntax). System Python 3.9 on macOS will fail — use `/usr/local/bin/python3.14` or install 3.11+.
+
+---
+
+## Session: 2026-06-03 — Memory architecture, dashboard live data, UI sync, E2E test suite, embedding fallback
 
 ---
 

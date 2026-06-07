@@ -34,7 +34,9 @@ Existing SDR workflows force teams to choose between slow manual prospecting and
 | Meeting Scheduling | Calendly link sent automatically on meeting requests |
 | **AI Observability** | Per-agent tracing, context scoring, prompt ambiguity detection, validation layer |
 | **Hallucination Diagnostics** | 5-category root cause breakdown: retrieval / context / prompt / validation / task-mismatch |
-| **Developer Dashboard** | Live governed AI dashboard at `/dev` with agent metrics, cost tracking, and validation feed |
+| **Mission Control Dashboard** | Live KPI cards, funnel chart, risk distribution, agent feed, outreach queue summary |
+| **FinOps Dashboard** | Per-agent cost/token tracking, retry cost analysis, avg cost per email trend, governance cost breakdown |
+| **AWS V2 Deployment** | ECS Fargate + CDK IaC, auto-sleep after 15 min inactivity, CloudWatch alarms, budget alerts |
 
 ---
 
@@ -126,10 +128,42 @@ LeadGenie-AI/
 ├── docker-compose.yml
 ├── run_test_pipeline.py            # End-to-end simulation script (6 leads)
 │
+├── .github/
+│   └── workflows/
+│       └── deploy-v2.yml           # GitHub Actions CI/CD → AWS V2 (ECS Fargate)
+│
+├── infrastructure/                 # AWS deployment (branch: aws/deploy-v2)
+│   ├── DEPLOY.md                   # Step-by-step AWS deployment guide
+│   ├── cdk/                        # AWS CDK v2 stacks (Python)
+│   │   ├── app.py                  # CDK entry point — wires all stacks
+│   │   ├── cdk.json
+│   │   ├── requirements.txt
+│   │   └── stacks/
+│   │       ├── vpc_stack.py        # VPC, subnets, security groups
+│   │       ├── data_stack.py       # RDS, ElastiCache Redis, DynamoDB, S3, Secrets Manager
+│   │       ├── compute_stack.py    # ECS cluster, API + Worker Fargate services, ALB
+│   │       ├── frontend_stack.py   # CloudFront + S3 SPA
+│   │       └── monitoring_stack.py # CloudWatch alarms, SNS alerts, budget, auto-sleep Lambda
+│   └── lambdas/
+│       ├── sleep_checker/handler.py # Auto-sleep: scales ECS to 0 after 15 min inactivity
+│       └── wake/handler.py          # Wake endpoint: scales services back up, returns status page
+│
+├── docs/
+│   ├── architecture/               # AWS architecture diagrams (PNG + SVG + source)
+│   │   ├── aws_v1_demo.png / .svg  # V1 serverless (Lambda, no ECS)
+│   │   ├── aws_v2_production.png / .svg  # V2 production (ECS Fargate)
+│   │   └── aws_v1_demo.py / aws_v2_production.py  # Diagrams-as-Code source
+│   ├── GUIDE.md
+│   ├── architecture.md
+│   └── demo-flow.md
+│
 ├── backend/                        # FastAPI backend — see backend/README.md
 │   ├── main.py                     # All API routes (single entry point)
 │   ├── requirements.txt
-│   ├── Dockerfile
+│   ├── Dockerfile                  # API server image (Python 3.12-slim, port 8000)
+│   ├── Dockerfile.worker           # Agent worker image (SQS consumer, no HTTP port)
+│   ├── middleware/
+│   │   └── activity_tracker.py     # Updates DynamoDB last_activity on each request (auto-sleep)
 │   │
 │   ├── agents/                     # AI agent layer — see backend/agents/README.md
 │   │   ├── conversation/           # Intent detection + multi-turn conversation
@@ -187,12 +221,15 @@ LeadGenie-AI/
 │   ├── src/
 │   │   ├── lib/api.ts              # All backend API calls (single source of truth)
 │   │   ├── pages/                  # One file per page/view
-│   │   │   ├── DashboardPage.tsx
+│   │   │   ├── DashboardPage.tsx       # Mission Control — KPIs, funnel, risk distribution
+│   │   │   ├── FinOpsDashboardPage.tsx # FinOps — cost/token trends, retry analysis, C2S
 │   │   │   ├── PipelinePage.tsx
 │   │   │   ├── LeadDiscoveryPage.tsx
 │   │   │   ├── ApprovalQueuePage.tsx
 │   │   │   ├── ConversationsPage.tsx
 │   │   │   ├── AuditTrailPage.tsx
+│   │   │   ├── KbFactsPage.tsx         # Knowledge base fact browser
+│   │   │   ├── ArchitecturePage.tsx    # Embedded AWS architecture diagrams
 │   │   │   ├── CampaignsPage.tsx
 │   │   │   └── DevDashboardPage.tsx    # Live AI observability dashboard (route: /dev)
 │   │   ├── components/             # Reusable UI components by domain
@@ -290,11 +327,84 @@ python3 scripts/run_reply_poller.py
 python3 scripts/run_followup_scheduler.py
 # After email send, waits WHATSAPP_FOLLOWUP_WAIT_MINUTES, then sends WhatsApp if no reply was detected
 ```
-### Docker (runs everything)
+### Docker (runs everything locally)
 
 ```bash
 docker-compose up --build
 ```
+
+---
+
+## AWS Deployment (V2 Production)
+
+Full infrastructure-as-code deployment on ECS Fargate. See [`infrastructure/DEPLOY.md`](infrastructure/DEPLOY.md) for the complete setup guide.
+
+### Architecture
+
+| Layer | Service |
+|---|---|
+| Frontend | CloudFront + S3 |
+| API | ECS Fargate (2 tasks, auto-scales on CPU + requests) |
+| Workers | ECS Fargate Spot (0–8 tasks, scales on SQS queue depth) |
+| Database | RDS Postgres t3.medium Multi-AZ + pgvector |
+| Cache | ElastiCache Redis t3.small (semantic cache + working memory) |
+| Job queue | SQS (decouples HTTP from long agent chains) |
+| Secrets | AWS Secrets Manager (all API keys) |
+| Monitoring | CloudWatch dashboard + alarms + X-Ray tracing |
+
+### Auto-Sleep (15-minute inactivity)
+
+The system automatically scales ECS to 0 tasks after 15 minutes with no API requests, cutting running costs to near zero during idle periods.
+
+```
+Every API request
+    → ActivityTrackerMiddleware (backend/middleware/activity_tracker.py)
+    → writes last_activity timestamp to DynamoDB (at most 1 write/60s)
+
+EventBridge every 5 min
+    → sleep_checker Lambda
+    → if now - last_activity > 15 min AND tasks > 0
+    → scale API + Worker services to 0
+    → send email alert with wake URL
+
+Wake URL (API Gateway → wake Lambda)
+    → scale services back to desired count
+    → return animated "Waking up…" HTML page (auto-refreshes every 20s until healthy)
+```
+
+### CloudWatch Alerts
+
+| Alert | Condition |
+|---|---|
+| `leadgenie-service-sleeping` | Task count drops to 0 |
+| `leadgenie-high-cpu` | CPU > 80% for 10 min |
+| `leadgenie-error-rate` | >10 HTTP 5xx errors in 5 min |
+| AWS Budget 50% | Monthly spend crosses 50% of $30 limit |
+| AWS Budget 90% | Monthly spend crosses 90% of $30 limit |
+
+### Deploy via GitHub Actions
+
+```bash
+git checkout aws/deploy-v2
+git push origin aws/deploy-v2
+# GitHub Actions automatically:
+# 1. Builds + pushes Docker images to ECR
+# 2. Runs CDK to deploy/update all AWS infrastructure
+# 3. Syncs React SPA to S3 + invalidates CloudFront
+# 4. Rolling ECS deploy (waits for service stability)
+# 5. Smoke test → SNS success/failure notification
+```
+
+**Required GitHub Secrets:** `AWS_DEPLOY_ROLE_ARN`, `AWS_ACCOUNT_ID`, `ALERT_EMAIL`, and all app API keys. See [`infrastructure/DEPLOY.md`](infrastructure/DEPLOY.md).
+
+### Cost Estimate
+
+| | V1 Demo (Lambda, no ECS) | V2 Production (ECS Fargate) |
+|---|---|---|
+| Always-on infra | RDS t3.micro ~$15/mo | RDS + ElastiCache + ALB ~$85/mo |
+| Active compute | Lambda ~$0.10/hr | ECS Fargate ~$0.94/hr |
+| 3-day test (5h/day) | **~$1.50** | **~$14** |
+| With auto-sleep | Minimal | Saves ~$1.18/day in ECS when idle |
 
 ---
 
@@ -496,5 +606,6 @@ summary = IntentDetector().get_summary()
 | `feat/conversation-reply-loop` | Conversation agent, intent detection, Gmail loop |
 | `feature/kunal-final-code` | Frontend, dashboard endpoints, pipeline |
 | `integration/premerge-phase1` | Full integration of conversation + frontend layers |
-| `feature/governed-dashboard-phase1` | **Active** — Phase 1 observability layer: agent tracer, validator, dev dashboard |
-| `feature/governed-dashboard-phase2-aws` | Phase 2 placeholder — memory intelligence, trajectory evaluation, AWS deployment |
+| `feature/governed-dashboard-phase1` | Phase 1 observability layer: agent tracer, validator, dev dashboard |
+| `av-alen-endtoend-final` | **Current main dev branch** — FinOps dashboard, Mission Control, WhatsApp, approval queue |
+| `aws/deploy-v2` | **AWS production deployment** — ECS Fargate, CDK IaC, auto-sleep, GitHub Actions CI/CD |
