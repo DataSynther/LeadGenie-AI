@@ -256,7 +256,6 @@ export function ResearchPanel({ lead, onClose, autoGenerate = false, defaultChan
     setOutreachResult(null);
     setEditableEmail(null);
     setSuggestion(null);
-    setPipelineStages([]);
     sendMutation.reset();
     suggestMutation.mutate();
   };
