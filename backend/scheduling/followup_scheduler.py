@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 STORE_DIR = Path(__file__).parent.parent / "storage" / "followups"
 STORE_DIR.mkdir(parents=True, exist_ok=True)
+WHATSAPP_SENDER_INTRO = "I am Prasant from Ganit."
 
 
 class FollowupScheduler:
@@ -228,13 +229,25 @@ class FollowupScheduler:
                 record.get("lead_id"),
                 message,
             )
-            return message
+            return self._with_sender_intro(message, lead)
         except Exception:
             logger.exception(
                 "Personalized WhatsApp generation failed lead_id=%s; using contextual fallback",
                 record.get("lead_id"),
             )
-            return self._build_fallback_message(lead, company, outreach)
+            return self._with_sender_intro(self._build_fallback_message(lead, company, outreach), lead)
+
+    def _with_sender_intro(self, message: str, lead: dict) -> str:
+        name = (lead.get("name") or "there").strip().split()[0] or "there"
+        intro = f"Hi {name}, {WHATSAPP_SENDER_INTRO}"
+        trimmed = (message or "").strip()
+        if trimmed.startswith(intro):
+            return trimmed
+        for greeting in (f"Hi {name},", f"Hello {name},", "Hi there,", "Hello there,"):
+            if trimmed.lower().startswith(greeting.lower()):
+                trimmed = trimmed[len(greeting):].strip()
+                break
+        return f"{intro}\n\n{trimmed}" if trimmed else intro
 
     def _build_fallback_message(self, lead: dict, company: dict, outreach: dict) -> str:
         name = (lead.get("name") or "there").split()[0]
