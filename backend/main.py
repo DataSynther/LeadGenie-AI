@@ -12,6 +12,7 @@ import secrets
 from datetime import datetime, timedelta
 from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from middleware.activity_tracker import ActivityTrackerMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from typing import Optional
@@ -89,6 +90,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(ActivityTrackerMiddleware)
 
 apollo_people = ApolloPeopleService()
 apollo_company = ApolloCompanyService()
