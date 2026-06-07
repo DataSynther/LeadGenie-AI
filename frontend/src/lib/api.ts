@@ -667,6 +667,7 @@ export type FinOpsLeadEntry = {
   tokens: number;
   cost_usd: number;
   agents: string[];
+  timestamp?: string;
 };
 
 export type FinOpsPromptEntry = {
@@ -712,6 +713,8 @@ export type FinOpsDailyEntry = {
   avg_tokens: number;
   success_calls: number;
   retry_success: number;
+  retry_calls?: number;
+  retry_cost_usd?: number;
 };
 
 export type FinOpsSummary = {

@@ -15,6 +15,8 @@ import { PipelineLineagePage } from "./pages/PipelineLineagePage";
 import { PromptVersionsPage } from "./pages/PromptVersionsPage";
 import { WhatsAppInboxPage } from "./pages/WhatsAppInboxPage";
 import { FinOpsDashboardPage } from "./pages/FinOpsDashboardPage";
+import { ArchitecturePage } from "./pages/ArchitecturePage";
+import { KbFactsPage } from "./pages/KbFactsPage";
 
 function App() {
   return (
@@ -36,6 +38,8 @@ function App() {
         <Route path="/prompt-versions" element={<PromptVersionsPage />} />
         <Route path="/whatsapp" element={<WhatsAppInboxPage />} />
         <Route path="/finops" element={<FinOpsDashboardPage />} />
+        <Route path="/architecture" element={<ArchitecturePage />} />
+        <Route path="/kb-facts" element={<KbFactsPage />} />
       </Route>
     </Routes>
   );

@@ -11,6 +11,8 @@ import {
   InboxIcon,
   MessageCircle,
   DollarSign,
+  Network,
+  PanelLeftClose,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
@@ -36,6 +38,7 @@ const WORKSPACE: NavItem[] = [
   { to: "/lineage",         label: "Pipeline Lineage", icon: GitBranch },
   { to: "/prompt-versions", label: "Prompt Versions",  icon: BarChart2 },
   { to: "/whatsapp",        label: "WhatsApp Inbox",   icon: MessageCircle },
+  { to: "/architecture",    label: "Pipeline Diagram", icon: Network },
 ];
 
 
@@ -90,7 +93,7 @@ function NavItemRow({ item, onNavigate, queueCount }: { item: NavItem; onNavigat
 }
 
 export function Sidebar() {
-  const { isOpen, close } = useSidebar();
+  const { isOpen, close, isCollapsed, toggleCollapse } = useSidebar();
   const { data: queueItems = [] } = useQuery({
     queryKey: ["approvalQueue"],
     queryFn: api.approvalQueue,
@@ -101,18 +104,29 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "fixed inset-y-0 left-0 z-30 w-60 bg-surface border-r border-line-soft p-6 px-4 flex flex-col gap-1",
-        "transition-transform duration-200 ease-in-out",
+        "fixed inset-y-0 left-0 z-30 bg-surface border-r border-line-soft flex flex-col gap-1",
+        "transition-[width,transform] duration-200 ease-in-out overflow-hidden",
         "md:relative md:translate-x-0 md:z-auto md:flex-shrink-0",
         isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+        isCollapsed ? "md:w-0 md:border-r-0 p-0" : "w-60 p-6 px-4",
       )}
     >
+      {/* Mobile close */}
       <button
         className="absolute top-4 right-4 text-ink-2 hover:text-ink md:hidden"
         onClick={close}
         aria-label="Close menu"
       >
         <X size={18} strokeWidth={2} />
+      </button>
+
+      {/* Desktop collapse button */}
+      <button
+        className="hidden md:flex absolute top-3 right-3 items-center justify-center w-7 h-7 rounded-md text-ink-2 hover:text-ink hover:bg-surface-2 transition-colors z-10"
+        onClick={toggleCollapse}
+        aria-label="Collapse sidebar"
+      >
+        <PanelLeftClose size={14} strokeWidth={2} />
       </button>
 
       <div className="flex flex-col items-center pb-6 pt-2">

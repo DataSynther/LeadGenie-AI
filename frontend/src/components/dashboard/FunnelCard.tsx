@@ -18,22 +18,22 @@ const FILL_TEXT_COLORS = ["white", "white", "white", "white", "#4A2256"];
 
 export function FunnelCard({ rows }: { rows: FunnelRow[] }) {
   return (
-    <div className="card-base">
-      <div className="px-5 py-4 border-b border-line-soft flex items-center justify-between">
+    <div className="card-base flex flex-col max-h-[340px]">
+      <div className="px-5 py-3 border-b border-line-soft flex items-center justify-between flex-shrink-0">
         <div className="font-serif text-display-md text-ink">
           Pipeline <em className="text-brand italic">funnel</em>
         </div>
         <div className="label-mono">Last 30 days</div>
       </div>
-      <div className="p-5">
-        <div className="flex flex-col gap-2.5">
+      <div className="p-4 flex-1 flex flex-col justify-evenly">
+        <div className="flex flex-col gap-3">
           {rows.map((row, i) => (
             <div
               key={row.label}
               className="grid grid-cols-[130px_1fr_60px] items-center gap-3"
             >
               <div className="text-xs text-ink-2">{row.label}</div>
-              <div className="h-7 bg-surface-2 rounded">
+              <div className="h-6 bg-surface-2 rounded">
                 <div
                   className="h-full rounded flex items-center pl-3 font-mono text-[11px] font-semibold transition-[width] duration-700"
                   style={{

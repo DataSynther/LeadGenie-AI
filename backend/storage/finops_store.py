@@ -82,11 +82,11 @@ def get_finops_summary() -> dict:
         "high_conf_calls": 0,
     })
     model_acc: dict[str, dict] = defaultdict(lambda: {"calls": 0, "tokens": 0, "cost": 0.0})
-    lead_acc:  dict[str, dict] = defaultdict(lambda: {"tokens": 0, "cost": 0.0, "agents": set()})
+    lead_acc:  dict[str, dict] = defaultdict(lambda: {"tokens": 0, "cost": 0.0, "agents": set(), "last_ts": ""})
     pv_acc:    dict[tuple, dict] = defaultdict(lambda: {"calls": 0, "tokens": 0, "cost": 0.0})
     agent_day: dict[tuple, dict] = defaultdict(lambda: {
         "calls": 0, "tokens": 0, "cost": 0.0, "success_calls": 0,
-        "retry_calls": 0, "retry_success": 0,
+        "retry_calls": 0, "retry_success": 0, "retry_cost": 0.0,
     })
 
     retry_traces:   list[dict] = []
@@ -162,6 +162,9 @@ def get_finops_summary() -> dict:
             lead_acc[lead_id]["tokens"]  += tokens
             lead_acc[lead_id]["cost"]    += cost
             lead_acc[lead_id]["agents"].add(agent)
+            ts_val = t.get("ts") or ""
+            if ts_val > lead_acc[lead_id]["last_ts"]:
+                lead_acc[lead_id]["last_ts"] = ts_val
 
         # ── prompt-version accumulator ────────────────────────────────────────
         pv_acc[(day, pv)]["calls"]  += 1
@@ -177,6 +180,7 @@ def get_finops_summary() -> dict:
             ad["success_calls"] += 1
         if attempt > 1:
             ad["retry_calls"] += 1
+            ad["retry_cost"]  += cost
             if success:
                 ad["retry_success"] += 1
 
@@ -277,15 +281,20 @@ def get_finops_summary() -> dict:
     }
 
     # ── cost_by_lead ──────────────────────────────────────────────────────────
-    cost_by_lead = [
-        {
-            "lead_id":  lid,
-            "tokens":   v["tokens"],
-            "cost_usd": round(v["cost"], 5),
-            "agents":   sorted(v["agents"]),
-        }
-        for lid, v in sorted(lead_acc.items(), key=lambda x: -x[1]["cost"])
-    ][:20]
+    cost_by_lead = sorted(
+        [
+            {
+                "lead_id":   lid,
+                "tokens":    v["tokens"],
+                "cost_usd":  round(v["cost"], 5),
+                "agents":    sorted(v["agents"]),
+                "timestamp": v["last_ts"],
+            }
+            for lid, v in lead_acc.items()
+        ],
+        key=lambda x: x["timestamp"],
+        reverse=True,
+    )[:20]
 
     # ── retry_info ────────────────────────────────────────────────────────────
     def _tc(t: dict) -> float:
@@ -334,6 +343,8 @@ def get_finops_summary() -> dict:
             "avg_tokens":        round(v["tokens"] / max(v["calls"], 1)),
             "success_calls":     v["success_calls"],
             "retry_success":     v["retry_success"],
+            "retry_calls":       v["retry_calls"],
+            "retry_cost_usd":    round(v["retry_cost"], 5),
         }
         for k, v in sorted(agent_day.items())
         if k[1]  # skip blank dates

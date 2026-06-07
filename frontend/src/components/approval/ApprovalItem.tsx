@@ -7,9 +7,28 @@ import type { ApprovalItem as ApprovalItemType, ValidatorCheckpoints, CitationEn
 
 interface ApprovalItemProps {
   item: ApprovalItemType;
+  initialExpanded?: boolean;
+  initialTab?: Tab;
+  highlight?: string;
 }
 
 type Tab = "email" | "validation" | "citations";
+
+/** Render text with query matches highlighted */
+function HighlightedText({ text, query }: { text: string; query: string }) {
+  if (!query.trim()) return <>{text}</>;
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const parts = text.split(new RegExp(`(${escaped})`, "gi"));
+  return (
+    <>
+      {parts.map((p, i) =>
+        p.toLowerCase() === query.toLowerCase()
+          ? <mark key={i} className="bg-brand/30 text-ink rounded-sm px-0.5 not-italic">{p}</mark>
+          : p
+      )}
+    </>
+  );
+}
 
 // ── Source colour helpers ──────────────────────────────────────────────────
 
@@ -38,10 +57,12 @@ function EmailTab({
   email,
   eventId,
   onSaved,
+  highlight,
 }: {
   email?: { subject: string; body: string; reasoning?: string };
   eventId: string;
   onSaved: (subject: string, body: string) => void;
+  highlight?: string;
 }) {
   const [editing, setEditing] = useState(false);
   const [subject, setSubject] = useState(email?.subject ?? "");
@@ -110,9 +131,16 @@ function EmailTab({
         </div>
       </div>
       <div>
-        <div className="label-mono mb-1">Body</div>
+        <div className="flex items-center justify-between mb-1">
+          <div className="label-mono">Body</div>
+          {highlight && (
+            <span className="text-[9px] font-mono text-brand/70 italic">
+              KB term highlighted
+            </span>
+          )}
+        </div>
         <div className="text-[12px] text-ink-2 leading-relaxed bg-surface-2 rounded px-3 py-2.5 border border-line-soft whitespace-pre-wrap">
-          {email.body}
+          {highlight ? <HighlightedText text={email.body} query={highlight} /> : email.body}
         </div>
       </div>
       {email.reasoning && (
@@ -453,13 +481,13 @@ function CitationsTab({ citations, leadId }: { citations?: Record<string, Citati
 
 // ── Main component ─────────────────────────────────────────────────────────
 
-export function ApprovalItem({ item }: ApprovalItemProps) {
+export function ApprovalItem({ item, initialExpanded = false, initialTab, highlight }: ApprovalItemProps) {
   const queryClient = useQueryClient();
   const isHigh = item.risk_level === "high";
   const governanceFailed = !item.governance_passed;
 
-  const [tab, setTab]         = useState<Tab>(governanceFailed ? "validation" : "email");
-  const [expanded, setExpanded] = useState(false);
+  const [tab, setTab]         = useState<Tab>(initialTab ?? (governanceFailed ? "validation" : "email"));
+  const [expanded, setExpanded] = useState(initialExpanded);
 
   // Local overrides for email content and hallucination status after in-page edits
   const [localEmail, setLocalEmail] = useState(item.email);
@@ -626,6 +654,7 @@ export function ApprovalItem({ item }: ApprovalItemProps) {
                 email={localEmail}
                 eventId={item.event_id}
                 onSaved={handleEmailSaved}
+                highlight={highlight}
               />
             )}
             {tab === "validation" && (

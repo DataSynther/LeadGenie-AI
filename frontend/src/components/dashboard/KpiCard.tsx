@@ -16,9 +16,9 @@ export function KpiCard({ label, value, delta, sub, gold }: KpiCardProps) {
         gold ? "bg-gradient-to-b from-gold-tint to-surface" : "bg-surface",
       )}
     >
-      <div className="text-[10px] text-ink-mute uppercase tracking-wide font-mono mb-2">{label}</div>
+      <div className="text-[11px] text-ink uppercase tracking-wide font-mono font-bold mb-2">{label}</div>
       <div className="flex items-baseline gap-1.5">
-        <span className={cn("text-2xl font-bold leading-tight", gold ? "text-gold-dark" : "text-ink")}>{value}</span>
+        <span className={cn("text-4xl font-bold leading-tight", gold ? "text-gold-dark" : "text-ink")}>{value}</span>
         {delta && (
           <span
             className={cn(
