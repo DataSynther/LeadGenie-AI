@@ -4,9 +4,10 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   X, ExternalLink, TrendingUp, TrendingDown, Minus,
   Building2, Users, DollarSign, Calendar, Zap, Cpu, RefreshCw, Send, MessageCircle,
+  CheckCircle2, AlertCircle, Loader2,
 } from "lucide-react";
 import { api } from "../../lib/api";
-import type { Lead, OutreachResult, OutreachSuggestion } from "../../lib/api";
+import type { Lead, OutreachResult, OutreachSuggestion, PipelineStageEvent } from "../../lib/api";
 import { cn } from "../../lib/utils";
 
 interface ResearchPanelProps {
@@ -139,6 +140,57 @@ function OutreachResultBanner({
   );
 }
 
+// ── Pipeline stage labels (display order) ─────────────────────────────────
+
+const STAGE_META: Record<string, string> = {
+  enriching_lead:    "Fetching lead data",
+  enriching_company: "Enriching company profile",
+  detecting_signals: "Detecting hiring signals",
+  researching:       "AI company research",
+  building_context:  "Building lead context",
+  fetching_trends:   "Fetching market trends",
+  ranking_relevance: "Ranking by relevance",
+  generating_email:  "Generating email",
+  governance:        "Governance checks",
+  queueing:          "Adding to queue",
+};
+
+function PipelineProgress({ stages }: { stages: PipelineStageEvent[] }) {
+  const stageMap = Object.fromEntries(stages.map(s => [s.stage, s]));
+
+  return (
+    <div className="p-6 flex flex-col gap-2.5">
+      <div className="label-mono text-ink mb-2">Pipeline running…</div>
+      {Object.entries(STAGE_META).map(([id, defaultLabel]) => {
+        const s = stageMap[id];
+        const status = s?.status ?? "pending";
+        const label = s?.label ?? defaultLabel;
+        return (
+          <div key={id} className="flex items-center gap-3">
+            <span className="shrink-0 w-4 h-4 flex items-center justify-center">
+              {status === "running" && <Loader2 size={14} className="animate-spin text-brand" />}
+              {status === "done"    && <CheckCircle2 size={14} className="text-emerald-500" />}
+              {status === "error"   && <AlertCircle size={14} className="text-danger" />}
+              {status === "pending" && <span className="w-2 h-2 rounded-full bg-line-soft mx-auto" />}
+            </span>
+            <div className="flex-1 min-w-0">
+              <div className={cn(
+                "text-[12px] font-mono truncate",
+                status === "running" ? "text-brand font-semibold" :
+                status === "done"    ? "text-ink" :
+                status === "error"   ? "text-danger" :
+                "text-ink-mute"
+              )}>
+                {label}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ── Main panel ─────────────────────────────────────────────────────────────
 
 export function ResearchPanel({ lead, onClose, autoGenerate = false, defaultChannel = "email" }: ResearchPanelProps) {
@@ -149,6 +201,8 @@ export function ResearchPanel({ lead, onClose, autoGenerate = false, defaultChan
   const [suggestion, setSuggestion] = useState<OutreachSuggestion | null>(null);
   const [selectedVertical, setSelectedVertical] = useState<string | null>(null);
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
+  const [pipelineStages, setPipelineStages] = useState<PipelineStageEvent[]>([]);
+  const [isStreaming, setIsStreaming] = useState(false);
 
   const { data: company, isLoading, error } = useQuery({
     queryKey: ["companyResearch", lead?.company],
@@ -172,14 +226,6 @@ export function ResearchPanel({ lead, onClose, autoGenerate = false, defaultChan
     },
   });
 
-  const generateMutation = useMutation({
-    mutationFn: () => api.generateOutreach(lead!.id, companyDomain, selectedVertical ?? undefined, selectedDomain ?? undefined),
-    onSuccess: (data) => {
-      setOutreachResult(data);
-      setSuggestion(null);
-      setEditableEmail(data.email ? { subject: data.email.subject, body: data.email.body, reasoning: data.email.reasoning } : null);
-    },
-  });
 
   const sendMutation = useMutation({
     mutationFn: () => api.sendOutreach({
@@ -199,12 +245,45 @@ export function ResearchPanel({ lead, onClose, autoGenerate = false, defaultChan
     setOutreachResult(null);
     setEditableEmail(null);
     setSuggestion(null);
+    setPipelineStages([]);
     sendMutation.reset();
     suggestMutation.mutate();
   };
 
-  const handleConfirmGenerate = () => {
-    generateMutation.mutate();
+  const handleConfirmGenerate = async () => {
+    setSuggestion(null);
+    setOutreachResult(null);
+    setEditableEmail(null);
+    setPipelineStages([]);
+    setIsStreaming(true);
+    try {
+      await api.streamGenerateOutreach(
+        lead!.id,
+        companyDomain,
+        (event) => {
+          if (event.stage === "done" && event.result) {
+            const r = event.result as OutreachResult;
+            setOutreachResult(r);
+            setEditableEmail(r.email ? { subject: r.email.subject, body: r.email.body, reasoning: r.email.reasoning } : null);
+            setPipelineStages([]);
+          } else if (event.stage !== "done") {
+            setPipelineStages(prev => {
+              const idx = prev.findIndex(s => s.stage === event.stage);
+              if (idx >= 0) {
+                const next = [...prev]; next[idx] = event; return next;
+              }
+              return [...prev, event];
+            });
+          }
+        },
+        selectedVertical ?? undefined,
+        selectedDomain ?? undefined,
+      );
+    } catch (err) {
+      setPipelineStages(prev => [...prev, { stage: "error", label: String(err), status: "error" }]);
+    } finally {
+      setIsStreaming(false);
+    }
   };
 
   return (
@@ -261,8 +340,18 @@ export function ResearchPanel({ lead, onClose, autoGenerate = false, defaultChan
                 result={outreachResult}
                 onDismiss={() => setOutreachResult(null)}
                 onRetry={handleGenerate}
-                retrying={generateMutation.isPending}
+                retrying={isStreaming}
               />
+            </div>
+          )}
+
+          {/* Live pipeline progress */}
+          {isStreaming && pipelineStages.length > 0 && (
+            <PipelineProgress stages={pipelineStages} />
+          )}
+          {isStreaming && pipelineStages.length === 0 && (
+            <div className="py-10 text-center text-ink-mute text-sm font-mono flex items-center justify-center gap-2">
+              <Loader2 size={14} className="animate-spin" /> Starting pipeline…
             </div>
           )}
 
@@ -438,8 +527,8 @@ export function ResearchPanel({ lead, onClose, autoGenerate = false, defaultChan
               <div className="text-danger text-xs font-mono mt-2">This lead has no email address.</div>
             )}
             <div className="mt-2 grid grid-cols-2 gap-2">
-              <button onClick={handleGenerate} disabled={generateMutation.isPending} className="btn-ghost disabled:opacity-60">
-                {generateMutation.isPending ? "Regenerating…" : "↺ Regenerate"}
+              <button onClick={handleGenerate} disabled={isStreaming} className="btn-ghost disabled:opacity-60">
+                {isStreaming ? "Regenerating…" : "↺ Regenerate"}
               </button>
               <button onClick={() => { setEditableEmail(null); setOutreachResult(null); sendMutation.reset(); }} className="btn-ghost">
                 Cancel
@@ -465,14 +554,14 @@ export function ResearchPanel({ lead, onClose, autoGenerate = false, defaultChan
         {/* Footer CTAs */}
         {company && !sendMutation.data?.sent && (
           <div className="px-6 py-4 border-t border-line-soft flex flex-col gap-2 shrink-0 bg-surface">
-            {(generateMutation.isError || suggestMutation.isError) && (
+            {suggestMutation.isError && (
               <div className="text-[10px] text-red-400 font-mono px-1">
-                ✗ {((generateMutation.error || suggestMutation.error) as Error)?.message || "Failed — check backend"}
+                ✗ {(suggestMutation.error as Error)?.message || "Failed — check backend"}
               </div>
             )}
 
             {/* Suggestion chips — shown after /outreach/suggest returns */}
-            {suggestion && !generateMutation.isPending && (
+            {suggestion && !isStreaming && (
               <div className="bg-surface-2 border border-line rounded-md px-3 py-2.5 flex flex-col gap-2">
                 <div className="font-mono text-[9px] uppercase tracking-[0.08em] text-ink-2">Detected Context — confirm or change</div>
                 <div className="flex flex-col gap-1.5">
@@ -538,10 +627,10 @@ export function ResearchPanel({ lead, onClose, autoGenerate = false, defaultChan
                 <>
                   <button
                     onClick={handleConfirmGenerate}
-                    disabled={generateMutation.isPending}
+                    disabled={isStreaming}
                     className="btn-primary flex items-center gap-2 flex-1 justify-center disabled:opacity-60"
                   >
-                    {generateMutation.isPending ? (
+                    {isStreaming ? (
                       <><RefreshCw size={13} className="animate-spin" /> Generating…</>
                     ) : (
                       <><Zap size={13} /> Confirm & Generate</>
@@ -549,7 +638,7 @@ export function ResearchPanel({ lead, onClose, autoGenerate = false, defaultChan
                   </button>
                   <button
                     onClick={() => setSuggestion(null)}
-                    disabled={generateMutation.isPending}
+                    disabled={isStreaming}
                     className="px-3 py-2 rounded-md text-[11px] font-medium bg-surface-2 text-ink-2 border border-line hover:border-line-soft transition-colors disabled:opacity-40"
                   >
                     Cancel

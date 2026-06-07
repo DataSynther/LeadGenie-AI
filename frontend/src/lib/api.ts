@@ -298,6 +298,55 @@ export const generateOutreach = (
     domain_override: domainOverride ?? null,
   });
 
+export type PipelineStageStatus = "pending" | "running" | "done" | "error";
+export type PipelineStageEvent = {
+  stage: string;
+  label: string;
+  status: PipelineStageStatus;
+  result?: OutreachResult & { queued_event_id: string };
+};
+
+export const streamGenerateOutreach = async (
+  leadId: string,
+  companyDomain: string,
+  onEvent: (event: PipelineStageEvent) => void,
+  verticalOverride?: string,
+  domainOverride?: string,
+): Promise<void> => {
+  const res = await fetch(`${BASE_URL}/outreach/generate/stream`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      lead_id: leadId,
+      company_domain: companyDomain,
+      vertical_override: verticalOverride ?? null,
+      domain_override: domainOverride ?? null,
+    }),
+  });
+
+  if (!res.ok || !res.body) throw new Error(`Stream failed: ${res.status}`);
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+    for (const line of lines) {
+      if (line.startsWith("data: ")) {
+        try {
+          const event = JSON.parse(line.slice(6)) as PipelineStageEvent;
+          onEvent(event);
+        } catch { /* skip malformed */ }
+      }
+    }
+  }
+};
+
 export const sendOutreach = (params: {
   leadId: string;
   toEmail?: string | null;

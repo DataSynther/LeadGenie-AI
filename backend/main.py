@@ -10,7 +10,8 @@ import logging
 import os
 import secrets
 from datetime import datetime, timedelta
-from fastapi import FastAPI, HTTPException, Request, Depends
+from fastapi import FastAPI, HTTPException, Request, Depends, Query
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from middleware.activity_tracker import ActivityTrackerMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -414,6 +415,192 @@ async def generate_outreach(req: OutreachRequest):
         "governance_attempt_history": result["governance_attempt_history"],
         "queued_event_id": event_id,
     }
+
+
+@app.post("/outreach/generate/stream")
+async def generate_outreach_stream(req: OutreachRequest):
+    """SSE endpoint — streams pipeline stage events then the full result."""
+
+    async def event_stream():
+        def sse(stage: str, label: str, status: str = "running", result: dict | None = None) -> str:
+            payload: dict = {"stage": stage, "label": label, "status": status}
+            if result is not None:
+                payload["result"] = result
+            return f"data: {json.dumps(payload)}\n\n"
+
+        try:
+            # ── Stage 1: Lead enrichment ──────────────────────────────────────
+            yield sse("enriching_lead", "Fetching lead data")
+            lead = await asyncio.to_thread(apollo_people.get_person_details, req.lead_id)
+            if not lead:
+                yield sse("enriching_lead", "Lead not found", "error")
+                return
+            enriched = await asyncio.to_thread(
+                apollo_people.enrich_by_name, lead.get("name", ""), lead.get("company", "")
+            )
+            if enriched:
+                for field in ("headline", "city", "country", "photo_url", "employment_history",
+                              "org_tech_stack", "org_headcount_growth_12m", "org_revenue",
+                              "org_keywords", "org_description", "org_employees", "org_industry",
+                              "email_status", "departments"):
+                    if enriched.get(field) is not None:
+                        lead[field] = enriched[field]
+            yield sse("enriching_lead", "Lead data ready", "done")
+
+            # ── Stage 2: Company enrichment ───────────────────────────────────
+            yield sse("enriching_company", "Enriching company profile")
+            company = await asyncio.to_thread(apollo_company.enrich_company, req.company_domain)
+            yield sse("enriching_company", "Company profile ready", "done")
+
+            # ── Stage 3: Hiring signals ───────────────────────────────────────
+            yield sse("detecting_signals", "Detecting hiring & growth signals")
+            signals = await asyncio.to_thread(
+                apollo_signals.detect_hiring_trends, lead.get("organization_id", "")
+            )
+            yield sse("detecting_signals", "Signals detected", "done")
+
+            # ── Stage 4: AI research ──────────────────────────────────────────
+            yield sse("researching", "AI company research")
+            research = await asyncio.to_thread(research_agent.research_company, company, signals)
+            yield sse("researching", "Research complete", "done")
+
+            # ── Stage 5: Context builder ──────────────────────────────────────
+            yield sse("building_context", "Building lead context")
+            context = await asyncio.to_thread(
+                context_builder.build_lead_context, lead, company, signals, research
+            )
+            from agents.outreach.template_categorizer import TemplateCategorizer, DomainDetector
+            context["_vertical"] = req.vertical_override or TemplateCategorizer().categorize(lead, company)
+            context["_domain"]   = req.domain_override   or DomainDetector().detect(company)
+            yield sse("building_context", "Context ready", "done")
+
+            # ── Stage 6: Market trends ────────────────────────────────────────
+            yield sse("fetching_trends", "Fetching market trends")
+            trends = await asyncio.to_thread(trend_agent.get_current_trends)
+            yield sse("fetching_trends", f"{len(trends)} trends loaded", "done")
+
+            # ── Stage 7: Relevance ranking ────────────────────────────────────
+            yield sse("ranking_relevance", "Ranking trends by relevance")
+            top_trends = await asyncio.to_thread(
+                relevance_engine.rank_trends, context, trends, 3
+            )
+            yield sse("ranking_relevance", "Top 3 trends selected", "done")
+
+            # ── Stage 8: Email generation + governance ────────────────────────
+            yield sse("generating_email", "Generating personalised email (Claude)")
+            source_facts = {
+                "company_name": company.get("name"),
+                "industry": company.get("industry"),
+                "lead_title": lead.get("title"),
+                "description": company.get("description"),
+                "employee_count": company.get("employee_count"),
+                "technologies": company.get("technologies", []),
+            }
+            result = await asyncio.to_thread(
+                governance_orchestrator.run,
+                outreach_agent,
+                context,
+                top_trends,
+                source_facts,
+                req.lead_id,
+                req.vertical_override,
+                req.domain_override,
+            )
+            yield sse("generating_email", "Email generated", "done")
+
+            # ── Stage 9: Governance result ────────────────────────────────────
+            gov = result["governance"]
+            risk = gov.get("risk_score", 0.0)
+            risk_label = gov.get("risk_level", "low")
+            gov_label = f"Risk {risk_label} ({risk:.2f}) — {'auto-approved' if gov.get('approved') else 'queued for review'}"
+            yield sse("governance", gov_label, "done")
+
+            # ── Stage 10: Queue ────────────────────────────────────────────────
+            yield sse("queueing", "Adding to approval queue")
+            from agents.conversation.memory_manager import GroundingMemory
+            grounding_facts = GroundingMemory().read(req.lead_id)
+            event_id = outreach_queue.enqueue(
+                lead_id=req.lead_id,
+                lead_name=lead.get("name", ""),
+                lead_title=lead.get("title", ""),
+                company_name=company.get("name", ""),
+                lead_email=lead.get("email", ""),
+                email=result["email"],
+                governance=result["governance"],
+                attempt_history=result["governance_attempt_history"],
+                grounding_facts=grounding_facts,
+            )
+
+            # Background bookkeeping (non-blocking, best-effort)
+            try:
+                email_out = result["email"]
+                stream_name = email_out.get("stream", "generic")
+                hook = email_out.get("opening_hook") or (email_out.get("body", "") or "")[:120]
+                tech_tags = (company.get("technologies") or [])[:3]
+                emp = company.get("employee_count") or 0
+                size_bucket = (
+                    "1-50" if emp < 50 else "50-200" if emp < 200 else
+                    "200-1000" if emp < 1000 else "1000-5000" if emp < 5000 else "5000+"
+                )
+                industry_memory.write(
+                    stream=stream_name,
+                    lead_signals={
+                        "title_keywords": (lead.get("title", "") or "").lower().split()[:3],
+                        "company_size": size_bucket,
+                        "tech_tags": tech_tags,
+                    },
+                    subject=email_out.get("subject", ""),
+                    hook=hook,
+                )
+                attempt_hist = result["governance_attempt_history"]
+                last = attempt_hist[-1] if attempt_hist else {}
+                layers = last.get("layers", {})
+                tone_layer = layers.get("tone", {})
+                halluc_layer = layers.get("hallucination", {})
+                stats_store.record_outreach(
+                    event_id=event_id,
+                    lead_id=req.lead_id,
+                    lead_name=lead.get("name", ""),
+                    company_name=company.get("name", ""),
+                    risk_score=gov.get("risk_score", 0.0),
+                    risk_level=gov.get("risk_level", "low"),
+                    status="pending",
+                    tone_passed=not tone_layer.get("issues"),
+                    hallucination_passed=halluc_layer.get("passed", True),
+                    tone_issues=tone_layer.get("issues", []),
+                    hallucination_violations=halluc_layer.get("violations", []),
+                    total_attempts=gov.get("total_attempts", 1),
+                )
+                stats_store.record_agent_event(
+                    agent="outreach",
+                    message=f"Generated outreach for {lead.get('name', '')} at {company.get('name', '')}",
+                    lead_id=req.lead_id,
+                )
+            except Exception as _err:
+                logger.warning("post-generate bookkeeping failed: %s", _err)
+
+            yield sse("queueing", "Queued for review", "done")
+
+            # ── Final: send full result ───────────────────────────────────────
+            yield sse("done", "Pipeline complete", "done", result={
+                "lead": lead,
+                "company": company,
+                "top_trends": top_trends,
+                "email": result["email"],
+                "governance": result["governance"],
+                "governance_attempt_history": result["governance_attempt_history"],
+                "queued_event_id": event_id,
+            })
+
+        except Exception as exc:
+            logger.exception("generate/stream pipeline error")
+            yield sse("error", str(exc), "error")
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @app.post("/outreach/send")
