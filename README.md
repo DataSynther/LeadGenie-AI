@@ -125,7 +125,9 @@ WhatsApp Inbox at /whatsapp shows the active conversation
 LeadGenie-AI/
 ├── .env.example                    # Environment variable template (copy → .env)
 ├── .gitignore
-├── docker-compose.yml
+├── docker-compose.yml              # Original single-service compose
+├── docker-compose.local-v2.yml     # Full V2 local stack (API + Worker + Frontend + Postgres + Redis)
+├── docker-compose.share.yml        # Shareable compose using pre-built Docker Hub images
 ├── run_test_pipeline.py            # End-to-end simulation script (6 leads)
 │
 ├── .github/
@@ -160,8 +162,10 @@ LeadGenie-AI/
 ├── backend/                        # FastAPI backend — see backend/README.md
 │   ├── main.py                     # All API routes (single entry point)
 │   ├── requirements.txt
-│   ├── Dockerfile                  # API server image (Python 3.12-slim, port 8000)
+│   ├── Dockerfile                  # API server image (Python 3.11-slim, port 8000)
 │   ├── Dockerfile.worker           # Agent worker image (SQS consumer, no HTTP port)
+│   ├── worker/
+│   │   └── __main__.py             # Worker entry point — SQS in AWS, file-queue locally
 │   ├── middleware/
 │   │   └── activity_tracker.py     # Updates DynamoDB last_activity on each request (auto-sleep)
 │   │
@@ -241,6 +245,7 @@ LeadGenie-AI/
 │   └── test_research_agent.py
 │
 ├── scripts/                        # Utility scripts — see scripts/README.md
+│   ├── smoke_test_local.sh         # Automated smoke test against the local Docker stack
 │   ├── run_reply_poller.py         # Start Gmail IMAP watcher
 │   ├── process_reply_now.py        # Manually trigger one poll cycle
 │   ├── debug_gmail_poller.py       # Debug IMAP connection
@@ -327,11 +332,110 @@ python3 scripts/run_reply_poller.py
 python3 scripts/run_followup_scheduler.py
 # After email send, waits WHATSAPP_FOLLOWUP_WAIT_MINUTES, then sends WhatsApp if no reply was detected
 ```
-### Docker (runs everything locally)
+---
+
+## Running with Docker (Windows & Mac)
+
+> **No Python or Node.js required.** Docker handles everything.
+
+### Prerequisites
+
+| Platform | Install |
+|---|---|
+| **Mac** | [OrbStack](https://orbstack.dev) (recommended) or [Docker Desktop](https://www.docker.com/products/docker-desktop/) |
+| **Windows** | [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/) — enable WSL 2 backend during install |
+
+---
+
+### Option A — Pull pre-built images (fastest, no code needed)
+
+Ideal for teammates who just want to run the app.
+
+**1. Create a `.env` file** in any folder with your API keys:
+
+```env
+ANTHROPIC_API_KEY=sk-ant-...
+APOLLO_API_KEY=...
+VOYAGE_API_KEY=...
+GMAIL_APP_PASSWORD=...
+RESEND_API_KEY=...
+```
+
+**2. Download `docker-compose.share.yml`** from this repo (or copy the block below) into the same folder as `.env`.
+
+**3. Start everything:**
 
 ```bash
-docker-compose up --build
+# Mac / Linux
+docker compose -f docker-compose.share.yml up
+
+# Windows (PowerShell or Command Prompt)
+docker compose -f docker-compose.share.yml up
 ```
+
+**4. Open the app:** http://localhost:3000  
+**API docs:** http://localhost:8000/docs  
+Login: `demo` / `demo123`
+
+**To stop:**
+```bash
+docker compose -f docker-compose.share.yml down
+```
+
+---
+
+### Option B — Build locally from source (full dev setup)
+
+```bash
+git clone https://github.com/DataSynther/LeadGenie-AI.git
+cd LeadGenie-AI
+cp .env.example .env
+# Fill in your API keys in .env
+
+# Build and start (takes ~3 min on first run)
+docker compose -f docker-compose.local-v2.yml up --build
+```
+
+Once all containers are healthy (~60 seconds after build):
+
+| What | URL |
+|---|---|
+| **App (React frontend)** | http://localhost:3000 |
+| **API interactive docs** | http://localhost:8000/docs |
+| **API ReDoc** | http://localhost:8000/redoc |
+| **Health check** | http://localhost:8000/health |
+
+Run the smoke test to verify everything works:
+```bash
+bash scripts/smoke_test_local.sh
+```
+
+**To stop:**
+```bash
+docker compose -f docker-compose.local-v2.yml down
+```
+
+---
+
+### Publishing updated images (maintainers only)
+
+When you want to push a new version for teammates to pull:
+
+```bash
+export DH=YOUR_DOCKERHUB_USERNAME
+
+docker buildx build --platform linux/amd64 -f backend/Dockerfile \
+  -t $DH/leadgenie-api:latest --push .
+
+docker buildx build --platform linux/amd64 -f backend/Dockerfile.worker \
+  -t $DH/leadgenie-worker:latest --push .
+
+docker buildx build --platform linux/amd64 -f frontend/Dockerfile \
+  --build-arg VITE_API_URL=http://localhost:8000 \
+  -t $DH/leadgenie-frontend:latest --push ./frontend
+```
+
+> Images are built for `linux/amd64` so they run on both Windows (x86) and Mac (Apple Silicon via Rosetta).
 
 ---
 
