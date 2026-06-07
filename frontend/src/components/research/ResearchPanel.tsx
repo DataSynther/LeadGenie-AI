@@ -260,7 +260,7 @@ export function ResearchPanel({ lead, onClose, autoGenerate = false, defaultChan
       await api.streamGenerateOutreach(
         lead!.id,
         companyDomain,
-        (event) => {
+        (event: PipelineStageEvent) => {
           if (event.stage === "done" && event.result) {
             const r = event.result as OutreachResult;
             setOutreachResult(r);

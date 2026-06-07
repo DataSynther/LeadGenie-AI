@@ -928,6 +928,7 @@ export const api = {
   conversationReply,
   suggestOutreachContext,
   generateOutreach,
+  streamGenerateOutreach,
   sendOutreach,
   whatsappConversations,
   whatsappConversation,
