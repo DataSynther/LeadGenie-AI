@@ -1,0 +1,106 @@
+version: "3.9"
+
+# Local mirror of the AWS V2 production stack.
+# Substitutes: RDS → postgres:16, ElastiCache → redis:7, SQS → (local file queue mode)
+# Usage:
+#   docker compose -f docker-compose.local-v2.yml up --build
+#   docker compose -f docker-compose.local-v2.yml down -v
+
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: leadgenie
+      POSTGRES_USER: leadgenie
+      POSTGRES_PASSWORD: leadgenie_local
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U leadgenie"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass redis_local
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redis_local", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      # Override DB/Redis to point at local containers
+      DATABASE_URL: postgresql://leadgenie:leadgenie_local@postgres:5432/leadgenie
+      REDIS_URL: redis://:redis_local@redis:6379/0
+      # No SQS in local mode — worker uses file queue
+      SQS_QUEUE_URL: ""
+      # Activity tracker writes to DynamoDB in prod; skip in local
+      ACTIVITY_TABLE: ""
+    volumes:
+      - ./backend/storage:/app/backend/storage
+      - ./sample_data:/app/sample_data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.worker
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://leadgenie:leadgenie_local@postgres:5432/leadgenie
+      REDIS_URL: redis://:redis_local@redis:6379/0
+      SQS_QUEUE_URL: ""       # triggers local file-queue mode
+      WORKER_POLL_SECONDS: "15"
+      ACTIVITY_TABLE: ""
+    volumes:
+      - ./backend/storage:/app/backend/storage
+      - ./sample_data:/app/sample_data
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:8000
+    ports:
+      - "3000:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pg_data:
