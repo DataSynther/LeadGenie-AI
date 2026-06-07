@@ -5,7 +5,8 @@ from typing import Optional
 from anthropic import Anthropic
 
 client = Anthropic()
-MODEL = os.getenv("CLAUDE_MODEL_HALLUCINATION") or os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
+# Haiku is sufficient for the structured yes/no JSON fact-check and is ~5x faster
+MODEL = os.getenv("CLAUDE_MODEL_HALLUCINATION", "claude-haiku-4-5-20251001")
 
 
 class HallucinationChecker:
@@ -87,7 +88,7 @@ Respond as JSON:
 }}"""
         response = client.messages.create(
             model=MODEL,
-            max_tokens=512,
+            max_tokens=256,
             messages=[{"role": "user", "content": prompt}],
         )
         raw = response.content[0].text.strip()

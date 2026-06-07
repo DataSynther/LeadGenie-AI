@@ -61,3 +61,4 @@ logs/
 *.pem
 *.key
 *.cert
+__embedding_cache__/
