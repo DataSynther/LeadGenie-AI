@@ -104,6 +104,8 @@ export const leadSearch = (params: {
   company_names?: string[];
   titles?: string[];
   seniorities?: string[];
+  industries?: string[];
+  locations?: string[];
   per_page?: number;
 }) => post<{
   id: string;

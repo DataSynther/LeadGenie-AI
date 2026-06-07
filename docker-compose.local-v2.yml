@@ -1,5 +1,3 @@
-version: "3.9"
-
 # Local mirror of the AWS V2 production stack.
 # Substitutes: RDS → postgres:16, ElastiCache → redis:7, SQS → (local file queue mode)
 # Usage:
