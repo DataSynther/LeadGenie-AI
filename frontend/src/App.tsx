@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AppShell } from "./components/layout/AppShell";
 import { PrivateLayout } from "./components/PrivateLayout";
+import { PipelineToast } from "./components/PipelineToast";
 import { LoginPage } from "./pages/LoginPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LeadDiscoveryPage } from "./pages/LeadDiscoveryPage";
@@ -20,6 +21,8 @@ import { KbFactsPage } from "./pages/KbFactsPage";
 
 function App() {
   return (
+    <>
+    <PipelineToast />
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route element={<PrivateLayout />}>
@@ -42,6 +45,7 @@ function App() {
         <Route path="/kb-facts" element={<KbFactsPage />} />
       </Route>
     </Routes>
+    </>
   );
 }
 

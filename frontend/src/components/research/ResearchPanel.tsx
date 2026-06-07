@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { api } from "../../lib/api";
 import type { Lead, OutreachResult, OutreachSuggestion, PipelineStageEvent } from "../../lib/api";
+import { usePipeline } from "../../context/PipelineContext";
 import { cn } from "../../lib/utils";
 
 interface ResearchPanelProps {
@@ -201,8 +202,18 @@ export function ResearchPanel({ lead, onClose, autoGenerate = false, defaultChan
   const [suggestion, setSuggestion] = useState<OutreachSuggestion | null>(null);
   const [selectedVertical, setSelectedVertical] = useState<string | null>(null);
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
-  const [pipelineStages, setPipelineStages] = useState<PipelineStageEvent[]>([]);
-  const [isStreaming, setIsStreaming] = useState(false);
+  const { run: pipelineRun, startPipeline } = usePipeline();
+  const isStreaming = pipelineRun.isStreaming;
+  const pipelineStages = pipelineRun.stages;
+
+  // When the global pipeline finishes, pull the result into this panel
+  useEffect(() => {
+    if (pipelineRun.result && !outreachResult) {
+      const r = pipelineRun.result;
+      setOutreachResult(r);
+      setEditableEmail(r.email ? { subject: r.email.subject, body: r.email.body, reasoning: r.email.reasoning } : null);
+    }
+  }, [pipelineRun.result]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { data: company, isLoading, error } = useQuery({
     queryKey: ["companyResearch", lead?.company],
@@ -250,40 +261,18 @@ export function ResearchPanel({ lead, onClose, autoGenerate = false, defaultChan
     suggestMutation.mutate();
   };
 
-  const handleConfirmGenerate = async () => {
+  const handleConfirmGenerate = () => {
     setSuggestion(null);
     setOutreachResult(null);
     setEditableEmail(null);
-    setPipelineStages([]);
-    setIsStreaming(true);
-    try {
-      await api.streamGenerateOutreach(
-        lead!.id,
-        companyDomain,
-        (event: PipelineStageEvent) => {
-          if (event.stage === "done" && event.result) {
-            const r = event.result as OutreachResult;
-            setOutreachResult(r);
-            setEditableEmail(r.email ? { subject: r.email.subject, body: r.email.body, reasoning: r.email.reasoning } : null);
-            setPipelineStages([]);
-          } else if (event.stage !== "done") {
-            setPipelineStages(prev => {
-              const idx = prev.findIndex(s => s.stage === event.stage);
-              if (idx >= 0) {
-                const next = [...prev]; next[idx] = event; return next;
-              }
-              return [...prev, event];
-            });
-          }
-        },
-        selectedVertical ?? undefined,
-        selectedDomain ?? undefined,
-      );
-    } catch (err) {
-      setPipelineStages(prev => [...prev, { stage: "error", label: String(err), status: "error" }]);
-    } finally {
-      setIsStreaming(false);
-    }
+    startPipeline({
+      leadId: lead!.id,
+      leadName: lead?.name ?? "",
+      companyName: lead?.company ?? "",
+      companyDomain,
+      vertical: selectedVertical ?? undefined,
+      domain: selectedDomain ?? undefined,
+    });
   };
 
   return (
