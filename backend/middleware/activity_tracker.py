@@ -8,7 +8,6 @@ Writes at most once per 60 seconds to avoid DynamoDB hot-key issues.
 """
 import os
 import time
-import boto3
 from datetime import datetime, timezone
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -25,6 +24,7 @@ _SKIP_PATHS = {"/health", "/metrics", "/favicon.ico"}
 def _get_table():
     global _dynamo
     if _dynamo is None and _TABLE_NAME:
+        import boto3  # lazy — not available in local/non-AWS environments
         _dynamo = boto3.resource("dynamodb").Table(_TABLE_NAME)
     return _dynamo
 
