@@ -28,6 +28,7 @@ services:
       REDIS_URL: redis://redis:6379/0
       SQS_QUEUE_URL: ""
       ACTIVITY_TABLE: ""
+      WHATSAPP_TEST_PHONE: "+918056498879"
     volumes:
       - storage_data:/app/backend/storage
     depends_on:
