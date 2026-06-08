@@ -1,0 +1,60 @@
+# LeadGenie-AI — shareable compose file for Windows / Linux / Mac (AMD64)
+# Prerequisites: Docker Desktop installed
+#
+# Usage:
+#   1. Create a .env file in the same folder with your API keys (see below)
+#   2. docker compose -f docker-compose.share.yml up
+#   3. Open http://localhost:3000
+#
+# Required .env file contents:
+#   ANTHROPIC_API_KEY=sk-ant-...
+#   APOLLO_API_KEY=...
+#   VOYAGE_API_KEY=...
+#   GMAIL_APP_PASSWORD=...
+#   RESEND_API_KEY=...
+
+services:
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+  api:
+    image: amuni1234/leadgenie-api:latest
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      SQS_QUEUE_URL: ""
+      ACTIVITY_TABLE: ""
+    volumes:
+      - storage_data:/app/backend/storage
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  worker:
+    image: amuni1234/leadgenie-worker:latest
+    env_file: .env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      SQS_QUEUE_URL: ""
+      ACTIVITY_TABLE: ""
+      WORKER_POLL_SECONDS: "15"
+    volumes:
+      - storage_data:/app/backend/storage
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  frontend:
+    image: amuni1234/leadgenie-frontend:latest
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  storage_data:
