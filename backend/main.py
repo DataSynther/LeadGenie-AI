@@ -543,12 +543,15 @@ async def generate_outreach_stream(req: OutreachRequest):
             _t = time.monotonic()
             from agents.conversation.memory_manager import GroundingMemory
             grounding_facts = GroundingMemory().read(req.lead_id)
+            _test_phone = os.getenv("WHATSAPP_TEST_PHONE", "")
+            _lead_phone = _test_phone or lead.get("phone") or ""
             event_id = outreach_queue.enqueue(
                 lead_id=req.lead_id,
                 lead_name=lead.get("name", ""),
                 lead_title=lead.get("title", ""),
                 company_name=company.get("name", ""),
                 lead_email=lead.get("email", ""),
+                lead_phone=_lead_phone,
                 email=result["email"],
                 governance=result["governance"],
                 attempt_history=result["governance_attempt_history"],
@@ -864,6 +867,22 @@ async def approve_outreach(event_id: str):
     outreach_queue.update_status(event_id, "approved")
     stats_store.update_outreach_status(event_id, "approved")
     stats_store.record_agent_event(agent="gov", message=f"Outreach approved & sent to {to_email}", lead_id=item.get("lead_id", ""))
+
+    # Schedule WhatsApp follow-up if phone is available
+    test_phone = os.getenv("WHATSAPP_TEST_PHONE", "")
+    lead_phone = test_phone or item.get("lead_phone", "")
+    if lead_phone:
+        context = {"lead": {"email": to_email, "phone": lead_phone, "name": item.get("lead_name", "")},
+                   "company": {"name": item.get("company_name", "")},
+                   "outreach": {"subject": subject, "body": body}}
+        lead_context_store.save(to_email, item.get("lead_id", ""), context)
+        followup_scheduler.schedule_followup(
+            lead_id=item.get("lead_id", ""),
+            phone=lead_phone,
+            context=context,
+            outreach={"subject": subject, "body": body},
+        )
+
     return {"status": "approved", "sent": True, "to": to_email, "event_id": event_id}
 
 

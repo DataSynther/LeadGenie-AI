@@ -123,6 +123,7 @@ class OutreachQueueStore:
         attempt_history: list[dict],
         grounding_facts: Optional[dict] = None,
         lead_email: str = "",
+        lead_phone: str = "",
     ) -> str:
         """Write an email to the queue. Returns the event_id."""
         passed = attempt_history[-1].get("passed", True) if attempt_history else True
@@ -168,6 +169,7 @@ class OutreachQueueStore:
             "lead_title":    lead_title,
             "company_name":  company_name,
             "lead_email":    lead_email,
+            "lead_phone":    lead_phone,
             "timestamp":     datetime.now(timezone.utc).isoformat(),
             "status":        "pending",
             "governance_passed": passed,

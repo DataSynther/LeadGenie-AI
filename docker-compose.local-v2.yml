@@ -51,6 +51,8 @@ services:
       SQS_QUEUE_URL: ""
       # Activity tracker writes to DynamoDB in prod; skip in local
       ACTIVITY_TABLE: ""
+      # Override phone for WhatsApp testing (all leads use this number)
+      WHATSAPP_TEST_PHONE: "+918056498879"
     volumes:
       - ./backend/storage:/app/backend/storage
       - ./sample_data:/app/sample_data
