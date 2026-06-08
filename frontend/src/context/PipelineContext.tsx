@@ -1,4 +1,5 @@
 import { createContext, useContext, useRef, useState, useCallback, type ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import type { OutreachResult, PipelineStageEvent } from "../lib/api";
 
@@ -41,8 +42,8 @@ const PipelineContext = createContext<PipelineContextType>({
 
 export function PipelineProvider({ children }: { children: ReactNode }) {
   const [run, setRun] = useState<PipelineRun>(defaultRun);
-  // Track abort so we can cancel if user starts a new pipeline
   const abortRef = useRef<AbortController | null>(null);
+  const queryClient = useQueryClient();
 
   const clearRun = useCallback(() => setRun(defaultRun), []);
 
@@ -64,6 +65,7 @@ export function PipelineProvider({ children }: { children: ReactNode }) {
       (event: PipelineStageEvent) => {
         if (ctrl.signal.aborted) return;
         if (event.stage === "done" && event.result) {
+          queryClient.invalidateQueries({ queryKey: ["approvalQueue"] });
           setRun(prev => ({
             ...prev,
             isStreaming: false,
