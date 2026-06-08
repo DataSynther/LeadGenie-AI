@@ -34,7 +34,9 @@ Existing SDR workflows force teams to choose between slow manual prospecting and
 | Meeting Scheduling | Calendly link sent automatically on meeting requests |
 | **AI Observability** | Per-agent tracing, context scoring, prompt ambiguity detection, validation layer |
 | **Hallucination Diagnostics** | 5-category root cause breakdown: retrieval / context / prompt / validation / task-mismatch |
-| **Mission Control Dashboard** | Live KPI cards, funnel chart, risk distribution, agent feed, outreach queue summary |
+| **Mission Control Dashboard** | Live KPI cards, funnel chart, risk distribution, pipeline latency histogram (per-stage stacked bars), agent feed, outreach queue summary |
+| **Pipeline Latency Chart** | Stacked bar histogram on Mission Control — each run on x-axis, segments show time spent in each pipeline stage |
+| **Live Pipeline Streaming** | SSE-based stage-by-stage progress toast (bottom-right) — visible from any page during email generation |
 | **FinOps Dashboard** | Per-agent cost/token tracking, retry cost analysis, avg cost per email trend, governance cost breakdown |
 | **AWS V2 Deployment** | ECS Fargate + CDK IaC, auto-sleep after 15 min inactivity, CloudWatch alarms, budget alerts |
 
@@ -219,6 +221,7 @@ LeadGenie-AI/
 │       ├── diagnostics/            # Agent traces + validation events (observability layer)
 │       ├── feedback/               # Outcome records
 │       ├── intent_analytics/       # Intent classification events
+│       ├── pipeline_runs.jsonl     # Per-run stage timing records (feeds latency histogram)
 │       └── lead_contexts/          # Email → lead context map
 │
 ├── frontend/                       # React + TypeScript UI — see frontend/README.md
@@ -555,6 +558,8 @@ All routes are defined in `backend/main.py`. Interactive docs available at `http
 | Method | Endpoint | Description |
 |---|---|---|
 | GET | `/dashboard/stats` | KPI cards, funnel chart, risk distribution, blocked patterns |
+| GET | `/dashboard/pipeline-latency?n=30` | Last N pipeline runs with per-stage durations in seconds (latency histogram data) |
+| GET | `/dashboard/outreach-trend?days=30` | Daily outreach volume (total + approved) for the past N days |
 | GET | `/agent-feed/recent` | Recent agent activity log for the live feed ticker |
 
 ### Leads & Pipeline
@@ -573,7 +578,9 @@ All routes are defined in `backend/main.py`. Interactive docs available at `http
 ### Outreach Generation
 | Method | Endpoint | Body | Description |
 |---|---|---|---|
-| POST | `/outreach/generate` | `{lead_id, company_domain}` | Full pipeline: enrich → research → trends → relevance → email → governance |
+| POST | `/outreach/generate` | `{lead_id, company_domain}` | Full pipeline (blocking): enrich → research → trends → relevance → email → governance |
+| POST | `/outreach/generate/stream` | `{lead_id, company_domain, vertical, domain}` | Same pipeline over SSE — streams stage events in real time; final event contains full result |
+| POST | `/outreach/suggest` | `{lead_id, company_domain}` | Fast pre-check (no Claude): enriches lead + company, detects domain/vertical, returns chip options |
 
 Additional outreach send endpoint:
 
@@ -665,8 +672,8 @@ The WhatsApp Inbox UI uses these endpoints from `frontend/src/lib/api.ts` and is
 
 Every generated email passes through three layers before being sent:
 
-1. **Tone Validator** — strips salesy phrases, enforces length limits
-2. **Hallucination Checker** — Claude verifies every claim against source facts
+1. **Tone Validator** — strips salesy phrases, enforces length limits (subject ≤ 8 words, body ≤ 10 sentences, ≤ 1 exclamation mark)
+2. **Hallucination Checker** — Claude Haiku verifies every claim in opening hook + value prop + social proof against source facts and KB claims
 3. **Risk Engine** — composite risk score (0.0–1.0):
    - `< 0.4` → auto-approved, email sent
    - `≥ 0.4` → held in Approval Queue for human review
