@@ -352,42 +352,55 @@ python3 scripts/run_followup_scheduler.py
 
 ### Option A — Pull pre-built images (fastest, no code needed)
 
-Ideal for teammates who just want to run the app.
+> Use the **`windows-docker` branch** — it contains `docker-compose.share.yml` pre-configured with Docker Hub images and demo seed data.
 
-**1. Create a `.env` file** in any folder with your API keys:
+**1. Switch to the `windows-docker` branch and get the compose file:**
+
+```bash
+git clone https://github.com/DataSynther/LeadGenie-AI.git
+cd LeadGenie-AI
+git checkout windows-docker
+```
+
+Or just download `docker-compose.share.yml` directly from:  
+`https://github.com/DataSynther/LeadGenie-AI/blob/windows-docker/docker-compose.share.yml`
+
+**2. Create a `.env` file** in the same folder as `docker-compose.share.yml`:
 
 ```env
 ANTHROPIC_API_KEY=sk-ant-...
 APOLLO_API_KEY=...
 VOYAGE_API_KEY=...
-GMAIL_APP_PASSWORD=...
-RESEND_API_KEY=...
+LEADGENIE_GMAIL=your-gmail@gmail.com
+LEADGENIE_GMAIL_PASSWORD=...
 ```
-
-**2. Download `docker-compose.share.yml`** from this repo (or copy the block below) into the same folder as `.env`.
 
 **3. Start everything:**
 
 ```bash
-# Mac / Linux
-docker compose -f docker-compose.share.yml up
-
-# Windows (PowerShell or Command Prompt)
 docker compose -f docker-compose.share.yml up
 ```
 
+The terminal will stay open showing logs — this is normal. You'll see the worker print `Local queue: N pending item(s)` every 15 seconds — that's the heartbeat, not an error.
+
+To run in the background instead:
+```bash
+docker compose -f docker-compose.share.yml up -d
+```
+
 **4. Open the app:** http://localhost:3000  
-**API docs:** http://localhost:8000/docs  
-Login: `demo` / `demo123`
+**API docs:** http://localhost:8000/docs
 
 **To stop:**
 ```bash
 docker compose -f docker-compose.share.yml down
 ```
 
+> **Note:** On first run, Docker pulls ~600 MB of images — takes 2–5 min depending on connection. Demo data (approval queue, audit logs) is pre-loaded automatically.
+
 ---
 
-### Option B — Build locally from source (full dev setup)
+### Option B — Build locally from source (dev setup)
 
 ```bash
 git clone https://github.com/DataSynther/LeadGenie-AI.git
@@ -425,7 +438,7 @@ docker compose -f docker-compose.local-v2.yml down
 When you want to push a new version for teammates to pull:
 
 ```bash
-export DH=YOUR_DOCKERHUB_USERNAME
+export DH=amuni1234
 
 docker buildx build --platform linux/amd64 -f backend/Dockerfile \
   -t $DH/leadgenie-api:latest --push .
