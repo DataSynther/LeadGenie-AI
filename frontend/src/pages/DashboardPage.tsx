@@ -1,12 +1,13 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { Topbar } from "../components/layout/Topbar";
 import { StatusPill } from "../components/StatusPill";
 import { KpiCard } from "../components/dashboard/KpiCard";
 import { FunnelCard } from "../components/dashboard/FunnelCard";
 import { RiskDistributionCard } from "../components/dashboard/RiskDistributionCard";
-import { api, type DashboardExtendedStats, type FinOpsSummary, type KbInsights, type ApprovalItem } from "../lib/api";
+import { api, type DashboardExtendedStats, type FinOpsSummary, type KbInsights, type ApprovalItem, type OutreachTrendPoint, type PipelineRunPoint } from "../lib/api";
 import { formatNumber, cn } from "../lib/utils";
 
 // ── Design tokens (CommandCenter palette) ─────────────────────────────────────
@@ -1302,6 +1303,112 @@ function SentEmailsPanel({ items }: { items: ApprovalItem[] }) {
   );
 }
 
+// ── Pipeline Latency Chart ────────────────────────────────────────────────────
+
+const STAGE_COLOURS: Record<string, string> = {
+  enriching_lead:     "#38bdf8",
+  enriching_company:  "#60a5fa",
+  detecting_signals:  "#a78bfa",
+  researching:        "#fb923c",
+  building_context:   "#34d399",
+  fetching_trends:    "#2dd4bf",
+  ranking_relevance:  "#818cf8",
+  generating_email:   "#c084fc",
+  queueing:           "#94a3b8",
+};
+
+const STAGE_LABELS: Record<string, string> = {
+  enriching_lead:     "Lead Enrich",
+  enriching_company:  "Co. Enrich",
+  detecting_signals:  "Signals",
+  researching:        "Research",
+  building_context:   "Context",
+  fetching_trends:    "Trends",
+  ranking_relevance:  "Ranking",
+  generating_email:   "Email Gen",
+  queueing:           "Queue",
+};
+
+const STAGE_KEYS = Object.keys(STAGE_COLOURS);
+
+function PipelineLatencyChart({ data }: { data: PipelineRunPoint[] }) {
+  const formatted = data.map(d => ({
+    ...d,
+    label: new Date(d.ts).toLocaleString("en-GB", {
+      day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", hour12: false,
+    }),
+  }));
+
+  if (!formatted.length) {
+    return (
+      <Panel>
+        <PanelTitle title="Pipeline Latency" sub="Per-stage breakdown · seconds per run" />
+        <p className="text-[11px] text-ink-mute">No runs recorded yet — generate your first outreach to see timings.</p>
+      </Panel>
+    );
+  }
+
+  return (
+    <Panel>
+      <PanelTitle
+        title="Pipeline Latency"
+        sub="Per-stage breakdown per run · seconds · hover for detail"
+      />
+      <ResponsiveContainer width="100%" height={200}>
+        <BarChart data={formatted} barCategoryGap="25%" margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+          <CartesianGrid vertical={false} stroke="rgba(148,163,184,0.15)" strokeDasharray="3 3" />
+          <XAxis
+            dataKey="label"
+            tick={{ fontSize: 9, fill: "#94a3b8", fontFamily: "monospace" }}
+            tickLine={false}
+            axisLine={false}
+            interval="preserveStartEnd"
+          />
+          <YAxis
+            tick={{ fontSize: 9, fill: "#94a3b8", fontFamily: "monospace" }}
+            tickLine={false}
+            axisLine={false}
+            width={28}
+            unit="s"
+          />
+          <Tooltip
+            contentStyle={{
+              background: "rgb(var(--c-surface))",
+              border: "1px solid rgb(var(--c-line-soft))",
+              borderRadius: 8,
+              fontSize: 11,
+            }}
+            labelStyle={{ color: "rgb(var(--c-ink))", fontWeight: 600, marginBottom: 4 }}
+            cursor={{ fill: "rgba(148,163,184,0.08)" }}
+            formatter={(val, key) => {
+              const v = Number(val);
+              return v > 0 ? [`${v}s`, STAGE_LABELS[String(key)] ?? String(key)] : ["", ""];
+            }}
+          />
+          {STAGE_KEYS.map((stage, i) => (
+            <Bar
+              key={stage}
+              dataKey={stage}
+              name={STAGE_LABELS[stage]}
+              stackId="run"
+              fill={STAGE_COLOURS[stage]}
+              radius={i === STAGE_KEYS.length - 1 ? [3, 3, 0, 0] : [0, 0, 0, 0]}
+            />
+          ))}
+        </BarChart>
+      </ResponsiveContainer>
+      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3">
+        {STAGE_KEYS.map(s => (
+          <div key={s} className="flex items-center gap-1.5 text-[9px] text-ink-mute font-mono">
+            <div className="w-2.5 h-2 rounded-sm flex-shrink-0" style={{ background: STAGE_COLOURS[s] }} />
+            {STAGE_LABELS[s]}
+          </div>
+        ))}
+      </div>
+    </Panel>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 function DeltaLabel({ value, direction }: { value: number; direction?: "up" | "down" }) {
@@ -1338,6 +1445,12 @@ export function DashboardPage() {
   const { data: sentEmailItems = [] } = useQuery({
     queryKey: ["sentEmails"],
     queryFn: api.sentEmails,
+    refetchInterval: 30_000,
+  });
+
+  const { data: pipelineLatency } = useQuery({
+    queryKey: ["pipelineLatency"],
+    queryFn: () => api.getPipelineLatency(30),
     refetchInterval: 30_000,
   });
 
@@ -1422,6 +1535,13 @@ export function DashboardPage() {
               <FunnelCard rows={stats.funnel} />
               {extended && <CompanyInsightsPanel data={extended.company_breakdown} />}
             </div>
+
+            {/* ── Pipeline Latency ──────────────────────────────────────────── */}
+            {pipelineLatency && (
+              <div className="mb-5">
+                <PipelineLatencyChart data={pipelineLatency} />
+              </div>
+            )}
 
             {/* ── AI Spend · Risk Distribution · (Retry + Governance) ─────── */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5 items-stretch">

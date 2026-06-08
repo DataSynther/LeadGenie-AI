@@ -80,6 +80,7 @@ Instructions:
 - Tone: professional but conversational
 - Reference location naturally if available (e.g. "your team in {location}")
 - In social_proof, use one of the Sender Proof Points above verbatim (include the metric). Cite it naturally — no need to mention the ID in the email text.
+- Keep each slot to 1 sentence — opening_hook, value_prop, social_proof, and cta must each be a single sentence. Total body must not exceed 5 sentences across all four slots.
 
 Respond as JSON with these exact keys:
 {{

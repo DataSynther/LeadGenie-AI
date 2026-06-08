@@ -31,9 +31,10 @@ _SENDER_INTRO = (
     "I'm Prashant Biswas from Ganit. We are a full-stack Data & AI company, "
     "recognized by Everest, Forrester, and Analytics India."
 )
+_SIGN_OFF = "With regards,\nGanit team"
 
 
-def _assemble_body(email: dict, add_intro: bool = True) -> dict:
+def _assemble_body(email: dict, add_intro: bool = True, lead_name: str = "") -> dict:
     """Assemble `body` from scaffold slots.
 
     add_intro=True (default) for initial cold outreach only.
@@ -48,8 +49,20 @@ def _assemble_body(email: dict, add_intro: bool = True) -> dict:
             email.get("cta", ""),
         ]
         email["body"] = "\n\n".join(p for p in parts if p)
-    if add_intro and email.get("body") and not email["body"].startswith(_SENDER_INTRO):
-        email["body"] = _SENDER_INTRO + "\n\n" + email["body"]
+    if add_intro and email.get("body"):
+        body = email["body"]
+        greeting = f"Hi {lead_name}," if lead_name else "Hi,"
+        if not body.startswith("Hi "):
+            body = greeting + "\n\n" + body
+        if _SENDER_INTRO not in body:
+            idx = body.find("\n\n")
+            if idx != -1:
+                body = body[:idx + 2] + _SENDER_INTRO + "\n\n" + body[idx + 2:]
+            else:
+                body = body + "\n\n" + _SENDER_INTRO
+        if not body.rstrip().endswith(_SIGN_OFF):
+            body = body.rstrip() + "\n\n" + _SIGN_OFF
+        email["body"] = body
     return email
 
 
@@ -160,7 +173,10 @@ class OutreachAgent:
                 )
                 raw = response.content[0].text.strip()
                 _m = re.search(r"\{[\s\S]*\}", raw)
-                result = _assemble_body(json.loads(_m.group()) if _m else {})
+                result = _assemble_body(
+                    json.loads(_m.group()) if _m else {},
+                    lead_name=(context.get("lead") or {}).get("name", ""),
+                )
                 t.finish(response)
                 t.set_retrieval_score(compute_retrieval_score(result.get("body", ""), context))
                 t.set_self_eval(self_evaluate("outreach", result.get("body", ""), context_to_summary(context)))
@@ -214,7 +230,10 @@ class OutreachAgent:
             )
             raw = response.content[0].text.strip()
             _m = re.search(r"\{[\s\S]*\}", raw)
-            result = _assemble_body(json.loads(_m.group()) if _m else {})
+            result = _assemble_body(
+                json.loads(_m.group()) if _m else {},
+                lead_name=(context.get("lead") or {}).get("name", ""),
+            )
             t.finish(response)
             t.set_retrieval_score(compute_retrieval_score(result.get("body", ""), context))
             t.set_self_eval(self_evaluate("outreach", result.get("body", ""), context_to_summary(context)))

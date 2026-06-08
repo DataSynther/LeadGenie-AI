@@ -850,6 +850,28 @@ export type DashboardExtendedStats = {
 
 export const dashboardExtendedStats = () => get<DashboardExtendedStats>("/dashboard/extended-stats");
 
+export type OutreachTrendPoint = { day: string; total: number; approved: number };
+export const getOutreachTrend = (days = 30) =>
+  get<OutreachTrendPoint[]>(`/dashboard/outreach-trend?days=${days}`);
+
+export type PipelineRunPoint = {
+  ts: string;
+  lead_name: string;
+  company_name: string;
+  total_s: number;
+  enriching_lead: number;
+  enriching_company: number;
+  detecting_signals: number;
+  researching: number;
+  building_context: number;
+  fetching_trends: number;
+  ranking_relevance: number;
+  generating_email: number;
+  queueing: number;
+};
+export const getPipelineLatency = (n = 30) =>
+  get<PipelineRunPoint[]>(`/dashboard/pipeline-latency?n=${n}`);
+
 // ── KB Insights ───────────────────────────────────────────────────────────────
 
 export type KbClaimEntry = {
@@ -954,6 +976,8 @@ export const api = {
   devFinOps,
   dashboardExtendedStats,
   dashboardKbInsights,
+  getOutreachTrend,
+  getPipelineLatency,
 };
 
 export default api;

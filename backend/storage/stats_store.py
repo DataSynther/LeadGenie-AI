@@ -24,8 +24,72 @@ DB_PATH = STORAGE_DIR / "stats.db"
 _QUEUE_FILE      = STORAGE_DIR / "outreach_queue" / "queue.jsonl"
 _INTENT_FILE     = STORAGE_DIR / "intent_analytics" / "events.jsonl"
 _TRACES_FILE     = STORAGE_DIR / "diagnostics" / "traces.jsonl"
+_PIPELINE_RUNS_FILE = STORAGE_DIR / "pipeline_runs.jsonl"
 
 _lock = threading.Lock()
+_pipeline_lock = threading.Lock()
+
+
+# ── Pipeline run timing ───────────────────────────────────────────────────────
+
+PIPELINE_STAGES = [
+    "enriching_lead", "enriching_company", "detecting_signals",
+    "researching", "building_context", "fetching_trends",
+    "ranking_relevance", "generating_email", "queueing",
+]
+
+
+def write_pipeline_run(
+    ts: str,
+    lead_id: str,
+    lead_name: str,
+    company_name: str,
+    stage_timings: list[dict],
+    total_ms: int,
+) -> None:
+    """Append one pipeline run record to pipeline_runs.jsonl."""
+    record = {
+        "ts": ts,
+        "lead_id": lead_id,
+        "lead_name": lead_name,
+        "company_name": company_name,
+        "total_ms": total_ms,
+        "stages": {s["stage"]: s["duration_ms"] for s in stage_timings},
+    }
+    with _pipeline_lock:
+        with open(_PIPELINE_RUNS_FILE, "a") as f:
+            f.write(json.dumps(record) + "\n")
+
+
+def get_pipeline_runs(n: int = 30) -> list[dict]:
+    """Return the last N pipeline runs as recharts-ready flat dicts."""
+    if not _PIPELINE_RUNS_FILE.exists():
+        return []
+    with _pipeline_lock:
+        lines = _PIPELINE_RUNS_FILE.read_text().splitlines()
+    records = []
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            records.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    records = records[-n:]
+    result = []
+    for r in records:
+        stages = r.get("stages", {})
+        flat = {
+            "ts":           r["ts"],
+            "lead_name":    r.get("lead_name", ""),
+            "company_name": r.get("company_name", ""),
+            "total_s":      round(r.get("total_ms", 0) / 1000, 1),
+        }
+        for s in PIPELINE_STAGES:
+            flat[s] = round(stages.get(s, 0) / 1000, 2)
+        result.append(flat)
+    return result
 
 
 def _connect() -> sqlite3.Connection:
@@ -500,6 +564,35 @@ def get_raw_agent_events(limit: int = 100) -> list[dict]:
         ).fetchall()
         conn.close()
     return [dict(r) for r in rows]
+
+
+def get_outreach_trend(days: int = 30) -> list[dict]:
+    """Return daily outreach counts for the past N days, including days with zero activity."""
+    with _lock:
+        conn = _connect()
+        cutoff = _iso_days_ago(days)
+        rows = conn.execute(
+            """
+            SELECT strftime('%Y-%m-%d', timestamp) AS day,
+                   COUNT(*)                                               AS total,
+                   SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END)  AS approved
+            FROM   outreach_events
+            WHERE  timestamp >= ?
+            GROUP  BY day
+            ORDER  BY day ASC
+            """,
+            (cutoff,),
+        ).fetchall()
+        conn.close()
+
+    # Fill in missing days so the chart has a continuous x-axis
+    result_map = {r["day"]: {"day": r["day"], "total": r["total"], "approved": r["approved"]} for r in rows}
+    today = datetime.now(timezone.utc).date()
+    filled = []
+    for i in range(days, -1, -1):
+        d = (today - timedelta(days=i)).isoformat()
+        filled.append(result_map.get(d, {"day": d, "total": 0, "approved": 0}))
+    return filled
 
 
 def get_extended_stats() -> dict:

@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, AlertCircle, Loader2, X, ExternalLink } from "lucide-react";
 import { usePipeline } from "../context/PipelineContext";
 import { cn } from "../lib/utils";
@@ -45,6 +46,7 @@ function StageRow({ id, event }: { id: string; event?: PipelineStageEvent }) {
 export function PipelineToast() {
   const { run, clearRun } = usePipeline();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   if (!run.isStreaming && !run.result && !run.error) return null;
 
@@ -103,7 +105,7 @@ export function PipelineToast() {
           </div>
           <div className="flex gap-2">
             <button
-              onClick={() => { navigate("/approval"); clearRun(); }}
+              onClick={() => { queryClient.invalidateQueries({ queryKey: ["approvalQueue"] }); navigate("/approval"); clearRun(); }}
               className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md bg-brand text-white text-[11px] font-mono font-semibold hover:bg-brand/85 transition-colors"
             >
               <ExternalLink size={10} /> View in Queue

@@ -61,6 +61,10 @@
 
 ## 2. Outreach Generation Pipeline (step by step)
 
+> **Timing (as of current build):**
+> First run ~75s · Repeat run ~50s (cached trends + prompt cache warm)
+> Previous baseline was ~150s. See optimisation notes at end of this section.
+
 ```
 User selects a lead and clicks "Generate Outreach"
         │
@@ -91,8 +95,9 @@ UI shows chip selector — user confirms or overrides vertical + domain
         │
         ▼
 ┌───────────────────────────────────────────────────────────────────────┐
-│  PHASE 2 — GENERATE  (paid, ~45-60 s)                                 │
-│  POST /outreach/generate  { vertical_override, domain_override }      │
+│  PHASE 2 — GENERATE  (paid, ~25-50 s optimised; was ~120 s)           │
+│  POST /outreach/generate/stream  ← SSE endpoint, streams stage events │
+│  POST /outreach/generate         ← original blocking endpoint (kept)  │
 │                                                                        │
 │  5. Apollo Signals  ──► detect_hiring_trends(org_id)                  │
 │     └─ returns: ai_hiring count, scaling flag, open roles             │
@@ -107,7 +112,11 @@ UI shows chip selector — user confirms or overrides vertical + domain
 │     └─ curated list + RSS feeds → trend store                        │
 │                                                                        │
 │  9. RelevanceEngine ──► rank_trends(context, trends, top_k=3)         │
-│     └─ Voyage AI embeddings → cosine similarity → top 3 trends       │
+│     └─ Single batch_embed([context] + trends) — ONE Voyage API call  │
+│        Trend embeddings cached to disk (agents/relevance/__embedding_ │
+│        cache__/) keyed by MD5 of trend texts. Repeat runs skip Voyage │
+│        entirely for trends (~0 ms vs ~10 s). Was 2 calls → rate-limit │
+│        sleep of 22–88 s on free tier (3 RPM cap).                    │
 │                                                                        │
 │  10. SenderKnowledgeBase ──► retrieve(vertical, domain, tech, trends) │
 │      └─ 5-signal scoring → top 2 KB claim records                    │
@@ -128,14 +137,26 @@ UI shows chip selector — user confirms or overrides vertical + domain
 │  Attempt N                                                             │
 │    │                                                                   │
 │    ├── OutreachAgent.generate_single()  [Claude Sonnet]               │
+│    │   Prompt structure (with caching):                               │
+│    │     content[0]: base_prompt  cache_control: ephemeral  ← cached  │
+│    │     content[1]: correction_note (empty on attempt 1)  ← dynamic  │
+│    │   Base prompt is 2,000–4,000 tokens (template + lead/company +  │
+│    │   KB claims + few-shot). Identical across all retry attempts.    │
+│    │   Attempt 1: cache MISS — full cost + latency (~15-20 s)         │
+│    │   Attempt 2+: cache HIT — 85% token savings, ~3 s per call      │
+│    │   Cache TTL: 5 minutes (Anthropic server-side, per API key)      │
 │    │   └─ returns: subject, opening_hook, value_prop,                 │
 │    │               social_proof, cta, reasoning,                      │
 │    │               stream, domain, kb_ids_used                        │
 │    │                                                                   │
-│    ├── _assemble_body(add_intro=True)                                  │
-│    │   └─ prepends fixed sender intro (initial cold email only):      │
-│    │      "I'm Prashant Biswas from Ganit…"                          │
-│    │   Note: follow-up and objection replies use add_intro=False      │
+│    ├── _assemble_body(add_intro=True, lead_name=…)                     │
+│    │   └─ assembles full email body for cold outreach:               │
+│    │      1. Greeting: "Hi {lead_name}," (or "Hi," if unknown)       │
+│    │      2. Sender intro: "I'm Prashant Biswas from Ganit…"         │
+│    │      3. Scaffold body (hook + value prop + social proof + CTA)  │
+│    │      4. Sign-off: "With regards,\nGanit team"                    │
+│    │   Guards prevent double-adding on retry attempts.               │
+│    │   Follow-up/objection replies use add_intro=False (no greeting) │
 │    │                                                                   │
 │    ├── Validator  (rule-based, free)                                   │
 │    │   ├── shape check  — required JSON fields present?               │
@@ -145,7 +166,7 @@ UI shows chip selector — user confirms or overrides vertical + domain
 │    └── ToneValidator  (rule-based, free)                               │
 │        ├── banned phrases ("guaranteed ROI", "revolutionary"…)        │
 │        ├── subject ≤ 8 words                                           │
-│        ├── body ≤ 6 sentences                                          │
+│        ├── body ≤ 10 sentences (threshold accounts for greeting + intro + sign-off) │
 │        └── ≤ 1 exclamation mark                                        │
 │                                                                        │
 │    If issues found AND attempt < 3:                                    │
@@ -185,6 +206,51 @@ UI shows chip selector — user confirms or overrides vertical + domain
 │  AuditLogger writes immutable event to storage/audit_logs/{id}.jsonl  │
 └───────────────────────────────────────────────────────────────────────┘
 ```
+
+### 2a. Live Pipeline Streaming (frontend)
+
+The generate endpoint streams stage events via Server-Sent Events so the UI can show live progress without waiting for the full response.
+
+```
+Frontend clicks "Confirm Generate"
+        │
+        ▼
+PipelineContext.startPipeline()                    ← global React context
+  └─ fetch POST /outreach/generate/stream           ← SSE endpoint
+       │
+       ├─ data: {"stage":"enriching_lead",  "status":"running"} ──► UI tick ✓
+       ├─ data: {"stage":"enriching_company","status":"done"}   ──► UI tick ✓
+       ├─ data: {"stage":"researching",      "status":"running"} ──► spinner
+       │       ...
+       └─ data: {"stage":"done", "result":{...full payload...}} ──► result
+
+PipelineToast (fixed bottom-right)
+  └─ Reads from PipelineContext — visible from ANY page
+  └─ User can navigate to Pipeline / Architecture pages mid-run
+  └─ On done: shows "✓ Email ready — [Lead Name]" + "View in Queue" CTA
+  └─ "View in Queue" click: invalidates ["approvalQueue"] React Query cache
+     before navigating so the queue always shows the freshly queued email
+
+Stream survives navigation because state lives in PipelineContext
+(wraps entire app in main.tsx), not inside ResearchPanel component.
+```
+
+### 2b. Pipeline Optimisation Log
+
+| Change | File | Before | After |
+|--------|------|--------|-------|
+| Voyage API calls | `relevance_engine.py` | 2 calls → rate-limit sleep 22-88s | 1 batch call → no sleep |
+| Trend embedding cache | `relevance_engine.py` | Recomputed every run | Disk cache keyed by MD5 of trend texts |
+| Hallucination model | `hallucination_checker.py` | `claude-sonnet-4-6` | `claude-haiku-4-5-20251001` |
+| Hallucination max_tokens | `hallucination_checker.py` | 512 | 256 |
+| Outreach prompt caching | `outreach_agent.py` | Full prompt sent every retry | `base_prompt` cached; retries pay only for correction note |
+| Email greeting + sign-off | `outreach_agent.py` | Body started with sender intro | "Hi {name}," greeting prepended; "With regards, Ganit team" appended |
+| ToneValidator threshold | `tone_validator.py` | `MAX_BODY_SENTENCES = 5` (unreachable) | `MAX_BODY_SENTENCES = 10` (accounts for greeting + intro + sign-off) |
+| Pipeline stage timing | `main.py` + `stats_store.py` | No per-stage timing recorded | Wall-clock ms per stage written to `pipeline_runs.jsonl` on completion |
+| Pipeline latency chart | `DashboardPage.tsx` | Outreach volume over time (bar) | Stacked bar histogram: x=run time, stacked segments=stage durations |
+| Queue cache refresh | `PipelineToast.tsx` | React Query showed stale queue on navigate | `invalidateQueries(["approvalQueue"])` on "View in Queue" click |
+| **Total first run** | — | ~150s | ~75s |
+| **Total repeat run** | — | ~150s | ~50s |
 
 ---
 
@@ -371,14 +437,14 @@ DevDashboard  (http://localhost:5173/dev)  auto-refreshes every 10 s
 | **ResearchAgent** | `agents/research/research_agent.py` | Company research brief via Claude | ~$0.003 (Sonnet) |
 | **ContextBuilder** | `agents/research/context_builder.py` | Assembles unified lead context dict | Free |
 | **TrendAgent** | `agents/trends/trend_agent.py` | Loads curated + RSS market trends | Free |
-| **RelevanceEngine** | `agents/relevance/relevance_engine.py` | Voyage AI embeddings → top-k trend ranking | ~$0.0001 (Voyage) |
+| **RelevanceEngine** | `agents/relevance/relevance_engine.py` | Single-batch Voyage AI embed (context + trends together) → cosine similarity → top-k. Trend embeddings cached to `__embedding_cache__/` by MD5 hash. | ~$0.0001 (Voyage, once; $0 on cache hits) |
 | **DomainDetector** | `agents/outreach/template_categorizer.py` | Maps company industry → domain (fintech/saas/…) | Free (Haiku fallback ~$0.001) |
 | **TemplateCategorizer** | `agents/outreach/template_categorizer.py` | Maps lead title → vertical (data_eng/devops/…) | Free |
 | **SenderKnowledgeBase** | `memory/sender_kb.py` | Retrieves verified Ganit proof points for prompt | Free |
 | **IndustryOutreachMemory** | `memory/industry_outreach_memory.py` | Few-shot hook examples per vertical | Free |
 | **OutreachAgent** | `agents/outreach/outreach_agent.py` | Generates email via Claude Sonnet | ~$0.010 (Sonnet) |
 | **GovernanceOrchestrator** | `governance/orchestrator.py` | Retry loop + single hallucination check | Included above |
-| **ToneValidator** | `governance/tone_validator.py` | Banned phrases, length, punctuation rules | Free |
+| **ToneValidator** | `governance/tone_validator.py` | Banned phrases, subject ≤ 8 words, body ≤ 10 sentences, ≤ 1 exclamation | Free |
 | **HallucinationChecker** | `governance/hallucination_checker.py` | Claude verifies claims vs source facts + KB | ~$0.003 (Sonnet) |
 | **RiskEngine** | `governance/risk_engine.py` | Composite risk score, approve/flag decision | Free |
 | **AuditLogger** | `governance/audit_logger.py` | Immutable JSONL audit trail per lead | Free |
@@ -450,6 +516,7 @@ backend/storage/
 │   └── {vertical}.jsonl
 ├── intent_analytics/
 │   └── events.jsonl             # Intent classification log
+├── pipeline_runs.jsonl          # Per-run stage timing records (latency histogram)
 ├── knowledge_base/              # Sender proof-point KB (Domain B)
 │   ├── data_science.jsonl       # 31 records — ML/AI case studies
 │   ├── data_engineering.jsonl   #  8 records — pipeline / lakehouse

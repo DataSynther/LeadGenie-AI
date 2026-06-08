@@ -9,7 +9,8 @@ import json
 import logging
 import os
 import secrets
-from datetime import datetime, timedelta
+import time
+from datetime import datetime, timedelta, timezone
 from fastapi import FastAPI, HTTPException, Request, Depends, Query
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -428,9 +429,16 @@ async def generate_outreach_stream(req: OutreachRequest):
                 payload["result"] = result
             return f"data: {json.dumps(payload)}\n\n"
 
+        _run_start = time.monotonic()
+        _stage_timings: list[dict] = []
+
+        def _tick(stage: str, t0: float) -> None:
+            _stage_timings.append({"stage": stage, "duration_ms": int((time.monotonic() - t0) * 1000)})
+
         try:
             # ── Stage 1: Lead enrichment ──────────────────────────────────────
             yield sse("enriching_lead", "Fetching lead data")
+            _t = time.monotonic()
             lead = await asyncio.to_thread(apollo_people.get_person_details, req.lead_id)
             if not lead:
                 yield sse("enriching_lead", "Lead not found", "error")
@@ -445,45 +453,58 @@ async def generate_outreach_stream(req: OutreachRequest):
                               "email_status", "departments"):
                     if enriched.get(field) is not None:
                         lead[field] = enriched[field]
+            _tick("enriching_lead", _t)
             yield sse("enriching_lead", "Lead data ready", "done")
 
             # ── Stage 2: Company enrichment ───────────────────────────────────
             yield sse("enriching_company", "Enriching company profile")
+            _t = time.monotonic()
             company = await asyncio.to_thread(apollo_company.enrich_company, req.company_domain)
+            _tick("enriching_company", _t)
             yield sse("enriching_company", "Company profile ready", "done")
 
             # ── Stage 3: Hiring signals ───────────────────────────────────────
             yield sse("detecting_signals", "Detecting hiring & growth signals")
+            _t = time.monotonic()
             signals = await asyncio.to_thread(
                 apollo_signals.detect_hiring_trends, lead.get("organization_id", "")
             )
+            _tick("detecting_signals", _t)
             yield sse("detecting_signals", "Signals detected", "done")
 
             # ── Stage 4: AI research ──────────────────────────────────────────
             yield sse("researching", "AI company research")
+            _t = time.monotonic()
             research = await asyncio.to_thread(research_agent.research_company, company, signals)
+            _tick("researching", _t)
             yield sse("researching", "Research complete", "done")
 
             # ── Stage 5: Context builder ──────────────────────────────────────
             yield sse("building_context", "Building lead context")
+            _t = time.monotonic()
             context = await asyncio.to_thread(
                 context_builder.build_lead_context, lead, company, signals, research
             )
             from agents.outreach.template_categorizer import TemplateCategorizer, DomainDetector
             context["_vertical"] = req.vertical_override or TemplateCategorizer().categorize(lead, company)
             context["_domain"]   = req.domain_override   or DomainDetector().detect(company)
+            _tick("building_context", _t)
             yield sse("building_context", "Context ready", "done")
 
             # ── Stage 6: Market trends ────────────────────────────────────────
             yield sse("fetching_trends", "Fetching market trends")
+            _t = time.monotonic()
             trends = await asyncio.to_thread(trend_agent.get_current_trends)
+            _tick("fetching_trends", _t)
             yield sse("fetching_trends", f"{len(trends)} trends loaded", "done")
 
             # ── Stage 7: Relevance ranking ────────────────────────────────────
             yield sse("ranking_relevance", "Ranking trends by relevance")
+            _t = time.monotonic()
             top_trends = await asyncio.to_thread(
                 relevance_engine.rank_trends, context, trends, 3
             )
+            _tick("ranking_relevance", _t)
             yield sse("ranking_relevance", "Top 3 trends selected", "done")
 
             # ── Stage 8: Email generation + governance ────────────────────────
@@ -496,6 +517,7 @@ async def generate_outreach_stream(req: OutreachRequest):
                 "employee_count": company.get("employee_count"),
                 "technologies": company.get("technologies", []),
             }
+            _t = time.monotonic()
             result = await asyncio.to_thread(
                 governance_orchestrator.run,
                 outreach_agent,
@@ -506,6 +528,7 @@ async def generate_outreach_stream(req: OutreachRequest):
                 req.vertical_override,
                 req.domain_override,
             )
+            _tick("generating_email", _t)
             yield sse("generating_email", "Email generated", "done")
 
             # ── Stage 9: Governance result ────────────────────────────────────
@@ -517,6 +540,7 @@ async def generate_outreach_stream(req: OutreachRequest):
 
             # ── Stage 10: Queue ────────────────────────────────────────────────
             yield sse("queueing", "Adding to approval queue")
+            _t = time.monotonic()
             from agents.conversation.memory_manager import GroundingMemory
             grounding_facts = GroundingMemory().read(req.lead_id)
             event_id = outreach_queue.enqueue(
@@ -579,7 +603,21 @@ async def generate_outreach_stream(req: OutreachRequest):
             except Exception as _err:
                 logger.warning("post-generate bookkeeping failed: %s", _err)
 
+            _tick("queueing", _t)
             yield sse("queueing", "Queued for review", "done")
+
+            # ── Record per-stage timings ──────────────────────────────────────
+            try:
+                stats_store.write_pipeline_run(
+                    ts=datetime.now(timezone.utc).isoformat(),
+                    lead_id=req.lead_id,
+                    lead_name=lead.get("name", ""),
+                    company_name=company.get("name", ""),
+                    stage_timings=_stage_timings,
+                    total_ms=int((time.monotonic() - _run_start) * 1000),
+                )
+            except Exception as _err:
+                logger.warning("write_pipeline_run failed: %s", _err)
 
             # ── Final: send full result ───────────────────────────────────────
             yield sse("done", "Pipeline complete", "done", result={
@@ -697,6 +735,18 @@ async def get_audit_trail(lead_id: str):
 async def dashboard_stats():
     """Dashboard statistics derived from real event data."""
     return stats_store.get_dashboard_stats()
+
+
+@app.get("/dashboard/outreach-trend")
+async def outreach_trend(days: int = 30):
+    """Daily outreach volume for the past N days (continuous, zero-filled)."""
+    return stats_store.get_outreach_trend(days)
+
+
+@app.get("/dashboard/pipeline-latency")
+async def pipeline_latency(n: int = 30):
+    """Per-stage latency for the last N pipeline runs."""
+    return stats_store.get_pipeline_runs(n)
 
 
 @app.get("/dashboard/extended-stats")
