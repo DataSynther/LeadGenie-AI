@@ -98,9 +98,9 @@ jobs:
       - name: CDK Bootstrap (idempotent)
         run: |
           cdk bootstrap aws://${{ secrets.AWS_ACCOUNT_ID }}/${{ env.AWS_REGION }} \
-            --app "python infrastructure/cdk/app.py" \
+            --app "python app.py" \
             --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess
-        working-directory: /
+        working-directory: infrastructure/cdk
 
       - name: CDK Deploy all stacks
         id: cdk-deploy
@@ -116,15 +116,15 @@ jobs:
           RESEND_API_KEY:    ${{ secrets.RESEND_API_KEY }}
         run: |
           cdk deploy --all --require-approval never --outputs-file cdk-outputs.json \
-            --app "python infrastructure/cdk/app.py"
-        working-directory: /
+            --app "python app.py"
+        working-directory: infrastructure/cdk
 
       - name: Extract CDK outputs
         id: cdk-out
         run: |
-          ALB=$(jq -r '.ComputeStack.AlbDns // ""' infrastructure/cdk/cdk-outputs.json)
-          CF=$(jq  -r '.FrontendStack.CloudFrontUrl // ""' infrastructure/cdk/cdk-outputs.json)
-          WAKE=$(jq -r '.MonitoringStack.WakeUrl // ""' infrastructure/cdk/cdk-outputs.json)
+          ALB=$(jq -r '.ComputeStack.AlbDns // ""' infrastructure/cdk/cdk-outputs.json 2>/dev/null || echo "")
+          CF=$(jq  -r '.FrontendStack.CloudFrontUrl // ""' infrastructure/cdk/cdk-outputs.json 2>/dev/null || echo "")
+          WAKE=$(jq -r '.MonitoringStack.WakeUrl // ""' infrastructure/cdk/cdk-outputs.json 2>/dev/null || echo "")
           echo "alb_dns=$ALB"        >> $GITHUB_OUTPUT
           echo "cloudfront_url=$CF"  >> $GITHUB_OUTPUT
           echo "wake_url=$WAKE"      >> $GITHUB_OUTPUT
