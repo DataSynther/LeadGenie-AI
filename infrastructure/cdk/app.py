@@ -20,7 +20,7 @@ compute_stack = ComputeStack(app, "ComputeStack",
     vpc=vpc_stack.vpc,
     alb_sg=vpc_stack.alb_sg,
     app_sg=vpc_stack.app_sg,
-    db=data_stack.db,
+
     redis=data_stack.redis,
     activity_table=data_stack.activity_table,
     budget_table=data_stack.budget_table,

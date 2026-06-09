@@ -1,8 +1,7 @@
 import os
 from aws_cdk import (
-    Stack, Duration, RemovalPolicy, SecretValue,
+    Stack, RemovalPolicy, SecretValue,
     aws_ec2 as ec2,
-    aws_rds as rds,
     aws_elasticache as elasticache,
     aws_dynamodb as dynamodb,
     aws_secretsmanager as secretsmanager,
@@ -26,32 +25,6 @@ class DataStack(Stack):
                 "GMAIL_APP_PASSWORD": SecretValue.unsafe_plain_text(os.environ.get("GMAIL_APP_PASSWORD", "")),
                 "RESEND_API_KEY":     SecretValue.unsafe_plain_text(os.environ.get("RESEND_API_KEY", "")),
             },
-        )
-
-        # ── RDS Postgres (Multi-AZ) ──────────────────────────────────────────
-        db_sg = vpc.node.find_child("DbSg") if vpc.node.try_find_child("DbSg") else None
-
-        self.db = rds.DatabaseInstance(self, "Postgres",
-            engine=rds.DatabaseInstanceEngine.postgres(
-                version=rds.PostgresEngineVersion.of(
-                    os.environ.get("POSTGRES_VERSION", "16.6"),
-                    os.environ.get("POSTGRES_VERSION", "16.6").split(".")[0],
-                ),
-            ),
-            instance_type=ec2.InstanceType.of(
-                ec2.InstanceClass.T3, ec2.InstanceSize.MEDIUM,
-            ),
-            vpc=vpc,
-            vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
-            multi_az=True,
-            allocated_storage=20,
-            max_allocated_storage=100,
-            database_name="leadgenie",
-            credentials=rds.Credentials.from_generated_secret("leadgenie_admin"),
-            backup_retention=Duration.days(7),
-            deletion_protection=False,
-            removal_policy=RemovalPolicy.DESTROY,
-            enable_performance_insights=True,
         )
 
         # ── ElastiCache Redis (single node for demo, cluster=False) ─────────

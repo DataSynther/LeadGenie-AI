@@ -9,7 +9,6 @@ from aws_cdk import (
     aws_secretsmanager as secretsmanager,
     aws_sqs as sqs,
     aws_dynamodb as dynamodb,
-    aws_rds as rds,
     aws_elasticache as elasticache,
 )
 from constructs import Construct
@@ -20,7 +19,6 @@ class ComputeStack(Stack):
                  vpc: ec2.Vpc,
                  alb_sg: ec2.SecurityGroup = None,
                  app_sg: ec2.SecurityGroup = None,
-                 db: rds.DatabaseInstance,
                  redis: elasticache.CfnReplicationGroup,
                  activity_table: dynamodb.Table,
                  budget_table: dynamodb.Table,
@@ -69,7 +67,7 @@ class ComputeStack(Stack):
         self.job_queue.grant_consume_messages(task_role)
         activity_table.grant_read_write_data(task_role)
         budget_table.grant_read_write_data(task_role)
-        db.secret.grant_read(task_role)
+
 
         # ── Common environment ────────────────────────────────────────────────
         redis_host = redis.attr_primary_end_point_address
@@ -86,7 +84,7 @@ class ComputeStack(Stack):
             "VOYAGE_API_KEY":     ecs.Secret.from_secrets_manager(secret, "VOYAGE_API_KEY"),
             "GMAIL_APP_PASSWORD": ecs.Secret.from_secrets_manager(secret, "GMAIL_APP_PASSWORD"),
             "RESEND_API_KEY":     ecs.Secret.from_secrets_manager(secret, "RESEND_API_KEY"),
-            "DB_SECRET_ARN":      ecs.Secret.from_secrets_manager(db.secret),
+
         }
 
         log_group = logs.LogGroup(self, "LogGroup",
