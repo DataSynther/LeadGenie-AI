@@ -1,7 +1,6 @@
 import { type ReactNode } from "react";
 import { Menu } from "lucide-react";
 import { useSidebar } from "../../context/SidebarContext";
-import { ThemeToggle } from "../ThemeToggle";
 
 interface TopbarProps {
   breadcrumb: string;
@@ -31,7 +30,6 @@ export function Topbar({ breadcrumb, title, right }: TopbarProps) {
       </div>
       <div className="flex gap-1.5 sm:gap-2.5 items-center flex-shrink-0">
         {right}
-        <ThemeToggle />
       </div>
     </div>
   );

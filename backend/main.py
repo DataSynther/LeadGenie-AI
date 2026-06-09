@@ -667,6 +667,13 @@ async def send_outreach(req: SendOutreachRequest):
     }
     lead_context_store.save(req.to_email, req.lead_id, enriched_context)
 
+    # Mark the most recent pending queue item for this lead as approved (direct send bypasses the queue UI).
+    pending = outreach_queue.get_queue(status="pending")
+    for item in pending:
+        if item.get("lead_id") == req.lead_id:
+            outreach_queue.update_status(item["event_id"], "approved")
+            break
+
     followup = None
     if lead_phone:
         followup = followup_scheduler.schedule_followup(

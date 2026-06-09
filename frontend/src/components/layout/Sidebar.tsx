@@ -18,6 +18,7 @@ import {
 import { cn } from "../../lib/utils";
 import { useSidebar } from "../../context/SidebarContext";
 import { api } from "../../lib/api";
+import { ThemeToggle } from "../ThemeToggle";
 
 interface NavItem {
   to: string;
@@ -149,13 +150,18 @@ export function Sidebar() {
         <NavItemRow key={item.to} item={item} onNavigate={close} queueCount={queueCount} />
       ))}
 
-      <div className="mt-auto pt-3 border-t border-line-soft flex items-center gap-2.5 px-3">
-        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-brand to-gold flex items-center justify-center font-mono text-[11px] font-semibold text-white">
-          PR
-        </div>
-        <div>
-          <div className="text-xs text-ink">Priya R.</div>
-          <div className="text-[10px] text-ink-mute font-mono">Sales Ops</div>
+      <div className="mt-auto pt-3 border-t border-line-soft flex flex-col gap-3 px-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-brand to-gold flex items-center justify-center font-mono text-[11px] font-semibold text-white">
+              PR
+            </div>
+            <div>
+              <div className="text-xs text-ink">Priya R.</div>
+              <div className="text-[10px] text-ink-mute font-mono">Sales Ops</div>
+            </div>
+          </div>
+          <ThemeToggle />
         </div>
       </div>
     </aside>

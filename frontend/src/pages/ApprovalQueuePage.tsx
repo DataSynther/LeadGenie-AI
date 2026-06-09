@@ -37,6 +37,7 @@ export function ApprovalQueuePage() {
   const { data: sentItems = [] } = useQuery({
     queryKey: ["sentEmails"],
     queryFn: api.sentEmails,
+    refetchInterval: 10_000,
   });
 
   const allItems = search
@@ -173,6 +174,14 @@ export function ApprovalQueuePage() {
                 <div>
                   {failedCount > 0 && <div className="label-mono mb-2 text-emerald-400">✓ Passed governance — ready to send</div>}
                   {items.filter(i => i.governance_passed).map(item => (
+                    <ApprovalItem key={item.event_id} item={item} />
+                  ))}
+                </div>
+              )}
+              {!isLoading && sentItems.length > 0 && (
+                <div className="mt-6 pt-4 border-t border-line-soft">
+                  <div className="label-mono mb-2 text-emerald-400">✓ Recently sent ({sentItems.slice(0, 5).length})</div>
+                  {sentItems.slice(0, 5).map(item => (
                     <ApprovalItem key={item.event_id} item={item} />
                   ))}
                 </div>
