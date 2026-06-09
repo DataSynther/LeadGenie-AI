@@ -12,7 +12,7 @@ from constructs import Construct
 
 
 class DataStack(Stack):
-    def __init__(self, scope: Construct, id: str, vpc: ec2.Vpc, **kwargs):
+    def __init__(self, scope: Construct, id: str, vpc: ec2.Vpc, redis_sg: ec2.SecurityGroup = None, **kwargs):
         super().__init__(scope, id, **kwargs)
 
         # ── Secrets Manager — all app credentials ────────────────────────────
@@ -57,11 +57,11 @@ class DataStack(Stack):
             subnet_ids=[s.subnet_id for s in vpc.private_subnets],
         )
 
-        redis_sg = ec2.SecurityGroup.from_security_group_id(
-            self, "ImportedRedisSg",
-            security_group_id=vpc.node.find_child("RedisSg").security_group_id
-            if vpc.node.try_find_child("RedisSg") else vpc.vpc_default_security_group,
-        )
+        if redis_sg is None:
+            redis_sg = ec2.SecurityGroup(self, "RedisSgFallback",
+                vpc=vpc,
+                description="Redis fallback SG",
+            )
 
         self.redis = elasticache.CfnReplicationGroup(self, "Redis",
             replication_group_description="LeadGenie semantic cache + working memory",

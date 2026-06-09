@@ -18,6 +18,8 @@ from constructs import Construct
 class ComputeStack(Stack):
     def __init__(self, scope: Construct, id: str, *,
                  vpc: ec2.Vpc,
+                 alb_sg: ec2.SecurityGroup = None,
+                 app_sg: ec2.SecurityGroup = None,
                  db: rds.DatabaseInstance,
                  redis: elasticache.CfnReplicationGroup,
                  activity_table: dynamodb.Table,
@@ -27,6 +29,8 @@ class ComputeStack(Stack):
                  worker_image: str,
                  **kwargs):
         super().__init__(scope, id, **kwargs)
+        self._alb_sg = alb_sg
+        self._app_sg = app_sg
 
         # ── ECR repos ────────────────────────────────────────────────────────
         api_repo    = ecr.Repository.from_repository_name(self, "ApiRepo",    "leadgenie-api")
@@ -136,10 +140,7 @@ class ComputeStack(Stack):
         )
 
         # ── ALB ────────────────────────────────────────────────────────────────
-        alb_sg = ec2.SecurityGroup.from_security_group_id(
-            self, "AlbSgImport",
-            security_group_id=vpc.node.find_child("AlbSg").security_group_id,
-        )
+        alb_sg = self._alb_sg
         self.alb = elbv2.ApplicationLoadBalancer(self, "Alb",
             vpc=vpc,
             internet_facing=True,
@@ -150,10 +151,7 @@ class ComputeStack(Stack):
             open=False,
         )
 
-        app_sg = ec2.SecurityGroup.from_security_group_id(
-            self, "AppSgImport",
-            security_group_id=vpc.node.find_child("AppSg").security_group_id,
-        )
+        app_sg = self._app_sg
 
         # ── API ECS Service ────────────────────────────────────────────────────
         self.api_service = ecs.FargateService(self, "ApiService",

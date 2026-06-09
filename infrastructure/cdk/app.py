@@ -15,9 +15,11 @@ env = cdk.Environment(
 )
 
 vpc_stack     = VpcStack(app,     "VpcStack",     env=env)
-data_stack    = DataStack(app,    "DataStack",    vpc=vpc_stack.vpc, env=env)
+data_stack    = DataStack(app,    "DataStack",    vpc=vpc_stack.vpc, redis_sg=vpc_stack.redis_sg, env=env)
 compute_stack = ComputeStack(app, "ComputeStack",
     vpc=vpc_stack.vpc,
+    alb_sg=vpc_stack.alb_sg,
+    app_sg=vpc_stack.app_sg,
     db=data_stack.db,
     redis=data_stack.redis,
     activity_table=data_stack.activity_table,
