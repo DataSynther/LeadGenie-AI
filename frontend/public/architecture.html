@@ -107,6 +107,16 @@
   @keyframes march { to { stroke-dashoffset: -18; } }
   .flow-highlight rect { animation: march .55s linear infinite; }
 
+  /* ── Theme toggle (bottom-left) ── */
+  .theme-toggle {
+    position: fixed; bottom: 20px; left: 24px;
+    background: var(--bg-ctrl); border: 1px solid var(--border); border-radius: 50%;
+    width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 1.1rem; z-index: 100;
+    box-shadow: 0 4px 16px rgba(0,0,0,.4); transition: background .25s, border-color .25s, transform .15s;
+  }
+  .theme-toggle:hover { transform: scale(1.1); }
+
   /* ── Controls ── */
   .controls {
     position: fixed; bottom: 20px; right: 24px;
@@ -588,6 +598,8 @@
 </svg>
 </div>
 
+<button id="theme-toggle-btn" class="theme-toggle" title="Toggle dark/light mode">☀️</button>
+
 <div class="controls">
   <span>Anim:</span>
   <button id="btn-play"  class="sp-active" onclick="setAnim(true)">▶ Play</button>
@@ -601,8 +613,8 @@
   function applyTheme(t) {
     const isLight = t === 'light';
     document.documentElement.setAttribute('data-theme', isLight ? 'light' : 'dark');
-    // Boost gradient stop-opacity so stage bands remain visible on light bg.
-    // CSS attribute selectors handle text, edge, and packet color changes below.
+    const btn = document.getElementById('theme-toggle-btn');
+    if (btn) btn.textContent = isLight ? '🌙' : '☀️';
     svg.querySelectorAll('linearGradient[id^="g-"]').forEach(g => {
       const stops = g.querySelectorAll('stop');
       if (stops[0]) stops[0].setAttribute('stop-opacity', isLight ? '0.72' : '0.5');
@@ -611,6 +623,12 @@
   }
   applyTheme(localStorage.getItem('theme'));
   window.addEventListener('storage', e => { if (e.key === 'theme') applyTheme(e.newValue); });
+
+  document.getElementById('theme-toggle-btn').addEventListener('click', () => {
+    const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    localStorage.setItem('theme', next);
+    applyTheme(next);
+  });
 
   // ── Flow filter ───────────────────────────────────────────────────────────
   let activeFlow = '';

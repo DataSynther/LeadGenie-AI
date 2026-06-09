@@ -58,7 +58,7 @@ class FrontendStack(Stack):
                         "/dashboard/*",
                         "/agent-feed/*",
                         "/pipeline*",
-                        "/approval-queue/*",
+                        "/approval-queue*",
                         "/credits*",
                         "/dev/*",
                     ]

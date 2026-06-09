@@ -72,11 +72,12 @@ class ComputeStack(Stack):
         # ── Common environment ────────────────────────────────────────────────
         redis_host = redis.attr_primary_end_point_address
         common_env = {
-            "REDIS_URL":       f"rediss://{redis_host}:6379",
-            "SQS_QUEUE_URL":   self.job_queue.queue_url,
-            "ACTIVITY_TABLE":  activity_table.table_name,
-            "BUDGET_TABLE":    budget_table.table_name,
-            "AWS_REGION":      self.region,
+            "REDIS_URL":             f"rediss://{redis_host}:6379",
+            "SQS_QUEUE_URL":         self.job_queue.queue_url,
+            "ACTIVITY_TABLE":        activity_table.table_name,
+            "BUDGET_TABLE":          budget_table.table_name,
+            "AWS_REGION":            self.region,
+            "WHATSAPP_TEST_PHONE":   "+918056498879",
         }
         common_secrets = {
             "ANTHROPIC_API_KEY":      ecs.Secret.from_secrets_manager(secret, "ANTHROPIC_API_KEY"),
