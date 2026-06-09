@@ -215,10 +215,11 @@ jobs:
           LEADGENIE_GMAIL:   ${{ secrets.LEADGENIE_GMAIL }}
           LEADGENIE_GMAIL_PASSWORD: ${{ secrets.LEADGENIE_GMAIL_PASSWORD }}
         run: |
-          # Stage 1: update ComputeStack first to drop the RDS secret import
-          cdk deploy ComputeStack --exclusively --require-approval never \
-            --app "python app.py" || true
-          # Stage 2: deploy all stacks (DataStack can now drop the RDS export)
+          # Stage 1: update DataStack first so Secrets Manager has all keys
+          # before ComputeStack task definitions try to reference them
+          cdk deploy DataStack --exclusively --require-approval never \
+            --app "python app.py"
+          # Stage 2: deploy all remaining stacks
           cdk deploy --all --require-approval never --outputs-file cdk-outputs.json \
             --app "python app.py"
         working-directory: infrastructure/cdk
