@@ -200,57 +200,11 @@ jobs:
             --output text)
           aws cloudfront create-invalidation --distribution-id $DIST_ID --paths "/*"
 
-  # ─── 4. Update ECS services with new images ──────────────────────────────────
-  deploy:
-    name: Rolling Deploy ECS Services
-    runs-on: ubuntu-latest
-    needs: [build, infra]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Update API task definition
-        id: task-def-api
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: infrastructure/task-definitions/api.json
-          container-name: leadgenie-api
-          image: ${{ needs.build.outputs.api_image }}
-
-      - name: Update Worker task definition
-        id: task-def-worker
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: infrastructure/task-definitions/worker.json
-          container-name: leadgenie-worker
-          image: ${{ needs.build.outputs.worker_image }}
-
-      - name: Deploy API service
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
-        with:
-          task-definition: ${{ steps.task-def-api.outputs.task-definition }}
-          service: ${{ env.ECS_API_SVC }}
-          cluster: ${{ env.ECS_CLUSTER }}
-          wait-for-service-stability: true
-
-      - name: Deploy Worker service
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
-        with:
-          task-definition: ${{ steps.task-def-worker.outputs.task-definition }}
-          service: ${{ env.ECS_WORKER_SVC }}
-          cluster: ${{ env.ECS_CLUSTER }}
-          wait-for-service-stability: true
-
-  # ─── 5. Smoke test ───────────────────────────────────────────────────────────
+  # ─── 4. Smoke test ───────────────────────────────────────────────────────────
   smoke:
     name: Smoke Test
     runs-on: ubuntu-latest
-    needs: [deploy, frontend]
+    needs: [infra, frontend]
     steps:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
