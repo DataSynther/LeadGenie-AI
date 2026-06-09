@@ -1,0 +1,84 @@
+name: Cleanup Stuck AWS Resources
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION || 'ap-south-1' }}
+
+jobs:
+  cleanup:
+    name: Delete stuck stacks and orphaned resources
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Disable RDS deletion protection
+        run: |
+          DB=$(aws rds describe-db-instances \
+            --query "DBInstances[?DBName=='leadgenie'].DBInstanceIdentifier" \
+            --output text 2>/dev/null || echo "")
+          if [ -n "$DB" ] && [ "$DB" != "None" ]; then
+            echo "Disabling deletion protection on $DB"
+            aws rds modify-db-instance \
+              --db-instance-identifier "$DB" \
+              --no-deletion-protection \
+              --apply-immediately
+            echo "Waiting for modification to apply..."
+            aws rds wait db-instance-available --db-instance-identifier "$DB"
+          else
+            echo "No RDS instance found, skipping"
+          fi
+
+      - name: Delete stuck CloudFormation stacks
+        run: |
+          for STACK in MonitoringStack FrontendStack ComputeStack DataStack VpcStack; do
+            STATUS=$(aws cloudformation describe-stacks \
+              --stack-name $STACK \
+              --query "Stacks[0].StackStatus" \
+              --output text 2>/dev/null || echo "DOES_NOT_EXIST")
+            echo "$STACK: $STATUS"
+            if [[ "$STATUS" == "ROLLBACK_COMPLETE" || "$STATUS" == "DELETE_FAILED" || "$STATUS" == "CREATE_FAILED" ]]; then
+              echo "Deleting $STACK..."
+              aws cloudformation delete-stack --stack-name $STACK
+            fi
+          done
+
+      - name: Wait for stack deletions
+        run: |
+          for STACK in MonitoringStack FrontendStack ComputeStack DataStack VpcStack; do
+            STATUS=$(aws cloudformation describe-stacks \
+              --stack-name $STACK \
+              --query "Stacks[0].StackStatus" \
+              --output text 2>/dev/null || echo "DOES_NOT_EXIST")
+            if [[ "$STATUS" == "DELETE_IN_PROGRESS" ]]; then
+              echo "Waiting for $STACK to finish deleting..."
+              aws cloudformation wait stack-delete-complete --stack-name $STACK || true
+            fi
+          done
+          echo "All stack deletions complete"
+
+      - name: Empty and delete orphaned S3 buckets
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          for BUCKET in "leadgenie-assets-$ACCOUNT_ID"; do
+            if aws s3api head-bucket --bucket "$BUCKET" 2>/dev/null; then
+              echo "Emptying $BUCKET..."
+              aws s3 rm s3://$BUCKET --recursive || true
+              echo "Deleting $BUCKET..."
+              aws s3api delete-bucket --bucket "$BUCKET" --region ${{ env.AWS_REGION }} || true
+            else
+              echo "$BUCKET does not exist, skipping"
+            fi
+          done
+
+      - name: Summary
+        run: echo "Cleanup complete. You can now re-run the deploy workflow."
