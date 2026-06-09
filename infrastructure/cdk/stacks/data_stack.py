@@ -33,7 +33,7 @@ class DataStack(Stack):
 
         self.db = rds.DatabaseInstance(self, "Postgres",
             engine=rds.DatabaseInstanceEngine.postgres(
-                version=rds.PostgresEngineVersion.VER_16_4,
+                version=rds.PostgresEngineVersion.VER_15_7,
             ),
             instance_type=ec2.InstanceType.of(
                 ec2.InstanceClass.T3, ec2.InstanceSize.MEDIUM,
