@@ -31,10 +31,7 @@ export function Topbar({ breadcrumb, title, right }: TopbarProps) {
       </div>
       <div className="flex gap-1.5 sm:gap-2.5 items-center flex-shrink-0">
         {right}
-        {/* Visible when sidebar is collapsed on desktop (toggle hidden inside sidebar) */}
-        {isCollapsed && <span className="hidden md:block"><ThemeToggle /></span>}
-        {/* Always visible on mobile (sidebar is off-screen) */}
-        <span className="md:hidden"><ThemeToggle /></span>
+        <ThemeToggle />
       </div>
     </div>
   );

@@ -16,7 +16,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
-import { ThemeToggle } from "../ThemeToggle";
 import { useSidebar } from "../../context/SidebarContext";
 import { api } from "../../lib/api";
 
@@ -157,9 +156,6 @@ export function Sidebar() {
         <div>
           <div className="text-xs text-ink">Priya R.</div>
           <div className="text-[10px] text-ink-mute font-mono">Sales Ops</div>
-        </div>
-        <div className="ml-auto">
-          <ThemeToggle />
         </div>
       </div>
     </aside>

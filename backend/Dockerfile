@@ -12,9 +12,11 @@ COPY sample_data/ /app/sample_data/
 
 # Seed demo data — copied to storage on first run (volume init)
 COPY backend/seed_data/ /app/backend/seed_data/
-RUN mkdir -p storage/outreach_queue storage/audit_logs && \
+RUN mkdir -p storage/outreach_queue storage/audit_logs storage/intent_analytics storage/diagnostics && \
     cp -n seed_data/outreach_queue/queue.jsonl storage/outreach_queue/queue.jsonl 2>/dev/null || true && \
-    cp -n seed_data/audit_logs/*.jsonl storage/audit_logs/ 2>/dev/null || true
+    cp -n seed_data/audit_logs/*.jsonl storage/audit_logs/ 2>/dev/null || true && \
+    cp -n seed_data/intent_analytics_events.jsonl storage/intent_analytics/events.jsonl 2>/dev/null || true && \
+    cp -n seed_data/diagnostics_traces.jsonl storage/diagnostics/traces.jsonl 2>/dev/null || true
 
 EXPOSE 8000
 

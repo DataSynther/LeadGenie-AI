@@ -157,8 +157,8 @@ class ComputeStack(Stack):
             service_name="leadgenie-api",
             cluster=self.cluster,
             task_definition=api_task_def,
-            desired_count=2,
-            min_healthy_percent=50,
+            desired_count=1,
+            min_healthy_percent=0,
             max_healthy_percent=200,
             security_groups=[app_sg],
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
@@ -167,7 +167,7 @@ class ComputeStack(Stack):
         )
 
         # Auto-scaling for API
-        api_scaling = self.api_service.auto_scale_task_count(min_capacity=1, max_capacity=6)
+        api_scaling = self.api_service.auto_scale_task_count(min_capacity=1, max_capacity=1)
         api_scaling.scale_on_cpu_utilization("CpuScaling",
             target_utilization_percent=60,
             scale_in_cooldown=Duration.minutes(5),
