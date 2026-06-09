@@ -79,12 +79,13 @@ class ComputeStack(Stack):
             "AWS_REGION":      self.region,
         }
         common_secrets = {
-            "ANTHROPIC_API_KEY":  ecs.Secret.from_secrets_manager(secret, "ANTHROPIC_API_KEY"),
-            "APOLLO_API_KEY":     ecs.Secret.from_secrets_manager(secret, "APOLLO_API_KEY"),
-            "VOYAGE_API_KEY":     ecs.Secret.from_secrets_manager(secret, "VOYAGE_API_KEY"),
-            "GMAIL_APP_PASSWORD": ecs.Secret.from_secrets_manager(secret, "GMAIL_APP_PASSWORD"),
-            "RESEND_API_KEY":     ecs.Secret.from_secrets_manager(secret, "RESEND_API_KEY"),
-
+            "ANTHROPIC_API_KEY":      ecs.Secret.from_secrets_manager(secret, "ANTHROPIC_API_KEY"),
+            "APOLLO_API_KEY":         ecs.Secret.from_secrets_manager(secret, "APOLLO_API_KEY"),
+            "VOYAGE_API_KEY":         ecs.Secret.from_secrets_manager(secret, "VOYAGE_API_KEY"),
+            "GMAIL_APP_PASSWORD":     ecs.Secret.from_secrets_manager(secret, "GMAIL_APP_PASSWORD"),
+            "RESEND_API_KEY":         ecs.Secret.from_secrets_manager(secret, "RESEND_API_KEY"),
+            "LEADGENIE_GMAIL":        ecs.Secret.from_secrets_manager(secret, "LEADGENIE_GMAIL"),
+            "LEADGENIE_GMAIL_PASSWORD": ecs.Secret.from_secrets_manager(secret, "LEADGENIE_GMAIL_PASSWORD"),
         }
 
         log_group = logs.LogGroup(self, "LogGroup",

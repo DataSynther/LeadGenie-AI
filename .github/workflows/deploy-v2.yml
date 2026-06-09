@@ -22,13 +22,42 @@ env:
   ECS_WORKER_SVC: leadgenie-worker
 
 jobs:
+  # ─── 0. Detect what changed ──────────────────────────────────────────────────
+  changes:
+    name: Detect Changed Paths
+    runs-on: ubuntu-latest
+    outputs:
+      backend:  ${{ steps.filter.outputs.backend }}
+      infra:    ${{ steps.filter.outputs.infra }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - 'backend/Dockerfile'
+              - 'backend/Dockerfile.worker'
+            infra:
+              - 'infrastructure/cdk/**'
+              - '.github/workflows/deploy-v2.yml'
+            frontend:
+              - 'frontend/**'
+
   # ─── 1. Build & push Docker images ──────────────────────────────────────────
   build:
     name: Build & Push Images
     runs-on: ubuntu-latest
+    needs: changes
     outputs:
-      api_image:    ${{ steps.meta-api.outputs.image }}
-      worker_image: ${{ steps.meta-worker.outputs.image }}
+      api_image:    ${{ steps.resolve.outputs.api_image }}
+      worker_image: ${{ steps.resolve.outputs.worker_image }}
+      skipped:      ${{ steps.resolve.outputs.skipped }}
     steps:
       - uses: actions/checkout@v4
 
@@ -45,8 +74,35 @@ jobs:
       - name: Set ECR registry
         run: echo "ECR_REGISTRY=${{ steps.ecr-login.outputs.registry }}" >> $GITHUB_ENV
 
+      - name: Check if images already exist for this SHA
+        id: check-images
+        run: |
+          API_TAG="${{ github.sha }}"
+          WORKER_TAG="${{ github.sha }}"
+          API_EXISTS=false
+          WORKER_EXISTS=false
+
+          if aws ecr describe-images \
+            --repository-name $ECR_API_REPO \
+            --image-ids imageTag=$API_TAG \
+            --region ${{ env.AWS_REGION }} 2>/dev/null; then
+            API_EXISTS=true
+          fi
+
+          if aws ecr describe-images \
+            --repository-name $ECR_WORKER_REPO \
+            --image-ids imageTag=$WORKER_TAG \
+            --region ${{ env.AWS_REGION }} 2>/dev/null; then
+            WORKER_EXISTS=true
+          fi
+
+          echo "api_exists=$API_EXISTS"     >> $GITHUB_OUTPUT
+          echo "worker_exists=$WORKER_EXISTS" >> $GITHUB_OUTPUT
+          echo "API image exists: $API_EXISTS, Worker image exists: $WORKER_EXISTS"
+
       - name: Build & push API image
         id: meta-api
+        if: needs.changes.outputs.backend == 'true' || steps.check-images.outputs.api_exists == 'false'
         run: |
           IMAGE=$ECR_REGISTRY/$ECR_API_REPO:${{ github.sha }}
           docker build -f backend/Dockerfile -t $IMAGE .
@@ -57,6 +113,7 @@ jobs:
 
       - name: Build & push Worker image
         id: meta-worker
+        if: needs.changes.outputs.backend == 'true' || steps.check-images.outputs.worker_exists == 'false'
         run: |
           IMAGE=$ECR_REGISTRY/$ECR_WORKER_REPO:${{ github.sha }}
           docker build -f backend/Dockerfile.worker -t $IMAGE .
@@ -65,11 +122,40 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_WORKER_REPO:latest
           echo "image=$IMAGE" >> $GITHUB_OUTPUT
 
+      - name: Resolve final image URIs
+        id: resolve
+        run: |
+          # Use newly built image if available, otherwise fall back to existing SHA-tagged image
+          API_IMAGE="${{ steps.meta-api.outputs.image }}"
+          WORKER_IMAGE="${{ steps.meta-worker.outputs.image }}"
+
+          if [ -z "$API_IMAGE" ]; then
+            API_IMAGE="$ECR_REGISTRY/$ECR_API_REPO:${{ github.sha }}"
+            echo "Reusing existing API image: $API_IMAGE"
+          fi
+          if [ -z "$WORKER_IMAGE" ]; then
+            WORKER_IMAGE="$ECR_REGISTRY/$ECR_WORKER_REPO:${{ github.sha }}"
+            echo "Reusing existing Worker image: $WORKER_IMAGE"
+          fi
+
+          SKIPPED=false
+          if [ "${{ needs.changes.outputs.backend }}" = "false" ] && \
+             [ "${{ steps.check-images.outputs.api_exists }}" = "true" ] && \
+             [ "${{ steps.check-images.outputs.worker_exists }}" = "true" ]; then
+            SKIPPED=true
+            echo "No backend changes and images exist — build effectively skipped"
+          fi
+
+          echo "api_image=$API_IMAGE"     >> $GITHUB_OUTPUT
+          echo "worker_image=$WORKER_IMAGE" >> $GITHUB_OUTPUT
+          echo "skipped=$SKIPPED"         >> $GITHUB_OUTPUT
+
   # ─── 2. Deploy infrastructure (CDK) ─────────────────────────────────────────
   infra:
     name: CDK Deploy Infrastructure
     runs-on: ubuntu-latest
-    needs: build
+    needs: [changes, build]
+    if: needs.changes.outputs.infra == 'true' || needs.changes.outputs.backend == 'true' || needs.build.outputs.skipped == 'false'
     outputs:
       alb_dns:         ${{ steps.cdk-out.outputs.alb_dns }}
       cloudfront_url:  ${{ steps.cdk-out.outputs.cloudfront_url }}
@@ -126,6 +212,8 @@ jobs:
           VOYAGE_API_KEY:    ${{ secrets.VOYAGE_API_KEY }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           RESEND_API_KEY:    ${{ secrets.RESEND_API_KEY }}
+          LEADGENIE_GMAIL:   ${{ secrets.LEADGENIE_GMAIL }}
+          LEADGENIE_GMAIL_PASSWORD: ${{ secrets.LEADGENIE_GMAIL_PASSWORD }}
         run: |
           # Stage 1: update ComputeStack first to drop the RDS secret import
           cdk deploy ComputeStack --exclusively --require-approval never \
@@ -145,11 +233,53 @@ jobs:
           echo "cloudfront_url=$CF"  >> $GITHUB_OUTPUT
           echo "wake_url=$WAKE"      >> $GITHUB_OUTPUT
 
+  # ─── 2b. Fetch infra URLs when CDK job was skipped ──────────────────────────
+  infra-urls:
+    name: Fetch Infra URLs (CDK skipped)
+    runs-on: ubuntu-latest
+    needs: [changes, build, infra]
+    if: always() && needs.infra.result == 'skipped'
+    outputs:
+      alb_dns:        ${{ steps.fetch.outputs.alb_dns }}
+      cloudfront_url: ${{ steps.fetch.outputs.cloudfront_url }}
+      wake_url:       ${{ steps.fetch.outputs.wake_url }}
+    steps:
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Fetch outputs from existing stacks
+        id: fetch
+        run: |
+          ALB=$(aws cloudformation describe-stacks \
+            --stack-name ComputeStack \
+            --query "Stacks[0].Outputs[?OutputKey=='AlbDns'].OutputValue" \
+            --output text 2>/dev/null || echo "")
+          CF=$(aws cloudformation describe-stacks \
+            --stack-name FrontendStack \
+            --query "Stacks[0].Outputs[?OutputKey=='CloudFrontUrl'].OutputValue" \
+            --output text 2>/dev/null || echo "")
+          WAKE=$(aws cloudformation describe-stacks \
+            --stack-name MonitoringStack \
+            --query "Stacks[0].Outputs[?OutputKey=='WakeUrl'].OutputValue" \
+            --output text 2>/dev/null || echo "")
+          echo "alb_dns=$ALB"        >> $GITHUB_OUTPUT
+          echo "cloudfront_url=$CF"  >> $GITHUB_OUTPUT
+          echo "wake_url=$WAKE"      >> $GITHUB_OUTPUT
+          echo "Fetched ALB=$ALB CF=$CF WAKE=$WAKE"
+
   # ─── 3. Deploy frontend to S3 ────────────────────────────────────────────────
   frontend:
     name: Deploy Frontend → S3 + CloudFront
     runs-on: ubuntu-latest
-    needs: infra
+    needs: [changes, infra, infra-urls]
+    if: |
+      always() &&
+      needs.changes.outputs.frontend == 'true' &&
+      (needs.infra.result == 'success' || needs.infra.result == 'skipped') &&
+      (needs.infra-urls.result == 'success' || needs.infra-urls.result == 'skipped')
     steps:
       - uses: actions/checkout@v4
 
@@ -166,10 +296,19 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
+      - name: Resolve CloudFront URL
+        id: urls
+        run: |
+          CF="${{ needs.infra.outputs.cloudfront_url }}"
+          if [ -z "$CF" ]; then
+            CF="${{ needs.infra-urls.outputs.cloudfront_url }}"
+          fi
+          echo "cloudfront_url=$CF" >> $GITHUB_OUTPUT
+
       - name: Build frontend
         working-directory: frontend
         env:
-          VITE_API_URL: ${{ needs.infra.outputs.cloudfront_url }}
+          VITE_API_URL: ${{ steps.urls.outputs.cloudfront_url }}
         run: |
           npm ci
           npm run build
@@ -180,9 +319,14 @@ jobs:
             --stack-name FrontendStack \
             --query "Stacks[0].Outputs[?OutputKey=='FrontendBucket'].OutputValue" \
             --output text)
+          # Upload all assets (including HTML) — deletes removed files
           aws s3 sync frontend/dist s3://$BUCKET --delete --cache-control "max-age=86400"
-          aws s3 cp frontend/dist/index.html s3://$BUCKET/index.html \
-            --cache-control "no-cache, no-store, must-revalidate"
+          # Re-upload every HTML file with no-cache so browsers never serve stale pages
+          find frontend/dist -name "*.html" | while read f; do
+            key="${f#frontend/dist/}"
+            aws s3 cp "$f" "s3://$BUCKET/$key" \
+              --cache-control "no-cache, no-store, must-revalidate"
+          done
 
       - name: Invalidate CloudFront cache
         run: |
@@ -196,13 +340,33 @@ jobs:
   smoke:
     name: Smoke Test
     runs-on: ubuntu-latest
-    needs: [infra, frontend]
+    needs: [infra, infra-urls, frontend]
+    if: |
+      always() &&
+      (needs.infra.result == 'success' || needs.infra.result == 'skipped') &&
+      (needs.frontend.result == 'success' || needs.frontend.result == 'skipped')
     steps:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Resolve URLs
+        id: urls
+        run: |
+          ALB="${{ needs.infra.outputs.alb_dns }}"
+          CF="${{ needs.infra.outputs.cloudfront_url }}"
+          WAKE="${{ needs.infra.outputs.wake_url }}"
+
+          # Fall back to infra-urls if CDK job was skipped
+          if [ -z "$ALB" ]; then ALB="${{ needs.infra-urls.outputs.alb_dns }}"; fi
+          if [ -z "$CF" ];  then CF="${{ needs.infra-urls.outputs.cloudfront_url }}"; fi
+          if [ -z "$WAKE" ]; then WAKE="${{ needs.infra-urls.outputs.wake_url }}"; fi
+
+          echo "alb_dns=$ALB"        >> $GITHUB_OUTPUT
+          echo "cloudfront_url=$CF"  >> $GITHUB_OUTPUT
+          echo "wake_url=$WAKE"      >> $GITHUB_OUTPUT
 
       - name: Wake ECS service for smoke test
         run: |
@@ -225,14 +389,14 @@ jobs:
 
       - name: Health check
         run: |
-          ALB="${{ needs.infra.outputs.alb_dns }}"
+          ALB="${{ steps.urls.outputs.alb_dns }}"
           for i in {1..24}; do
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://$ALB/health)
-            [ "$STATUS" = "200" ] && echo "✓ Backend healthy" && exit 0
+            [ "$STATUS" = "200" ] && echo "Health check passed" && exit 0
             echo "Attempt $i: status $STATUS — retrying in 15s"
             sleep 15
           done
-          echo "✗ Health check failed" && exit 1
+          echo "Health check failed" && exit 1
 
       - name: Notify deployment success
         if: success()
@@ -242,11 +406,11 @@ jobs:
               --stack-name MonitoringStack \
               --query "Stacks[0].Outputs[?OutputKey=='AlertTopicArn'].OutputValue" \
               --output text) \
-            --subject "✅ LeadGenie-AI deployed" \
+            --subject "LeadGenie-AI deployed" \
             --message "Deployment succeeded.
-          UI:   ${{ needs.infra.outputs.cloudfront_url }}
-          API:  https://${{ needs.infra.outputs.alb_dns }}
-          Wake: ${{ needs.infra.outputs.wake_url }}
+          UI:   ${{ steps.urls.outputs.cloudfront_url }}
+          API:  https://${{ steps.urls.outputs.alb_dns }}
+          Wake: ${{ steps.urls.outputs.wake_url }}
           Commit: ${{ github.sha }}"
 
       - name: Notify deployment failure
@@ -257,7 +421,7 @@ jobs:
               --stack-name MonitoringStack \
               --query "Stacks[0].Outputs[?OutputKey=='AlertTopicArn'].OutputValue" \
               --output text) \
-            --subject "❌ LeadGenie-AI deployment FAILED" \
+            --subject "LeadGenie-AI deployment FAILED" \
             --message "Deployment failed on commit ${{ github.sha }}.
           Check logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 

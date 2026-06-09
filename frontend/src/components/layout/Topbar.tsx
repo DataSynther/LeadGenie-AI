@@ -1,6 +1,7 @@
 import { type ReactNode } from "react";
 import { Menu } from "lucide-react";
 import { useSidebar } from "../../context/SidebarContext";
+import { ThemeToggle } from "../ThemeToggle";
 
 interface TopbarProps {
   breadcrumb: string;
@@ -9,7 +10,7 @@ interface TopbarProps {
 }
 
 export function Topbar({ breadcrumb, title, right }: TopbarProps) {
-  const { toggle } = useSidebar();
+  const { toggle, isCollapsed } = useSidebar();
 
   return (
     <div className="sticky top-0 z-10 bg-canvas border-b border-line-soft px-4 sm:px-8 py-4 flex items-center gap-3 justify-between">
@@ -28,11 +29,13 @@ export function Topbar({ breadcrumb, title, right }: TopbarProps) {
           <div className="font-serif text-display-lg text-ink">{title}</div>
         </div>
       </div>
-      {right && (
-        <div className="flex gap-1.5 sm:gap-2.5 items-center flex-shrink-0">
-          {right}
-        </div>
-      )}
+      <div className="flex gap-1.5 sm:gap-2.5 items-center flex-shrink-0">
+        {right}
+        {/* Visible when sidebar is collapsed on desktop (toggle hidden inside sidebar) */}
+        {isCollapsed && <span className="hidden md:block"><ThemeToggle /></span>}
+        {/* Always visible on mobile (sidebar is off-screen) */}
+        <span className="md:hidden"><ThemeToggle /></span>
+      </div>
     </div>
   );
 }
