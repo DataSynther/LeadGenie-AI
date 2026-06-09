@@ -162,7 +162,8 @@ class ComputeStack(Stack):
             max_healthy_percent=200,
             security_groups=[app_sg],
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
-            enable_execute_command=True,         # allows ecs exec for debugging
+            enable_execute_command=True,
+            circuit_breaker=ecs.DeploymentCircuitBreaker(rollback=True),
         )
 
         # Auto-scaling for API
@@ -197,6 +198,7 @@ class ComputeStack(Stack):
             max_healthy_percent=200,
             security_groups=[app_sg],
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
+            circuit_breaker=ecs.DeploymentCircuitBreaker(rollback=True),
             capacity_provider_strategies=[
                 ecs.CapacityProviderStrategy(
                     capacity_provider="FARGATE_SPOT",
