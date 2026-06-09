@@ -95,6 +95,17 @@ jobs:
           npm install -g aws-cdk@2
           pip install -r infrastructure/cdk/requirements.txt
 
+      - name: Discover latest available Postgres version
+        id: pg-version
+        run: |
+          PG_VERSION=$(aws rds describe-db-engine-versions \
+            --engine postgres \
+            --region ${{ env.AWS_REGION }} \
+            --query "sort_by(DBEngineVersions[?starts_with(EngineVersion, '16.')], &EngineVersion)[-1].EngineVersion" \
+            --output text)
+          echo "Detected Postgres version: $PG_VERSION"
+          echo "version=$PG_VERSION" >> $GITHUB_OUTPUT
+
       - name: CDK Bootstrap (idempotent)
         run: |
           cdk bootstrap aws://${{ secrets.AWS_ACCOUNT_ID }}/${{ env.AWS_REGION }} \
@@ -105,9 +116,10 @@ jobs:
       - name: CDK Deploy all stacks
         id: cdk-deploy
         env:
-          API_IMAGE:    ${{ needs.build.outputs.api_image }}
-          WORKER_IMAGE: ${{ needs.build.outputs.worker_image }}
-          ALERT_EMAIL:  ${{ secrets.ALERT_EMAIL }}
+          API_IMAGE:        ${{ needs.build.outputs.api_image }}
+          WORKER_IMAGE:     ${{ needs.build.outputs.worker_image }}
+          ALERT_EMAIL:      ${{ secrets.ALERT_EMAIL }}
+          POSTGRES_VERSION: ${{ steps.pg-version.outputs.version }}
           # App secrets — passed to Secrets Manager via CDK
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           APOLLO_API_KEY:    ${{ secrets.APOLLO_API_KEY }}
