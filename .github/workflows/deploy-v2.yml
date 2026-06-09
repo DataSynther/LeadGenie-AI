@@ -177,7 +177,7 @@ jobs:
       - name: Build frontend
         working-directory: frontend
         env:
-          VITE_API_URL: https://${{ needs.infra.outputs.alb_dns }}
+          VITE_API_URL: ${{ needs.infra.outputs.cloudfront_url }}
         run: |
           npm ci
           npm run build

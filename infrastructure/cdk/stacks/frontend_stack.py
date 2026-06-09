@@ -33,16 +33,36 @@ class FrontendStack(Stack):
                 cache_policy=cloudfront.CachePolicy.CACHING_OPTIMIZED,
             ),
             additional_behaviors={
-                # API calls proxied through CloudFront to ALB
-                "/api/*": cloudfront.BehaviorOptions(
-                    origin=origins.LoadBalancerV2Origin(alb,
-                        protocol_policy=cloudfront.OriginProtocolPolicy.HTTP_ONLY,
-                    ),
-                    viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-                    cache_policy=cloudfront.CachePolicy.CACHING_DISABLED,
-                    origin_request_policy=cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
-                    allowed_methods=cloudfront.AllowedMethods.ALLOW_ALL,
-                ),
+                # All backend API paths proxied through CloudFront to ALB (HTTP only)
+                **{
+                    path: cloudfront.BehaviorOptions(
+                        origin=origins.LoadBalancerV2Origin(alb,
+                            protocol_policy=cloudfront.OriginProtocolPolicy.HTTP_ONLY,
+                        ),
+                        viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+                        cache_policy=cloudfront.CachePolicy.CACHING_DISABLED,
+                        origin_request_policy=cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+                        allowed_methods=cloudfront.AllowedMethods.ALLOW_ALL,
+                    )
+                    for path in [
+                        "/health*",
+                        "/auth/*",
+                        "/leads/*",
+                        "/company/*",
+                        "/outreach/*",
+                        "/conversation/*",
+                        "/feedback/*",
+                        "/learning/*",
+                        "/trends*",
+                        "/audit/*",
+                        "/dashboard/*",
+                        "/agent-feed/*",
+                        "/pipeline*",
+                        "/approval-queue/*",
+                        "/credits*",
+                        "/dev/*",
+                    ]
+                },
             },
             # SPA fallback: all paths → index.html
             error_responses=[
