@@ -95,6 +95,18 @@ jobs:
           npm install -g aws-cdk@2
           pip install -r infrastructure/cdk/requirements.txt
 
+      - name: Remove orphaned S3 assets bucket if exists
+        run: |
+          BUCKET="leadgenie-assets-${{ secrets.AWS_ACCOUNT_ID }}"
+          if aws s3api head-bucket --bucket "$BUCKET" 2>/dev/null; then
+            echo "Removing orphaned bucket $BUCKET..."
+            aws s3 rm s3://$BUCKET --recursive || true
+            aws s3api delete-bucket --bucket "$BUCKET" --region ${{ env.AWS_REGION }}
+            echo "Deleted $BUCKET"
+          else
+            echo "Bucket $BUCKET does not exist, skipping"
+          fi
+
       - name: Discover latest available Postgres version
         id: pg-version
         run: |
