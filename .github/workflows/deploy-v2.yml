@@ -127,6 +127,10 @@ jobs:
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           RESEND_API_KEY:    ${{ secrets.RESEND_API_KEY }}
         run: |
+          # Stage 1: update ComputeStack first to drop the RDS secret import
+          cdk deploy ComputeStack --exclusively --require-approval never \
+            --app "python app.py" || true
+          # Stage 2: deploy all stacks (DataStack can now drop the RDS export)
           cdk deploy --all --require-approval never --outputs-file cdk-outputs.json \
             --app "python app.py"
         working-directory: infrastructure/cdk
