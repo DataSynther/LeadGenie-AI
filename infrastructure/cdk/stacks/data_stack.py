@@ -49,8 +49,8 @@ class DataStack(Stack):
             database_name="leadgenie",
             credentials=rds.Credentials.from_generated_secret("leadgenie_admin"),
             backup_retention=Duration.days(7),
-            deletion_protection=True,
-            removal_policy=RemovalPolicy.SNAPSHOT,
+            deletion_protection=False,
+            removal_policy=RemovalPolicy.DESTROY,
             enable_performance_insights=True,
         )
 
