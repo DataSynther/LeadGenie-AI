@@ -48,3 +48,9 @@ class VpcStack(Stack):
             description="ElastiCache - allow from ECS tasks only",
         )
         self.redis_sg.add_ingress_rule(self.app_sg, ec2.Port.tcp(6379))
+
+        self.efs_sg = ec2.SecurityGroup(self, "EfsSg",
+            vpc=self.vpc,
+            description="EFS - allow NFS from ECS tasks",
+        )
+        self.efs_sg.add_ingress_rule(self.app_sg, ec2.Port.tcp(2049))

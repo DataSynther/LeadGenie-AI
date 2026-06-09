@@ -3,6 +3,7 @@ from aws_cdk import (
     aws_ec2 as ec2,
     aws_ecs as ecs,
     aws_ecr as ecr,
+    aws_efs as efs,
     aws_elasticloadbalancingv2 as elbv2,
     aws_iam as iam,
     aws_logs as logs,
@@ -23,6 +24,7 @@ class ComputeStack(Stack):
                  activity_table: dynamodb.Table,
                  budget_table: dynamodb.Table,
                  secret: secretsmanager.Secret,
+                 app_efs: efs.FileSystem,
                  api_image: str,
                  worker_image: str,
                  **kwargs):
@@ -58,6 +60,8 @@ class ComputeStack(Stack):
             ],
         )
         secret.grant_read(exec_role)
+        # EFS mount requires ClientMount + ClientWrite on the execution role
+        app_efs.grant_root_access(exec_role)
 
         # ── Task role (what the app code can do) ──────────────────────────────
         task_role = iam.Role(self, "TaskRole",
@@ -94,6 +98,20 @@ class ComputeStack(Stack):
             retention=logs.RetentionDays.ONE_WEEK,
         )
 
+        # ── Shared EFS volume config (API + worker both mount at /app/backend/storage) ──
+        efs_volume = ecs.Volume(
+            name="app-storage",
+            efs_volume_configuration=ecs.EfsVolumeConfiguration(
+                file_system_id=app_efs.file_system_id,
+                transit_encryption="ENABLED",
+            ),
+        )
+        storage_mount = ecs.MountPoint(
+            container_path="/app/backend/storage",
+            source_volume="app-storage",
+            read_only=False,
+        )
+
         # ── API Task Definition ───────────────────────────────────────────────
         api_task_def = ecs.FargateTaskDefinition(self, "ApiTaskDef",
             family="leadgenie-api",
@@ -101,8 +119,9 @@ class ComputeStack(Stack):
             memory_limit_mib=1024,
             execution_role=exec_role,
             task_role=task_role,
+            volumes=[efs_volume],
         )
-        api_task_def.add_container("leadgenie-api",
+        api_container = api_task_def.add_container("leadgenie-api",
             image=ecs.ContainerImage.from_ecr_repository(api_repo, tag="latest")
                   if not api_image else ecs.ContainerImage.from_registry(api_image),
             port_mappings=[ecs.PortMapping(container_port=8000)],
@@ -119,6 +138,7 @@ class ComputeStack(Stack):
                 retries=3,
             ),
         )
+        api_container.add_mount_points(storage_mount)
 
         # ── Worker Task Definition ─────────────────────────────────────────────
         worker_task_def = ecs.FargateTaskDefinition(self, "WorkerTaskDef",
@@ -127,8 +147,9 @@ class ComputeStack(Stack):
             memory_limit_mib=2048,
             execution_role=exec_role,
             task_role=task_role,
+            volumes=[efs_volume],
         )
-        worker_task_def.add_container("leadgenie-worker",
+        worker_container = worker_task_def.add_container("leadgenie-worker",
             image=ecs.ContainerImage.from_ecr_repository(worker_repo, tag="latest")
                   if not worker_image else ecs.ContainerImage.from_registry(worker_image),
             environment={**common_env, "WORKER_MODE": "true"},
@@ -138,6 +159,7 @@ class ComputeStack(Stack):
                 log_group=log_group,
             ),
         )
+        worker_container.add_mount_points(storage_mount)
 
         # ── ALB ────────────────────────────────────────────────────────────────
         alb_sg = self._alb_sg

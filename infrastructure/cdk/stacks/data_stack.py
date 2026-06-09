@@ -2,6 +2,7 @@ import os
 from aws_cdk import (
     Stack, RemovalPolicy, SecretValue,
     aws_ec2 as ec2,
+    aws_efs as efs,
     aws_elasticache as elasticache,
     aws_dynamodb as dynamodb,
     aws_secretsmanager as secretsmanager,
@@ -11,7 +12,10 @@ from constructs import Construct
 
 
 class DataStack(Stack):
-    def __init__(self, scope: Construct, id: str, vpc: ec2.Vpc, redis_sg: ec2.SecurityGroup = None, **kwargs):
+    def __init__(self, scope: Construct, id: str, vpc: ec2.Vpc,
+                 redis_sg: ec2.SecurityGroup = None,
+                 efs_sg: ec2.SecurityGroup = None,
+                 **kwargs):
         super().__init__(scope, id, **kwargs)
 
         # ── Secrets Manager — all app credentials ────────────────────────────
@@ -80,4 +84,20 @@ class DataStack(Stack):
             encryption=s3.BucketEncryption.S3_MANAGED,
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             removal_policy=RemovalPolicy.RETAIN,
+        )
+
+        # ── EFS — shared persistent storage for API + worker ─────────────
+        if efs_sg is None:
+            efs_sg = ec2.SecurityGroup(self, "EfsSgFallback",
+                vpc=vpc,
+                description="EFS fallback SG",
+            )
+        self.app_efs = efs.FileSystem(self, "AppStorage",
+            vpc=vpc,
+            security_group=efs_sg,
+            encrypted=True,
+            removal_policy=RemovalPolicy.RETAIN,
+            performance_mode=efs.PerformanceMode.GENERAL_PURPOSE,
+            throughput_mode=efs.ThroughputMode.BURSTING,
+            vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
         )

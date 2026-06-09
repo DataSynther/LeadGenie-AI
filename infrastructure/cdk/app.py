@@ -15,7 +15,7 @@ env = cdk.Environment(
 )
 
 vpc_stack     = VpcStack(app,     "VpcStack",     env=env)
-data_stack    = DataStack(app,    "DataStack",    vpc=vpc_stack.vpc, redis_sg=vpc_stack.redis_sg, env=env)
+data_stack    = DataStack(app,    "DataStack",    vpc=vpc_stack.vpc, redis_sg=vpc_stack.redis_sg, efs_sg=vpc_stack.efs_sg, env=env)
 compute_stack = ComputeStack(app, "ComputeStack",
     vpc=vpc_stack.vpc,
     alb_sg=vpc_stack.alb_sg,
@@ -25,6 +25,7 @@ compute_stack = ComputeStack(app, "ComputeStack",
     activity_table=data_stack.activity_table,
     budget_table=data_stack.budget_table,
     secret=data_stack.app_secret,
+    app_efs=data_stack.app_efs,
     api_image=os.environ.get("API_IMAGE", ""),
     worker_image=os.environ.get("WORKER_IMAGE", ""),
     env=env,
