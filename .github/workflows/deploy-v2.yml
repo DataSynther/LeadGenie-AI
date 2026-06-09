@@ -204,9 +204,20 @@ jobs:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Wait for ECS service stability
+      - name: Wake ECS service for smoke test
         run: |
-          echo "Waiting for ECS API service to stabilize..."
+          echo "Ensuring API service has at least 1 task running..."
+          DESIRED=$(aws ecs describe-services \
+            --cluster ${{ env.ECS_CLUSTER }} --services ${{ env.ECS_API_SVC }} \
+            --query "services[0].desiredCount" --output text)
+          if [ "$DESIRED" = "0" ]; then
+            echo "Service is sleeping — scaling to 1 for smoke test"
+            aws ecs update-service \
+              --cluster ${{ env.ECS_CLUSTER }} \
+              --service ${{ env.ECS_API_SVC }} \
+              --desired-count 1
+          fi
+          echo "Waiting for service to stabilize..."
           aws ecs wait services-stable \
             --cluster ${{ env.ECS_CLUSTER }} \
             --services ${{ env.ECS_API_SVC }}
