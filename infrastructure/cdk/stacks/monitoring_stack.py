@@ -122,7 +122,13 @@ class MonitoringStack(Stack):
         sleep_alarm = cloudwatch.Alarm(self, "ServiceSleepingAlarm",
             alarm_name="leadgenie-service-sleeping",
             alarm_description="ECS API service scaled to 0 — system is sleeping",
-            metric=api_service.metric_running_task_count(
+            metric=cloudwatch.Metric(
+                namespace="ECS/ContainerInsights",
+                metric_name="RunningTaskCount",
+                dimensions_map={
+                    "ClusterName": cluster.cluster_name,
+                    "ServiceName": api_service.service_name,
+                },
                 period=Duration.minutes(5),
                 statistic="Minimum",
             ),
@@ -207,8 +213,20 @@ class MonitoringStack(Stack):
                     cloudwatch.GraphWidget(
                         title="ECS Running Tasks",
                         left=[
-                            api_service.metric_running_task_count(period=Duration.minutes(5)),
-                            worker_service.metric_running_task_count(period=Duration.minutes(5)),
+                            cloudwatch.Metric(
+                                namespace="ECS/ContainerInsights",
+                                metric_name="RunningTaskCount",
+                                dimensions_map={"ClusterName": cluster.cluster_name, "ServiceName": api_service.service_name},
+                                period=Duration.minutes(5),
+                                label="API",
+                            ),
+                            cloudwatch.Metric(
+                                namespace="ECS/ContainerInsights",
+                                metric_name="RunningTaskCount",
+                                dimensions_map={"ClusterName": cluster.cluster_name, "ServiceName": worker_service.service_name},
+                                period=Duration.minutes(5),
+                                label="Worker",
+                            ),
                         ],
                         width=12,
                     ),
