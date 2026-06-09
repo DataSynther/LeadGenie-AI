@@ -147,9 +147,8 @@ class ComputeStack(Stack):
             memory_limit_mib=2048,
             execution_role=exec_role,
             task_role=task_role,
-            volumes=[efs_volume],
         )
-        worker_container = worker_task_def.add_container("leadgenie-worker",
+        worker_task_def.add_container("leadgenie-worker",
             image=ecs.ContainerImage.from_ecr_repository(worker_repo, tag="latest")
                   if not worker_image else ecs.ContainerImage.from_registry(worker_image),
             environment={**common_env, "WORKER_MODE": "true"},
@@ -159,7 +158,6 @@ class ComputeStack(Stack):
                 log_group=log_group,
             ),
         )
-        worker_container.add_mount_points(storage_mount)
 
         # ── ALB ────────────────────────────────────────────────────────────────
         alb_sg = self._alb_sg
