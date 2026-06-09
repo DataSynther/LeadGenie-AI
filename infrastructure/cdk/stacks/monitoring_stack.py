@@ -121,7 +121,7 @@ class MonitoringStack(Stack):
         # 1. API service has 0 running tasks (sleep state)
         sleep_alarm = cloudwatch.Alarm(self, "ServiceSleepingAlarm",
             alarm_name="leadgenie-service-sleeping",
-            alarm_description="ECS API service scaled to 0 — system is sleeping",
+            alarm_description="ECS API service scaled to 0 - system is sleeping",
             metric=cloudwatch.Metric(
                 namespace="ECS/ContainerInsights",
                 metric_name="RunningTaskCount",
