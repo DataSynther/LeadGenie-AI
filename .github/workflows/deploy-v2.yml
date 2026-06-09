@@ -212,14 +212,22 @@ jobs:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Wait for ECS service stability
+        run: |
+          echo "Waiting for ECS API service to stabilize..."
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.ECS_API_SVC }}
+          echo "ECS service stable"
+
       - name: Health check
         run: |
           ALB="${{ needs.infra.outputs.alb_dns }}"
-          for i in {1..10}; do
+          for i in {1..24}; do
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://$ALB/health)
             [ "$STATUS" = "200" ] && echo "✓ Backend healthy" && exit 0
-            echo "Attempt $i: status $STATUS — retrying in 10s"
-            sleep 10
+            echo "Attempt $i: status $STATUS — retrying in 15s"
+            sleep 15
           done
           echo "✗ Health check failed" && exit 1
 
