@@ -22,6 +22,7 @@ class ComputeStack(Stack):
                  redis: elasticache.CfnReplicationGroup,
                  activity_table: dynamodb.Table,
                  budget_table: dynamodb.Table,
+                 queue_table: dynamodb.Table,
                  secret: secretsmanager.Secret,
                  api_image: str,
                  worker_image: str,
@@ -67,6 +68,7 @@ class ComputeStack(Stack):
         self.job_queue.grant_consume_messages(task_role)
         activity_table.grant_read_write_data(task_role)
         budget_table.grant_read_write_data(task_role)
+        queue_table.grant_read_write_data(task_role)
 
 
         # ── Common environment ────────────────────────────────────────────────
@@ -76,6 +78,7 @@ class ComputeStack(Stack):
             "SQS_QUEUE_URL":         self.job_queue.queue_url,
             "ACTIVITY_TABLE":        activity_table.table_name,
             "BUDGET_TABLE":          budget_table.table_name,
+            "QUEUE_TABLE":           queue_table.table_name,
             "AWS_REGION":            self.region,
             "WHATSAPP_TEST_PHONE":   "+918056498879",
         }

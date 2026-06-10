@@ -77,6 +77,20 @@ class DataStack(Stack):
             removal_policy=RemovalPolicy.DESTROY,
         )
 
+        # ── DynamoDB — outreach approval queue (survives container restarts) ──
+        self.queue_table = dynamodb.Table(self, "QueueTable",
+            table_name="leadgenie-queue",
+            partition_key=dynamodb.Attribute(name="pk", type=dynamodb.AttributeType.STRING),
+            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
+            removal_policy=RemovalPolicy.DESTROY,
+        )
+        self.queue_table.add_global_secondary_index(
+            index_name="status-index",
+            partition_key=dynamodb.Attribute(name="status", type=dynamodb.AttributeType.STRING),
+            sort_key=dynamodb.Attribute(name="timestamp", type=dynamodb.AttributeType.STRING),
+            projection_type=dynamodb.ProjectionType.ALL,
+        )
+
         # ── S3 — templates, KB docs, exports ─────────────────────────────
         self.assets_bucket = s3.Bucket(self, "AssetsBucket",
             bucket_name=f"leadgenie-assets-{self.account}",

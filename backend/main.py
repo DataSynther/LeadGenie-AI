@@ -55,6 +55,7 @@ from agents.conversation.conversation_agent import ConversationAgent
 from governance.risk_engine import RiskEngine
 from governance.orchestrator import GovernanceOrchestrator
 from governance.outreach_queue_store import OutreachQueueStore
+from governance.dynamo_queue_store import DynamoOutreachQueueStore
 from governance.credit_store import CreditStore
 from learning.feedback_collector import FeedbackCollector
 from learning.learning_engine import LearningEngine
@@ -116,7 +117,7 @@ followup_scheduler = FollowupScheduler()
 lead_context_store = LeadContextStore()
 whatsapp_conversation_store = WhatsAppConversationStore()
 render_whatsapp_mailbox = RenderWhatsAppMailbox()
-outreach_queue = OutreachQueueStore()
+outreach_queue = DynamoOutreachQueueStore() if os.environ.get("QUEUE_TABLE") else OutreachQueueStore()
 credit_store = CreditStore()
 _followup_task = None
 
@@ -680,6 +681,10 @@ async def send_outreach(req: SendOutreachRequest):
     for item in pending:
         if item.get("lead_id") == req.lead_id:
             outreach_queue.update_status(item["event_id"], "approved")
+            try:
+                stats_store.update_outreach_status(item["event_id"], "approved")
+            except Exception as _e:
+                logger.warning("stats_store.update_outreach_status failed: %s", _e)
             break
 
     followup = None
