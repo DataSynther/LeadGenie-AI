@@ -9,6 +9,12 @@ on:
         description: "Tear down all infrastructure (type 'destroy' to confirm)"
         required: false
 
+# Cancel any in-progress run on the same branch when a new push arrives.
+# This prevents concurrent CDK deploys from conflicting on CloudFormation.
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   id-token: write   # OIDC token for AWS auth
   contents: read
@@ -235,12 +241,12 @@ jobs:
           echo "cloudfront_url=$CF"  >> $GITHUB_OUTPUT
           echo "wake_url=$WAKE"      >> $GITHUB_OUTPUT
 
-  # ─── 2b. Fetch infra URLs when CDK job was skipped ──────────────────────────
+  # ─── 2b. Fetch infra URLs when CDK job was skipped or failed ───────────────
   infra-urls:
     name: Fetch Infra URLs (CDK skipped)
     runs-on: ubuntu-latest
     needs: [changes, build, infra]
-    if: always() && needs.infra.result == 'skipped'
+    if: always() && (needs.infra.result == 'skipped' || needs.infra.result == 'failure')
     outputs:
       alb_dns:        ${{ steps.fetch.outputs.alb_dns }}
       cloudfront_url: ${{ steps.fetch.outputs.cloudfront_url }}
@@ -280,7 +286,7 @@ jobs:
     if: |
       always() &&
       needs.changes.outputs.frontend == 'true' &&
-      (needs.infra.result == 'success' || needs.infra.result == 'skipped') &&
+      (needs.infra.result == 'success' || needs.infra.result == 'skipped' || needs.infra.result == 'failure') &&
       (needs.infra-urls.result == 'success' || needs.infra-urls.result == 'skipped')
     steps:
       - uses: actions/checkout@v4

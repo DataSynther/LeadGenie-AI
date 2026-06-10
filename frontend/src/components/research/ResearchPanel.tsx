@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   X, ExternalLink, TrendingUp, TrendingDown, Minus,
   Building2, Users, DollarSign, Calendar, Zap, Cpu, RefreshCw, Send, MessageCircle,
@@ -63,6 +63,12 @@ function OutreachResultBanner({
   retrying: boolean;
 }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const goToQueue = () => {
+    queryClient.invalidateQueries({ queryKey: ["approvalQueue"] });
+    queryClient.invalidateQueries({ queryKey: ["sentEmails"] });
+    navigate("/approval");
+  };
   const gov = result.governance;
   const lastAttempt = gov.governance_attempt_history?.[gov.governance_attempt_history.length - 1];
   const hallucLayers = lastAttempt?.layers?.hallucination;
@@ -118,7 +124,7 @@ function OutreachResultBanner({
       {/* Action buttons */}
       <div className="flex gap-2 flex-wrap">
         <button
-          onClick={() => navigate("/approval")}
+          onClick={goToQueue}
           className="px-2.5 py-1 rounded text-[10px] font-medium bg-brand text-white hover:bg-brand/80 transition-colors"
         >
           View in Queue →
@@ -131,7 +137,7 @@ function OutreachResultBanner({
           {retrying ? <><RefreshCw size={9} className="inline animate-spin mr-1" />Retrying…</> : "↺ Retry"}
         </button>
         <button
-          onClick={() => navigate(`/approval`)}
+          onClick={goToQueue}
           className="px-2.5 py-1 rounded text-[10px] font-medium bg-surface-2 text-ink border border-line hover:bg-surface transition-colors"
         >
           ↗ Citations
@@ -196,6 +202,12 @@ function PipelineProgress({ stages }: { stages: PipelineStageEvent[] }) {
 
 export function ResearchPanel({ lead, onClose, autoGenerate = false, defaultChannel = "email" }: ResearchPanelProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const goToQueue = () => {
+    queryClient.invalidateQueries({ queryKey: ["approvalQueue"] });
+    queryClient.invalidateQueries({ queryKey: ["sentEmails"] });
+    navigate("/approval");
+  };
   const [outreachResult, setOutreachResult] = useState<OutreachResult | null>(null);
   const [channel, setChannel] = useState<"email" | "whatsapp">(defaultChannel);
   const [editableEmail, setEditableEmail] = useState<{ subject: string; body: string; reasoning?: string } | null>(null);
@@ -636,7 +648,7 @@ export function ResearchPanel({ lead, onClose, autoGenerate = false, defaultChan
 
               {!suggestion && (
                 <button
-                  onClick={() => navigate("/approval")}
+                  onClick={goToQueue}
                   className="flex items-center gap-2 px-4 py-2 rounded-md text-[12px] font-medium bg-surface-2 text-ink border border-line hover:border-brand hover:text-brand transition-colors"
                 >
                   View Queue
