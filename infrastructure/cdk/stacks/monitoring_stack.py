@@ -78,7 +78,7 @@ class MonitoringStack(Stack):
                 "API_SERVICE":       api_service.service_name,
                 "WORKER_SERVICE":    worker_service.service_name,
                 "ALERT_TOPIC_ARN":   self.alert_topic.topic_arn,
-                "INACTIVITY_MINUTES": "15",
+                "INACTIVITY_MINUTES": "600",
                 "AWS_ACCOUNT_ID":    self.account,
             },
             log_retention=logs.RetentionDays.ONE_WEEK,
