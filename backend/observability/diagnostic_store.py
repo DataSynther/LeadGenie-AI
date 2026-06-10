@@ -1,15 +1,25 @@
 """Central store for all observability events — traces, validations, diagnostics."""
 import json
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 from collections import defaultdict
 from typing import Optional
+
+import boto3
+from boto3.dynamodb.conditions import Attr
 
 STORE_DIR = Path(__file__).parent.parent / "storage" / "diagnostics"
 TRACES_FILE       = STORE_DIR / "traces.jsonl"
 VALIDATIONS_FILE  = STORE_DIR / "validations.jsonl"
 GOVERNANCE_RUNS_FILE = STORE_DIR / "governance_runs.jsonl"
 STORE_DIR.mkdir(parents=True, exist_ok=True)
+
+_ACTIVITY_TABLE = os.environ.get("ACTIVITY_TABLE", "")
+
+
+def _table():
+    return boto3.resource("dynamodb").Table(_ACTIVITY_TABLE)
 
 
 # ── Failure categories (maps to the 5 upstream hallucination causes) ──────────
@@ -54,8 +64,9 @@ def write_trace(
     diagnostic_categories: list[str],   # which of the 5 categories fired
     metadata: Optional[dict] = None,
 ) -> dict:
+    ts = datetime.now(timezone.utc).isoformat()
     record = {
-        "ts": datetime.now(timezone.utc).isoformat(),
+        "ts": ts,
         "agent": agent,
         "lead_id": lead_id,
         "prompt_preview": prompt_preview[:300],
@@ -67,6 +78,16 @@ def write_trace(
         "metadata": metadata or {},
     }
     _append(TRACES_FILE, record)
+    if _ACTIVITY_TABLE and lead_id:
+        try:
+            _table().put_item(Item={
+                "pk":      f"TRACE#{lead_id}#{ts}#{agent}",
+                "lead_id": lead_id,
+                "agent":   agent,
+                "payload": json.dumps(record),
+            })
+        except Exception:
+            pass
     return record
 
 
@@ -82,8 +103,9 @@ def write_validation(
     issues: list[str],
     output_preview: str,
 ) -> dict:
+    ts = datetime.now(timezone.utc).isoformat()
     record = {
-        "ts": datetime.now(timezone.utc).isoformat(),
+        "ts": ts,
         "agent": agent,
         "lead_id": lead_id,
         "shape_ok": shape_ok,
@@ -94,6 +116,16 @@ def write_validation(
         "output_preview": output_preview[:300],
     }
     _append(VALIDATIONS_FILE, record)
+    if _ACTIVITY_TABLE and lead_id:
+        try:
+            _table().put_item(Item={
+                "pk":      f"VALID#{lead_id}#{ts}#{agent}",
+                "lead_id": lead_id,
+                "agent":   agent,
+                "payload": json.dumps(record),
+            })
+        except Exception:
+            pass
     return record
 
 
@@ -415,3 +447,53 @@ def _category_description(cat: str) -> str:
         CATEGORY_VALIDATION:    "Model output flowed downstream with no shape, context, or policy check applied.",
         CATEGORY_TASK_MISMATCH: "Model confidence was low or output schema mismatched — model may not be suited to this task.",
     }.get(cat, cat)
+
+
+# ── Per-lead lookup helpers (used by /pipeline/lineage endpoint) ──────────────
+
+def get_traces_for_lead(lead_id: str) -> dict:
+    """Return {agent: [trace, ...]} for all traces belonging to lead_id."""
+    if _ACTIVITY_TABLE:
+        try:
+            resp = _table().scan(
+                FilterExpression=Attr("pk").begins_with(f"TRACE#{lead_id}#")
+            )
+            items = resp.get("Items", [])
+            by_agent: dict = {}
+            for item in items:
+                t = json.loads(item["payload"])
+                agent = t.get("agent", "unknown")
+                by_agent.setdefault(agent, []).append(t)
+            return by_agent
+        except Exception:
+            pass
+    # Local JSONL fallback
+    by_agent = {}
+    for t in _read_all(TRACES_FILE):
+        if t.get("lead_id") == lead_id:
+            by_agent.setdefault(t.get("agent", "unknown"), []).append(t)
+    return by_agent
+
+
+def get_validations_for_lead(lead_id: str) -> dict:
+    """Return {agent: [validation, ...]} for all validations belonging to lead_id."""
+    if _ACTIVITY_TABLE:
+        try:
+            resp = _table().scan(
+                FilterExpression=Attr("pk").begins_with(f"VALID#{lead_id}#")
+            )
+            items = resp.get("Items", [])
+            by_agent: dict = {}
+            for item in items:
+                v = json.loads(item["payload"])
+                agent = v.get("agent", "unknown")
+                by_agent.setdefault(agent, []).append(v)
+            return by_agent
+        except Exception:
+            pass
+    # Local JSONL fallback
+    by_agent = {}
+    for v in _read_all(VALIDATIONS_FILE):
+        if v.get("lead_id") == lead_id:
+            by_agent.setdefault(v.get("agent", "unknown"), []).append(v)
+    return by_agent

@@ -181,6 +181,7 @@ class ConversationRequest(BaseModel):
     lead_id: str
     reply: str
     context: dict
+    lead_email: Optional[str] = None
 
 
 class FeedbackRequest(BaseModel):
@@ -703,8 +704,10 @@ async def send_outreach(req: SendOutreachRequest):
 async def handle_reply(req: ConversationRequest):
     # Mark as replied immediately so the WhatsApp scheduler skips this lead
     followup_scheduler.mark_replied(req.lead_id)
+    # Resolve lead email: explicit field > context.lead.email (so reply is sent via email not just logged)
+    lead_email = req.lead_email or (req.context.get("lead") or {}).get("email")
     result = await asyncio.to_thread(
-        conversation_agent.handle_reply, req.lead_id, req.reply, req.context
+        conversation_agent.handle_reply, req.lead_id, req.reply, req.context, lead_email
     )
     try:
         stats_store.record_conversation(
@@ -1191,28 +1194,16 @@ async def memory_governance_stats():
 @app.get("/pipeline/lineage")
 async def lineage_index():
     """List all lead IDs that have audit log data, most recent first."""
-    audit_dir = Path(__file__).parent / "storage" / "audit_logs"
-    if not audit_dir.exists():
-        return []
+    from governance.audit_logger import AuditLogger
+    items = AuditLogger().get_all_lead_ids()
     results = []
-    for f in sorted(audit_dir.glob("*.jsonl"), key=lambda p: p.stat().st_mtime, reverse=True):
-        lead_id = f.stem
-        try:
-            with open(f) as fh:
-                first_line = fh.readline().strip()
-            if not first_line:
-                continue
-            ev = json.loads(first_line)
-            payload = ev.get("payload", {})
-            content = payload.get("content", {})
-            results.append({
-                "lead_id": lead_id,
-                "timestamp": ev.get("timestamp", ""),
-                "decision": ev.get("decision", "unknown"),
-                "subject": content.get("subject", ""),
-            })
-        except Exception:
-            continue
+    for item in items:
+        results.append({
+            "lead_id":   item.get("lead_id", ""),
+            "timestamp": item.get("timestamp", ""),
+            "decision":  item.get("decision", "unknown"),
+            "subject":   "",
+        })
     return results
 
 
@@ -1220,35 +1211,11 @@ async def lineage_index():
 async def pipeline_lineage(lead_id: str):
     """Full pipeline lineage for a specific lead assembled from audit + diagnostics."""
     from governance.audit_logger import AuditLogger
+    from observability.diagnostic_store import get_traces_for_lead, get_validations_for_lead
 
     audit_events = AuditLogger().get_audit_trail(lead_id)
-
-    traces_path = Path(__file__).parent / "storage" / "diagnostics" / "traces.jsonl"
-    validations_path = Path(__file__).parent / "storage" / "diagnostics" / "validations.jsonl"
-
-    traces_by_agent: dict = {}
-    if traces_path.exists():
-        with open(traces_path) as f:
-            for line in f:
-                try:
-                    t = json.loads(line.strip())
-                    if t.get("lead_id") == lead_id:
-                        agent = t["agent"]
-                        traces_by_agent.setdefault(agent, []).append(t)
-                except Exception:
-                    continue
-
-    validations_by_agent: dict = {}
-    if validations_path.exists():
-        with open(validations_path) as f:
-            for line in f:
-                try:
-                    v = json.loads(line.strip())
-                    if v.get("lead_id") == lead_id:
-                        agent = v["agent"]
-                        validations_by_agent.setdefault(agent, []).append(v)
-                except Exception:
-                    continue
+    traces_by_agent = get_traces_for_lead(lead_id)
+    validations_by_agent = get_validations_for_lead(lead_id)
 
     gov_event = audit_events[-1] if audit_events else None
     gov_payload = gov_event.get("payload", {}) if gov_event else {}

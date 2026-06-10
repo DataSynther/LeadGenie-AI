@@ -245,7 +245,7 @@ export const auditTrail = (leadId: string) =>
 
 // ── Conversation ─────────────────────────────────────────────────────────────
 
-export const conversationReply = (leadId: string, reply: string, context: unknown) =>
+export const conversationReply = (leadId: string, reply: string, context: unknown, leadEmail?: string) =>
   post<{
     lead_id: string;
     intent: string;
@@ -253,7 +253,7 @@ export const conversationReply = (leadId: string, reply: string, context: unknow
     response: string;
     conversation_length: number;
     email_sent?: boolean;
-  }>("/conversation/reply", { lead_id: leadId, reply, context });
+  }>("/conversation/reply", { lead_id: leadId, reply, context, lead_email: leadEmail });
 
 // ── Outreach ─────────────────────────────────────────────────────────────────
 
