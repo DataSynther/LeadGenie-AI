@@ -411,7 +411,7 @@ function SeasonRecord({ history }: { history: QuidditchRun[] }) {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
               <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#6b7280" }} />
               <YAxis tick={{ fontSize: 10, fill: "#6b7280" }} unit="s" />
-              <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v: number) => [`${v}s`, "Latency"]} />
+              <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v) => [`${v}s`, "Latency"]} />
               <Line type="monotone" dataKey="latency" stroke="#f59e0b" strokeWidth={2}
                 dot={{ r: 3, fill: "#f59e0b", strokeWidth: 0 }} />
             </LineChart>
@@ -426,7 +426,7 @@ function SeasonRecord({ history }: { history: QuidditchRun[] }) {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
               <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#6b7280" }} />
               <YAxis tick={{ fontSize: 10, fill: "#6b7280" }} unit="m$" />
-              <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v: number) => [`${v}m$`, "Cost"]} />
+              <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v) => [`${v}m$`, "Cost"]} />
               <Line type="monotone" dataKey="cost_m" stroke="#10b981" strokeWidth={2}
                 dot={{ r: 3, fill: "#10b981", strokeWidth: 0 }} />
             </LineChart>
@@ -461,7 +461,7 @@ function SeasonRecord({ history }: { history: QuidditchRun[] }) {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
               <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#6b7280" }} />
               <YAxis domain={[0, 1]} tick={{ fontSize: 10, fill: "#6b7280" }} />
-              <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v: number) => [v.toFixed(3), "Human avg"]} />
+              <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v) => [typeof v === "number" ? v.toFixed(3) : v, "Human avg"]} />
               <Line type="monotone" dataKey="human_avg" name="Human avg" stroke="#f59e0b"
                 strokeWidth={2} dot={{ r: 4, fill: "#f59e0b", strokeWidth: 0 }} connectNulls />
             </LineChart>
@@ -576,7 +576,7 @@ export function QuidditchPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-surface">
-      <Topbar title="Quidditch" />
+      <Topbar breadcrumb="Observability" title="Quidditch" />
 
       {/* ── Hero header ── */}
       <div className="px-6 pt-6 pb-5 border-b border-line-soft">
