@@ -65,6 +65,102 @@ const DEFAULT_PROMPT = `Write a personalised B2B outreach email for a VP of Sale
 
 Keep it under 150 words, professional but warm in tone.`;
 
+// ── Quidditch Stadium Background ─────────────────────────────────────────────
+
+function QuidditchBackground() {
+  const stars: [number, number, number][] = [
+    [5,10,1],[12,28,0],[22,5,1],[35,15,0],[48,3,1],[62,8,0],[75,12,1],[88,6,0],[95,22,1],
+    [3,45,0],[7,70,1],[15,55,0],[20,80,1],[28,40,0],[33,72,1],[40,85,0],[50,92,1],[58,78,0],
+    [65,50,1],[72,88,0],[80,62,1],[87,45,0],[93,58,1],[97,75,0],[10,90,1],[45,68,0],[55,35,1],
+    [70,25,0],[82,18,1],[90,35,0],[25,95,1],[38,58,0],[52,22,1],[68,72,0],[78,40,1],
+  ];
+  return (
+    <div
+      className="fixed inset-0 pointer-events-none overflow-hidden"
+      aria-hidden
+      style={{ zIndex: 0 }}
+    >
+      <style>{`
+        @keyframes qfloat {
+          0%,100% { transform: translateY(0px) rotate(-6deg); }
+          50%      { transform: translateY(-18px) rotate(6deg); }
+        }
+        @keyframes qtwinkle {
+          0%,100% { opacity: 0.06; }
+          50%      { opacity: 0.20; }
+        }
+      `}</style>
+
+      {/* SVG pitch + stars */}
+      <svg
+        className="absolute inset-0 w-full h-full"
+        xmlns="http://www.w3.org/2000/svg"
+        preserveAspectRatio="xMidYMid slice"
+      >
+        <defs>
+          <radialGradient id="qPitchGlow" cx="50%" cy="52%" r="45%">
+            <stop offset="0%" stopColor="rgba(91,33,182,0.14)" />
+            <stop offset="100%" stopColor="rgba(8,4,26,0)" />
+          </radialGradient>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#qPitchGlow)" />
+
+        {/* Outer pitch oval */}
+        <ellipse cx="50%" cy="52%" rx="43%" ry="29%"
+          fill="none" stroke="rgba(120,60,220,0.07)" strokeWidth="1.5" />
+        {/* Inner circle */}
+        <ellipse cx="50%" cy="52%" rx="10%" ry="7%"
+          fill="none" stroke="rgba(120,60,220,0.05)" strokeWidth="1" />
+        {/* Midfield line */}
+        <line x1="50%" y1="23%" x2="50%" y2="81%"
+          stroke="rgba(120,60,220,0.04)" strokeWidth="1" strokeDasharray="4 6" />
+
+        {/* Left goalposts pole + 3 rings */}
+        <line x1="8%" y1="33%" x2="8%" y2="71%"
+          stroke="rgba(251,191,36,0.07)" strokeWidth="1.5" />
+        <circle cx="8%" cy="33%" r="2.6%"
+          fill="none" stroke="rgba(251,191,36,0.10)" strokeWidth="1.5" />
+        <circle cx="8%" cy="52%" r="2.6%"
+          fill="none" stroke="rgba(251,191,36,0.10)" strokeWidth="1.5" />
+        <circle cx="8%" cy="71%" r="2.6%"
+          fill="none" stroke="rgba(251,191,36,0.10)" strokeWidth="1.5" />
+
+        {/* Right goalposts pole + 3 rings */}
+        <line x1="92%" y1="33%" x2="92%" y2="71%"
+          stroke="rgba(251,191,36,0.07)" strokeWidth="1.5" />
+        <circle cx="92%" cy="33%" r="2.6%"
+          fill="none" stroke="rgba(251,191,36,0.10)" strokeWidth="1.5" />
+        <circle cx="92%" cy="52%" r="2.6%"
+          fill="none" stroke="rgba(251,191,36,0.10)" strokeWidth="1.5" />
+        <circle cx="92%" cy="71%" r="2.6%"
+          fill="none" stroke="rgba(251,191,36,0.10)" strokeWidth="1.5" />
+
+        {/* Stars */}
+        {stars.map(([x, y, big], i) => (
+          <circle
+            key={i}
+            cx={`${x}%`} cy={`${y}%`}
+            r={big ? 1.3 : 0.7}
+            fill={`rgba(255,255,255,${big ? 0.30 : 0.18})`}
+          />
+        ))}
+      </svg>
+
+      {/* Floating broomsticks */}
+      <div style={{ position:'absolute', top:'9%',   left:'5%',   fontSize:82, opacity:0.05, animation:'qfloat 14s ease-in-out infinite' }}>🧹</div>
+      <div style={{ position:'absolute', top:'56%',  right:'4%',  fontSize:66, opacity:0.04, animation:'qfloat 11s ease-in-out infinite 2.5s' }}>🧹</div>
+      <div style={{ position:'absolute', bottom:'16%', left:'11%', fontSize:50, opacity:0.04, animation:'qfloat 17s ease-in-out infinite 5s' }}>🧹</div>
+
+      {/* Twinkling stars */}
+      <div style={{ position:'absolute', top:'20%',  right:'20%', fontSize:18, animation:'qtwinkle 3.5s ease-in-out infinite' }}>⭐</div>
+      <div style={{ position:'absolute', top:'66%',  left:'28%',  fontSize:14, animation:'qtwinkle 4.8s ease-in-out infinite 1s' }}>✦</div>
+      <div style={{ position:'absolute', top:'37%',  right:'40%', fontSize:12, animation:'qtwinkle 5.2s ease-in-out infinite 2s' }}>✧</div>
+      <div style={{ position:'absolute', bottom:'24%', right:'23%', fontSize:16, animation:'qtwinkle 3.2s ease-in-out infinite 0.5s' }}>⭐</div>
+      <div style={{ position:'absolute', top:'5%',   right:'12%', fontSize:10, animation:'qtwinkle 4s ease-in-out infinite 1.8s' }}>✦</div>
+    </div>
+  );
+}
+
 // ── Nimbus Loading Animation ──────────────────────────────────────────────────
 
 function NimbusLoader() {
@@ -358,115 +454,172 @@ function ResultPanel({ run }: { run: QuidditchRun }) {
   );
 }
 
-// ── Season Record (Trend Charts) ──────────────────────────────────────────────
+// ── Season Record (Multi-series Trend Charts) ─────────────────────────────────
+
+type CompareMode = "model" | "prompt";
 
 const TOOLTIP_STYLE = {
-  background: "#0f0f1a",
-  border: "1px solid rgba(255,255,255,0.08)",
+  background: "#08041a",
+  border: "1px solid rgba(120,60,220,0.25)",
   borderRadius: 8,
   fontSize: 11,
   color: "#c8c8d8",
 };
 
+const MODEL_SERIES_COLORS: Record<string, string> = {
+  "Haiku 4.5":  "#0ea5e9",
+  "Sonnet 4.6": "#f59e0b",
+  "Opus 4.7":   "#8b5cf6",
+};
+const PROMPT_PALETTE = ["#10b981", "#f59e0b", "#8b5cf6", "#0ea5e9", "#f97316", "#ec4899"];
+
+type SeriesPoint = Record<string, string | number | undefined>;
+
 function SeasonRecord({ history }: { history: QuidditchRun[] }) {
+  const [mode, setMode] = useState<CompareMode>("model");
+
   if (history.length < 2) return null;
 
-  const data = [...history].reverse().map((r, i) => {
-    const hs = r.human_scores ?? {};
-    const hsVals = Object.values(hs) as number[];
-    return {
-      name:       `#${i + 1}`,
-      fullName:   `${r.prompt_name} (${r.model_display})`,
-      model:      r.model_display,
-      latency:    r.metrics.latency_s,
-      cost_m:     parseFloat((r.metrics.cost_usd * 1000).toFixed(4)),
-      self_eval:  r.metrics.self_eval_confidence,
-      sem_gt:     r.metrics.semantic_sim_gt,
-      bleu1:      r.metrics.bleu1_gt,
-      human_avg:  hsVals.length > 0
-        ? parseFloat((hsVals.reduce((a, b) => a + b, 0) / hsVals.length).toFixed(3))
-        : undefined,
-    };
+  const runs = [...history].reverse(); // oldest first → chronological
+
+  const modelKeys   = [...new Set(runs.map(r => r.model_display))];
+  const promptKeys  = [...new Set(runs.map(r => r.prompt_name))].slice(0, 6);
+  const seriesKeys  = mode === "model" ? modelKeys : promptKeys;
+
+  const seriesColor = (key: string, i: number) =>
+    mode === "model"
+      ? (MODEL_SERIES_COLORS[key] ?? "#94a3b8")
+      : PROMPT_PALETTE[i % PROMPT_PALETTE.length];
+
+  const seriesKeyFn = (r: QuidditchRun) =>
+    mode === "model" ? r.model_display : r.prompt_name;
+
+  // Build a flat data array; each run is one x-point.
+  // Only the series this run belongs to has a value — others are absent so
+  // Recharts renders separate lines that reconnect across gaps (connectNulls).
+  const makeData = (metricFn: (r: QuidditchRun) => number | undefined): SeriesPoint[] =>
+    runs.map((r, i) => {
+      const entry: SeriesPoint = { name: `#${i + 1}` };
+      const key = seriesKeyFn(r);
+      if (seriesKeys.includes(key)) {
+        const v = metricFn(r);
+        if (v !== undefined) entry[key] = v;
+      }
+      return entry;
+    });
+
+  const latencyData = makeData(r => r.metrics.latency_s);
+  const costData    = makeData(r => parseFloat((r.metrics.cost_usd * 1000).toFixed(4)));
+  const selfData    = makeData(r => r.metrics.self_eval_confidence);
+  const semData     = makeData(r => r.metrics.semantic_sim_gt);
+  const bleuData    = makeData(r => r.metrics.bleu1_gt);
+  const humanData   = makeData(r => {
+    const vals = Object.values(r.human_scores ?? {}) as number[];
+    return vals.length > 0
+      ? parseFloat((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(3))
+      : undefined;
   });
 
+  const lines = () =>
+    seriesKeys.map((key, i) => (
+      <Line
+        key={key}
+        type="monotone"
+        dataKey={key}
+        name={key}
+        stroke={seriesColor(key, i)}
+        strokeWidth={2}
+        dot={{ r: 3.5, fill: seriesColor(key, i), strokeWidth: 0 }}
+        connectNulls
+      />
+    ));
+
+  const Chart = ({
+    title, data, unit = "", domain,
+    fmtVal,
+  }: {
+    title: string;
+    data: SeriesPoint[];
+    unit?: string;
+    domain?: [number | string, number | string];
+    fmtVal?: (v: unknown) => string;
+  }) => (
+    <div>
+      <div className="text-[11px] text-ink-mute font-mono mb-2.5">{title}</div>
+      <ResponsiveContainer width="100%" height={155}>
+        <LineChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+          <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#6b7280" }} />
+          <YAxis
+            tick={{ fontSize: 10, fill: "#6b7280" }}
+            unit={unit}
+            {...(domain ? { domain } : {})}
+          />
+          <Tooltip
+            contentStyle={TOOLTIP_STYLE}
+            formatter={(v) => [fmtVal ? fmtVal(v) : String(v), ""]}
+          />
+          {lines()}
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+
   return (
-    <div className="rounded-[10px] border border-line-soft bg-surface p-5 space-y-6">
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-xl">📈</span>
-        <div>
-          <div className="text-sm font-semibold text-ink">Season Record</div>
-          <div className="text-[11px] text-ink-mute">
-            {history.length} matches — performance trends across prompt × model combos
+    <div className="rounded-[10px] border border-violet-500/20 bg-black/40 backdrop-blur-sm p-5 space-y-5">
+      {/* Header + toggle */}
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-2.5">
+          <span className="text-xl">📈</span>
+          <div>
+            <div className="text-sm font-semibold text-ink">Season Record</div>
+            <div className="text-[11px] text-ink-mute">
+              {history.length} matches ·{" "}
+              {mode === "model"
+                ? "one line per model — see cost/quality tradeoffs"
+                : "one line per prompt — find your best recipe"}
+            </div>
           </div>
+        </div>
+        <div className="flex gap-1 p-1 bg-black/30 rounded-lg border border-violet-500/20">
+          {(["model", "prompt"] as CompareMode[]).map(m => (
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              className={cn(
+                "px-3 py-1 rounded text-[11px] font-semibold transition-colors",
+                mode === m
+                  ? "bg-violet-500/25 border border-violet-500/40 text-violet-300"
+                  : "text-ink-mute hover:text-ink"
+              )}
+            >
+              {m === "model" ? "⚡ By Model" : "📋 By Prompt"}
+            </button>
+          ))}
         </div>
       </div>
 
+      {/* Series legend */}
+      <div className="flex flex-wrap gap-4">
+        {seriesKeys.map((key, i) => (
+          <div key={key} className="flex items-center gap-1.5">
+            <div className="w-5 h-0.5 rounded-full" style={{ background: seriesColor(key, i) }} />
+            <span className="text-[10px] text-ink-mute font-mono max-w-[160px] truncate">{key}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* 2×3 chart grid */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-
-        {/* Latency */}
-        <div>
-          <div className="text-[11px] text-ink-mute font-mono mb-3">⚡ Latency (seconds)</div>
-          <ResponsiveContainer width="100%" height={160}>
-            <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#6b7280" }} />
-              <YAxis tick={{ fontSize: 10, fill: "#6b7280" }} unit="s" />
-              <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v) => [`${v}s`, "Latency"]} />
-              <Line type="monotone" dataKey="latency" stroke="#f59e0b" strokeWidth={2}
-                dot={{ r: 3, fill: "#f59e0b", strokeWidth: 0 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Cost */}
-        <div>
-          <div className="text-[11px] text-ink-mute font-mono mb-3">💰 Cost (milli-$)</div>
-          <ResponsiveContainer width="100%" height={160}>
-            <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#6b7280" }} />
-              <YAxis tick={{ fontSize: 10, fill: "#6b7280" }} unit="m$" />
-              <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v) => [`${v}m$`, "Cost"]} />
-              <Line type="monotone" dataKey="cost_m" stroke="#10b981" strokeWidth={2}
-                dot={{ r: 3, fill: "#10b981", strokeWidth: 0 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Quality scores */}
-        <div>
-          <div className="text-[11px] text-ink-mute font-mono mb-3">🧠 Quality Scores (0–1)</div>
-          <ResponsiveContainer width="100%" height={160}>
-            <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#6b7280" }} />
-              <YAxis domain={[0, 1]} tick={{ fontSize: 10, fill: "#6b7280" }} />
-              <Tooltip contentStyle={TOOLTIP_STYLE} />
-              <Legend wrapperStyle={{ fontSize: 10, color: "#9ca3af" }} />
-              <Line type="monotone" dataKey="self_eval" name="Self-eval" stroke="#8b5cf6"
-                strokeWidth={2} dot={{ r: 3, fill: "#8b5cf6", strokeWidth: 0 }} connectNulls />
-              <Line type="monotone" dataKey="sem_gt" name="Sem·Sim GT" stroke="#06b6d4"
-                strokeWidth={2} dot={{ r: 3, fill: "#06b6d4", strokeWidth: 0 }} connectNulls />
-              <Line type="monotone" dataKey="bleu1" name="BLEU-1" stroke="#f97316"
-                strokeWidth={2} dot={{ r: 3, fill: "#f97316", strokeWidth: 0 }} connectNulls />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Human judge avg */}
-        <div>
-          <div className="text-[11px] text-ink-mute font-mono mb-3">👁 Human Judge Average (0–1)</div>
-          <ResponsiveContainer width="100%" height={160}>
-            <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#6b7280" }} />
-              <YAxis domain={[0, 1]} tick={{ fontSize: 10, fill: "#6b7280" }} />
-              <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v) => [typeof v === "number" ? v.toFixed(3) : v, "Human avg"]} />
-              <Line type="monotone" dataKey="human_avg" name="Human avg" stroke="#f59e0b"
-                strokeWidth={2} dot={{ r: 4, fill: "#f59e0b", strokeWidth: 0 }} connectNulls />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        <Chart title="⚡ Latency (s)" data={latencyData} unit="s"
+          fmtVal={v => `${v}s`} />
+        <Chart title="💰 Cost (milli-$)" data={costData} unit="m$"
+          fmtVal={v => `${v}m$`} />
+        <Chart title="🧠 Self-eval Score" data={selfData} domain={[0, 1]} />
+        <Chart title="🔮 Semantic Sim vs GT" data={semData} domain={[0, 1]} />
+        <Chart title="📊 BLEU-1 Score" data={bleuData} domain={[0, 1]} />
+        <Chart title="👁 Human Judge Avg" data={humanData} domain={[0, 1]}
+          fmtVal={v => typeof v === "number" ? v.toFixed(3) : String(v)} />
       </div>
     </div>
   );
@@ -575,11 +728,18 @@ export function QuidditchPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-surface">
+    <div
+      className="flex flex-col min-h-screen relative"
+      style={{ background: 'linear-gradient(160deg, #08041a 0%, #080a20 40%, #060d1a 70%, #08041a 100%)' }}
+    >
+      <QuidditchBackground />
+
+      {/* All content above background */}
+      <div className="relative flex flex-col flex-1" style={{ zIndex: 1 }}>
       <Topbar breadcrumb="Observability" title="Quidditch" />
 
       {/* ── Hero header ── */}
-      <div className="px-6 pt-6 pb-5 border-b border-line-soft">
+      <div className="px-6 pt-6 pb-5 border-b border-amber-500/15 bg-black/20 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
             <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400/20 to-amber-600/10 border border-amber-500/30 flex items-center justify-center text-2xl">
@@ -807,6 +967,7 @@ export function QuidditchPage() {
           </div>
         )}
       </div>
+      </div>{/* /content wrapper */}
     </div>
   );
 }
