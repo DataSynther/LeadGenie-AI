@@ -696,8 +696,11 @@ async def send_outreach(req: SendOutreachRequest):
 
 @app.post("/conversation/reply")
 async def handle_reply(req: ConversationRequest):
+    # Mark as replied immediately so the WhatsApp scheduler skips this lead
     followup_scheduler.mark_replied(req.lead_id)
-    result = conversation_agent.handle_reply(req.lead_id, req.reply, req.context)
+    result = await asyncio.to_thread(
+        conversation_agent.handle_reply, req.lead_id, req.reply, req.context
+    )
     try:
         stats_store.record_conversation(
             lead_id=req.lead_id,
@@ -711,6 +714,10 @@ async def handle_reply(req: ConversationRequest):
         )
     except Exception as _stats_err:
         logger.warning("stats_store.record_conversation failed: %s", _stats_err)
+    # Always surface the generated reply text so the frontend can display it immediately,
+    # regardless of whether the email send succeeded
+    if "reply" not in result and result.get("email"):
+        result["reply"] = result["email"].get("body") or result["email"].get("content", "")
     return result
 
 

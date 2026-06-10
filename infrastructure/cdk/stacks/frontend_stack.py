@@ -61,6 +61,13 @@ class FrontendStack(Stack):
                         "/approval-queue*",
                         "/credits*",
                         "/dev/*",
+                        "/whatsapp*",
+                        "/api/*",
+                        "/quidditch*",
+                        "/kb-facts*",
+                        "/memory/*",
+                        "/pending-messages*",
+                        "/followups/*",
                     ]
                 },
             },

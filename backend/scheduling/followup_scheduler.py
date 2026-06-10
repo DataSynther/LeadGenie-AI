@@ -134,6 +134,16 @@ class FollowupScheduler:
                 self._write(lead_id, record)
                 continue
 
+            # Also suppress if any inbound conversation message exists for this lead
+            if self._has_conversation_activity(lead_id):
+                logger.info(
+                    "Skipping WhatsApp follow-up lead_id=%s — inbound conversation activity detected",
+                    lead_id,
+                )
+                record["status"] = "replied"
+                self._write(lead_id, record)
+                continue
+
             message = self._build_message(record)
             latest_record = self.get(lead_id) or {}
             latest_status = latest_record.get("status")
@@ -268,6 +278,26 @@ class FollowupScheduler:
         cleaned = cleaned.replace(company_name, "").strip(" -:|")
         words = cleaned.split()
         return " ".join(words[:8]) if words else "a few practical ideas"
+
+    def _has_conversation_activity(self, lead_id: str) -> bool:
+        """Return True if any inbound message has been received for this lead (email or WhatsApp)."""
+        try:
+            conv = WhatsAppConversationStore().get_conversation(lead_id)
+            if conv:
+                inbound = [m for m in conv.get("messages", []) if m.get("direction") == "inbound"]
+                if inbound:
+                    return True
+        except Exception:
+            pass
+        try:
+            from agents.conversation.memory_manager import EpisodicMemory
+            history = EpisodicMemory().get(lead_id)
+            inbound = [m for m in history if m.get("role") in ("user", "lead")]
+            if inbound:
+                return True
+        except Exception:
+            pass
+        return False
 
     def _write(self, lead_id: str, record: dict) -> None:
         with open(self._path(lead_id), "w") as f:

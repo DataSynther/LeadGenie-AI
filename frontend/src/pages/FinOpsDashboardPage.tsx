@@ -1351,6 +1351,149 @@ function LeadCostTable({ data }: { data: FinOpsSummary["cost_by_lead"] }) {
   );
 }
 
+// ── Infrastructure Cost Breakdown ─────────────────────────────────────────────
+
+const INFRA_SERVICES = [
+  {
+    name: "ECS Fargate",
+    icon: "⚙️",
+    desc: "API + Worker containers (0.5 vCPU / 1 GB + 1 vCPU / 2 GB)",
+    monthly_usd: 28.50,
+    note: "~$0.04048/vCPU·hr · ~$0.004445/GB·hr · 2 tasks × 720 hr",
+    color: "bg-violet-500/10 text-violet-400 border-violet-500/20",
+  },
+  {
+    name: "Application Load Balancer",
+    icon: "⚡",
+    desc: "Single ALB with 1 listener rule",
+    monthly_usd: 16.20,
+    note: "$0.008/LCU·hr + $0.0225 base/hr × 720 hr",
+    color: "bg-sky-500/10 text-sky-400 border-sky-500/20",
+  },
+  {
+    name: "CloudFront CDN",
+    icon: "🌐",
+    desc: "SPA + API proxy, first 10 TB free tier",
+    monthly_usd: 0.00,
+    note: "Free tier: first 10 TB/month + 2M req/month included",
+    color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  },
+  {
+    name: "DynamoDB (2 tables)",
+    icon: "🗄️",
+    desc: "ActivityTable + BudgetTable (PAY_PER_REQUEST)",
+    monthly_usd: 1.25,
+    note: "$1.25/M write · $0.25/M read · On-demand, scales to zero",
+    color: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+  },
+  {
+    name: "ElastiCache Redis",
+    icon: "⚡",
+    desc: "1× cache.t3.micro — session & queue state",
+    monthly_usd: 12.24,
+    note: "$0.017/hr × 720 hr (t3.micro single-node)",
+    color: "bg-orange-500/10 text-orange-400 border-orange-500/20",
+  },
+  {
+    name: "ECR (2 repos)",
+    icon: "📦",
+    desc: "API + Worker Docker images",
+    monthly_usd: 0.50,
+    note: "$0.10/GB/month · ~5 GB total images stored",
+    color: "bg-pink-500/10 text-pink-400 border-pink-500/20",
+  },
+  {
+    name: "NAT Gateway",
+    icon: "🔀",
+    desc: "Egress for private subnets (ECS → internet)",
+    monthly_usd: 34.56,
+    note: "$0.045/hr + $0.045/GB processed · Largest fixed cost",
+    color: "bg-red-500/10 text-red-400 border-red-500/20",
+  },
+  {
+    name: "S3 (frontend bucket)",
+    icon: "🪣",
+    desc: "Static SPA assets",
+    monthly_usd: 0.03,
+    note: "$0.023/GB/month · ~1 GB assets",
+    color: "bg-teal-500/10 text-teal-400 border-teal-500/20",
+  },
+  {
+    name: "CloudWatch Logs",
+    icon: "📋",
+    desc: "ECS container logs (1-week retention)",
+    monthly_usd: 0.60,
+    note: "$0.50/GB ingested · ~1.2 GB/month estimated",
+    color: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
+  },
+];
+
+function InfrastructureCostPanel() {
+  const total = INFRA_SERVICES.reduce((s, r) => s + r.monthly_usd, 0);
+  const maxCost = Math.max(...INFRA_SERVICES.map(r => r.monthly_usd));
+
+  return (
+    <Panel>
+      <PanelTitle
+        title="AWS Infrastructure Cost Breakdown"
+        sub="Estimated monthly costs at current usage · all prices us-east-1 on-demand"
+      />
+
+      {/* Summary bar */}
+      <div className="flex items-center justify-between mb-4 p-3 rounded-lg border border-line-soft bg-surface-2">
+        <div>
+          <div className="text-[10px] text-ink-mute font-mono uppercase tracking-widest">Est. monthly total</div>
+          <div className="text-[22px] font-bold font-mono text-ink">${total.toFixed(2)}</div>
+        </div>
+        <div className="text-right">
+          <div className="text-[10px] text-ink-mute font-mono uppercase tracking-widest">Per day</div>
+          <div className="text-[16px] font-bold font-mono text-amber-400">${(total / 30).toFixed(2)}</div>
+        </div>
+        <div className="text-right">
+          <div className="text-[10px] text-ink-mute font-mono uppercase tracking-widest">AI costs (sep)</div>
+          <div className="text-[13px] font-semibold font-mono text-violet-400">tracked above ↑</div>
+        </div>
+      </div>
+
+      {/* Service rows */}
+      <div className="space-y-2">
+        {INFRA_SERVICES.sort((a, b) => b.monthly_usd - a.monthly_usd).map(svc => (
+          <div key={svc.name} className={cn("rounded-lg border p-3", svc.color)}>
+            <div className="flex items-start justify-between gap-3 mb-1.5">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-base shrink-0">{svc.icon}</span>
+                <div className="min-w-0">
+                  <div className="text-xs font-semibold truncate">{svc.name}</div>
+                  <div className="text-[10px] opacity-80 truncate">{svc.desc}</div>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <div className="text-sm font-bold font-mono">
+                  {svc.monthly_usd === 0 ? "Free" : `$${svc.monthly_usd.toFixed(2)}`}
+                </div>
+                <div className="text-[9px] opacity-70">/month</div>
+              </div>
+            </div>
+            {/* Cost bar */}
+            <div className="h-1 bg-current/10 rounded-full overflow-hidden mt-1">
+              <div
+                className="h-full bg-current/40 rounded-full"
+                style={{ width: `${maxCost > 0 ? (svc.monthly_usd / maxCost) * 100 : 0}%` }}
+              />
+            </div>
+            <div className="text-[9px] opacity-60 mt-1">{svc.note}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-3 text-[10px] text-ink-mute font-mono">
+        Note: NAT Gateway dominates infra cost — consider VPC endpoints for DynamoDB/S3 to eliminate ~$30/month.
+        Estimates assume low-moderate demo traffic. Production scale will increase ECS + CloudFront costs.
+      </div>
+    </Panel>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export function FinOpsDashboardPage() {
@@ -1456,6 +1599,9 @@ export function FinOpsDashboardPage() {
 
             {/* ── Per-lead attribution ──────────────────────────────────── */}
             <LeadCostTable data={data.cost_by_lead} />
+
+            {/* ── AWS Infrastructure Cost Breakdown ─────────────────────── */}
+            <InfrastructureCostPanel />
 
             {/* Pricing footnote */}
             <div className="text-[10px] text-ink-mute font-mono px-1 pt-1">

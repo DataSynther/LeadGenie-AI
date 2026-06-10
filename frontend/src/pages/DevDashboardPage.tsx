@@ -38,7 +38,7 @@ const AGENT_COLOURS: Record<string, string> = {
 
 function agentChip(agent: string) {
   return (
-    <span className={cn("font-mono text-[10px] px-1.5 py-px rounded capitalize", AGENT_COLOURS[agent] ?? "bg-surface-2 text-ink-2")}>
+    <span className={cn("font-mono text-[10px] px-1.5 py-px rounded capitalize", AGENT_COLOURS[agent] ?? "bg-surface-2 text-ink")}>
       {agent}
     </span>
   );
@@ -53,14 +53,11 @@ function Bar({ value, max, colour }: { value: number; max: number; colour: strin
   );
 }
 
-function SectionHeader({ icon, title, sub }: { icon: string; title: string; sub?: string }) {
+function SectionHeader({ title, sub }: { icon?: string; title: string; sub?: string }) {
   return (
-    <div className="flex items-start gap-2 mb-4">
-      <span className="text-xl leading-none mt-0.5">{icon}</span>
-      <div>
-        <div className="text-sm font-semibold text-ink">{title}</div>
-        {sub && <div className="text-[11px] text-ink-2 mt-0.5">{sub}</div>}
-      </div>
+    <div className="mb-4">
+      <div className="text-sm font-semibold text-ink tracking-tight">{title}</div>
+      {sub && <div className="text-[11px] text-ink-mute mt-0.5">{sub}</div>}
     </div>
   );
 }
@@ -90,7 +87,7 @@ function DiagnosticsPanel() {
     refetchInterval: 10_000,
   });
 
-  if (isLoading) return <Card><div className="text-ink-2 text-sm">Loading diagnostics…</div></Card>;
+  if (isLoading) return <Card><div className="text-ink text-sm">Loading diagnostics…</div></Card>;
   if (!data) return null;
 
   const cats = Object.entries(data.by_category);
@@ -101,19 +98,19 @@ function DiagnosticsPanel() {
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
         {cats.map(([key, cat]) => (
           <div key={key} className={cn("rounded-lg border p-3.5", CATEGORY_COLOURS[key] ?? "bg-surface-2 border-line-soft")}>
-            <div className="flex items-center justify-between mb-1">
-              <span className="font-mono text-[10px] uppercase tracking-widest opacity-60">{CATEGORY_ICONS[key]} {cat.label}</span>
-              <span className="font-serif text-2xl font-bold">{cat.count}</span>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="font-mono text-[10px] uppercase tracking-widest font-semibold">{CATEGORY_ICONS[key]} {cat.label}</span>
+              <span className="font-mono text-2xl font-bold">{cat.count}</span>
             </div>
-            <p className="text-[11px] opacity-70 mb-2 leading-relaxed">{cat.description}</p>
+            <p className="text-[11px] mb-2 leading-relaxed">{cat.description}</p>
             {cat.recent_events.length > 0 && (
-              <div className="space-y-1 border-t border-current/10 pt-2 mt-1">
+              <div className="space-y-1 border-t border-current/20 pt-2 mt-1">
                 {cat.recent_events.slice(0, 3).map((ev, i) => (
-                  <div key={i} className="text-[10px] opacity-60 flex gap-1.5">
-                    <span>{fmtTime(ev.ts)}</span>
-                    <span className="opacity-50">·</span>
-                    <span className="capitalize">{ev.agent}</span>
-                    {ev.detail && <span className="opacity-50 truncate">· {ev.detail}</span>}
+                  <div key={i} className="text-[10px] flex gap-1.5">
+                    <span className="opacity-70">{fmtTime(ev.ts)}</span>
+                    <span className="opacity-40">·</span>
+                    <span className="capitalize font-medium">{ev.agent}</span>
+                    {ev.detail && <span className="opacity-70 truncate">· {ev.detail}</span>}
                   </div>
                 ))}
               </div>
@@ -134,12 +131,12 @@ function AgentMetricsPanel() {
     refetchInterval: 10_000,
   });
 
-  if (isLoading) return <Card><div className="text-ink-2 text-sm">Loading agent metrics…</div></Card>;
+  if (isLoading) return <Card><div className="text-ink text-sm">Loading agent metrics…</div></Card>;
   if (!data || Object.keys(data).length === 0) {
     return (
       <Card>
         <SectionHeader icon="📊" title="AI Operations" sub="Per-agent performance" />
-        <div className="text-ink-2 text-sm py-6 text-center">No traces yet — run some agent calls to populate.</div>
+        <div className="text-ink text-sm py-6 text-center">No traces yet — run some agent calls to populate.</div>
       </Card>
     );
   }
@@ -152,7 +149,7 @@ function AgentMetricsPanel() {
       <div className="overflow-x-auto">
         <table className="w-full text-[12px]">
           <thead>
-            <tr className="text-ink-2 border-b border-line-soft">
+            <tr className="text-ink border-b border-line-soft">
               <th className="text-left font-mono text-[10px] uppercase tracking-widest pb-2 pr-4">Agent</th>
               <th className="text-right font-mono text-[10px] uppercase tracking-widest pb-2 pr-4">Calls</th>
               <th className="text-right font-mono text-[10px] uppercase tracking-widest pb-2 pr-4">Success</th>
@@ -172,12 +169,12 @@ function AgentMetricsPanel() {
                     {(m.success_rate * 100).toFixed(0)}%
                   </span>
                 </td>
-                <td className="text-right pr-4 text-ink-2 font-mono">{m.avg_latency_ms.toFixed(0)}ms</td>
-                <td className="text-right pr-4 text-ink-2 font-mono">{m.avg_tokens}</td>
+                <td className="text-right pr-4 text-ink font-mono">{m.avg_latency_ms.toFixed(0)}ms</td>
+                <td className="text-right pr-4 text-ink font-mono">{m.avg_tokens}</td>
                 <td className="text-right pr-4">
                   {m.avg_confidence != null
                     ? <span className={cn("font-mono", m.avg_confidence >= 0.8 ? "text-emerald-400" : m.avg_confidence >= 0.65 ? "text-amber-400" : "text-red-400")}>{(m.avg_confidence * 100).toFixed(0)}%</span>
-                    : <span className="text-ink-2">—</span>}
+                    : <span className="text-ink">—</span>}
                 </td>
                 <td className="text-right">
                   <span className={cn("font-mono", m.validation.pass_rate >= 0.9 ? "text-emerald-400" : m.validation.pass_rate >= 0.7 ? "text-amber-400" : "text-red-400")}>
@@ -202,12 +199,12 @@ function ValidationPanel() {
     refetchInterval: 10_000,
   });
 
-  if (isLoading) return <Card><div className="text-ink-2 text-sm">Loading validation log…</div></Card>;
+  if (isLoading) return <Card><div className="text-ink text-sm">Loading validation log…</div></Card>;
   if (!data || data.length === 0) {
     return (
       <Card>
         <SectionHeader icon="🛡️" title="Governance & Validation" sub="shape · context · policy · business rules" />
-        <div className="text-ink-2 text-sm py-6 text-center">No validation events yet.</div>
+        <div className="text-ink text-sm py-6 text-center">No validation events yet.</div>
       </Card>
     );
   }
@@ -230,7 +227,7 @@ function ValidationPanel() {
         ].map(item => (
           <div key={item.label} className={cn("flex-1 rounded-lg p-3 text-center", item.colour)}>
             <div className="font-serif text-2xl font-bold">{item.count}</div>
-            <div className="font-mono text-[10px] uppercase tracking-widest opacity-70">{item.label}</div>
+            <div className="font-mono text-[10px] uppercase tracking-widest font-semibold">{item.label}</div>
           </div>
         ))}
       </div>
@@ -250,7 +247,7 @@ function ValidationPanel() {
               {v.consequence}
             </span>
             {agentChip(v.agent)}
-            <span className="text-ink-2 truncate flex-1">{v.issues.length > 0 ? v.issues.join(" · ") : "all checks passed"}</span>
+            <span className="text-ink truncate flex-1">{v.issues.length > 0 ? v.issues.join(" · ") : "all checks passed"}</span>
             <span className="text-ink-mute shrink-0">{fmtTime(v.ts)}</span>
           </div>
         ))}
@@ -268,12 +265,12 @@ function RetrievalAndPromptPanel() {
     refetchInterval: 10_000,
   });
 
-  if (isLoading) return <Card><div className="text-ink-2 text-sm">Loading trace data…</div></Card>;
+  if (isLoading) return <Card><div className="text-ink text-sm">Loading trace data…</div></Card>;
   if (!data || data.length === 0) {
     return (
       <Card>
         <SectionHeader icon="🔍" title="Retrieval & Prompt Intelligence" sub="context coverage · ambiguity scores" />
-        <div className="text-ink-2 text-sm py-6 text-center">No traces yet.</div>
+        <div className="text-ink text-sm py-6 text-center">No traces yet.</div>
       </Card>
     );
   }
@@ -314,7 +311,7 @@ function RetrievalAndPromptPanel() {
               <div key={row.agent}>
                 <div className="flex justify-between mb-1">
                   {agentChip(row.agent)}
-                  <span className="text-[10px] text-ink-2 font-mono">
+                  <span className="text-[10px] text-ink font-mono">
                     ctx {(row.avgContext * 100).toFixed(0)}% · ambig {(row.avgAmbiguity * 100).toFixed(0)}%
                   </span>
                 </div>
@@ -330,8 +327,8 @@ function RetrievalAndPromptPanel() {
             ))}
           </div>
           <div className="flex gap-3 mt-3">
-            <span className="flex items-center gap-1 text-[10px] text-ink-2"><span className="w-2 h-1.5 rounded-full bg-sky-500 inline-block" />Context</span>
-            <span className="flex items-center gap-1 text-[10px] text-ink-2"><span className="w-2 h-1.5 rounded-full bg-violet-500 inline-block" />Ambiguity</span>
+            <span className="flex items-center gap-1 text-[10px] text-ink"><span className="w-2 h-1.5 rounded-full bg-sky-500 inline-block" />Context</span>
+            <span className="flex items-center gap-1 text-[10px] text-ink"><span className="w-2 h-1.5 rounded-full bg-violet-500 inline-block" />Ambiguity</span>
           </div>
         </div>
 
@@ -343,9 +340,9 @@ function RetrievalAndPromptPanel() {
               const hasCats = d.cats.filter(Boolean).length;
               return (
                 <div key={v} className="flex items-center gap-2">
-                  <span className="font-mono text-[10px] text-ink-2 w-36 truncate">{v}</span>
+                  <span className="font-mono text-[10px] text-ink w-36 truncate">{v}</span>
                   <Bar value={d.count} max={Math.max(...Object.values(promptVersions).map(x => x.count))} colour="bg-brand/60" />
-                  <span className="font-mono text-[10px] text-ink-2 w-6 text-right">{d.count}</span>
+                  <span className="font-mono text-[10px] text-ink w-6 text-right">{d.count}</span>
                   {hasCats > 0 && (
                     <span className="font-mono text-[10px] text-amber-400">{hasCats} flags</span>
                   )}
@@ -368,12 +365,12 @@ function SystemInsightsPanel() {
     refetchInterval: 10_000,
   });
 
-  if (isLoading) return <Card><div className="text-ink-2 text-sm">Loading system insights…</div></Card>;
+  if (isLoading) return <Card><div className="text-ink text-sm">Loading system insights…</div></Card>;
   if (!data || Object.keys(data).length === 0) {
     return (
       <Card>
         <SectionHeader icon="⚡" title="System Insights" sub="latency bottlenecks · token cost" />
-        <div className="text-ink-2 text-sm py-6 text-center">No data yet.</div>
+        <div className="text-ink text-sm py-6 text-center">No data yet.</div>
       </Card>
     );
   }
@@ -400,7 +397,7 @@ function SystemInsightsPanel() {
               <div key={agent}>
                 <div className="flex justify-between mb-1">
                   {agentChip(agent)}
-                  <span className="font-mono text-[10px] text-ink-2">{m.avg_latency_ms.toFixed(0)} ms</span>
+                  <span className="font-mono text-[10px] text-ink">{m.avg_latency_ms.toFixed(0)} ms</span>
                 </div>
                 <Bar value={m.avg_latency_ms} max={maxLatency}
                   colour={m.avg_latency_ms > maxLatency * 0.7 ? "bg-red-400" : m.avg_latency_ms > maxLatency * 0.4 ? "bg-amber-400" : "bg-emerald-400"}
@@ -415,18 +412,18 @@ function SystemInsightsPanel() {
           <div>
             <div className="label-mono mb-2">Token Usage</div>
             <div className="font-serif text-3xl text-ink">{totalTokens.toLocaleString()}</div>
-            <div className="text-[11px] text-ink-2 mt-0.5">across {totalCalls} agent calls</div>
+            <div className="text-[11px] text-ink mt-0.5">across {totalCalls} agent calls</div>
           </div>
           <div>
             <div className="label-mono mb-2">Estimated Cost</div>
             <div className="font-serif text-3xl text-gold-dark">${estCostUsd.toFixed(4)}</div>
-            <div className="text-[11px] text-ink-2 mt-0.5">Sonnet 4.6 blended rate</div>
+            <div className="text-[11px] text-ink mt-0.5">Sonnet 4.6 blended rate</div>
           </div>
           <div className="border-t border-line-soft pt-3 space-y-1">
             {agents.map(([agent, m]) => (
               <div key={agent} className="flex justify-between text-[11px]">
                 {agentChip(agent)}
-                <span className="text-ink-2 font-mono">{(m.avg_tokens * m.total_calls).toLocaleString()} tok · ${(m.avg_tokens * m.total_calls * COST_PER_TOKEN).toFixed(4)}</span>
+                <span className="text-ink font-mono">{(m.avg_tokens * m.total_calls).toLocaleString()} tok · ${(m.avg_tokens * m.total_calls * COST_PER_TOKEN).toFixed(4)}</span>
               </div>
             ))}
           </div>
@@ -445,12 +442,12 @@ function TraceFeed() {
     refetchInterval: 10_000,
   });
 
-  if (isLoading) return <Card><div className="text-ink-2 text-sm">Loading trace feed…</div></Card>;
+  if (isLoading) return <Card><div className="text-ink text-sm">Loading trace feed…</div></Card>;
   if (!data || data.length === 0) {
     return (
       <Card>
         <SectionHeader icon="📡" title="Live Trace Feed" sub="most recent agent calls" />
-        <div className="text-ink-2 text-sm py-6 text-center">No traces yet — trigger an agent call to start.</div>
+        <div className="text-ink text-sm py-6 text-center">No traces yet — trigger an agent call to start.</div>
       </Card>
     );
   }
@@ -466,12 +463,12 @@ function TraceFeed() {
             <span className={cn("font-mono shrink-0", t.success ? "text-emerald-400" : "text-red-400")}>
               {t.success ? "✓" : "✗"}
             </span>
-            <span className="text-ink-2 font-mono shrink-0">{t.latency_ms.toFixed(0)}ms</span>
-            <span className="text-ink-2 font-mono shrink-0">{t.tokens_used}tok</span>
+            <span className="text-ink font-mono shrink-0">{t.latency_ms.toFixed(0)}ms</span>
+            <span className="text-ink font-mono shrink-0">{t.tokens_used}tok</span>
             {t.diagnostic_categories.length > 0 && (
               <div className="flex gap-1 flex-wrap">
                 {t.diagnostic_categories.map(cat => (
-                  <span key={cat} className={cn("px-1 py-px rounded border text-[9px] font-mono", CATEGORY_COLOURS[cat] ?? "bg-surface-2 text-ink-2 border-line-soft")}>
+                  <span key={cat} className={cn("px-1 py-px rounded border text-[9px] font-mono", CATEGORY_COLOURS[cat] ?? "bg-surface-2 text-ink border-line-soft")}>
                     {CATEGORY_ICONS[cat] ?? "?"} {cat.split("_")[0]}
                   </span>
                 ))}
@@ -540,7 +537,7 @@ function RetrievalGroundingPanel() {
             <div className="space-y-2">
               {Object.entries(selfEval).map(([agent, s]) => (
                 <div key={agent} className="flex items-center gap-3 text-[11px]">
-                  <span className={cn("font-mono px-1.5 py-px rounded capitalize shrink-0", AGENT_COLOURS[agent] ?? "bg-surface-2 text-ink-2")}>{agent}</span>
+                  <span className={cn("font-mono px-1.5 py-px rounded capitalize shrink-0", AGENT_COLOURS[agent] ?? "bg-surface-2 text-ink")}>{agent}</span>
                   <div className="flex-1 h-2 bg-surface-2 rounded overflow-hidden">
                     <div className={cn("h-full rounded", s.avg_confidence >= 0.65 ? "bg-emerald-400" : "bg-amber-400")} style={{ width: `${Math.round(s.avg_confidence * 100)}%` }} />
                   </div>
@@ -571,7 +568,7 @@ function CitationsPanel() {
     if (val === null || val === undefined) return null;
     if (Array.isArray(val)) {
       return (
-        <div key={key} className="text-[10px] text-ink-2">
+        <div key={key} className="text-[10px] text-ink">
           <span className="text-ink-mute font-mono">{key}:</span>{" "}
           {(val as { title?: string; source?: string; url?: string }[]).map((t, i) => (
             <span key={i} className="ml-1">
@@ -591,7 +588,7 @@ function CitationsPanel() {
     return (
       <div key={key} className="flex gap-1.5 text-[10px]">
         <span className="text-ink-mute font-mono shrink-0 w-28 truncate">{key}</span>
-        <span className="text-ink-2 truncate">{display}</span>
+        <span className="text-ink truncate">{display}</span>
         <span className="text-ink-mute ml-auto shrink-0">{c.source}</span>
       </div>
     );
@@ -607,7 +604,7 @@ function CitationsPanel() {
           {entries.map((entry, i) => (
             <div key={i} className="rounded-lg border border-line-soft bg-surface-2 p-3 space-y-1.5">
               <div className="flex items-center gap-2 mb-2">
-                <span className={cn("font-mono text-[10px] px-1.5 py-px rounded capitalize", AGENT_COLOURS[entry.agent] ?? "bg-surface-2 text-ink-2")}>{entry.agent}</span>
+                <span className={cn("font-mono text-[10px] px-1.5 py-px rounded capitalize", AGENT_COLOURS[entry.agent] ?? "bg-surface-2 text-ink")}>{entry.agent}</span>
                 {entry.retrieval_score != null && (
                   <span className={cn("font-mono text-[10px] px-1.5 py-px rounded", entry.retrieval_score >= 0.55 ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400")}>
                     retrieval {entry.retrieval_score.toFixed(3)}
@@ -646,7 +643,7 @@ function InterpretationDriftPanel() {
             <div key={pv} className="rounded-lg border border-line-soft bg-surface-2 p-3">
               <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <span className="font-mono text-[11px] text-ink">{pv}</span>
-                <span className={cn("font-mono text-[10px] px-1.5 py-px rounded capitalize", AGENT_COLOURS[s.agent] ?? "bg-surface-2 text-ink-2")}>{s.agent}</span>
+                <span className={cn("font-mono text-[10px] px-1.5 py-px rounded capitalize", AGENT_COLOURS[s.agent] ?? "bg-surface-2 text-ink")}>{s.agent}</span>
                 <span className="text-[10px] text-ink-mute">{s.total_seen} runs</span>
                 {s.drift_events > 0
                   ? <span className="ml-auto text-[10px] bg-amber-500/10 text-amber-400 px-1.5 py-px rounded font-mono">⚠ {s.drift_events} drift{s.drift_events > 1 ? "s" : ""}</span>

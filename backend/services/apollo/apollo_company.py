@@ -33,7 +33,9 @@ class ApolloCompanyService:
         return None
 
     def enrich_company(self, domain: str) -> Optional[dict]:
-        """Enrich company — tries live Apollo first, falls back to demo_companies.json on any error."""
+        """Enrich company — uses cached demo data when APOLLO_DEMO_MODE=true or no API key."""
+        if os.getenv("APOLLO_DEMO_MODE", "true").lower() == "true" or not self.headers.get("X-Api-Key"):
+            return self._search_sample(domain)
         try:
             response = requests.get(
                 f"{APOLLO_BASE_URL}/organizations/enrich",

@@ -31,7 +31,9 @@ class ApolloPeopleService:
         }
 
     def search_people(self, filters: dict) -> list[dict]:
-        """Search people — tries live Apollo, falls back to demo_leads.json on any error."""
+        """Search people — uses cached demo data when APOLLO_DEMO_MODE=true or no API key."""
+        if os.getenv("APOLLO_DEMO_MODE", "true").lower() == "true" or not self._api_key:
+            return self._search_sample(filters)
         try:
             payload: dict = {
                 "person_titles":      filters.get("titles", []),
@@ -63,11 +65,13 @@ class ApolloPeopleService:
         return self._search_sample(filters)
 
     def get_person_details(self, person_id: str) -> Optional[dict]:
-        """Get person by ID — checks demo file first, then live Apollo, returns None on miss."""
-        # Sample IDs are always resolved locally (fast, no API cost)
+        """Get person by ID — always resolves from demo data when APOLLO_DEMO_MODE=true."""
         sample_match = next((p for p in _SAMPLE_LEADS if p["id"] == person_id), None)
         if sample_match:
             return self._normalize_sample(sample_match)
+
+        if os.getenv("APOLLO_DEMO_MODE", "true").lower() == "true" or not self._api_key:
+            return None
 
         # Unknown ID — try live Apollo
         try:
