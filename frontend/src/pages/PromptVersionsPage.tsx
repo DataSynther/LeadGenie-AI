@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { cn } from "../lib/utils";
 import { Topbar } from "../components/layout/Topbar";
 import {
@@ -382,6 +383,7 @@ function RunDetail({ run }: { run: EngagementRun }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export function PromptVersionsPage() {
+  const navigate = useNavigate();
   const { data: runs = [], isLoading } = useQuery({
     queryKey: ["engagementRuns"],
     queryFn: api.devEngagementRuns,
@@ -396,6 +398,16 @@ export function PromptVersionsPage() {
       <Topbar breadcrumb="Observability" title="Prompt Quality by Engagement" />
 
       <div className="p-8 pb-20">
+        {/* Quidditch Prompt Lab link */}
+        <div className="flex justify-end mb-5">
+          <button
+            onClick={() => navigate("/quidditch")}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-400 text-xs font-semibold hover:bg-amber-500/20 transition-colors"
+          >
+            🏟️ Open Quidditch Prompt Lab →
+          </button>
+        </div>
+
         {isLoading && (
           <div className="text-ink-mute text-sm text-center py-12">Loading engagement runs…</div>
         )}

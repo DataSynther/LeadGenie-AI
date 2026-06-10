@@ -209,6 +209,14 @@ class WhatsAppReplyRequest(BaseModel):
     conversation_id: Optional[str] = None
 
 
+class QuidditchRunRequest(BaseModel):
+    prompt_template: str
+    model: str = "claude-sonnet-4-6"
+    ground_truth: str = ""
+    prompt_name: str = ""
+    mock_context: Optional[dict] = None
+
+
 @app.get("/health")
 async def health():
     """Health check endpoint."""
@@ -1786,3 +1794,34 @@ async def pending_messages():
 @app.post("/followups/process-due")
 async def process_due_followups():
     return {"processed": followup_scheduler.process_due()}
+
+
+# ── Quidditch — Prompt × Model Performance Lab ────────────────────────────────
+
+@app.post("/quidditch/run")
+async def quidditch_run(req: QuidditchRunRequest):
+    from quidditch.runner import run_match
+    result = await asyncio.to_thread(
+        run_match,
+        req.prompt_template,
+        req.model,
+        req.ground_truth,
+        req.prompt_name,
+        req.mock_context,
+    )
+    return result
+
+
+@app.get("/quidditch/history")
+async def quidditch_history():
+    from quidditch.runner import get_history
+    return get_history()
+
+
+@app.patch("/quidditch/runs/{run_id}/human-scores")
+async def quidditch_human_scores(run_id: str, scores: dict):
+    from quidditch.runner import patch_human_scores
+    ok = patch_human_scores(run_id, scores)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Run not found")
+    return {"ok": True}

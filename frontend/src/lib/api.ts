@@ -31,6 +31,16 @@ async function del<T>(path: string): Promise<T> {
   return res.json();
 }
 
+async function patch<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`PATCH ${path} → ${res.status}`);
+  return res.json();
+}
+
 // ── Dashboard ────────────────────────────────────────────────────────────────
 
 export const dashboardStats = () => get<{
@@ -931,6 +941,53 @@ export type EngagementRun = {
 
 export const devEngagementRuns = () => get<EngagementRun[]>("/dev/engagement-runs");
 
+// ── Quidditch — Prompt × Model Performance Lab ────────────────────────────────
+
+export type QuidditchMetrics = {
+  latency_s: number;
+  cost_usd: number;
+  input_tokens: number;
+  output_tokens: number;
+  tone_passed?: boolean;
+  tone_issues?: string[];
+  hallucination_passed?: boolean;
+  hallucination_confidence?: number;
+  hallucination_violations?: string[];
+  hallucination_explanation?: string;
+  self_eval_confidence?: number;
+  self_eval_sufficient?: boolean;
+  self_eval_explanation?: string;
+  retrieval_score?: number;
+  bleu1_gt?: number;
+  semantic_sim_gt?: number;
+};
+
+export type QuidditchRun = {
+  run_id: string;
+  ts: string;
+  model: string;
+  model_display: string;
+  prompt_name: string;
+  prompt_template: string;
+  ground_truth: string;
+  generated_text: string;
+  metrics: QuidditchMetrics;
+  human_scores: Record<string, number>;
+};
+
+export const quidditchRun = (req: {
+  prompt_template: string;
+  model: string;
+  ground_truth?: string;
+  prompt_name?: string;
+  mock_context?: Record<string, unknown>;
+}) => post<QuidditchRun>("/quidditch/run", req);
+
+export const quidditchHistory = () => get<QuidditchRun[]>("/quidditch/history");
+
+export const quidditchSaveHumanScores = (runId: string, scores: Record<string, number>) =>
+  patch<{ ok: boolean }>(`/quidditch/runs/${runId}/human-scores`, scores);
+
 export const api = {
   dashboardStats,
   agentFeedRecent,
@@ -978,6 +1035,9 @@ export const api = {
   dashboardKbInsights,
   getOutreachTrend,
   getPipelineLatency,
+  quidditchRun,
+  quidditchHistory,
+  quidditchSaveHumanScores,
 };
 
 export default api;
