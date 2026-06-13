@@ -8,7 +8,7 @@ class VpcStack(Stack):
 
         self.vpc = ec2.Vpc(self, "LeadGenieVpc",
             max_azs=2,
-            nat_gateways=1,             # single NAT saves ~$32/mo vs 2
+            nat_gateways=0,             # ECS uses public subnets + public IPs — no NAT needed
             subnet_configuration=[
                 ec2.SubnetConfiguration(
                     name="Public",

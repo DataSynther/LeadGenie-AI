@@ -165,7 +165,8 @@ class ComputeStack(Stack):
             min_healthy_percent=0,
             max_healthy_percent=200,
             security_groups=[app_sg],
-            vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
+            vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
+            assign_public_ip=True,
             enable_execute_command=True,
             circuit_breaker=ecs.DeploymentCircuitBreaker(rollback=True),
         )
@@ -201,7 +202,8 @@ class ComputeStack(Stack):
             min_healthy_percent=0,
             max_healthy_percent=200,
             security_groups=[app_sg],
-            vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
+            vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
+            assign_public_ip=True,
             circuit_breaker=ecs.DeploymentCircuitBreaker(rollback=True),
             capacity_provider_strategies=[
                 ecs.CapacityProviderStrategy(
