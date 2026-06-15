@@ -2,7 +2,7 @@ name: Deploy LeadGenie-AI → AWS V2 (ECS Fargate)
 
 on:
   push:
-    branches: [aws/deploy-v2]
+    branches: [aws/deploy-v2, final-round]
   workflow_dispatch:
     inputs:
       destroy:
