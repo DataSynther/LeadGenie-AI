@@ -365,6 +365,7 @@ export const sendOutreach = (params: {
   body: string;
   reasoning?: string;
   context: unknown;
+  eventId?: string | null;
 }) =>
   post<{ sent: boolean; to: string; lead_id: string }>("/outreach/send", {
     lead_id: params.leadId,
@@ -374,6 +375,7 @@ export const sendOutreach = (params: {
     body: params.body,
     reasoning: params.reasoning,
     context: params.context,
+    event_id: params.eventId ?? null,
   });
 
 // ── Health ───────────────────────────────────────────────────────────────────

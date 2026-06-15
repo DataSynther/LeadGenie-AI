@@ -55,11 +55,34 @@ jobs:
             frontend:
               - 'frontend/**'
 
-  # ─── 1. Build & push Docker images ──────────────────────────────────────────
+  # ─── 1. Eval pipeline (pre-deploy gate) ─────────────────────────────────────
+  eval:
+    name: Eval Pipeline (4-Layer Gate)
+    runs-on: ubuntu-latest
+    needs: changes
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt --quiet
+
+      - name: Run 4-layer eval pipeline (no LLM judge to save cost)
+        env:
+          NO_LLM_JUDGE: "true"
+        run: bash scripts/run_evals.sh
+
+  # ─── 2. Build & push Docker images ──────────────────────────────────────────
   build:
     name: Build & Push Images
     runs-on: ubuntu-latest
-    needs: changes
+    needs: [changes, eval]
     outputs:
       api_image:    ${{ steps.resolve.outputs.api_image }}
       worker_image: ${{ steps.resolve.outputs.worker_image }}

@@ -203,6 +203,7 @@ class SendOutreachRequest(BaseModel):
     body: str
     reasoning: Optional[str] = None
     context: dict = {}
+    event_id: Optional[str] = None  # pass from frontend to avoid DynamoDB GSI eventual-consistency scan
 
 
 class WhatsAppReplyRequest(BaseModel):
@@ -677,16 +678,24 @@ async def send_outreach(req: SendOutreachRequest):
     }
     lead_context_store.save(req.to_email, req.lead_id, enriched_context)
 
-    # Mark the most recent pending queue item for this lead as approved (direct send bypasses the queue UI).
-    pending = outreach_queue.get_queue(status="pending")
-    for item in pending:
-        if item.get("lead_id") == req.lead_id:
-            outreach_queue.update_status(item["event_id"], "approved")
-            try:
-                stats_store.update_outreach_status(item["event_id"], "approved")
-            except Exception as _e:
-                logger.warning("stats_store.update_outreach_status failed: %s", _e)
-            break
+    # Mark the queue item as approved. Use event_id directly if provided (avoids DynamoDB
+    # GSI eventual-consistency issue where a just-inserted item may not appear in a scan).
+    if req.event_id:
+        outreach_queue.update_status(req.event_id, "approved")
+        try:
+            stats_store.update_outreach_status(req.event_id, "approved")
+        except Exception as _e:
+            logger.warning("stats_store.update_outreach_status failed: %s", _e)
+    else:
+        pending = outreach_queue.get_queue(status="pending")
+        for item in pending:
+            if item.get("lead_id") == req.lead_id:
+                outreach_queue.update_status(item["event_id"], "approved")
+                try:
+                    stats_store.update_outreach_status(item["event_id"], "approved")
+                except Exception as _e:
+                    logger.warning("stats_store.update_outreach_status failed: %s", _e)
+                break
 
     followup = None
     if lead_phone:

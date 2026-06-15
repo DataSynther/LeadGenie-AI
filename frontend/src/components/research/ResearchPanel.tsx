@@ -261,6 +261,7 @@ export function ResearchPanel({ lead, onClose, autoGenerate = false, defaultChan
         : editableEmail!.body,
       reasoning: editableEmail?.reasoning,
       context: outreachResult,
+      eventId: (outreachResult as any)?.queued_event_id ?? null,
     }),
   });
 
