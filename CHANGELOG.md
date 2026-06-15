@@ -115,10 +115,26 @@ Metrics per run:
 - BLEU-1, semantic similarity vs ground truth
 - Tone validation, hallucination check, self-eval confidence
 - Retrieval grounding score
+- **Prompt quality audit** — 16-criteria Anthropic best-practices score (see below)
 
 Human scores patchable via `PATCH /quidditch/runs/{run_id}/human-scores`.
 
 Files: `backend/quidditch/runner.py`, `backend/main.py` (`/quidditch/*` endpoints)
+
+### Quidditch — Anthropic Prompting Best-Practices Audit
+Every Quidditch run now scores the prompt template against Anthropic's prompting best practices. Results appear in `metrics["prompt_quality"]` of each run record.
+
+**16 criteria across two tiers:**
+
+| Tier | Criteria | Weight |
+|---|---|---|
+| Rule-based | clarity, examples_present, xml_structure, role_assignment, no_prefill, positive_format, output_explicit, self_check, no_over_prompting, specificity | 0.04–0.10 |
+| Semantic (Haiku) | context_motivation, anti_hallucination, effort_calibration, golden_rule, agentic_safety, scope_control | 0.03–0.12 |
+
+Weighted aggregate ≥ 0.6 → passed. Warnings generated for any criterion below 0.5.
+`anti_hallucination` (0.12) and `golden_rule` + `clarity` (0.10 each) carry the most weight.
+
+File: `backend/quidditch/runner.py` (`audit_prompt_quality`, `_rule_based_prompt_scores`, `_semantic_prompt_scores`)
 
 ### EFS Shared Persistent Storage
 Shared EFS volume mounted at `/app/backend/storage` on both API and worker containers so file-based stores (memory, diagnostics, stats) survive across task restarts within a deployment.
