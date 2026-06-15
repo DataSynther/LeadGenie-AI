@@ -23,26 +23,29 @@ def _split_sentences(text: str) -> list[str]:
 
 
 def _faithfulness(generated: str, context: dict, source_facts: list[str]) -> float:
-    """Jaccard similarity per generated sentence vs all context+facts. Mean across sentences."""
-    ctx_strings: list[str] = []
-    for v in context.values():
-        if isinstance(v, str):
-            ctx_strings.append(v)
-        elif isinstance(v, dict):
-            ctx_strings.extend(str(vv) for vv in v.values())
-    ctx_strings.extend(source_facts or [])
-    if not ctx_strings:
+    """Token recall: fraction of each source-fact's tokens present in generated text, averaged.
+
+    Jaccard per-sentence against short facts always scores low because it penalises extra
+    tokens in long sentences. Token recall correctly measures whether the output is grounded
+    in the provided facts regardless of sentence length.
+    """
+    facts = list(source_facts or [])
+    if not facts:
         return 1.0
 
-    sentences = _split_sentences(generated)
-    if not sentences:
+    gen_tokens = _tokenize(generated)
+    if not gen_tokens:
         return 1.0
 
-    scores = []
-    for sent in sentences:
-        best = max(_jaccard(sent, ref) for ref in ctx_strings)
-        scores.append(best)
-    return sum(scores) / len(scores)
+    recalls = []
+    for fact in facts:
+        fact_tokens = _tokenize(fact)
+        if not fact_tokens:
+            continue
+        covered = len(fact_tokens & gen_tokens) / len(fact_tokens)
+        recalls.append(covered)
+
+    return sum(recalls) / len(recalls) if recalls else 1.0
 
 
 def _answer_relevance(generated: str, task: str) -> float:
