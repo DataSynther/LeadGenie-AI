@@ -1,6 +1,7 @@
 """Quidditch — Prompt & Model Performance Lab.
 
 Run a prompt × model combo, score against ground truth, and persist results.
+Includes prompt quality audit against Anthropic prompting best practices.
 """
 import json
 import os
@@ -15,6 +16,174 @@ import numpy as np
 from anthropic import Anthropic
 
 _client = Anthropic()
+
+# ── Prompt quality criteria (Anthropic best practices) ────────────────────────
+# Ref: https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices
+#
+# Two tiers:
+#   Rule-based  — fast regex/heuristic, no API call
+#   Semantic    — Claude Haiku judge, only when ANTHROPIC_API_KEY available
+#
+# Weights sum to 1.0
+
+_PROMPT_CRITERIA_WEIGHTS: dict[str, float] = {
+    # Rule-based
+    "clarity":              0.10,  # Specific, explicit instructions; no vague openers
+    "examples_present":     0.10,  # 3-5 diverse examples in <example> tags
+    "xml_structure":        0.07,  # <instructions>/<context>/<input> separation
+    "role_assignment":      0.05,  # "You are a/an…" in system prompt
+    "no_prefill":           0.04,  # No prefilled assistant turn (deprecated 4.6+)
+    "positive_format":      0.06,  # Format instructions positive ("write X") not negative ("don't use X")
+    "output_explicit":      0.07,  # Explicit output format stated (JSON, prose, list…)
+    "self_check":           0.05,  # Instructs model to verify output before finishing
+    "no_over_prompting":    0.04,  # No excessive CRITICAL/MUST/ALWAYS caps emphasis
+    "specificity":          0.06,  # Concrete constraints (length, format, tone)
+    # Semantic (Haiku judge)
+    "context_motivation":   0.08,  # Explains WHY, not just WHAT
+    "anti_hallucination":   0.12,  # Guard: "investigate before asserting / read before answering"
+    "effort_calibration":   0.06,  # Thinking/effort level appropriate for task complexity
+    "golden_rule":          0.10,  # Clear to a colleague with minimal context
+    "agentic_safety":       0.03,  # If agentic, guardrails for risky/destructive actions
+    "scope_control":        0.07,  # Minimal, focused — no over-engineering or padding
+}
+
+_VAGUE_OPENERS = re.compile(
+    r"\b(can you|could you|please try|maybe|you might|you could|consider|feel free|"
+    r"if you want|whenever possible|as much as possible)\b", re.I
+)
+_NEGATIVE_FORMAT = re.compile(
+    r"\b(don't use|do not use|avoid using|never use|don't include|do not include)\b"
+    r".{0,40}(bullet|markdown|list|header|bold|italic|table|json|xml)", re.I
+)
+_OVER_PROMPT = re.compile(r"\b(CRITICAL|MUST|ALWAYS|NEVER|IMPORTANT|WARNING)\b")
+
+
+def _rule_based_prompt_scores(prompt: str) -> dict[str, float]:
+    """Fast structural checks, no API call."""
+    scores: dict[str, float] = {}
+
+    # clarity — penalise vague openers
+    vague_count = len(_VAGUE_OPENERS.findall(prompt))
+    scores["clarity"] = max(0.0, round(1.0 - vague_count * 0.25, 2))
+
+    # examples_present — count <example> tags or inline "Example:" labels
+    example_count = len(re.findall(r"<example>|<examples>|Example\s*\d*\s*:", prompt, re.I))
+    scores["examples_present"] = 1.0 if example_count >= 3 else (0.5 if example_count >= 1 else 0.0)
+
+    # xml_structure — any structured XML tags for prompt sections
+    xml_tags = re.findall(r"<(instructions?|context|input|task|system|output|format|constraints?)>", prompt, re.I)
+    scores["xml_structure"] = 1.0 if len(set(xml_tags)) >= 2 else (0.5 if len(set(xml_tags)) == 1 else 0.0)
+
+    # role_assignment
+    scores["role_assignment"] = 1.0 if re.search(r"\byou are (a|an)\b", prompt, re.I) else 0.0
+
+    # no_prefill — look for assistant: pattern at end of prompt
+    scores["no_prefill"] = 0.0 if re.search(r"(assistant|claude)\s*:", prompt[-200:], re.I) else 1.0
+
+    # positive_format
+    scores["positive_format"] = 0.0 if _NEGATIVE_FORMAT.search(prompt) else 1.0
+
+    # output_explicit — explicit output format named
+    scores["output_explicit"] = 1.0 if re.search(
+        r"\b(JSON|YAML|markdown|prose|plain text|bullet|numbered list|table|HTML|XML|structured)\b", prompt, re.I
+    ) else 0.0
+
+    # self_check — verify / double-check instruction
+    scores["self_check"] = 1.0 if re.search(
+        r"\b(verify|double.check|before you finish|confirm|review your|check your|validate)\b", prompt, re.I
+    ) else 0.0
+
+    # no_over_prompting — excessive caps emphasis degrades newer models
+    caps_count = len(_OVER_PROMPT.findall(prompt))
+    scores["no_over_prompting"] = max(0.0, round(1.0 - max(0, caps_count - 2) * 0.2, 2))
+
+    # specificity — concrete constraints present
+    scores["specificity"] = 1.0 if re.search(
+        r"\b(\d+\s*(words?|characters?|sentences?|lines?|paragraphs?|tokens?)|"
+        r"concise|brief|detailed|formal|casual|professional|technical)\b", prompt, re.I
+    ) else 0.0
+
+    return scores
+
+
+_SEMANTIC_PROMPT = """You are evaluating a prompt template against Anthropic's prompting best practices.
+Score ONLY the following criteria. Return valid JSON with float scores 0.0-1.0.
+
+Criteria definitions:
+- context_motivation: Does the prompt explain WHY (because/since/so that/reason), not just WHAT to do?
+- anti_hallucination: Does it guard against speculation? (e.g. "read the file before answering", "only assert facts from context", "investigate before answering")
+- effort_calibration: Is the thinking/effort level appropriate — neither under-specified nor over-prompting with excessive CRITICAL/MUST/ALWAYS?
+- golden_rule: Would a colleague with minimal context follow this prompt correctly without guessing?
+- agentic_safety: If this is an agentic task, does it include guardrails for reversible vs irreversible actions? (score 0.7 if not agentic, 1.0 if agentic with guardrails, 0.0 if agentic without)
+- scope_control: Is the scope minimal and focused — no padding, no requests for unnecessary extras, no over-engineering instruction?
+
+Respond ONLY with JSON, no explanation:
+{"context_motivation": 0.0, "anti_hallucination": 0.0, "effort_calibration": 0.0, "golden_rule": 0.0, "agentic_safety": 0.0, "scope_control": 0.0}
+
+Prompt to evaluate:
+<prompt>
+{prompt}
+</prompt>"""
+
+
+def _semantic_prompt_scores(prompt: str) -> dict[str, float]:
+    """Claude Haiku judges subjective criteria. Returns {} if unavailable."""
+    try:
+        resp = _client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=256,
+            messages=[{"role": "user", "content": _SEMANTIC_PROMPT.format(prompt=prompt[:3000])}],
+        )
+        raw = resp.content[0].text.strip()
+        match = re.search(r"\{.*\}", raw, re.DOTALL)
+        if match:
+            data = json.loads(match.group())
+            return {k: max(0.0, min(1.0, float(v))) for k, v in data.items()}
+    except Exception:
+        pass
+    return {}
+
+
+def audit_prompt_quality(prompt: str, use_llm: bool = True) -> dict:
+    """Score a prompt against Anthropic prompting best practices.
+
+    Returns per-criterion scores, weighted aggregate, pass/fail, and warnings.
+    """
+    scores = _rule_based_prompt_scores(prompt)
+    if use_llm:
+        scores.update(_semantic_prompt_scores(prompt))
+
+    # Fill missing semantic scores as None (excluded from aggregate)
+    all_criteria = list(_PROMPT_CRITERIA_WEIGHTS.keys())
+    for c in all_criteria:
+        if c not in scores:
+            scores[c] = None
+
+    # Weighted aggregate over available scores only
+    total_weight = 0.0
+    weighted_sum = 0.0
+    for criterion, weight in _PROMPT_CRITERIA_WEIGHTS.items():
+        val = scores.get(criterion)
+        if val is not None:
+            weighted_sum += val * weight
+            total_weight  += weight
+    aggregate = round(weighted_sum / total_weight, 4) if total_weight > 0 else 0.0
+
+    warnings = []
+    for criterion, val in scores.items():
+        if val is not None and val < 0.5:
+            warnings.append(f"{criterion}: {val:.2f} (below 0.5 — see Anthropic best practices)")
+    if aggregate < 0.6:
+        warnings.insert(0, f"Overall prompt quality {aggregate:.2f} < 0.6 — consider revising before production use")
+
+    return {
+        "scores":         scores,
+        "aggregate":      aggregate,
+        "passed":         aggregate >= 0.6,
+        "warnings":       warnings,
+        "llm_judged":     use_llm,
+        "criteria_ref":   "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices",
+    }
 
 # ── Pricing ($ per 1M tokens, exact input + output) ───────────────────────────
 _PRICING: dict[str, dict[str, float]] = {
@@ -165,6 +334,13 @@ def run_match(
         sim = _semantic_sim(generated_text, ground_truth)
         if sim is not None:
             metrics["semantic_sim_gt"] = sim
+
+    # ── 7. Prompt quality audit (Anthropic best practices) ────────────────────
+    try:
+        pq = audit_prompt_quality(prompt_template, use_llm=True)
+        metrics["prompt_quality"] = pq
+    except Exception:
+        pass
 
     run = {
         "run_id":          str(uuid.uuid4())[:8],
