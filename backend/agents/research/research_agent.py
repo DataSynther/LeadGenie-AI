@@ -34,7 +34,9 @@ Hiring Signals:
 - Engineering Expansion: {signals.get('engineering_expansion')}
 - Scaling Signal: {signals.get('scaling_signal')}
 
-Output a JSON with keys: summary, growth_stage, strategic_priorities, likely_pain_points, ai_readiness_score (0-10).
+Your goal is to assess this company as a revenue opportunity. Include both the value potential and the urgency of the opportunity.
+
+Output a JSON with keys: summary, growth_stage, strategic_priorities, likely_pain_points, ai_readiness_score (0-10), opportunity_priority_score (0-100), revenue_opportunity_range, deal_timing_indicator.
 Respond with valid JSON only.
 """
         context = {"company": company, "signals": signals}

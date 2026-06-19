@@ -817,8 +817,78 @@ async def agent_feed_recent():
     return events
 
 
+def _parse_revenue_value(revenue: str | int | float | None) -> float | None:
+    if revenue is None:
+        return None
+    if isinstance(revenue, (int, float)):
+        return float(revenue)
+    raw = str(revenue).lower().replace("$", "").replace(",", "").strip()
+    if not raw:
+        return None
+    multiplier = 1.0
+    if raw.endswith("m"):
+        multiplier = 1_000_000
+        raw = raw[:-1].strip()
+    elif raw.endswith("b"):
+        multiplier = 1_000_000_000
+        raw = raw[:-1].strip()
+    elif raw.endswith("k"):
+        multiplier = 1_000
+        raw = raw[:-1].strip()
+    if raw.endswith("million"):
+        multiplier = 1_000_000
+        raw = raw.replace("million", "").strip()
+    if raw.endswith("billion"):
+        multiplier = 1_000_000_000
+        raw = raw.replace("billion", "").strip()
+    try:
+        return float(raw) * multiplier
+    except ValueError:
+        return None
+
+
+def _score_lead_priority(person: dict) -> tuple[float, str, list[dict]]:
+    revenue_value = _parse_revenue_value(person.get("org_revenue") or person.get("org_annual_revenue") or person.get("revenue"))
+    employees = person.get("org_employees") or person.get("org_employee_count") or 0
+    seniority = (person.get("seniority") or "").lower()
+    title = (person.get("title") or "").lower()
+    company = (person.get("company") or "").lower()
+
+    revenue_score = 0.0
+    if revenue_value is not None and revenue_value > 0:
+        revenue_m = revenue_value / 1_000_000
+        revenue_score = min(1.0, revenue_m / 100) * 4.0
+        revenue_score += min(1.0, revenue_m / 25) * 2.0
+    size_score = min(1.0, employees / 2000) * 2.0
+    seniority_score = 1.0 if seniority == "c_suite" else 0.9 if seniority == "vp" else 0.7 if seniority == "director" else 0.5
+    ai_signal = 1.0 if any(keyword in title for keyword in ["ai", "data", "machine learning", "analytics", "ml", "cio", "cto"]) else 0.0
+    scaling_signal = 1.0 if any(keyword in company for keyword in ["scale", "growth", "data", "cloud", "systems"]) else 0.0
+    raw_score = revenue_score + size_score + seniority_score * 2.0 + ai_signal * 1.5 + scaling_signal * 1.0
+    priority_score = round(min(100.0, max(0.0, raw_score / 9.0 * 100.0)), 1)
+
+    if priority_score >= 75:
+        label = "high value"
+    elif priority_score >= 45:
+        label = "medium value"
+    else:
+        label = "low value"
+
+    signals = []
+    if revenue_value is not None and revenue_value > 0:
+        signals.append({"strength": "hot" if priority_score >= 75 else "warm", "type": "revenue", "label": "Revenue signal"})
+    if ai_signal:
+        signals.append({"strength": "hot" if ai_signal else "cold", "type": "ai", "label": "AI / data signal"})
+    if scaling_signal:
+        signals.append({"strength": "hot" if scaling_signal else "cold", "type": "scaling", "label": "Scaling signal"})
+    if not signals:
+        signals.append({"strength": "cold", "type": "baseline", "label": "Discovery"})
+
+    return priority_score, label, signals
+
+
 def _person_to_pipeline_item(person: dict) -> dict:
     """Transform Apollo normalized person into PipelineItem for the frontend."""
+    priority_score, priority_label, signals = _score_lead_priority(person)
     return {
         "lead_id": person.get("id", ""),
         "name": person.get("name", "Unknown"),
@@ -829,9 +899,11 @@ def _person_to_pipeline_item(person: dict) -> dict:
         "company": {
             "name": person.get("company") or "Unknown",
         },
-        "signals": [],
+        "signals": signals,
         "stage": "new",
         "reply_probability": 0.45,
+        "priority_score": priority_score,
+        "priority_label": priority_label,
     }
 
 
@@ -844,7 +916,9 @@ async def pipeline():
             "seniorities": ["vp", "c_suite", "director"],
             "per_page": 25,
         })
-        return [_person_to_pipeline_item(p) for p in people]
+        pipeline_items = [_person_to_pipeline_item(p) for p in people]
+        pipeline_items.sort(key=lambda item: item.get("priority_score", 0), reverse=True)
+        return pipeline_items
     except Exception:
         return []
 

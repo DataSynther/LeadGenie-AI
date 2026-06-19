@@ -1,6 +1,6 @@
-# LeadGenie AI — Governed Adaptive AI SDR Platform
+# LeadGenie AI — Revenue Intelligence Platform
 
-> An autonomous, governed, market-aware AI sales development platform that discovers high-intent leads, generates context-personalized outreach, handles multi-turn email conversations, and maintains full auditability — all without human intervention in the loop.
+> An autonomous, governed, revenue intelligence platform that discovers, scores, and prioritizes the highest-value opportunities from available leads, delivers contextual company research, and supports intelligent outreach with full auditability.
 
 ---
 

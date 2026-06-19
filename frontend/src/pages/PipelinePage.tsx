@@ -38,6 +38,7 @@ export function PipelinePage() {
                   "Prospect",
                   "Company",
                   "Signals",
+                  "Opportunity",
                   "Stage",
                   "Last touch",
                   "Reply chance",
@@ -55,7 +56,7 @@ export function PipelinePage() {
               {isLoading && (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="px-5 py-8 text-center text-ink-mute"
                   >
                     Loading...
@@ -72,6 +73,12 @@ export function PipelinePage() {
                   </td>
                   <td className="px-5 py-4 border-b border-line-soft text-ink-2">
                     {p.company.name} · {p.title}
+                  </td>
+                  <td className="px-5 py-4 border-b border-line-soft">
+                    <div className="font-medium text-ink">{p.priority_label}</div>
+                    <div className="font-mono text-[11px] text-ink-2">
+                      {Math.round(p.priority_score)} / 100
+                    </div>
                   </td>
                   <td className="px-5 py-4 border-b border-line-soft">
                     <div className="flex gap-1 flex-wrap">

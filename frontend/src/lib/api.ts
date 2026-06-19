@@ -106,7 +106,9 @@ export const pipeline = () => get<{
   signals: Signal[];
   stage: PipelineStage;
   reply_probability: number;
-}[]>("/pipeline");
+  priority_score: number;
+  priority_label: string;
+}[]>('/pipeline');
 
 // ── Lead Discovery ───────────────────────────────────────────────────────────
 

@@ -55,6 +55,9 @@ class ContextBuilder:
                 "pain_points": research.get("likely_pain_points", []),
                 "ai_readiness_score": research.get("ai_readiness_score"),
                 "strategic_priorities": research.get("strategic_priorities", []),
+                "opportunity_priority_score": research.get("opportunity_priority_score"),
+                "revenue_opportunity_range": research.get("revenue_opportunity_range"),
+                "deal_timing_indicator": research.get("deal_timing_indicator"),
             },
         }
 
