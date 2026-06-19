@@ -88,7 +88,17 @@ class MCPGateway:
                                    block_reason=misuse_reason)
             raise GovernanceBlockError(request_id, misuse_reason)
 
-        # ── WRITE — governance evaluation ─────────────────────────────────────
+        # ── reveal_contact: rate limiting is the only governance needed ───────
+        # Content governance (tone/hallucination/risk) applies to outreach text,
+        # not to a data-access action.
+        if tool == "reveal_contact":
+            _reveal_window[user_id].append(time.time())
+            mcp_audit.update_entry(request_id, decision="APPROVE")
+            result = executor(params) if executor else {}
+            mcp_audit.update_entry(request_id, status="EXECUTED", outcome="success")
+            return {**result, "request_id": request_id, "decision": "APPROVE", "checks": {}}
+
+        # ── WRITE — content governance (outreach actions only) ────────────────
         content = params.get("content", str(params)[:500])
         checks: dict = {}
 
@@ -103,16 +113,18 @@ class MCPGateway:
         }
 
         risk = self._risk.evaluate(
-            {"subject": params.get("subject", ""), "body": content}, halluc, 1.0
+            lead_id,
+            {"subject": params.get("subject", ""), "body": content},
+            {f"fact_{i}": f for i, f in enumerate(source_facts or [])},
         )
         checks["risk_score"] = risk.get("risk_score", 0.0)
 
         mcp_audit.update_entry(request_id, checks=checks)
 
         # ── Decision ──────────────────────────────────────────────────────────
-        rs       = checks["risk_score"]
-        tone_ok  = checks["tone"]["passed"]
-        hall_ok  = checks["hallucination"]["passed"]
+        rs      = checks["risk_score"]
+        tone_ok = checks["tone"]["passed"]
+        hall_ok = checks["hallucination"]["passed"]
 
         if rs > RISK_BLOCK_FLOOR or not hall_ok:
             decision = "BLOCK"
@@ -137,10 +149,6 @@ class MCPGateway:
                 "decision":   "DEFER",
                 "checks":     checks,
             }
-
-        # APPROVE — execute
-        if tool == "reveal_contact":
-            _reveal_window[user_id].append(time.time())
 
         result = executor(params) if executor else {}
         mcp_audit.update_entry(request_id, status="EXECUTED", outcome="success")
