@@ -68,6 +68,8 @@ class FrontendStack(Stack):
                         "/memory/*",
                         "/pending-messages*",
                         "/followups/*",
+                        "/contact/*",
+                        "/governance/*",
                     ]
                 },
             },
