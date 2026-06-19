@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Search, UserPlus, Zap, MessageCircle } from "lucide-react";
+import { Search, UserPlus, Zap, MessageCircle, Lock, Unlock } from "lucide-react";
 import { Topbar } from "../components/layout/Topbar";
 import { ResearchPanel } from "../components/research/ResearchPanel";
 import { api } from "../lib/api";
-import type { Lead } from "../lib/api";
+import type { Lead, RevealResult } from "../lib/api";
 import { cn } from "../lib/utils";
 
 const SENIORITIES = [
@@ -85,6 +85,8 @@ export function LeadDiscoveryPage() {
   const [perPage,      setPerPage]      = useState(25);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [outreachChannel, setOutreachChannel] = useState<"email" | "whatsapp">("email");
+  const [revealed, setRevealed] = useState<Record<string, RevealResult>>({});
+  const [revealing, setRevealing] = useState<string | null>(null);
 
   const search = useMutation({
     mutationFn: () =>
@@ -107,6 +109,20 @@ export function LeadDiscoveryPage() {
   function openOutreach(lead: Lead, channel: "email" | "whatsapp") {
     setOutreachChannel(channel);
     setSelectedLead(lead);
+  }
+
+  async function handleReveal(e: React.MouseEvent, lead: Lead) {
+    e.stopPropagation();
+    if (revealed[lead.id] || revealing === lead.id) return;
+    setRevealing(lead.id);
+    try {
+      const result = await api.revealContact(lead.id);
+      setRevealed((prev) => ({ ...prev, [lead.id]: result }));
+    } catch {
+      setRevealed((prev) => ({ ...prev, [lead.id]: { decision: "BLOCK" } }));
+    } finally {
+      setRevealing(null);
+    }
   }
 
   return (
@@ -286,12 +302,46 @@ export function LeadDiscoveryPage() {
                           </span>
                         </td>
                         <td className="px-5 py-4 border-b border-line-soft font-mono text-[11px] text-ink">
-                          {lead.email || (
-                            <span className="text-ink-2 italic">not available</span>
-                          )}
+                          {(() => {
+                            const rev = revealed[lead.id];
+                            if (rev?.decision === "BLOCK") {
+                              return <span className="text-danger italic">Blocked</span>;
+                            }
+                            if (rev?.status === "deferred") {
+                              return <span className="text-amber-500 italic">Pending review</span>;
+                            }
+                            if (rev?.email) {
+                              return (
+                                <span className="flex items-center gap-1 text-emerald-500">
+                                  <Unlock size={10} />
+                                  {rev.email}
+                                </span>
+                              );
+                            }
+                            const masked = lead.email;
+                            if (masked) {
+                              return (
+                                <span className="flex items-center gap-1.5">
+                                  <Lock size={10} className="text-ink-mute" />
+                                  <span className="text-ink-mute">{masked}</span>
+                                </span>
+                              );
+                            }
+                            return <span className="text-ink-2 italic">not available</span>;
+                          })()}
                         </td>
                         <td className="px-5 py-4 border-b border-line-soft">
                           <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                            {lead._contact_masked && !revealed[lead.id] && (
+                              <button
+                                onClick={(e) => handleReveal(e, lead)}
+                                disabled={revealing === lead.id}
+                                className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium bg-amber-500/10 text-amber-600 border border-amber-500/30 hover:bg-amber-500 hover:text-white transition-colors disabled:opacity-50"
+                              >
+                                <Unlock size={11} />
+                                {revealing === lead.id ? "…" : "Reveal"}
+                              </button>
+                            )}
                             <button className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium bg-brand-soft text-brand border border-brand/20 hover:bg-brand hover:text-white transition-colors">
                               <UserPlus size={11} />
                               Add

@@ -5,6 +5,9 @@ export type Lead = {
   company: string;
   seniority: string;
   email: string;
+  phone?: string;
+  linkedin_url?: string;
+  _contact_masked?: boolean;
 };
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
@@ -117,14 +120,49 @@ export const leadSearch = (params: {
   industries?: string[];
   locations?: string[];
   per_page?: number;
-}) => post<{
-  id: string;
-  name: string;
-  title: string;
-  company: string;
-  seniority: string;
-  email: string;
-}[]>("/leads/search", params);
+}) => post<Lead[]>("/leads/search", params);
+
+export type RevealResult = {
+  status?: "deferred" | "approved";
+  request_id?: string;
+  decision?: "APPROVE" | "DEFER" | "BLOCK";
+  email?: string;
+  phone?: string;
+  linkedin_url?: string;
+  checks?: Record<string, unknown>;
+};
+
+export const revealContact = async (leadId: string, userId = "default"): Promise<RevealResult> => {
+  const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
+  const res = await fetch(`${BASE}/contact/reveal/${leadId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-User-Id": userId },
+  });
+  const data = await res.json();
+  if (res.status === 403) throw new Error(data.detail || "BLOCKED");
+  return data as RevealResult;
+};
+
+export type ContactAuditStats = {
+  total_reveals: number;
+  approved: number;
+  deferred: number;
+  blocked: number;
+  by_user: Record<string, number>;
+  recent_events: Array<{
+    request_id: string;
+    tool: string;
+    user_id: string;
+    lead_id?: string;
+    status: string;
+    decision?: string;
+    timestamp: string;
+    block_reason?: string;
+  }>;
+};
+
+export const contactAudit = (limit = 100) =>
+  get<ContactAuditStats>(`/governance/contact-audit?limit=${limit}`);
 
 // ── Approval Queue ───────────────────────────────────────────────────────────
 
@@ -1040,6 +1078,8 @@ export const api = {
   quidditchRun,
   quidditchHistory,
   quidditchSaveHumanScores,
+  revealContact,
+  contactAudit,
 };
 
 export default api;

@@ -72,8 +72,48 @@ from memory.memory_governance import governance as memory_governance
 from memory.industry_outreach_memory import IndustryOutreachMemory
 from agents.outreach.template_categorizer import TemplateCategorizer as _TemplateCategorizer, DomainDetector as _DomainDetector, STREAMS as _STREAMS, DOMAINS as _DOMAINS
 from storage import stats_store, finops_store
+from mcp.gateway import get_gateway, GovernanceBlockError
+from mcp import audit as mcp_audit
 
 industry_memory = IndustryOutreachMemory()
+
+# ── Contact vault — stores original PII server-side until reveal is approved ──
+# Keyed by lead_id. In production this would be an encrypted DynamoDB table.
+_contact_vault: dict[str, dict] = {}
+
+
+def _mask_email(email: str | None) -> str | None:
+    if not email:
+        return None
+    parts = email.split("@")
+    if len(parts) != 2:
+        return "•••@•••.•••"
+    user, domain = parts
+    visible = user[0] if user else "•"
+    return f"{visible}{'•' * min(len(user) - 1, 5)}@{domain}"
+
+
+def _mask_phone(phone: str | None) -> str | None:
+    if not phone or len(phone) < 4:
+        return None
+    return phone[:2] + "•" * max(0, len(phone) - 5) + phone[-3:]
+
+
+def _mask_contact(person: dict) -> dict:
+    """Return person dict with PII masked. Originals stored in _contact_vault."""
+    lead_id = person.get("id") or person.get("lead_id", "")
+    if lead_id:
+        _contact_vault[lead_id] = {
+            "email":       person.get("email"),
+            "phone":       person.get("phone"),
+            "linkedin_url": person.get("linkedin_url"),
+        }
+    masked = {**person}
+    masked["email"]         = _mask_email(person.get("email"))
+    masked["phone"]         = _mask_phone(person.get("phone"))
+    masked["linkedin_url"]  = "linkedin.com/in/••••••" if person.get("linkedin_url") else None
+    masked["_contact_masked"] = True
+    return masked
 _categorizer_instance = _TemplateCategorizer()
 _domain_detector_instance = _DomainDetector()
 
@@ -255,9 +295,80 @@ def auth_logout(credentials: Optional[HTTPAuthorizationCredentials] = Depends(_b
 @app.post("/leads/search")
 async def search_leads(req: LeadSearchRequest):
     try:
-        return apollo_people.search_people(req.model_dump())
+        results = apollo_people.search_people(req.model_dump())
+        if isinstance(results, list):
+            return [_mask_contact(p) for p in results]
+        if isinstance(results, dict) and "people" in results:
+            results["people"] = [_mask_contact(p) for p in results["people"]]
+        return results
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Apollo API error: {e}")
+
+
+@app.post("/contact/reveal/{lead_id}")
+async def reveal_contact(lead_id: str, request: Request):
+    """Governed contact reveal — routes through MCP Gateway.
+
+    Returns unmasked contact fields only after governance APPROVE.
+    Every call is logged with a Request ID regardless of decision.
+    """
+    user_id = request.headers.get("X-User-Id", "default")
+
+    vault_entry = _contact_vault.get(lead_id)
+    if not vault_entry:
+        raise HTTPException(status_code=404,
+                            detail="Contact not found. Search for this lead first.")
+
+    try:
+        result = get_gateway().call(
+            "reveal_contact",
+            params={"lead_id": lead_id, "content": f"Reveal contact for lead {lead_id}"},
+            user_id=user_id,
+            lead_id=lead_id,
+            executor=lambda _: vault_entry,
+        )
+    except GovernanceBlockError as e:
+        raise HTTPException(status_code=403,
+                            detail={"blocked": True, "request_id": e.request_id, "reason": e.reason})
+
+    if result.get("decision") == "DEFER":
+        raise HTTPException(status_code=202,
+                            detail={"deferred": True, "request_id": result["request_id"],
+                                    "message": "Contact reveal queued for review"})
+
+    return {
+        "lead_id":     lead_id,
+        "email":       vault_entry.get("email"),
+        "phone":       vault_entry.get("phone"),
+        "linkedin_url": vault_entry.get("linkedin_url"),
+        "request_id":  result.get("request_id"),
+        "decision":    "APPROVE",
+        "governed":    True,
+    }
+
+
+@app.get("/governance/contact-audit")
+async def contact_audit(limit: int = 100):
+    """Return recent contact reveal audit records for the Governance Dashboard."""
+    reveals = mcp_audit.scan_reveals(limit=limit)
+    total   = len(reveals)
+    approved = sum(1 for r in reveals if r.get("decision") == "APPROVE")
+    deferred = sum(1 for r in reveals if r.get("decision") == "DEFER")
+    blocked  = sum(1 for r in reveals if r.get("decision") == "BLOCK")
+
+    by_user: dict[str, int] = {}
+    for r in reveals:
+        uid = r.get("user_id", "default")
+        by_user[uid] = by_user.get(uid, 0) + 1
+
+    return {
+        "total_reveals":    total,
+        "approved":         approved,
+        "deferred":         deferred,
+        "blocked":          blocked,
+        "by_user":          by_user,
+        "recent_events":    reveals[:limit],
+    }
 
 
 @app.get("/company/enrich")

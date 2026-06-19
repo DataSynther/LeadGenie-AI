@@ -13,6 +13,7 @@ import {
   DollarSign,
   Network,
   PanelLeftClose,
+  Lock,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
@@ -39,6 +40,7 @@ const WORKSPACE: NavItem[] = [
   { to: "/prompt-versions", label: "Prompt Versions",  icon: BarChart2 },
   { to: "/whatsapp",        label: "WhatsApp Inbox",   icon: MessageCircle },
   { to: "/architecture",    label: "Pipeline Diagram", icon: Network },
+  { to: "/governance",      label: "Contact Governance", icon: Lock },
 ];
 
 
