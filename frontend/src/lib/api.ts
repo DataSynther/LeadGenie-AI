@@ -20,9 +20,21 @@ function authHeaders(extra: Record<string, string> = {}): Record<string, string>
   };
 }
 
+function handleStatus(res: Response, label: string): void {
+  if (res.status === 401) {
+    // Session expired or invalid — clear auth and force re-login
+    localStorage.removeItem("lg_auth_token");
+    localStorage.removeItem("lg_auth_user");
+    localStorage.removeItem("lg_auth_role");
+    window.location.href = "/login";
+    throw new Error("Session expired");
+  }
+  if (!res.ok) throw new Error(`${label} → ${res.status}`);
+}
+
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, { headers: authHeaders() });
-  if (!res.ok) throw new Error(`GET ${path} → ${res.status}`);
+  handleStatus(res, `GET ${path}`);
   return res.json();
 }
 
@@ -32,7 +44,7 @@ async function post<T>(path: string, body: unknown): Promise<T> {
     headers: authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`POST ${path} → ${res.status}`);
+  handleStatus(res, `POST ${path}`);
   return res.json();
 }
 
@@ -41,7 +53,7 @@ async function del<T>(path: string): Promise<T> {
     method: "DELETE",
     headers: authHeaders(),
   });
-  if (!res.ok) throw new Error(`DELETE ${path} → ${res.status}`);
+  handleStatus(res, `DELETE ${path}`);
   return res.json();
 }
 
@@ -51,7 +63,7 @@ async function patch<T>(path: string, body: unknown): Promise<T> {
     headers: authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`PATCH ${path} → ${res.status}`);
+  handleStatus(res, `PATCH ${path}`);
   return res.json();
 }
 

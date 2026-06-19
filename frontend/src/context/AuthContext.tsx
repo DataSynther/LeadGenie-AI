@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
 
 export type UserRole = "admin" | "manager" | "sdr" | "viewer";
@@ -23,15 +23,39 @@ const USER_KEY  = "lg_auth_user";
 const ROLE_KEY  = "lg_auth_role";
 const BASE_URL  = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
+function clearAuth() {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+  localStorage.removeItem(ROLE_KEY);
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(() => {
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true); // true until token validated
+
+  // On mount: validate stored token against /auth/me — clears stale sessions
+  useEffect(() => {
     const token    = localStorage.getItem(TOKEN_KEY);
     const username = localStorage.getItem(USER_KEY);
     const role     = (localStorage.getItem(ROLE_KEY) ?? "viewer") as UserRole;
-    if (token && username) return { token, username, role };
-    return null;
-  });
-  const [isLoading, setIsLoading] = useState(false);
+    if (!token || !username) { setIsLoading(false); return; }
+
+    fetch(`${BASE_URL}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => {
+        if (!res.ok) throw new Error("invalid");
+        return res.json() as Promise<{ username: string; role: UserRole }>;
+      })
+      .then((data) => {
+        // Refresh role from server in case it changed
+        localStorage.setItem(ROLE_KEY, data.role);
+        setUser({ token, username: data.username, role: data.role });
+      })
+      .catch(() => {
+        clearAuth();
+        setUser(null);
+      })
+      .finally(() => setIsLoading(false));
+  }, []);
 
   const login = async (username: string, password: string) => {
     setIsLoading(true);
@@ -63,9 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers: { Authorization: `Bearer ${token}` },
       }).catch(() => {});
     }
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
-    localStorage.removeItem(ROLE_KEY);
+    clearAuth();
     setUser(null);
   };
 
