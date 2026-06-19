@@ -23,6 +23,8 @@ DAILY_REVEAL_MAX  = int(os.getenv("DAILY_REVEAL_MAX", "50"))
 RISK_DEFER_FLOOR  = float(os.getenv("RISK_DEFER_FLOOR", "0.4"))
 RISK_BLOCK_FLOOR  = float(os.getenv("RISK_BLOCK_FLOOR", "0.7"))
 
+_ROLE_RANK: dict[str, int] = {"viewer": 0, "sdr": 1, "manager": 2, "admin": 3}
+
 # Sliding-window reveal log: user_id → list of epoch timestamps
 _reveal_window: dict[str, list[float]] = defaultdict(list)
 
@@ -52,6 +54,7 @@ class MCPGateway:
         params: dict,
         *,
         user_id: str = "default",
+        role: str = "viewer",
         lead_id: str = "",
         source_facts: Optional[list] = None,
         executor: Optional[Callable[[dict], Any]] = None,
@@ -64,6 +67,17 @@ class MCPGateway:
 
         tool_def   = TOOL_REGISTRY[tool]
         request_id = mcp_audit.generate_request_id(tool)
+
+        # ── RBAC — check caller role against tool's minimum required role ──────
+        min_role      = tool_def.get("min_role", "viewer")
+        caller_rank   = _ROLE_RANK.get(role, 0)
+        required_rank = _ROLE_RANK.get(min_role, 0)
+        if caller_rank < required_rank:
+            mcp_audit.write_entry(request_id, tool=tool, tool_type=tool_def["type"],
+                                  user_id=user_id, lead_id=lead_id, status="BLOCKED",
+                                  decision="BLOCK", block_reason=f"role '{role}' < min '{min_role}'")
+            raise GovernanceBlockError(request_id,
+                                       f"Role '{role}' is not permitted to use '{tool}' (requires '{min_role}')")
 
         mcp_audit.write_entry(
             request_id,

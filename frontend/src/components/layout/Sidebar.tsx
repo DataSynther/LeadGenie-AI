@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useSidebar } from "../../context/SidebarContext";
+import { useAuth } from "../../context/AuthContext";
 import { api } from "../../lib/api";
 import { ThemeToggle } from "../ThemeToggle";
 
@@ -94,14 +95,22 @@ function NavItemRow({ item, onNavigate, queueCount }: { item: NavItem; onNavigat
   );
 }
 
+const ROLE_RANK: Record<string, number> = { viewer: 0, sdr: 1, manager: 2, admin: 3 };
+
 export function Sidebar() {
   const { isOpen, close, isCollapsed, toggleCollapse } = useSidebar();
+  const { user } = useAuth();
+  const role = user?.role ?? "viewer";
   const { data: queueItems = [] } = useQuery({
     queryKey: ["approvalQueue"],
     queryFn: api.approvalQueue,
     refetchInterval: 30_000,
   });
   const queueCount = queueItems.length;
+  const visibleNav = WORKSPACE.filter((item) => {
+    if (item.to === "/governance") return ROLE_RANK[role] >= ROLE_RANK["manager"];
+    return true;
+  });
 
   return (
     <aside
@@ -148,7 +157,7 @@ export function Sidebar() {
       <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-ink-mute px-3 pt-4 pb-2">
         Workspace
       </div>
-      {WORKSPACE.map((item) => (
+      {visibleNav.map((item) => (
         <NavItemRow key={item.to} item={item} onNavigate={close} queueCount={queueCount} />
       ))}
 
@@ -156,11 +165,11 @@ export function Sidebar() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-brand to-gold flex items-center justify-center font-mono text-[11px] font-semibold text-white">
-              PR
+              {(user?.username?.[0] ?? "?").toUpperCase()}
             </div>
             <div>
-              <div className="text-xs text-ink">Priya R.</div>
-              <div className="text-[10px] text-ink-mute font-mono">Sales Ops</div>
+              <div className="text-xs text-ink capitalize">{user?.username ?? "—"}</div>
+              <div className="text-[10px] text-ink-mute font-mono uppercase">{role}</div>
             </div>
           </div>
           <ThemeToggle />

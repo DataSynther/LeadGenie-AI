@@ -1,9 +1,12 @@
 import { createContext, useContext, useState } from "react";
 import type { ReactNode } from "react";
 
+export type UserRole = "admin" | "manager" | "sdr" | "viewer";
+
 export interface AuthUser {
   username: string;
   token: string;
+  role: UserRole;
 }
 
 interface AuthContextValue {
@@ -17,13 +20,15 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 const TOKEN_KEY = "lg_auth_token";
 const USER_KEY  = "lg_auth_user";
+const ROLE_KEY  = "lg_auth_role";
 const BASE_URL  = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(() => {
     const token    = localStorage.getItem(TOKEN_KEY);
     const username = localStorage.getItem(USER_KEY);
-    if (token && username) return { token, username };
+    const role     = (localStorage.getItem(ROLE_KEY) ?? "viewer") as UserRole;
+    if (token && username) return { token, username, role };
     return null;
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -40,10 +45,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const err = await res.json().catch(() => ({}));
         throw new Error((err as { detail?: string }).detail ?? "Invalid credentials");
       }
-      const data = await res.json() as { token: string; username: string };
+      const data = await res.json() as { token: string; username: string; role: UserRole };
       localStorage.setItem(TOKEN_KEY, data.token);
       localStorage.setItem(USER_KEY, data.username);
-      setUser({ token: data.token, username: data.username });
+      localStorage.setItem(ROLE_KEY, data.role ?? "viewer");
+      setUser({ token: data.token, username: data.username, role: data.role ?? "viewer" });
     } finally {
       setIsLoading(false);
     }
@@ -59,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(ROLE_KEY);
     setUser(null);
   };
 

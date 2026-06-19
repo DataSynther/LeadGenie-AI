@@ -26,9 +26,14 @@ logger = logging.getLogger(__name__)
 def _hash(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
 
-_USERS: dict[str, str] = {
-    "admin": _hash("leadgenie123"),
-    "demo":  _hash("demo123"),
+# Role hierarchy — higher rank = more permissions
+_ROLE_RANK: dict[str, int] = {"viewer": 0, "sdr": 1, "manager": 2, "admin": 3}
+
+_USERS: dict[str, dict] = {
+    "admin":   {"password": _hash("leadgenie123"), "role": "admin"},
+    "manager": {"password": _hash("manager123"),   "role": "manager"},
+    "sdr":     {"password": _hash("sdr123"),       "role": "sdr"},
+    "demo":    {"password": _hash("demo123"),       "role": "viewer"},
 }
 _SESSIONS: dict[str, dict] = {}
 _bearer = HTTPBearer(auto_error=False)
@@ -41,6 +46,16 @@ def _get_session(credentials: Optional[HTTPAuthorizationCredentials]) -> dict:
         _SESSIONS.pop(credentials.credentials, None)
         raise HTTPException(status_code=401, detail="Session expired or invalid")
     return session
+
+def _require_role(min_role: str):
+    """FastAPI dependency — enforces minimum role level."""
+    def dep(credentials: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)) -> dict:
+        session = _get_session(credentials)
+        if _ROLE_RANK.get(session.get("role", "viewer"), 0) < _ROLE_RANK[min_role]:
+            raise HTTPException(status_code=403,
+                                detail=f"Requires role '{min_role}' or higher")
+        return session
+    return dep
 
 _COMPANIES_PATH = Path(__file__).parent.parent / "sample_data" / "demo_companies.json"
 _SAMPLE_COMPANIES: list[dict] = json.loads(_COMPANIES_PATH.read_text(encoding="utf-8")) if _COMPANIES_PATH.exists() else []
@@ -271,18 +286,23 @@ async def health():
 @app.post("/auth/login")
 def auth_login(req: LoginRequest):
     username = req.username.strip().lower()
-    expected = _USERS.get(username)
-    if not expected or expected != _hash(req.password):
+    user_rec = _USERS.get(username)
+    if not user_rec or user_rec["password"] != _hash(req.password):
         raise HTTPException(status_code=401, detail="Invalid username or password")
     token = secrets.token_urlsafe(32)
-    _SESSIONS[token] = {"username": username, "expires_at": datetime.utcnow() + timedelta(hours=8)}
-    return {"token": token, "username": username}
+    role  = user_rec["role"]
+    _SESSIONS[token] = {
+        "username":   username,
+        "role":       role,
+        "expires_at": datetime.utcnow() + timedelta(hours=8),
+    }
+    return {"token": token, "username": username, "role": role}
 
 
 @app.get("/auth/me")
 def auth_me(credentials: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
     session = _get_session(credentials)
-    return {"username": session["username"]}
+    return {"username": session["username"], "role": session["role"]}
 
 
 @app.post("/auth/logout")
@@ -293,7 +313,8 @@ def auth_logout(credentials: Optional[HTTPAuthorizationCredentials] = Depends(_b
 
 
 @app.post("/leads/search")
-async def search_leads(req: LeadSearchRequest):
+async def search_leads(req: LeadSearchRequest,
+                       session: dict = Depends(_require_role("viewer"))):
     try:
         results = apollo_people.search_people(req.model_dump())
         if isinstance(results, list):
@@ -306,13 +327,14 @@ async def search_leads(req: LeadSearchRequest):
 
 
 @app.post("/contact/reveal/{lead_id}")
-async def reveal_contact(lead_id: str, request: Request):
-    """Governed contact reveal — routes through MCP Gateway.
+async def reveal_contact(lead_id: str,
+                         session: dict = Depends(_require_role("sdr"))):
+    """Governed contact reveal — sdr+ only. Routes through MCP Gateway.
 
-    Returns unmasked contact fields only after governance APPROVE.
+    User identity comes from the verified session, not a spoofable header.
     Every call is logged with a Request ID regardless of decision.
     """
-    user_id = request.headers.get("X-User-Id", "default")
+    user_id = session["username"]
 
     vault_entry = _contact_vault.get(lead_id)
     if not vault_entry:
@@ -322,8 +344,9 @@ async def reveal_contact(lead_id: str, request: Request):
     try:
         result = get_gateway().call(
             "reveal_contact",
-            params={"lead_id": lead_id, "content": f"Reveal contact for lead {lead_id}"},
+            params={"lead_id": lead_id},
             user_id=user_id,
+            role=session.get("role", "viewer"),
             lead_id=lead_id,
             executor=lambda _: vault_entry,
         )
@@ -348,8 +371,9 @@ async def reveal_contact(lead_id: str, request: Request):
 
 
 @app.get("/governance/contact-audit")
-async def contact_audit(limit: int = 100):
-    """Return recent contact reveal audit records for the Governance Dashboard."""
+async def contact_audit(limit: int = 100,
+                        session: dict = Depends(_require_role("manager"))):
+    """Return recent contact reveal audit records — manager/admin only."""
     reveals = mcp_audit.scan_reveals(limit=limit)
     total   = len(reveals)
     approved = sum(1 for r in reveals if r.get("decision") == "APPROVE")

@@ -5,7 +5,10 @@ import { Topbar } from "../components/layout/Topbar";
 import { ResearchPanel } from "../components/research/ResearchPanel";
 import { api } from "../lib/api";
 import type { Lead, RevealResult } from "../lib/api";
+import { useAuth } from "../context/AuthContext";
 import { cn } from "../lib/utils";
+
+const ROLE_RANK: Record<string, number> = { viewer: 0, sdr: 1, manager: 2, admin: 3 };
 
 const SENIORITIES = [
   { value: "c_suite",  label: "C-Suite" },
@@ -77,6 +80,8 @@ function toggle(arr: string[], val: string): string[] {
 }
 
 export function LeadDiscoveryPage() {
+  const { user } = useAuth();
+  const canReveal = ROLE_RANK[user?.role ?? "viewer"] >= ROLE_RANK["sdr"];
   const [companyNames, setCompanyNames] = useState("");
   const [titles,       setTitles]       = useState("");
   const [seniorities,  setSeniorities]  = useState<string[]>(["vp", "c_suite", "director"]);
@@ -319,7 +324,7 @@ export function LeadDiscoveryPage() {
                               );
                             }
                             if (lead._contact_masked && !revealed[lead.id]) {
-                              return (
+                              return canReveal ? (
                                 <button
                                   onClick={(e) => handleReveal(e, lead)}
                                   disabled={revealing === lead.id}
@@ -331,6 +336,10 @@ export function LeadDiscoveryPage() {
                                     <><Lock size={10} /><span className="text-ink-mute font-mono">{lead.email}</span> · Reveal</>
                                   )}
                                 </button>
+                              ) : (
+                                <span className="flex items-center gap-1.5 text-ink-mute">
+                                  <Lock size={10} /><span className="font-mono">{lead.email}</span>
+                                </span>
                               );
                             }
                             return <span className="text-ink-2 italic">not available</span>;
