@@ -1050,6 +1050,56 @@ export const quidditchHistory = () => get<QuidditchRun[]>("/quidditch/history");
 export const quidditchSaveHumanScores = (runId: string, scores: Record<string, number>) =>
   patch<{ ok: boolean }>(`/quidditch/runs/${runId}/human-scores`, scores);
 
+// ── Lead Network (Neo4j Knowledge Graph) ─────────────────────────────────────
+
+export interface NetworkLead {
+  lead_id: string;
+  name: string;
+  title: string;
+  company: string;
+  industry: string;
+  linkedin_url: string;
+  region: string;
+  seniority: string;
+  stored_at: string;
+  engaged_via?: string;
+  topics?: string[];
+  score?: number;
+  match_type?: "graph" | "semantic";
+  matched_topics?: string[];
+}
+
+export interface NetworkGraphData {
+  nodes: Array<{ id: string; label: string; type: "lead" | "company"; industry?: string; tech?: string[]; title?: string; linkedin_url?: string; seniority?: string }>;
+  edges: Array<{ source: string; target: string; label: string; type?: string }>;
+}
+
+export interface NetworkQueryResult {
+  query: string;
+  intent: { topics?: string[]; region?: string | null; industry?: string | null };
+  results: NetworkLead[];
+  total: number;
+}
+
+export const networkQuery = (query: string, top_k = 10) =>
+  post<NetworkQueryResult>("/network/query", { query, top_k });
+
+export const networkLeads = (params?: { region?: string; industry?: string; topic?: string; limit?: number }) => {
+  const qs = new URLSearchParams();
+  if (params?.region)   qs.set("region",   params.region);
+  if (params?.industry) qs.set("industry", params.industry);
+  if (params?.topic)    qs.set("topic",    params.topic);
+  if (params?.limit)    qs.set("limit",    String(params.limit));
+  const suffix = qs.toString() ? `?${qs}` : "";
+  return get<{ leads: NetworkLead[]; total: number }>(`/network/leads${suffix}`);
+};
+
+export const networkGraph = (limit = 30) =>
+  get<NetworkGraphData>(`/network/graph?limit=${limit}`);
+
+export const networkTagLead = (lead_id: string, tags: string[]) =>
+  post<{ tags_added: string[] }>(`/network/leads/${lead_id}/tags`, { tags });
+
 export const api = {
   dashboardStats,
   agentFeedRecent,
@@ -1102,6 +1152,10 @@ export const api = {
   quidditchSaveHumanScores,
   revealContact,
   contactAudit,
+  networkQuery,
+  networkLeads,
+  networkGraph,
+  networkTagLead,
 };
 
 export default api;

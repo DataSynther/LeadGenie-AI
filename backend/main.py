@@ -11,7 +11,7 @@ import os
 import secrets
 import time
 from datetime import datetime, timedelta, timezone
-from fastapi import FastAPI, HTTPException, Request, Depends, Query
+from fastapi import FastAPI, HTTPException, Request, Depends, Query, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from middleware.activity_tracker import ActivityTrackerMiddleware
@@ -87,6 +87,7 @@ from memory.memory_governance import governance as memory_governance
 from memory.industry_outreach_memory import IndustryOutreachMemory
 from agents.outreach.template_categorizer import TemplateCategorizer as _TemplateCategorizer, DomainDetector as _DomainDetector, STREAMS as _STREAMS, DOMAINS as _DOMAINS
 from storage import stats_store, finops_store
+import storage.network_store as network_store
 from mcp.gateway import get_gateway, GovernanceBlockError
 from mcp import audit as mcp_audit
 
@@ -522,6 +523,39 @@ async def generate_outreach(req: OutreachRequest):
         )
     except Exception as _mem_err:
         logger.warning("industry_memory.write failed: %s", _mem_err)
+
+    # ── Store lead to Neo4j knowledge graph ───────────────────────────────────
+    try:
+        from agents.relevance.embedding_service import EmbeddingService
+        import anthropic as _anthropic
+        _ac = _anthropic.Anthropic()
+        _profile_text = (
+            f"{lead.get('name','')} {lead.get('title','')} at {company.get('name','')}. "
+            f"Industry: {company.get('industry','')}. "
+            f"Tech: {', '.join((company.get('technologies') or [])[:5])}. "
+            f"Keywords: {', '.join((company.get('org_keywords') or [])[:5])}."
+        )
+        _embedding = EmbeddingService().embed_text(_profile_text)
+        _tag_resp = _ac.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=200,
+            messages=[{"role": "user", "content": (
+                f"Extract 3-6 concise topic tags for this B2B lead profile. "
+                f"Return only a JSON array of lowercase strings.\n\n{_profile_text}"
+            )}],
+        )
+        import re as _re
+        _tag_match = _re.search(r'\[.*?\]', _tag_resp.content[0].text, _re.DOTALL)
+        _topics = json.loads(_tag_match.group()) if _tag_match else []
+        network_store.store_lead(
+            lead={**lead, "domain": company.get("primary_domain", ""), "region": lead.get("city", "")},
+            embedding=_embedding,
+            topics=_topics,
+            engaged_via="outreach",
+            employment_history=lead.get("employment_history") or [],
+        )
+    except Exception as _net_err:
+        logger.warning("network_store.store_lead failed: %s", _net_err)
 
     # ── Record to stats store for Mission Control dashboard ───────────────────
     try:
@@ -1948,3 +1982,282 @@ async def quidditch_human_scores(run_id: str, scores: dict):
     if not ok:
         raise HTTPException(status_code=404, detail="Run not found")
     return {"ok": True}
+
+
+# ── Lead Network (Neo4j Knowledge Graph) ──────────────────────────────────────
+
+class NetworkQueryRequest(BaseModel):
+    query: str
+    top_k: int = 10
+
+class NetworkStoreRequest(BaseModel):
+    lead: dict
+    topics: list[str] = []
+    engaged_via: str = "manual"
+
+class TagRequest(BaseModel):
+    tags: list[str]
+
+
+@app.on_event("startup")
+async def _init_neo4j_schema():
+    try:
+        await asyncio.to_thread(network_store.init_schema)
+        logger.info("Neo4j schema ready")
+    except Exception as e:
+        logger.warning("Neo4j schema init failed (will retry on first use): %s", e)
+
+
+@app.post("/network/query")
+async def network_query(
+    req: NetworkQueryRequest,
+    session: dict = Depends(_require_role("viewer")),
+):
+    """Natural language query over the lead knowledge graph."""
+    import anthropic as _ac
+    from agents.relevance.embedding_service import EmbeddingService
+
+    client = _ac.Anthropic()
+
+    # Step 1: Claude extracts structured intent
+    intent_resp = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=400,
+        messages=[{"role": "user", "content": (
+            f"Extract search intent from this lead network query as JSON with keys: "
+            f"topics (list of lowercase strings), region (string or null), "
+            f"industry (string or null), semantic_query (rephrased for embedding search), "
+            f"past_org (company name if query asks about past employers, e.g. 'worked at Google', else null).\n\n"
+            f"Query: {req.query}"
+        )}],
+    )
+    import re
+    intent_text = intent_resp.content[0].text
+    match = re.search(r'\{.*\}', intent_text, re.DOTALL)
+    intent = json.loads(match.group()) if match else {}
+
+    topics   = intent.get("topics", [])
+    region   = intent.get("region")
+    past_org = intent.get("past_org")
+    sem_q    = intent.get("semantic_query", req.query)
+
+    # Step 2: Graph traversal — past org takes priority if detected
+    graph_results = []
+    if past_org:
+        graph_results = await asyncio.to_thread(
+            network_store.find_by_past_org, past_org, req.top_k
+        )
+    elif topics:
+        graph_results = await asyncio.to_thread(
+            network_store.query_by_topics, topics, region, req.top_k
+        )
+
+    # Step 3: Semantic vector search
+    query_embedding = await asyncio.to_thread(
+        EmbeddingService().embed_text, sem_q
+    )
+    semantic_results = await asyncio.to_thread(
+        network_store.semantic_search, query_embedding, req.top_k
+    )
+
+    # Step 4: Merge + deduplicate, graph results ranked first
+    seen: set[str] = set()
+    merged = []
+    for r in graph_results:
+        lid = r.get("lead_id")
+        if lid and lid not in seen:
+            seen.add(lid)
+            merged.append({**r, "match_type": "graph"})
+    for r in semantic_results:
+        lid = r.get("lead_id")
+        if lid and lid not in seen:
+            seen.add(lid)
+            merged.append({**r, "match_type": "semantic", "score": r.get("score", 0)})
+
+    return {
+        "query": req.query,
+        "intent": intent,
+        "results": merged[:req.top_k],
+        "total": len(merged),
+    }
+
+
+@app.get("/network/past-org")
+async def network_past_org(
+    org: str,
+    session: dict = Depends(_require_role("viewer")),
+):
+    """Find leads who previously worked at a given organisation."""
+    results = await asyncio.to_thread(network_store.find_by_past_org, org)
+    return {"org": org, "results": results, "total": len(results)}
+
+
+@app.get("/network/leads")
+async def network_leads(
+    region: Optional[str] = Query(None),
+    industry: Optional[str] = Query(None),
+    topic: Optional[str] = Query(None),
+    limit: int = Query(50, le=200),
+    session: dict = Depends(_require_role("viewer")),
+):
+    """List stored leads with optional filters."""
+    leads = await asyncio.to_thread(
+        network_store.list_leads, region, industry, topic, limit
+    )
+    return {"leads": leads, "total": len(leads)}
+
+
+@app.get("/network/graph")
+async def network_graph(
+    limit: int = Query(30, le=100),
+    session: dict = Depends(_require_role("viewer")),
+):
+    """Return nodes + edges for force-directed graph visualisation."""
+    data = await asyncio.to_thread(network_store.get_graph_data, limit)
+    return data
+
+
+@app.get("/network/leads/{lead_id}")
+async def network_get_lead(
+    lead_id: str,
+    session: dict = Depends(_require_role("viewer")),
+):
+    lead = await asyncio.to_thread(network_store.get_lead, lead_id)
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found in network")
+    return lead
+
+
+@app.post("/network/leads/{lead_id}/tags")
+async def network_tag_lead(
+    lead_id: str,
+    req: TagRequest,
+    session: dict = Depends(_require_role("sdr")),
+):
+    """Manually add topic tags to a lead node."""
+    gateway = get_gateway()
+    result = gateway.call(
+        "tag_lead",
+        {"lead_id": lead_id, "tags": req.tags},
+        user_id=session["username"],
+        role=session.get("role", "viewer"),
+        executor=lambda p: network_store.add_tags(p["lead_id"], p["tags"]),
+    )
+    return result
+
+
+@app.post("/network/store")
+async def network_store_lead(
+    req: NetworkStoreRequest,
+    session: dict = Depends(_require_role("sdr")),
+):
+    """Manually store a lead to the knowledge graph."""
+    from agents.relevance.embedding_service import EmbeddingService
+    profile_text = (
+        f"{req.lead.get('name','')} {req.lead.get('title','')} "
+        f"at {req.lead.get('company','')}. "
+        f"Industry: {req.lead.get('industry','')}."
+    )
+    embedding = await asyncio.to_thread(EmbeddingService().embed_text, profile_text)
+    gateway = get_gateway()
+    result = gateway.call(
+        "store_lead_network",
+        {"lead": req.lead, "topics": req.topics},
+        user_id=session["username"],
+        role=session.get("role", "viewer"),
+        executor=lambda p: network_store.store_lead(
+            p["lead"], embedding, p["topics"], req.engaged_via
+        ),
+    )
+    return result
+
+
+@app.post("/network/backfill")
+async def network_backfill(
+    background_tasks: BackgroundTasks,
+    session: dict = Depends(_require_role("manager")),
+):
+    """Import all historical leads from the approval queue into Neo4j (runs in background)."""
+    async def _do_backfill():
+        import boto3
+        from agents.relevance.embedding_service import EmbeddingService
+
+        ddb = boto3.resource("dynamodb", region_name=os.environ.get("AWS_REGION", "ap-south-1"))
+        table = ddb.Table(os.environ["QUEUE_TABLE"])
+
+        items = []
+        scan_kwargs: dict = {}
+        while True:
+            resp = table.scan(**scan_kwargs)
+            items.extend(resp.get("Items", []))
+            if "LastEvaluatedKey" not in resp:
+                break
+            scan_kwargs["ExclusiveStartKey"] = resp["LastEvaluatedKey"]
+
+        svc = EmbeddingService()
+        stored, skipped = 0, 0
+
+        for item in items:
+            try:
+                payload = json.loads(item.get("payload", "{}"))
+                citations = payload.get("citations", {})
+
+                lead_id = payload.get("lead_id", "")
+                if not lead_id:
+                    skipped += 1
+                    continue
+
+                # Extract location from prompt preview: "- Location: Cambridge, United States"
+                import re as _re
+                prompt_preview = ""
+                attempt_history = payload.get("attempt_history", [])
+                if attempt_history:
+                    prompt_preview = attempt_history[0].get("prompt_preview", "")
+                loc_match = _re.search(r"Location:\s*([^\n]+)", prompt_preview)
+                region = loc_match.group(1).strip() if loc_match else ""
+
+                lead = {
+                    "id":           lead_id,
+                    "name":         payload.get("lead_name", ""),
+                    "title":        payload.get("lead_title", ""),
+                    "email":        payload.get("lead_email", ""),
+                    "company":      payload.get("company_name", ""),
+                    "industry":     citations.get("industry", {}).get("value", ""),
+                    "seniority":    citations.get("lead_seniority", {}).get("value", ""),
+                    "linkedin_url": citations.get("lead_name", {}).get("url", ""),
+                    "region":       region,
+                    "domain":       "",
+                }
+
+                techs        = citations.get("technologies", {}).get("value", []) or []
+                pains        = [p.split()[0].lower() for p in (citations.get("pain_points", {}).get("value", []) or [])[:2]]
+                growth       = citations.get("growth_stage", {}).get("value", "")
+                industry_tag = lead["industry"].replace(" ", "-").lower() if lead["industry"] else ""
+                topics       = list({t.lower() for t in techs[:4]} | set(pains) | {industry_tag, growth.lower()} - {""})[:8]
+
+                profile_text = (
+                    f"{lead['name']} {lead['title']} at {lead['company']}. "
+                    f"Industry: {lead['industry']}. "
+                    f"Tech: {', '.join(techs[:5])}."
+                )
+                # Extract past roles from attempt_history prompt preview
+                # Format: "- Recent roles: Title at Company, Title at Company"
+                emp_history = []
+                roles_match = _re.search(r"Recent roles:\s*([^\n]+)", prompt_preview)
+                if roles_match and roles_match.group(1).strip().lower() not in ("n/a", "none", ""):
+                    for role_str in roles_match.group(1).split(","):
+                        parts = role_str.strip().split(" at ", 1)
+                        if len(parts) == 2:
+                            emp_history.append({"title": parts[0].strip(), "company": parts[1].strip(), "current": False})
+
+                embedding = await asyncio.to_thread(svc.embed_text, profile_text)
+                network_store.store_lead(lead, embedding, topics, engaged_via="outreach", employment_history=emp_history)
+                stored += 1
+            except Exception as e:
+                logger.warning("backfill skip %s: %s", item.get("pk", "?"), e)
+                skipped += 1
+
+        logger.info("Network backfill complete: stored=%d skipped=%d total=%d", stored, skipped, len(items))
+
+    background_tasks.add_task(_do_backfill)
+    return {"status": "backfill started in background", "message": "Check /network/leads in ~30s"}

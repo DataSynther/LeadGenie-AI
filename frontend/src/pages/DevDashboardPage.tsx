@@ -1,9 +1,14 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "../lib/utils";
 import { Topbar } from "../components/layout/Topbar";
 import { StatusPill } from "../components/StatusPill";
 import { api, type AgentMetrics, type TraceRecord, type ValidationRecord } from "../lib/api";
 import type { CitationEntry, RetrievalStats, InterpretationSummary, SelfEvalStats } from "../lib/api";
+import { RetryEfficiencyCard } from "../components/dashboard/RetryEfficiencyCard";
+import { RiskDistributionCard } from "../components/dashboard/RiskDistributionCard";
+import { PromptVersionsPage } from "./PromptVersionsPage";
+import { PipelineLineagePage } from "./PipelineLineagePage";
 
 // ── Colour tokens for diagnostic categories ──────────────────────────────────
 const CATEGORY_COLOURS: Record<string, string> = {
@@ -667,11 +672,34 @@ function InterpretationDriftPanel() {
   );
 }
 
+type DevTab = "observability" | "governance-debug" | "prompts" | "lineage";
+
+const DEV_TABS: { id: DevTab; label: string }[] = [
+  { id: "observability",    label: "Observability" },
+  { id: "governance-debug", label: "Governance Debug" },
+  { id: "prompts",          label: "Prompts" },
+  { id: "lineage",          label: "Lineage" },
+];
+
 export function DevDashboardPage() {
+  const [activeTab, setActiveTab] = useState<DevTab>("observability");
+
   const { data: metrics } = useQuery({
     queryKey: ["devAgentMetrics"],
     queryFn: api.devAgentMetrics,
     refetchInterval: 10_000,
+  });
+
+  const { data: finops } = useQuery({
+    queryKey: ["devFinOps"],
+    queryFn: api.devFinOps,
+    refetchInterval: 30_000,
+  });
+
+  const { data: extended } = useQuery({
+    queryKey: ["dashboardExtended"],
+    queryFn: api.dashboardExtendedStats,
+    refetchInterval: 30_000,
   });
 
   const totalCalls = metrics ? Object.values(metrics).reduce((s, m) => s + m.total_calls, 0) : 0;
@@ -682,49 +710,98 @@ export function DevDashboardPage() {
   return (
     <>
       <Topbar
-        breadcrumb="Dev / Governed Dashboard"
-        title={<>AI <em className="text-brand italic">Observability</em></>}
+        breadcrumb="Developer's Tool"
+        title={<>Developer's <em className="text-brand italic">Tool</em></>}
         right={
           <div className="flex items-center gap-2.5">
-            <StatusPill>{totalCalls} traces</StatusPill>
-            {avgSuccess != null && (
-              <StatusPill>{(avgSuccess * 100).toFixed(0)}% avg success</StatusPill>
+            {activeTab === "observability" && (
+              <>
+                <StatusPill>{totalCalls} traces</StatusPill>
+                {avgSuccess != null && (
+                  <StatusPill>{(avgSuccess * 100).toFixed(0)}% avg success</StatusPill>
+                )}
+                <span className="font-mono text-[10px] text-ink-mute px-2 py-1 rounded bg-surface-2 border border-line-soft">
+                  auto-refresh 10s
+                </span>
+              </>
             )}
-            <span className="font-mono text-[10px] text-ink-mute px-2 py-1 rounded bg-surface-2 border border-line-soft">
-              Phase 1 · auto-refresh 10s
-            </span>
           </div>
         }
       />
 
-      <div className="p-4 sm:p-8 pb-20 space-y-5">
-        {/* Row 1: Full-width diagnostic categories */}
-        <DiagnosticsPanel />
-
-        {/* Row 2: Agent metrics + validation */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-5">
-          <AgentMetricsPanel />
-          <ValidationPanel />
-        </div>
-
-        {/* Row 3: Retrieval + Prompt */}
-        <RetrievalAndPromptPanel />
-
-        {/* Row 4: System Insights + Trace Feed */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          <SystemInsightsPanel />
-          <TraceFeed />
-        </div>
-
-        {/* Row 5: Retrieval Grounding */}
-        <RetrievalGroundingPanel />
-
-        {/* Row 6: Citations + Interpretation Drift */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          <CitationsPanel />
-          <InterpretationDriftPanel />
+      {/* ── Tab bar ───────────────────────────────────────────────────────────── */}
+      <div className="px-4 sm:px-8 border-b border-line-soft bg-surface sticky top-[57px] z-10">
+        <div className="flex gap-1">
+          {DEV_TABS.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "px-4 py-3 text-[12px] font-medium transition-colors border-b-2 -mb-px",
+                activeTab === tab.id
+                  ? "border-brand text-brand"
+                  : "border-transparent text-ink-2 hover:text-ink",
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
       </div>
+
+      {/* ── Tab: Observability ────────────────────────────────────────────────── */}
+      {activeTab === "observability" && (
+        <div className="p-4 sm:p-8 pb-20 space-y-5">
+          <DiagnosticsPanel />
+          <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-5">
+            <AgentMetricsPanel />
+            <ValidationPanel />
+          </div>
+          <RetrievalAndPromptPanel />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <SystemInsightsPanel />
+            <TraceFeed />
+          </div>
+          <RetrievalGroundingPanel />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <CitationsPanel />
+            <InterpretationDriftPanel />
+          </div>
+        </div>
+      )}
+
+      {/* ── Tab: Governance Debug ─────────────────────────────────────────────── */}
+      {activeTab === "governance-debug" && (
+        <div className="p-4 sm:p-8 pb-20 space-y-5">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
+            {finops && extended ? (
+              <RetryEfficiencyCard finops={finops} extended={extended} />
+            ) : (
+              <div className="card-base flex items-center justify-center h-48">
+                <span className="text-[11px] text-ink-mute">Loading retry data…</span>
+              </div>
+            )}
+            <RiskDistributionCard
+              hallucCategories={extended?.validation_stats.hallucination_categories}
+              validationStats={extended?.validation_stats}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ── Tab: Prompts ──────────────────────────────────────────────────────── */}
+      {activeTab === "prompts" && (
+        <div className="overflow-y-auto">
+          <PromptVersionsPage />
+        </div>
+      )}
+
+      {/* ── Tab: Lineage ──────────────────────────────────────────────────────── */}
+      {activeTab === "lineage" && (
+        <div className="overflow-y-auto">
+          <PipelineLineagePage />
+        </div>
+      )}
     </>
   );
 }

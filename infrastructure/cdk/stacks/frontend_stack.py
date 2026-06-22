@@ -70,6 +70,7 @@ class FrontendStack(Stack):
                         "/followups/*",
                         "/contact/*",
                         "/governance/*",
+                        "/network/*",
                     ]
                 },
             },

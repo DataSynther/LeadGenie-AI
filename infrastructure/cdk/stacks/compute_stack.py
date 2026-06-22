@@ -90,6 +90,9 @@ class ComputeStack(Stack):
             "RESEND_API_KEY":         ecs.Secret.from_secrets_manager(secret, "RESEND_API_KEY"),
             "LEADGENIE_GMAIL":        ecs.Secret.from_secrets_manager(secret, "LEADGENIE_GMAIL"),
             "LEADGENIE_GMAIL_PASSWORD": ecs.Secret.from_secrets_manager(secret, "LEADGENIE_GMAIL_PASSWORD"),
+            "NEO4J_URI":              ecs.Secret.from_secrets_manager(secret, "NEO4J_URI"),
+            "NEO4J_USERNAME":         ecs.Secret.from_secrets_manager(secret, "NEO4J_USERNAME"),
+            "NEO4J_PASSWORD":         ecs.Secret.from_secrets_manager(secret, "NEO4J_PASSWORD"),
         }
 
         log_group = logs.LogGroup(self, "LogGroup",

@@ -1,0 +1,31 @@
+{
+  "lead_id": "6051ce8e97b52e00018389cc",
+  "phone": "+918056498879",
+  "context": {
+    "lead": {
+      "email": "abhishek.muni@ganitinc.com",
+      "phone": "+918056498879",
+      "name": "Marcus Williams"
+    },
+    "company": {
+      "name": "Salesforce"
+    },
+    "outreach": {
+      "subject": "Kubernetes cost discipline at Salesforce's scale",
+      "body": "Hi Marcus Williams,\n\nI'm Prashant Biswas from Ganit. We are a full-stack Data & AI company, recognized by Everest, Forrester, and Analytics India.\n\nWith Salesforce running a massive multi-tenant platform on AWS and Kubernetes while your San Francisco engineering org is in a headcount consolidation phase (down ~4% over the last year), I'd imagine the pressure on your infrastructure team to do more with less \u2014 without compromising platform reliability for 150,000+ customers \u2014 is very real right now.\n\nWe help platform and infra teams at enterprise scale reduce Kubernetes and cloud spend while cutting incident response toil \u2014 so your engineers spend less time firefighting and more time shipping.\n\nAs an AWS Advanced Tier Partner with 6+ years of partnership, we've built integrated cloud infrastructure for companies running Salesforce as a core source system, so we understand the complexity of your stack firsthand.\n\nWould a focused 20-minute call next week be worth it to compare notes on where Salesforce-scale teams are finding the most leverage on cloud cost and observability?\n\nWith regards,\nGanit team"
+    }
+  },
+  "outreach": {
+    "subject": "Kubernetes cost discipline at Salesforce's scale",
+    "body": "Hi Marcus Williams,\n\nI'm Prashant Biswas from Ganit. We are a full-stack Data & AI company, recognized by Everest, Forrester, and Analytics India.\n\nWith Salesforce running a massive multi-tenant platform on AWS and Kubernetes while your San Francisco engineering org is in a headcount consolidation phase (down ~4% over the last year), I'd imagine the pressure on your infrastructure team to do more with less \u2014 without compromising platform reliability for 150,000+ customers \u2014 is very real right now.\n\nWe help platform and infra teams at enterprise scale reduce Kubernetes and cloud spend while cutting incident response toil \u2014 so your engineers spend less time firefighting and more time shipping.\n\nAs an AWS Advanced Tier Partner with 6+ years of partnership, we've built integrated cloud infrastructure for companies running Salesforce as a core source system, so we understand the complexity of your stack firsthand.\n\nWould a focused 20-minute call next week be worth it to compare notes on where Salesforce-scale teams are finding the most leverage on cloud cost and observability?\n\nWith regards,\nGanit team"
+  },
+  "email_sent_at": "2026-06-20T04:22:53.685326",
+  "due_at": "2026-06-20T04:24:53.685326",
+  "status": "whatsapp_sent",
+  "whatsapp_sent_at": "2026-06-20T04:25:46.684497",
+  "whatsapp_error": null,
+  "whatsapp_traceback": null,
+  "whatsapp_status_code": 200,
+  "whatsapp_elapsed_seconds": 37.059,
+  "whatsapp_normalized_to": "+918056498879"
+}

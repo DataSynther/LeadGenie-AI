@@ -10,6 +10,13 @@ TOOL_REGISTRY: dict[str, dict] = {
     "knowledge_base_query":  {"type": "READ",  "governance": False, "min_role": "viewer",  "description": "Query knowledge base"},
     "get_research":          {"type": "READ",  "governance": False, "min_role": "viewer",  "description": "Read research output for a lead"},
 
+    # ── Network / Knowledge Graph ──────────────────────────────────────────────
+    "store_lead_network":    {"type": "WRITE", "governance": False, "min_role": "sdr",     "description": "Persist lead + relationships to Neo4j knowledge graph"},
+    "query_lead_network":    {"type": "READ",  "governance": False, "min_role": "viewer",  "description": "Semantic + graph NL query over stored lead network"},
+    "get_network_graph":     {"type": "READ",  "governance": False, "min_role": "viewer",  "description": "Return company-lead graph nodes and edges for visualisation"},
+    "tag_lead":              {"type": "WRITE", "governance": False, "min_role": "sdr",     "description": "Manually add topic tags to a lead node in the knowledge graph"},
+    "enrich_lead_linkedin":  {"type": "WRITE", "governance": False, "min_role": "manager", "description": "Enrich lead profile from LinkedIn via ProxyCurl"},
+
     # ── WRITE — always routed through governance ───────────────────────────────
     "reveal_contact":        {"type": "WRITE", "governance": True,  "min_role": "sdr",     "description": "Reveal masked contact information"},
     "send_email":            {"type": "WRITE", "governance": True,  "min_role": "sdr",     "description": "Send outreach email to lead"},

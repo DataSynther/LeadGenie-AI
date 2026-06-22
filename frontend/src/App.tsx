@@ -20,6 +20,7 @@ import { ArchitecturePage } from "./pages/ArchitecturePage";
 import { KbFactsPage } from "./pages/KbFactsPage";
 import { QuidditchPage } from "./pages/QuidditchPage";
 import { GovernanceDashboardPage } from "./pages/GovernanceDashboardPage";
+import { LeadNetworkPage } from "./pages/LeadNetworkPage";
 
 function App() {
   return (
@@ -47,6 +48,7 @@ function App() {
         <Route path="/kb-facts" element={<KbFactsPage />} />
         <Route path="/quidditch" element={<QuidditchPage />} />
         <Route path="/governance" element={<GovernanceDashboardPage />} />
+        <Route path="/network" element={<LeadNetworkPage />} />
       </Route>
     </Routes>
     </>

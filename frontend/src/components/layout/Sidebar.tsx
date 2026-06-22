@@ -4,8 +4,6 @@ import {
   Search,
   X,
   Activity,
-  GitBranch,
-  BarChart2,
   ShieldCheck,
   LayoutDashboard,
   InboxIcon,
@@ -14,6 +12,8 @@ import {
   Network,
   PanelLeftClose,
   Lock,
+  LogOut,
+  Globe,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
@@ -31,16 +31,15 @@ interface NavItem {
 }
 
 const WORKSPACE: NavItem[] = [
-  { to: "/discover",        label: "Discover Leads",   icon: Search },
-  { to: "/dashboard",       label: "Mission Control",  icon: LayoutDashboard },
-  { to: "/command-center",  label: "Command Center",   icon: ShieldCheck },
-  { to: "/approval",        label: "Outreach Queue",   icon: InboxIcon,    liveBadge: true },
-  { to: "/finops",          label: "AI FinOps",        icon: DollarSign },
-  { to: "/dev",             label: "AI Observability", icon: Activity },
-  { to: "/lineage",         label: "Pipeline Lineage", icon: GitBranch },
-  { to: "/prompt-versions", label: "Prompt Versions",  icon: BarChart2 },
-  { to: "/whatsapp",        label: "WhatsApp Inbox",   icon: MessageCircle },
-  { to: "/architecture",    label: "Pipeline Diagram", icon: Network },
+  { to: "/discover",        label: "Discover Leads",    icon: Search },
+  { to: "/dashboard",       label: "Mission Control",   icon: LayoutDashboard },
+  { to: "/command-center",  label: "Command Center",    icon: ShieldCheck },
+  { to: "/approval",        label: "Outreach Queue",    icon: InboxIcon,    liveBadge: true },
+  { to: "/finops",          label: "AI FinOps",         icon: DollarSign },
+  { to: "/dev",             label: "Developer's Tool",  icon: Activity },
+  { to: "/whatsapp",        label: "WhatsApp Inbox",    icon: MessageCircle },
+  { to: "/architecture",    label: "Pipeline Diagram",  icon: Network },
+  { to: "/network",          label: "Lead Network",       icon: Globe },
   { to: "/governance",      label: "Contact Governance", icon: Lock },
 ];
 
@@ -99,7 +98,7 @@ const ROLE_RANK: Record<string, number> = { viewer: 0, sdr: 1, manager: 2, admin
 
 export function Sidebar() {
   const { isOpen, close, isCollapsed, toggleCollapse } = useSidebar();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const role = user?.role ?? "viewer";
   const { data: queueItems = [] } = useQuery({
     queryKey: ["approvalQueue"],
@@ -172,7 +171,16 @@ export function Sidebar() {
               <div className="text-[10px] text-ink-mute font-mono uppercase">{role}</div>
             </div>
           </div>
-          <ThemeToggle />
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <button
+              onClick={logout}
+              className="flex items-center justify-center w-7 h-7 rounded-md text-ink-mute hover:text-danger hover:bg-danger/10 transition-colors"
+              title="Sign out"
+            >
+              <LogOut size={13} strokeWidth={2} />
+            </button>
+          </div>
         </div>
       </div>
     </aside>

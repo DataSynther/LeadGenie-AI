@@ -66,6 +66,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({ username, password }),
       });
       if (!res.ok) {
+        if (res.status === 502 || res.status === 503 || res.status === 504) {
+          throw new Error("Service unavailable — the backend is starting up, please try again in a moment");
+        }
         const err = await res.json().catch(() => ({}));
         throw new Error((err as { detail?: string }).detail ?? "Invalid credentials");
       }
