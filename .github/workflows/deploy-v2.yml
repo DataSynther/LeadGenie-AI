@@ -231,22 +231,13 @@ jobs:
 
       - name: Check and stabilize CloudFormation stacks
         run: |
-          _stop_ecs_tasks() {
-            # Stop all running ECS tasks for a service to help trigger the circuit breaker
-            for SVC in leadgenie-api leadgenie-worker; do
-              TASKS=$(aws ecs list-tasks --cluster leadgenie-cluster --service-name "$SVC" \
-                --query "taskArns[]" --output text 2>/dev/null || echo "")
-              for TASK in $TASKS; do
-                echo "    Stopping task $TASK in $SVC..."
-                aws ecs stop-task --cluster leadgenie-cluster --task "$TASK" \
-                  --reason "Unblocking CloudFormation rollback" 2>/dev/null || true
-              done
-            done
-          }
-
-          _wait_for_rollback_failed_or_complete() {
+          _wait_for_rollback_exit() {
+            # Poll silently — no intervention. Let CF finish rollback on its own.
+            # Previous interventions (stop-task, force-new-deployment) reset ECS deployment
+            # timers and create conflicting deployments, preventing CF from seeing stability.
+            # The old task definition (pre-NEO4J) should pass health checks on its own.
             local STACK=$1
-            local MAX_WAIT=1500   # 25 minutes
+            local MAX_WAIT=1800   # 30 minutes
             local WAITED=0
             while [[ $WAITED -lt $MAX_WAIT ]]; do
               sleep 30
@@ -258,11 +249,6 @@ jobs:
                 echo "  → $STACK left UPDATE_ROLLBACK_IN_PROGRESS → $STATUS"
                 break
               fi
-              # Every 5 min, stop ECS tasks again so new cycle triggers circuit breaker
-              if [[ "$STACK" == "ComputeStack" && $((WAITED % 300)) -eq 0 ]]; then
-                echo "  → Stopping ECS tasks again to accelerate circuit breaker..."
-                _stop_ecs_tasks
-              fi
             done
           }
 
@@ -273,32 +259,12 @@ jobs:
               --output text 2>/dev/null || echo "DOES_NOT_EXIST")
             echo "$STACK: $STATUS"
 
-            # UPDATE_ROLLBACK_IN_PROGRESS: rollback is running but hasn't failed yet.
-            # continue-update-rollback only works in UPDATE_ROLLBACK_FAILED, not here.
-            # Strategy: stop ECS tasks to trigger circuit breaker faster, then wait for FAILED.
+            # UPDATE_ROLLBACK_IN_PROGRESS: just wait. Do NOT stop tasks or force deployments —
+            # those interventions reset ECS deployment timers and fight CF's own rollback attempt.
+            # The old task definition (before the failed update) should work fine on its own.
             if [[ "$STATUS" == "UPDATE_ROLLBACK_IN_PROGRESS" ]]; then
-              echo "  → $STACK rollback in progress — forcing ECS services stable to unblock CF..."
-              if [[ "$STACK" == "ComputeStack" ]]; then
-                # The ECS circuit breaker likely already fired (0 running tasks, 1 desired, stuck).
-                # Stopping tasks doesn't help because there are none starting.
-                # Instead: force desired_count=0 with a new deployment so ECS becomes immediately
-                # stable (0==0), which lets CloudFormation detect a stable service and complete rollback.
-                for SVC in leadgenie-api leadgenie-worker; do
-                  echo "  → Force ECS service $SVC to desired_count=0..."
-                  aws ecs update-service \
-                    --cluster leadgenie-cluster \
-                    --service "$SVC" \
-                    --desired-count 0 \
-                    --force-new-deployment \
-                    --deployment-configuration maximumPercent=100,minimumHealthyPercent=0 \
-                    2>/dev/null || true
-                done
-                echo "  → Waiting up to 3 min for ECS services to stabilize at 0..."
-                timeout 180 aws ecs wait services-stable \
-                  --cluster leadgenie-cluster \
-                  --services leadgenie-api leadgenie-worker 2>/dev/null || true
-              fi
-              _wait_for_rollback_failed_or_complete "$STACK"
+              echo "  → $STACK rollback in progress — waiting silently (no intervention) up to 30 min..."
+              _wait_for_rollback_exit "$STACK"
               STATUS=$(aws cloudformation describe-stacks \
                 --stack-name $STACK --query "Stacks[0].StackStatus" --output text 2>/dev/null || echo "UNKNOWN")
               echo "  → $STACK is now: $STATUS"
