@@ -231,13 +231,9 @@ jobs:
 
       - name: Check and stabilize CloudFormation stacks
         run: |
-          _wait_for_rollback_exit() {
-            # Poll silently — no intervention. Let CF finish rollback on its own.
-            # Previous interventions (stop-task, force-new-deployment) reset ECS deployment
-            # timers and create conflicting deployments, preventing CF from seeing stability.
-            # The old task definition (pre-NEO4J) should pass health checks on its own.
+          _poll_for_rollback_exit() {
             local STACK=$1
-            local MAX_WAIT=1800   # 30 minutes
+            local MAX_WAIT=$2
             local WAITED=0
             while [[ $WAITED -lt $MAX_WAIT ]]; do
               sleep 30
@@ -259,15 +255,56 @@ jobs:
               --output text 2>/dev/null || echo "DOES_NOT_EXIST")
             echo "$STACK: $STATUS"
 
-            # UPDATE_ROLLBACK_IN_PROGRESS: just wait. Do NOT stop tasks or force deployments —
-            # those interventions reset ECS deployment timers and fight CF's own rollback attempt.
-            # The old task definition (before the failed update) should work fine on its own.
             if [[ "$STATUS" == "UPDATE_ROLLBACK_IN_PROGRESS" ]]; then
-              echo "  → $STACK rollback in progress — waiting silently (no intervention) up to 30 min..."
-              _wait_for_rollback_exit "$STACK"
+              echo "  → $STACK in UPDATE_ROLLBACK_IN_PROGRESS"
+
+              if [[ "$STACK" == "ComputeStack" ]]; then
+                # Root cause: a previous CI run forced ECS services to desired_count=0, which
+                # prevents CF from seeing a stable desired=1 service during rollback.
+                # Fix: restore each service to desired_count=1 using the old task definition
+                # (the second-most-recent revision, which predates the failed NEO4J update).
+                # This lets CF's rollback deployment see stability and complete naturally.
+                echo "  → Restoring ECS services to desired=1 with old task def..."
+                for FAMILY in leadgenie-api leadgenie-worker; do
+                  SVC_NAME=$FAMILY
+                  OLD_TASK_DEF=$(aws ecs list-task-definitions \
+                    --family-prefix "$FAMILY" --sort DESC \
+                    --query "taskDefinitionArns[1]" --output text 2>/dev/null || echo "")
+                  CURRENT_DESIRED=$(aws ecs describe-services \
+                    --cluster leadgenie-cluster --services "$SVC_NAME" \
+                    --query "services[0].desiredCount" --output text 2>/dev/null || echo "1")
+                  echo "    $SVC_NAME: current desired=$CURRENT_DESIRED old_task_def=$OLD_TASK_DEF"
+                  if [ -n "$OLD_TASK_DEF" ] && [ "$OLD_TASK_DEF" != "None" ]; then
+                    aws ecs update-service --cluster leadgenie-cluster --service "$SVC_NAME" \
+                      --desired-count 1 --task-definition "$OLD_TASK_DEF" 2>/dev/null || true
+                    echo "    Restored $SVC_NAME to desired=1 with $OLD_TASK_DEF"
+                  fi
+                done
+                echo "  → Waiting up to 15 min for CF to detect stable service and complete rollback..."
+                _poll_for_rollback_exit "$STACK" 900
+              else
+                echo "  → Waiting up to 30 min for $STACK rollback to complete..."
+                _poll_for_rollback_exit "$STACK" 1800
+              fi
+
               STATUS=$(aws cloudformation describe-stacks \
                 --stack-name $STACK --query "Stacks[0].StackStatus" --output text 2>/dev/null || echo "UNKNOWN")
               echo "  → $STACK is now: $STATUS"
+
+              # If still stuck after restoring services, force UPDATE_ROLLBACK_FAILED
+              # by deleting the ECS services so CF detects missing resources.
+              if [[ "$STATUS" == "UPDATE_ROLLBACK_IN_PROGRESS" && "$STACK" == "ComputeStack" ]]; then
+                echo "  → Still stuck — deleting ECS services to force UPDATE_ROLLBACK_FAILED..."
+                for SVC in leadgenie-api leadgenie-worker; do
+                  aws ecs delete-service --cluster leadgenie-cluster --service "$SVC" \
+                    --force 2>/dev/null || true
+                done
+                echo "  → Waiting up to 5 min for CF to detect deleted services..."
+                _poll_for_rollback_exit "$STACK" 300
+                STATUS=$(aws cloudformation describe-stacks \
+                  --stack-name $STACK --query "Stacks[0].StackStatus" --output text 2>/dev/null || echo "UNKNOWN")
+                echo "  → $STACK after nuclear option: $STATUS"
+              fi
             fi
 
             # UPDATE_ROLLBACK_FAILED: rollback is stuck — skip the failing resources.

@@ -160,7 +160,7 @@ class ComputeStack(Stack):
         app_sg = self._app_sg
 
         # ── API ECS Service ────────────────────────────────────────────────────
-        self.api_service = ecs.FargateService(self, "ApiService",
+        self.api_service = ecs.FargateService(self, "ApiServiceV2",
             service_name="leadgenie-api",
             cluster=self.cluster,
             task_definition=api_task_def,
@@ -199,7 +199,7 @@ class ComputeStack(Stack):
         )
 
         # ── Worker ECS Service ─────────────────────────────────────────────────
-        self.worker_service = ecs.FargateService(self, "WorkerService",
+        self.worker_service = ecs.FargateService(self, "WorkerServiceV2",
             service_name="leadgenie-worker",
             cluster=self.cluster,
             task_definition=worker_task_def,
