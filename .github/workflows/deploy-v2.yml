@@ -231,6 +231,41 @@ jobs:
 
       - name: Check and stabilize CloudFormation stacks
         run: |
+          _stop_ecs_tasks() {
+            # Stop all running ECS tasks for a service to help trigger the circuit breaker
+            for SVC in leadgenie-api leadgenie-worker; do
+              TASKS=$(aws ecs list-tasks --cluster leadgenie-cluster --service-name "$SVC" \
+                --query "taskArns[]" --output text 2>/dev/null || echo "")
+              for TASK in $TASKS; do
+                echo "    Stopping task $TASK in $SVC..."
+                aws ecs stop-task --cluster leadgenie-cluster --task "$TASK" \
+                  --reason "Unblocking CloudFormation rollback" 2>/dev/null || true
+              done
+            done
+          }
+
+          _wait_for_rollback_failed_or_complete() {
+            local STACK=$1
+            local MAX_WAIT=1500   # 25 minutes
+            local WAITED=0
+            while [[ $WAITED -lt $MAX_WAIT ]]; do
+              sleep 30
+              WAITED=$((WAITED + 30))
+              STATUS=$(aws cloudformation describe-stacks --stack-name "$STACK" \
+                --query "Stacks[0].StackStatus" --output text 2>/dev/null || echo "UNKNOWN")
+              echo "    [${WAITED}s] $STACK: $STATUS"
+              if [[ "$STATUS" != "UPDATE_ROLLBACK_IN_PROGRESS" ]]; then
+                echo "  → $STACK left UPDATE_ROLLBACK_IN_PROGRESS → $STATUS"
+                break
+              fi
+              # Every 5 min, stop ECS tasks again so new cycle triggers circuit breaker
+              if [[ "$STACK" == "ComputeStack" && $((WAITED % 300)) -eq 0 ]]; then
+                echo "  → Stopping ECS tasks again to accelerate circuit breaker..."
+                _stop_ecs_tasks
+              fi
+            done
+          }
+
           for STACK in VpcStack DataStack ComputeStack FrontendStack MonitoringStack; do
             STATUS=$(aws cloudformation describe-stacks \
               --stack-name $STACK \
@@ -238,38 +273,43 @@ jobs:
               --output text 2>/dev/null || echo "DOES_NOT_EXIST")
             echo "$STACK: $STATUS"
 
+            # UPDATE_ROLLBACK_IN_PROGRESS: rollback is running but hasn't failed yet.
+            # continue-update-rollback only works in UPDATE_ROLLBACK_FAILED, not here.
+            # Strategy: stop ECS tasks to trigger circuit breaker faster, then wait for FAILED.
             if [[ "$STATUS" == "UPDATE_ROLLBACK_IN_PROGRESS" ]]; then
-              echo "  → $STACK is stuck in UPDATE_ROLLBACK_IN_PROGRESS"
-              echo "  → Finding stuck resources to skip..."
-              # Get logical IDs of resources currently in UPDATE_ROLLBACK_IN_PROGRESS
-              STUCK=$(aws cloudformation describe-stack-resources \
-                --stack-name $STACK \
-                --query "StackResources[?ResourceStatus=='UPDATE_ROLLBACK_IN_PROGRESS'].LogicalResourceId" \
-                --output text 2>/dev/null || echo "")
-              if [ -n "$STUCK" ]; then
-                SKIP_ARGS=$(echo "$STUCK" | tr '\t\n' ' ' | xargs -n1 echo "--resources-to-skip" | tr '\n' ' ')
-                echo "  → Skipping stuck resources: $STUCK"
-                aws cloudformation continue-update-rollback --stack-name $STACK $SKIP_ARGS || true
-              else
-                echo "  → No stuck resources found, continuing rollback..."
-                aws cloudformation continue-update-rollback --stack-name $STACK || true
+              echo "  → $STACK rollback in progress — waiting for it to reach FAILED state..."
+              if [[ "$STACK" == "ComputeStack" ]]; then
+                echo "  → Stopping ECS tasks to trigger circuit breaker..."
+                _stop_ecs_tasks
               fi
-              echo "  → Waiting for rollback to complete (up to 8 min)..."
-              timeout 480 aws cloudformation wait stack-rollback-complete --stack-name $STACK || true
+              _wait_for_rollback_failed_or_complete "$STACK"
               STATUS=$(aws cloudformation describe-stacks \
                 --stack-name $STACK --query "Stacks[0].StackStatus" --output text 2>/dev/null || echo "UNKNOWN")
-              echo "  → $STACK after recovery: $STATUS"
+              echo "  → $STACK is now: $STATUS"
             fi
 
+            # UPDATE_ROLLBACK_FAILED: rollback is stuck — skip the failing resources.
+            # This is the correct state for calling continue-update-rollback.
             if [[ "$STATUS" == "UPDATE_ROLLBACK_FAILED" ]]; then
-              echo "  → $STACK in UPDATE_ROLLBACK_FAILED — forcing continue-rollback skipping all failed resources..."
+              echo "  → $STACK in UPDATE_ROLLBACK_FAILED — skipping failed resources to unblock..."
               STUCK=$(aws cloudformation describe-stack-resources \
                 --stack-name $STACK \
                 --query "StackResources[?ResourceStatus=='UPDATE_FAILED' || ResourceStatus=='UPDATE_ROLLBACK_FAILED'].LogicalResourceId" \
                 --output text 2>/dev/null || echo "")
-              SKIP_ARGS=$(echo "$STUCK" | tr '\t\n' ' ' | xargs -n1 echo "--resources-to-skip" | tr '\n' ' ')
-              aws cloudformation continue-update-rollback --stack-name $STACK $SKIP_ARGS || true
-              timeout 480 aws cloudformation wait stack-rollback-complete --stack-name $STACK || true
+              if [ -n "$STUCK" ]; then
+                # --resources-to-skip takes multiple space-separated values after a single flag
+                SKIP_IDS=$(echo "$STUCK" | tr '\t\n' ' ' | xargs)
+                echo "  → Skipping: $SKIP_IDS"
+                aws cloudformation continue-update-rollback --stack-name $STACK \
+                  --resources-to-skip $SKIP_IDS || true
+              else
+                aws cloudformation continue-update-rollback --stack-name $STACK || true
+              fi
+              echo "  → Waiting up to 10 min for rollback to complete..."
+              timeout 600 aws cloudformation wait stack-rollback-complete --stack-name $STACK || true
+              STATUS=$(aws cloudformation describe-stacks \
+                --stack-name $STACK --query "Stacks[0].StackStatus" --output text 2>/dev/null || echo "UNKNOWN")
+              echo "  → $STACK final status: $STATUS"
             fi
           done
 
