@@ -7,6 +7,7 @@ from email.header import decode_header
 from datetime import datetime, timezone
 
 from services.lead_context_store import LeadContextStore
+from services.interested_store import InterestedStore
 from agents.conversation.conversation_agent import ConversationAgent
 from scheduling.followup_scheduler import FollowupScheduler
 
@@ -26,6 +27,7 @@ class GmailReplyPoller:
         self.user     = os.getenv("LEADGENIE_GMAIL", "")
         self.password = os.getenv("LEADGENIE_GMAIL_PASSWORD", "")
         self.store    = LeadContextStore()
+        self.interested_store = InterestedStore()
         self.agent    = ConversationAgent()
 
     def _connect(self) -> imaplib.IMAP4_SSL:
@@ -79,10 +81,12 @@ class GmailReplyPoller:
         if not known:
             return []
 
-        # Search IMAP for UNSEEN reply emails (Re:) FROM known leads only
+        # Search IMAP for UNSEEN emails from known leads. Some clients do not
+        # prefix replies with "Re:", so subject filtering made real replies
+        # invisible.
         msg_id_set = set()
         for lead_email in known:
-            _, data = mail.search(None, f'UNSEEN FROM "{lead_email}" SUBJECT "Re:"')
+            _, data = mail.search(None, f'UNSEEN FROM "{lead_email}"')
             if data[0]:
                 for mid in data[0].split():
                     msg_id_set.add(mid)
@@ -140,6 +144,14 @@ class GmailReplyPoller:
                 lead_id=lead_id,
                 reply=body,
                 context=context,
+                lead_email=sender_email,
+            )
+            self.interested_store.record_reply(
+                lead_id=lead_id,
+                context=context,
+                reply=body,
+                intent=result.get("intent"),
+                intent_confidence=result.get("intent_confidence"),
                 lead_email=sender_email,
             )
 

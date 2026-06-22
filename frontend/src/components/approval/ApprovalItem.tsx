@@ -485,9 +485,11 @@ export function ApprovalItem({ item, initialExpanded = false, initialTab, highli
   const queryClient = useQueryClient();
   const isHigh = item.risk_level === "high";
   const governanceFailed = !item.governance_passed;
+  const isFollowup = item.message_type === "followup";
 
   const [tab, setTab]         = useState<Tab>(initialTab ?? (governanceFailed ? "validation" : "email"));
   const [expanded, setExpanded] = useState(initialExpanded);
+  const [maxFollowups, setMaxFollowups] = useState(1);
 
   // Local overrides for email content and hallucination status after in-page edits
   const [localEmail, setLocalEmail] = useState(item.email);
@@ -499,7 +501,7 @@ export function ApprovalItem({ item, initialExpanded = false, initialTab, highli
     );
 
   const approveMutation = useMutation({
-    mutationFn: () => api.approveOutreach(item.event_id),
+    mutationFn: () => api.approveOutreach(item.event_id, isFollowup ? undefined : maxFollowups),
     onSuccess: removeFromCache,
   });
 
@@ -579,6 +581,11 @@ export function ApprovalItem({ item, initialExpanded = false, initialTab, highli
           {hasHallucinationViolations && (
             <span className="font-mono text-[9px] uppercase tracking-[0.1em] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 font-semibold">
               ⚠ hallucination
+            </span>
+          )}
+          {isFollowup && item.followup_number && (
+            <span className="font-mono text-[9px] uppercase tracking-[0.1em] px-1.5 py-0.5 rounded bg-brand/10 text-brand font-semibold">
+              Follow-up #{item.followup_number}
             </span>
           )}
           <span className="text-[13px] font-medium text-ink">{item.lead_name}</span>
@@ -675,6 +682,19 @@ export function ApprovalItem({ item, initialExpanded = false, initialTab, highli
       {/* Actions */}
       <div className="px-4 pb-3.5">
         <div className="flex gap-2 flex-wrap">
+          {!isFollowup && (
+            <label className="flex items-center gap-1.5 text-[10px] font-mono text-ink-mute border border-line rounded px-2 py-1 bg-surface-2">
+              Max Follow-ups
+              <select
+                value={maxFollowups}
+                onChange={e => setMaxFollowups(Number(e.target.value))}
+                disabled={acting}
+                className="bg-surface text-ink border border-line-soft rounded px-1 py-0.5 text-[10px] focus:outline-none focus:border-brand/50"
+              >
+                {[0, 1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </label>
+          )}
           <button
             onClick={() => approveMutation.mutate()}
             disabled={acting}

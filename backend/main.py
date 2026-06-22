@@ -61,6 +61,7 @@ from learning.learning_engine import LearningEngine
 from scheduling.scheduler import Scheduler
 from scheduling.followup_scheduler import FollowupScheduler
 from services.lead_context_store import LeadContextStore
+from services.interested_store import InterestedStore
 from services.email_sender import EmailSender
 from services.twilio_whatsapp import TwilioWhatsApp
 from services.whatsapp_conversation_store import WhatsAppConversationStore
@@ -118,6 +119,7 @@ whatsapp_conversation_store = WhatsAppConversationStore()
 render_whatsapp_mailbox = RenderWhatsAppMailbox()
 outreach_queue = OutreachQueueStore()
 credit_store = CreditStore()
+interested_store = InterestedStore()
 _followup_task = None
 
 
@@ -201,6 +203,11 @@ class SendOutreachRequest(BaseModel):
     body: str
     reasoning: Optional[str] = None
     context: dict = {}
+    max_followups: int = 1
+
+
+class ApproveOutreachRequest(BaseModel):
+    max_followups: int = 1
 
 
 class WhatsAppReplyRequest(BaseModel):
@@ -348,6 +355,7 @@ async def generate_outreach(req: OutreachRequest):
         governance=result["governance"],
         attempt_history=result["governance_attempt_history"],
         grounding_facts=grounding_facts,
+        context=context,
     )
 
     # Write compact outreach example to industry memory for future few-shot learning
@@ -556,6 +564,7 @@ async def generate_outreach_stream(req: OutreachRequest):
                 governance=result["governance"],
                 attempt_history=result["governance_attempt_history"],
                 grounding_facts=grounding_facts,
+                context=context,
             )
 
             # Background bookkeeping (non-blocking, best-effort)
@@ -668,12 +677,14 @@ async def send_outreach(req: SendOutreachRequest):
     lead_context_store.save(req.to_email, req.lead_id, enriched_context)
 
     followup = None
-    if lead_phone:
+    max_followups = max(0, min(int(req.max_followups or 0), 5))
+    if max_followups > 0:
         followup = followup_scheduler.schedule_followup(
             lead_id=req.lead_id,
-            phone=lead_phone,
+            phone=lead_phone or "",
             context=enriched_context,
             outreach={"subject": req.subject, "body": req.body, "reasoning": req.reasoning},
+            max_followups=max_followups,
         )
 
     return {"sent": True, "to": req.to_email, "lead_id": req.lead_id, "followup": followup}
@@ -683,6 +694,13 @@ async def send_outreach(req: SendOutreachRequest):
 async def handle_reply(req: ConversationRequest):
     followup_scheduler.mark_replied(req.lead_id)
     result = conversation_agent.handle_reply(req.lead_id, req.reply, req.context)
+    interested_store.record_reply(
+        lead_id=req.lead_id,
+        context=req.context,
+        reply=req.reply,
+        intent=result.get("intent"),
+        intent_confidence=result.get("intent_confidence"),
+    )
     try:
         stats_store.record_conversation(
             lead_id=req.lead_id,
@@ -846,7 +864,7 @@ async def sent_emails():
 
 
 @app.post("/approval-queue/{event_id}/approve")
-async def approve_outreach(event_id: str):
+async def approve_outreach(event_id: str, req: Optional[ApproveOutreachRequest] = None):
     """Approve and immediately send the outreach email."""
     item = outreach_queue.get_item(event_id)
     if not item:
@@ -868,22 +886,48 @@ async def approve_outreach(event_id: str):
     stats_store.update_outreach_status(event_id, "approved")
     stats_store.record_agent_event(agent="gov", message=f"Outreach approved & sent to {to_email}", lead_id=item.get("lead_id", ""))
 
-    # Schedule WhatsApp follow-up if phone is available
+    message_type = item.get("message_type") or "initial"
+    followup_number = item.get("followup_number")
+    base_context = item.get("context") or {}
     test_phone = os.getenv("WHATSAPP_TEST_PHONE", "")
-    lead_phone = test_phone or item.get("lead_phone", "")
-    if lead_phone:
-        context = {"lead": {"email": to_email, "phone": lead_phone, "name": item.get("lead_name", "")},
-                   "company": {"name": item.get("company_name", "")},
-                   "outreach": {"subject": subject, "body": body}}
-        lead_context_store.save(to_email, item.get("lead_id", ""), context)
-        followup_scheduler.schedule_followup(
-            lead_id=item.get("lead_id", ""),
-            phone=lead_phone,
-            context=context,
-            outreach={"subject": subject, "body": body},
-        )
+    lead_phone = test_phone or item.get("lead_phone", "") or (base_context.get("lead") or {}).get("phone", "")
+    context = {
+        **base_context,
+        "lead": {
+            **(base_context.get("lead") or {}),
+            "email": to_email,
+            "phone": lead_phone,
+            "name": (base_context.get("lead") or {}).get("name") or item.get("lead_name", ""),
+            "title": (base_context.get("lead") or {}).get("title") or item.get("lead_title", ""),
+        },
+        "company": {
+            **(base_context.get("company") or {}),
+            "name": (base_context.get("company") or {}).get("name") or item.get("company_name", ""),
+        },
+        "outreach": {"subject": subject, "body": body, "reasoning": email.get("reasoning")},
+    }
+    lead_context_store.save(to_email, item.get("lead_id", ""), context)
 
-    return {"status": "approved", "sent": True, "to": to_email, "event_id": event_id}
+    followup = None
+    if message_type == "followup" and followup_number:
+        followup_scheduler.mark_followup_sent(
+            item.get("lead_id", ""),
+            event_id,
+            int(followup_number),
+            {"subject": subject, "body": body, "reasoning": email.get("reasoning")},
+        )
+    else:
+        max_followups = max(0, min(int((req.max_followups if req else 1) or 0), 5))
+        if max_followups > 0:
+            followup = followup_scheduler.schedule_followup(
+                lead_id=item.get("lead_id", ""),
+                phone=lead_phone or "",
+                context=context,
+                outreach={"subject": subject, "body": body, "reasoning": email.get("reasoning")},
+                max_followups=max_followups,
+            )
+
+    return {"status": "approved", "sent": True, "to": to_email, "event_id": event_id, "followup": followup}
 
 
 @app.post("/approval-queue/{event_id}/reject")
@@ -1651,6 +1695,14 @@ async def inbound_email_reply(request: Request):
         context=context,
         lead_email=sender_email,
     )
+    interested_store.record_reply(
+        lead_id=lead_id,
+        context=context,
+        reply=reply_body,
+        intent=result.get("intent"),
+        intent_confidence=result.get("intent_confidence"),
+        lead_email=sender_email,
+    )
 
     logger.info("Handled reply from %s — intent=%s", sender_email, result.get("intent"))
     return {
@@ -1661,6 +1713,12 @@ async def inbound_email_reply(request: Request):
         "email_sent": result.get("email_sent", False),
         "conversation_length": result.get("conversation_length"),
     }
+
+
+@app.get("/interested")
+async def interested_leads():
+    """Return leads that replied to email outreach."""
+    return interested_store.list_all()
 
 
 # ── WhatsApp Endpoints ────────────────────────────────────────────────────────

@@ -150,6 +150,8 @@ export type ApprovalItem = {
   risk_score: number;
   timestamp: string;
   status: "pending" | "approved" | "rejected";
+  message_type?: "initial" | "followup";
+  followup_number?: number | null;
   governance_passed: boolean;
   total_attempts: number;
   content_snippet: string;
@@ -178,14 +180,21 @@ export type ApprovalItem = {
 
 export const approvalQueue = () => get<ApprovalItem[]>("/approval-queue");
 export const sentEmails    = () => get<ApprovalItem[]>("/approval-queue/sent");
-async function action<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, { method: "POST" });
+async function action<T>(path: string, body?: unknown): Promise<T> {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: "POST",
+    headers: body === undefined ? undefined : { "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
   if (!res.ok) throw new Error(`POST ${path} → ${res.status}`);
   return res.json();
 }
 
-export const approveOutreach = (eventId: string) =>
-  action<{ status: string; event_id: string }>(`/approval-queue/${eventId}/approve`);
+export const approveOutreach = (eventId: string, maxFollowups?: number) =>
+  action<{ status: string; event_id: string }>(
+    `/approval-queue/${eventId}/approve`,
+    maxFollowups === undefined ? undefined : { max_followups: maxFollowups },
+  );
 export const rejectOutreach = (eventId: string) =>
   action<{ status: string; event_id: string }>(`/approval-queue/${eventId}/reject`);
 
@@ -204,6 +213,19 @@ export const recheckHallucination = (eventId: string) =>
 
 export type Credits = { total: number; used: number; remaining: number };
 export const getCredits = () => get<Credits>("/credits");
+
+export type InterestedLead = {
+  lead_id: string;
+  lead_name: string;
+  company_name: string;
+  lead_title: string;
+  reply_content: string;
+  detected_intent: string;
+  intent_confidence?: number | null;
+  timestamp: string;
+  replies?: { reply: string; intent?: string; timestamp: string }[];
+};
+export const interestedLeads = () => get<InterestedLead[]>("/interested");
 
 // ── Company ──────────────────────────────────────────────────────────────────
 
@@ -355,6 +377,7 @@ export const sendOutreach = (params: {
   body: string;
   reasoning?: string;
   context: unknown;
+  maxFollowups?: number;
 }) =>
   post<{ sent: boolean; to: string; lead_id: string }>("/outreach/send", {
     lead_id: params.leadId,
@@ -364,6 +387,7 @@ export const sendOutreach = (params: {
     body: params.body,
     reasoning: params.reasoning,
     context: params.context,
+    max_followups: params.maxFollowups ?? 1,
   });
 
 // ── Health ───────────────────────────────────────────────────────────────────
@@ -944,6 +968,7 @@ export const api = {
   editEmail,
   recheckHallucination,
   getCredits,
+  interestedLeads,
   companyList,
   companyResearch,
   auditTrail,

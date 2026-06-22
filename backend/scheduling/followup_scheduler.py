@@ -10,6 +10,8 @@ from typing import Optional
 
 from agents.outreach.outreach_agent import OutreachAgent
 from agents.conversation.memory_manager import MemoryManager
+from governance.outreach_queue_store import OutreachQueueStore
+from governance.risk_engine import RiskEngine
 from services.twilio_whatsapp import TwilioWhatsApp
 from services.whatsapp_conversation_store import WhatsAppConversationStore
 
@@ -30,14 +32,20 @@ class FollowupScheduler:
         context: dict,
         outreach: Optional[dict] = None,
         wait_minutes: Optional[int] = None,
+        max_followups: int = 1,
     ) -> dict:
         wait = wait_minutes or int(os.getenv("WHATSAPP_FOLLOWUP_WAIT_MINUTES", "2"))
         now = datetime.utcnow()
+        max_followups = max(0, min(int(max_followups or 0), 5))
         record = {
             "lead_id": lead_id,
             "phone": phone,
             "context": context,
             "outreach": outreach or context.get("outreach") or {},
+            "max_followups": max_followups,
+            "next_followup_number": 2 if max_followups >= 2 else None,
+            "email_followups": [],
+            "pending_followup_event_id": None,
             "email_sent_at": now.isoformat(),
             "due_at": (now + timedelta(minutes=wait)).isoformat(),
             "status": "waiting",
@@ -64,7 +72,15 @@ class FollowupScheduler:
         )
         record["status"] = "replied"
         record["replied_at"] = datetime.utcnow().isoformat()
+        record["pending_followup_event_id"] = None
+        for item in record.get("email_followups") or []:
+            if item.get("status") == "pending_approval":
+                item["status"] = "cancelled"
+                item["cancelled_at"] = record["replied_at"]
         self._write(lead_id, record)
+        cancelled = OutreachQueueStore().cancel_pending_followups(lead_id)
+        if cancelled:
+            logger.info("Cancelled %s pending email follow-up approvals for replied lead_id=%s", cancelled, lead_id)
         updated = self.get(lead_id) or {}
         logger.info(
             "mark_replied after update lead_id=%s old_status=%s current_status=%s replied_at=%s path=%s",
@@ -132,6 +148,11 @@ class FollowupScheduler:
                 logger.info("Skipping due follow-up lead_id=%s because status is replied", lead_id)
                 record["status"] = "replied"
                 self._write(lead_id, record)
+                continue
+
+            if not record.get("phone"):
+                queued = self.queue_next_email_followup(lead_id)
+                results.append({"lead_id": lead_id, "sent": False, "followup_queued": bool(queued), "event_id": queued})
                 continue
 
             message = self._build_message(record)
@@ -210,8 +231,106 @@ class FollowupScheduler:
                     )
                 except Exception:
                     logger.exception("Unable to store WhatsApp follow-up conversation lead_id=%s", lead_id)
+                event_id = self.queue_next_email_followup(lead_id)
+                if event_id:
+                    result["followup_queued"] = True
+                    result["followup_event_id"] = event_id
             results.append({"lead_id": lead_id, **result})
         return results
+
+    def schedule_next_after_email_followup(self, lead_id: str, sent_followup_number: int, wait_minutes: Optional[int] = None) -> Optional[dict]:
+        record = self.get(lead_id)
+        if not record or record.get("status") == "replied":
+            return None
+        max_followups = int(record.get("max_followups") or 0)
+        next_number = int(sent_followup_number or 0) + 1
+        if next_number > max_followups or next_number > 5:
+            record["status"] = "completed"
+            record["completed_at"] = datetime.utcnow().isoformat()
+            record["next_followup_number"] = None
+            self._write(lead_id, record)
+            return record
+
+        wait = wait_minutes or int(os.getenv("EMAIL_FOLLOWUP_WAIT_MINUTES", os.getenv("WHATSAPP_FOLLOWUP_WAIT_MINUTES", "2")))
+        record["status"] = "waiting"
+        record["due_at"] = (datetime.utcnow() + timedelta(minutes=wait)).isoformat()
+        record["next_followup_number"] = next_number
+        record["pending_followup_event_id"] = None
+        self._write(lead_id, record)
+        return record
+
+    def queue_next_email_followup(self, lead_id: str) -> Optional[str]:
+        record = self.get(lead_id)
+        if not record or record.get("status") == "replied":
+            return None
+
+        followup_number = record.get("next_followup_number")
+        max_followups = int(record.get("max_followups") or 0)
+        if not followup_number or int(followup_number) > max_followups or int(followup_number) > 5:
+            record["status"] = "completed"
+            record["completed_at"] = datetime.utcnow().isoformat()
+            self._write(lead_id, record)
+            return None
+
+        if record.get("pending_followup_event_id"):
+            return record.get("pending_followup_event_id")
+
+        context = record.get("context") or {}
+        lead = context.get("lead") or {}
+        company = context.get("company") or {}
+        lead_email = lead.get("email") or record.get("lead_email")
+        if not lead_email:
+            logger.warning("Cannot queue follow-up without lead email lead_id=%s", lead_id)
+            return None
+
+        email = self._build_email_followup(record, int(followup_number))
+        governance, attempt_history = self._validate_email(lead_id, email, context)
+        event_id = OutreachQueueStore().enqueue(
+            lead_id=lead_id,
+            lead_name=lead.get("name", ""),
+            lead_title=lead.get("title", ""),
+            company_name=company.get("name", ""),
+            lead_email=lead_email,
+            lead_phone=record.get("phone", ""),
+            email=email,
+            governance=governance,
+            attempt_history=attempt_history,
+            grounding_facts={},
+            context=context,
+            message_type="followup",
+            followup_number=int(followup_number),
+        )
+
+        email_followups = record.get("email_followups") or []
+        email_followups.append({
+            "followup_number": int(followup_number),
+            "event_id": event_id,
+            "queued_at": datetime.utcnow().isoformat(),
+            "status": "pending_approval",
+            "subject": email.get("subject", ""),
+            "body": email.get("body", ""),
+        })
+        record["email_followups"] = email_followups
+        record["pending_followup_event_id"] = event_id
+        record["status"] = "email_followup_pending_approval"
+        self._write(lead_id, record)
+        return event_id
+
+    def mark_followup_sent(self, lead_id: str, event_id: str, followup_number: int, email: Optional[dict] = None) -> None:
+        record = self.get(lead_id)
+        if not record:
+            return
+        for item in record.get("email_followups") or []:
+            if item.get("event_id") == event_id:
+                item["status"] = "sent"
+                item["sent_at"] = datetime.utcnow().isoformat()
+                if email:
+                    item["subject"] = email.get("subject", item.get("subject", ""))
+                    item["body"] = email.get("body", item.get("body", ""))
+                    item["reasoning"] = email.get("reasoning", item.get("reasoning", ""))
+        record["pending_followup_event_id"] = None
+        self._write(lead_id, record)
+        self.schedule_next_after_email_followup(lead_id, followup_number)
 
     def _build_message(self, record: dict) -> str:
         context = record.get("context", {})
@@ -268,6 +387,88 @@ class FollowupScheduler:
         cleaned = cleaned.replace(company_name, "").strip(" -:|")
         words = cleaned.split()
         return " ".join(words[:8]) if words else "a few practical ideas"
+
+    def _build_email_followup(self, record: dict, followup_number: int) -> dict:
+        context = record.get("context") or {}
+        lead = context.get("lead") or {}
+        company = context.get("company") or {}
+        outreach = record.get("outreach") or context.get("outreach") or {}
+        first_name = (lead.get("name") or "there").split()[0]
+        company_name = company.get("name") or "your team"
+        subject = outreach.get("subject") or f"{company_name} follow-up"
+        prior_subject = subject.replace("Re: ", "")
+        stage = {
+            2: ("Reminder", "I wanted to follow up on my previous email."),
+            3: ("Call To Action", "Would you be open to a quick conversation?"),
+            4: ("Still Interested", "I am checking whether this is still relevant."),
+            5: ("Feedback / Future Interest", "If now is not the right time, would it make sense to reconnect later?"),
+        }.get(followup_number, ("Follow-up", "I wanted to follow up."))
+
+        history_bits = []
+        if outreach.get("body"):
+            history_bits.append("I had shared a note about " + self._short_topic(prior_subject, company_name) + ".")
+        if record.get("whatsapp_sent_at"):
+            history_bits.append("I also sent a short WhatsApp note in case that was easier.")
+        previous_followups = [
+            item for item in (record.get("email_followups") or [])
+            if item.get("status") == "sent" and int(item.get("followup_number") or 0) < followup_number
+        ]
+        if previous_followups:
+            last = sorted(previous_followups, key=lambda i: i.get("followup_number") or 0)[-1]
+            history_bits.append(
+                f"My last follow-up was about {self._short_topic(last.get('subject', ''), company_name)}."
+            )
+
+        body = (
+            f"Hi {first_name},\n\n"
+            f"{stage[1]} "
+            f"{' '.join(history_bits)} "
+            f"Given {company_name}'s context, I thought this may still be worth a brief look.\n\n"
+            "With regards,\nGanit team"
+        )
+        return {
+            "subject": f"Re: {prior_subject}"[:60],
+            "body": body,
+            "reasoning": f"Follow-up #{followup_number} ({stage[0]}) generated from prior outreach, WhatsApp status, and lead/company context.",
+            "followup_type": stage[0],
+        }
+
+    def _validate_email(self, lead_id: str, email: dict, context: dict) -> tuple[dict, list[dict]]:
+        lead = context.get("lead") or {}
+        company = context.get("company") or {}
+        source_facts = {
+            "company_name": company.get("name"),
+            "industry": company.get("industry"),
+            "lead_title": lead.get("title"),
+            "description": company.get("description"),
+            "employee_count": company.get("employee_count"),
+            "technologies": company.get("technologies", []),
+        }
+        risk_engine = RiskEngine()
+        governance = risk_engine.evaluate(lead_id, email, source_facts)
+        tone = risk_engine.tone_validator.validate(email)
+        hallucination = risk_engine.hallucination_checker.check(email, source_facts, lead_id=lead_id)
+        attempt_history = [{
+            "attempt": 1,
+            "passed": governance.get("approved", False),
+            "email": {
+                "subject": email.get("subject", ""),
+                "body": email.get("body", ""),
+                "reasoning": email.get("reasoning", ""),
+            },
+            "layers": {
+                "tone": tone,
+                "hallucination": {
+                    "passed": hallucination.get("passed", True),
+                    "violations": hallucination.get("violations", []),
+                    "confidence": hallucination.get("confidence"),
+                    "explanation": hallucination.get("explanation", ""),
+                },
+                "validator": {"consequence": "allow", "issues": [], "checkpoints": {}},
+            },
+        }]
+        governance["total_attempts"] = 1
+        return governance, attempt_history
 
     def _write(self, lead_id: str, record: dict) -> None:
         with open(self._path(lead_id), "w") as f:

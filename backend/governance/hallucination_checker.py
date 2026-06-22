@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import re
 from typing import Optional
@@ -7,6 +8,7 @@ from anthropic import Anthropic
 client = Anthropic()
 # Haiku is sufficient for the structured yes/no JSON fact-check and is ~5x faster
 MODEL = os.getenv("CLAUDE_MODEL_HALLUCINATION", "claude-haiku-4-5-20251001")
+logger = logging.getLogger(__name__)
 
 
 class HallucinationChecker:
@@ -86,14 +88,77 @@ Respond as JSON:
   "confidence": 0.0-1.0,
   "explanation": "one sentence summary"
 }}"""
-        response = client.messages.create(
-            model=MODEL,
-            max_tokens=256,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        raw = response.content[0].text.strip()
-        # Extract JSON object, handling code fences and surrounding prose
-        match = re.search(r"\{[\s\S]*\}", raw)
-        if not match:
-            return {"passed": True, "violations": [], "confidence": 0.5, "explanation": "No JSON in response — check skipped."}
-        return json.loads(match.group())
+        try:
+            response = client.messages.create(
+                model=MODEL,
+                max_tokens=256,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            raw = self._extract_text(response).strip()
+            logger.info(
+                "Hallucination check raw response lead_id=%s model=%s prompt=%s raw_response=%s",
+                lead_id,
+                MODEL,
+                prompt,
+                raw,
+            )
+            # Extract JSON object, handling code fences and surrounding prose.
+            match = re.search(r"\{[\s\S]*\}", raw)
+            if not match:
+                logger.warning(
+                    "Hallucination check returned no JSON lead_id=%s model=%s raw_response=%s",
+                    lead_id,
+                    MODEL,
+                    raw,
+                )
+                return {
+                    "passed": False,
+                    "violations": ["Hallucination checker returned no JSON payload."],
+                    "confidence": 0.0,
+                    "explanation": "Hallucination checker response could not be parsed.",
+                }
+
+            candidate = match.group()
+            try:
+                return json.loads(candidate)
+            except json.JSONDecodeError as exc:
+                logger.warning(
+                    "Hallucination check JSON parse failed lead_id=%s model=%s error=%s prompt=%s raw_response=%s candidate=%s",
+                    lead_id,
+                    MODEL,
+                    exc,
+                    prompt,
+                    raw,
+                    candidate,
+                )
+                return {
+                    "passed": False,
+                    "violations": [f"Hallucination checker returned invalid JSON: {exc.msg}"],
+                    "confidence": 0.0,
+                    "explanation": "Hallucination checker response could not be parsed.",
+                }
+        except Exception as exc:
+            logger.exception(
+                "Hallucination check failed lead_id=%s model=%s prompt=%s",
+                lead_id,
+                MODEL,
+                prompt,
+            )
+            return {
+                "passed": False,
+                "violations": [f"Hallucination checker failed: {exc}"],
+                "confidence": 0.0,
+                "explanation": "Hallucination checker could not complete.",
+            }
+
+    @staticmethod
+    def _extract_text(response) -> str:
+        blocks = getattr(response, "content", None) or []
+        texts = []
+        for block in blocks:
+            text = getattr(block, "text", None)
+            if text:
+                texts.append(text)
+        if texts:
+            return "\n".join(texts)
+        return str(response)

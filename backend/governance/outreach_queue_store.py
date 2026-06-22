@@ -124,6 +124,9 @@ class OutreachQueueStore:
         grounding_facts: Optional[dict] = None,
         lead_email: str = "",
         lead_phone: str = "",
+        context: Optional[dict] = None,
+        message_type: str = "initial",
+        followup_number: Optional[int] = None,
     ) -> str:
         """Write an email to the queue. Returns the event_id."""
         passed = attempt_history[-1].get("passed", True) if attempt_history else True
@@ -170,6 +173,8 @@ class OutreachQueueStore:
             "company_name":  company_name,
             "lead_email":    lead_email,
             "lead_phone":    lead_phone,
+            "message_type":   message_type,
+            "followup_number": followup_number,
             "timestamp":     datetime.now(timezone.utc).isoformat(),
             "status":        "pending",
             "governance_passed": passed,
@@ -184,6 +189,7 @@ class OutreachQueueStore:
             "checkpoints":   checkpoints,
             "citations":     citations,
             "attempt_history": attempt_history,
+            "context":       context or {},
         }
         _append(record)
         return event_id
@@ -275,3 +281,27 @@ class OutreachQueueStore:
                 for rec in updated:
                     f.write(json.dumps(rec) + "\n")
         return found
+
+    def cancel_pending_followups(self, lead_id: str) -> int:
+        """Cancel pending email follow-up approval items for a lead."""
+        items = _read_all()
+        cancelled = 0
+        updated: list[dict] = []
+        for item in items:
+            if (
+                item.get("lead_id") == lead_id
+                and item.get("message_type") == "followup"
+                and item.get("status") == "pending"
+            ):
+                item = dict(item)
+                item["status"] = "cancelled"
+                item["status_updated_at"] = datetime.now(timezone.utc).isoformat()
+                item["cancel_reason"] = "lead_replied"
+                cancelled += 1
+            updated.append(item)
+
+        if cancelled:
+            with open(QUEUE_FILE, "w") as f:
+                for rec in updated:
+                    f.write(json.dumps(rec) + "\n")
+        return cancelled

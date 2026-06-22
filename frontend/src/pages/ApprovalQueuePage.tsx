@@ -6,6 +6,9 @@ import { StatusPill } from "../components/StatusPill";
 import { GovStatCard } from "../components/approval/GovStatCard";
 import { ApprovalItem } from "../components/approval/ApprovalItem";
 import { api, type ApprovalItem as ApprovalItemType } from "../lib/api";
+import { formatRelativeTime } from "../lib/utils";
+
+type QueueTab = "outreach" | "interested" | "followups";
 
 function matchesSearch(item: ApprovalItemType, q: string): boolean {
   const lq = q.toLowerCase();
@@ -24,6 +27,7 @@ export function ApprovalQueuePage() {
   const qParam   = searchParams.get("q") ?? "";
   const tabParam = searchParams.get("tab") as "email" | "validation" | "citations" | null;
   const [search, setSearch] = useState(qParam);
+  const [queueTab, setQueueTab] = useState<QueueTab>("outreach");
 
   // Sync input when URL param changes (e.g. navigating from dashboard)
   useEffect(() => { setSearch(qParam); }, [qParam]);
@@ -39,19 +43,24 @@ export function ApprovalQueuePage() {
     queryFn: api.sentEmails,
   });
 
-  const allItems = search
-    ? [
-        ...items.filter(i => matchesSearch(i, search)),
-        ...sentItems.filter(i => matchesSearch(i, search)),
-      ]
-    : items;
+  const { data: interestedItems = [] } = useQuery({
+    queryKey: ["interestedLeads"],
+    queryFn: api.interestedLeads,
+    refetchInterval: 15_000,
+  });
 
-  const displayItems   = search ? allItems : items;
+  const outreachItems = items.filter(i => i.message_type !== "followup");
+  const followupItems = items.filter(i => i.message_type === "followup");
+  const activeItems = queueTab === "followups" ? followupItems : outreachItems;
+
+  const displayItems   = search ? activeItems.filter(i => matchesSearch(i, search)) : activeItems;
   const failedCount    = items.filter(i => !i.governance_passed).length;
   const passedCount    = items.filter(i => i.governance_passed).length;
   const retriedCount   = items.filter(i => i.total_attempts > 1).length;
-  const highRisk       = items.filter(i => i.risk_level === "high").length;
   const sentMatches    = search ? sentItems.filter(i => matchesSearch(i, search)) : [];
+  const activeFailedCount = activeItems.filter(i => !i.governance_passed).length;
+  const activePassedCount = activeItems.filter(i => i.governance_passed).length;
+  const activeHighRisk = activeItems.filter(i => i.risk_level === "high").length;
 
   const clearSearch = () => {
     setSearch("");
@@ -128,11 +137,33 @@ export function ApprovalQueuePage() {
           </div>
         )}
 
+        <div className="mb-4 inline-flex rounded-lg border border-line-soft bg-surface overflow-hidden">
+          {[
+            ["outreach", `Outreach (${outreachItems.length})`],
+            ["interested", `Interested (${interestedItems.length})`],
+            ["followups", `Follow-ups (${followupItems.length})`],
+          ].map(([id, label]) => (
+            <button
+              key={id}
+              onClick={() => setQueueTab(id as QueueTab)}
+              className={`px-4 py-2 text-[11px] font-mono border-r border-line-soft last:border-r-0 transition-colors ${
+                queueTab === id ? "bg-brand/10 text-brand" : "text-ink-mute hover:text-ink"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
         <div className="card-base">
           <div className="px-5 py-4 border-b border-line-soft flex items-center justify-between">
             <div className="font-serif text-display-md text-ink">
-              {search
+              {queueTab === "interested"
+                ? <>Leads showing <em className="text-brand italic">interest</em></>
+                : search
                 ? <>Emails matching <em className="text-brand italic">"{search}"</em></>
+                : queueTab === "followups"
+                ? <>Follow-ups awaiting your <em className="text-brand italic">approval</em></>
                 : <>All emails awaiting your <em className="text-brand italic">approval</em></>}
             </div>
             <div className="flex items-center gap-3">
@@ -143,7 +174,7 @@ export function ApprovalQueuePage() {
                 </>
               ) : (
                 <>
-                  {highRisk > 0 && <span className="text-[11px] font-mono text-danger">{highRisk} high-risk</span>}
+                  {activeHighRisk > 0 && <span className="text-[11px] font-mono text-danger">{activeHighRisk} high-risk</span>}
                   <div className="label-mono">Sorted by risk score</div>
                 </>
               )}
@@ -151,28 +182,54 @@ export function ApprovalQueuePage() {
           </div>
 
           {/* ── Default queue view (single scrollable column) ── */}
-          {!search && (
+          {queueTab === "interested" && (
+            <div className="p-5 overflow-y-auto max-h-[calc(100vh-340px)]">
+              {interestedItems.length === 0 && (
+                <div className="py-12 text-center text-ink-mute text-sm">No interested replies yet.</div>
+              )}
+              {interestedItems.map(item => (
+                <div key={item.lead_id} className="bg-surface rounded-md border border-line-soft border-l-[3px] border-l-brand mb-2.5">
+                  <div className="flex justify-between items-start px-4 pt-3.5 pb-2.5">
+                    <div>
+                      <div className="text-[13px] font-medium text-ink">{item.lead_name}</div>
+                      <div className="text-[11px] text-ink-2 font-mono">{item.lead_title} @ {item.company_name}</div>
+                    </div>
+                    <span className="label-mono shrink-0 ml-2">{formatRelativeTime(item.timestamp)}</span>
+                  </div>
+                  <div className="mx-4 mb-2.5 text-xs text-ink-2 leading-relaxed p-2.5 bg-surface-2 rounded border border-line-soft whitespace-pre-wrap">
+                    <div className="label-mono mb-1">Reply</div>
+                    "{item.reply_content}"
+                  </div>
+                  <div className="px-4 pb-3 text-[11px] text-ink-mute font-mono">
+                    Intent: <span className="text-brand">{item.detected_intent}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!search && queueTab !== "interested" && (
             <div className="p-5 overflow-y-auto max-h-[calc(100vh-340px)]">
               {isLoading && (
                 <div className="py-12 text-center text-ink-mute text-sm animate-pulse">Loading queue…</div>
               )}
-              {!isLoading && items.length === 0 && (
+              {!isLoading && activeItems.length === 0 && (
                 <div className="py-12 text-center text-ink-mute text-sm">
                   <div className="text-2xl mb-2">✓</div>Queue is empty.
                 </div>
               )}
-              {!isLoading && failedCount > 0 && (
+              {!isLoading && activeFailedCount > 0 && (
                 <div className="mb-4">
                   <div className="label-mono mb-2 text-red-400">⚠ Governance failed — requires review</div>
-                  {items.filter(i => !i.governance_passed).map(item => (
+                  {activeItems.filter(i => !i.governance_passed).map(item => (
                     <ApprovalItem key={item.event_id} item={item} />
                   ))}
                 </div>
               )}
-              {!isLoading && passedCount > 0 && (
+              {!isLoading && activePassedCount > 0 && (
                 <div>
-                  {failedCount > 0 && <div className="label-mono mb-2 text-emerald-400">✓ Passed governance — ready to send</div>}
-                  {items.filter(i => i.governance_passed).map(item => (
+                  {activeFailedCount > 0 && <div className="label-mono mb-2 text-emerald-400">✓ Passed governance — ready to send</div>}
+                  {activeItems.filter(i => i.governance_passed).map(item => (
                     <ApprovalItem key={item.event_id} item={item} />
                   ))}
                 </div>
