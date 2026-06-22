@@ -171,7 +171,9 @@ class ComputeStack(Stack):
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
             assign_public_ip=True,
             enable_execute_command=True,
-            circuit_breaker=ecs.DeploymentCircuitBreaker(rollback=True),
+            # rollback=False: circuit breaker detects failures but never resets desiredCount to 0.
+            # rollback=True caused services to silently scale to 0 after any failed deployment.
+            circuit_breaker=ecs.DeploymentCircuitBreaker(enable=True, rollback=False),
         )
 
         # Auto-scaling for API
@@ -207,7 +209,7 @@ class ComputeStack(Stack):
             security_groups=[app_sg],
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
             assign_public_ip=True,
-            circuit_breaker=ecs.DeploymentCircuitBreaker(rollback=True),
+            circuit_breaker=ecs.DeploymentCircuitBreaker(enable=True, rollback=False),
             capacity_provider_strategies=[
                 ecs.CapacityProviderStrategy(
                     capacity_provider="FARGATE_SPOT",

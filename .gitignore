@@ -57,6 +57,9 @@ logs/
 # Docker
 *.override.yml
 
+# CDK build output (regenerated on every synth)
+infrastructure/cdk/cdk.out/
+
 # Secrets / keys
 *.pem
 *.key
