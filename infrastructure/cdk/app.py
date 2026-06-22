@@ -31,7 +31,7 @@ compute_stack = ComputeStack(app, "ComputeStack",
     env=env,
 )
 frontend_stack = FrontendStack(app, "FrontendStack",
-    alb_dns=cdk.Fn.import_value("AlbDns"),
+    alb=compute_stack.alb,
     env=env,
 )
 monitoring_stack = MonitoringStack(app, "MonitoringStack",

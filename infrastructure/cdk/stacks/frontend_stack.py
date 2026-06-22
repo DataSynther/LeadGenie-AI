@@ -1,15 +1,16 @@
 from aws_cdk import (
-    Stack, CfnOutput, RemovalPolicy, Fn,
+    Stack, CfnOutput, RemovalPolicy,
     aws_s3 as s3,
     aws_cloudfront as cloudfront,
     aws_cloudfront_origins as origins,
+    aws_elasticloadbalancingv2 as elbv2,
 )
 from constructs import Construct
 
 
 class FrontendStack(Stack):
     def __init__(self, scope: Construct, id: str, *,
-                 alb_dns: str,
+                 alb: elbv2.ApplicationLoadBalancer,
                  **kwargs):
         super().__init__(scope, id, **kwargs)
 
@@ -35,7 +36,7 @@ class FrontendStack(Stack):
                 # All backend API paths proxied through CloudFront to ALB (HTTP only)
                 **{
                     path: cloudfront.BehaviorOptions(
-                        origin=origins.HttpOrigin(alb_dns,
+                        origin=origins.LoadBalancerV2Origin(alb,
                             protocol_policy=cloudfront.OriginProtocolPolicy.HTTP_ONLY,
                         ),
                         viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
