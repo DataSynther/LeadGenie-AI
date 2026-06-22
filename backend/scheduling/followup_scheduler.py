@@ -8,8 +8,16 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
+import re
+
 from agents.outreach.outreach_agent import OutreachAgent
 from agents.conversation.memory_manager import MemoryManager
+from agents.outreach.prompt_templates import (
+    FOLLOWUP_TRUST_TEMPLATE,
+    FOLLOWUP_CTA_TEMPLATE_3,
+    FOLLOWUP_CTA_TEMPLATE_5,
+)
+from memory.sender_kb import SenderKnowledgeBase
 from services.twilio_whatsapp import TwilioWhatsApp
 from services.whatsapp_conversation_store import WhatsAppConversationStore
 
@@ -222,6 +230,123 @@ class FollowupScheduler:
                     logger.exception("Unable to store WhatsApp follow-up conversation lead_id=%s", lead_id)
             results.append({"lead_id": lead_id, **result})
         return results
+
+    # ── Email follow-up generation ─────────────────────────────────────────────
+    # Sequence rules:
+    #   #2, #4 → trust building via case study (Claude Haiku + KB, no fact repetition)
+    #   #3, #5 → call to action (template, no Claude)
+
+    def build_email_followup(self, record: dict, followup_number: int) -> dict:
+        """Dispatch to trust or CTA builder based on follow-up number."""
+        if followup_number in (2, 4):
+            return self._build_trust_email(record, followup_number)
+        return self._build_cta_email(record, followup_number)
+
+    def _build_trust_email(self, record: dict, followup_number: int) -> dict:
+        """Trust-building email: relevant case study via Claude Haiku.
+
+        Tracks used KB IDs across the sequence so #2 and #4 cite different case studies.
+        """
+        from anthropic import Anthropic
+        context = record.get("context") or {}
+        lead    = context.get("lead") or {}
+        company = context.get("company") or {}
+        research = context.get("research") or {}
+
+        first_name   = (lead.get("name") or "there").split()[0]
+        company_name = company.get("name") or "your company"
+        industry     = company.get("industry") or ""
+        technologies = company.get("technologies") or []
+        pain_points  = ", ".join(research.get("pain_points") or []) or "scaling data and AI initiatives"
+
+        outreach    = record.get("outreach") or context.get("outreach") or {}
+        prior_subject = outreach.get("subject") or f"{company_name} follow-up"
+        prior_hook    = outreach.get("opening_hook") or outreach.get("body") or ""
+
+        # Collect KB IDs used in all previous follow-ups to avoid repetition
+        used_kb_ids: set[str] = set()
+        for item in (record.get("email_followups") or []):
+            for kid in (item.get("kb_ids_used") or []):
+                used_kb_ids.add(kid)
+
+        # Pull case studies from KB; exclude already-used IDs
+        vertical = self._industry_to_vertical(industry)
+        kb_records = SenderKnowledgeBase().retrieve(
+            vertical=vertical,
+            technologies=technologies,
+            category="case_study",
+            n=10,
+        )
+        fresh = [r for r in kb_records if r.get("id") not in used_kb_ids]
+        candidates = (fresh or kb_records)[:4]  # fallback to any if all used
+
+        cs_text = "\n".join(
+            f"[{r['id']}] {r['claim']}"
+            for r in candidates
+        )
+
+        prompt = FOLLOWUP_TRUST_TEMPLATE.format(
+            first_name=first_name,
+            company=company_name,
+            industry=industry or "your industry",
+            pain_points=pain_points,
+            prior_subject=prior_subject,
+            prior_hook=prior_hook[:300],
+            case_studies=cs_text or "(no case studies available — write a general value-based follow-up)",
+        )
+
+        response = Anthropic().messages.create(
+            model=os.getenv("CLAUDE_MODEL_FOLLOWUP", "claude-haiku-4-5-20251001"),
+            max_tokens=600,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        text = re.sub(r"^```(?:json)?\s*", "", response.content[0].text.strip())
+        text = re.sub(r"\s*```$", "", text)
+        result = json.loads(text)
+        result["followup_type"] = f"trust_building_{followup_number}"
+        return result
+
+    def _build_cta_email(self, record: dict, followup_number: int) -> dict:
+        """Call-to-action email: template only, no Claude call."""
+        context = record.get("context") or {}
+        lead    = context.get("lead") or {}
+        company = context.get("company") or {}
+
+        first_name   = (lead.get("name") or "there").split()[0]
+        company_name = company.get("name") or "your team"
+        outreach     = record.get("outreach") or context.get("outreach") or {}
+        prior_subject = outreach.get("subject") or f"{company_name} follow-up"
+
+        template = FOLLOWUP_CTA_TEMPLATE_3 if followup_number == 3 else FOLLOWUP_CTA_TEMPLATE_5
+        body = template.format(first_name=first_name, company=company_name)
+
+        return {
+            "subject": f"Re: {prior_subject}"[:60],
+            "body":    body,
+            "reasoning": (
+                "Soft close — gives the lead a graceful exit while keeping the door open."
+                if followup_number == 3
+                else "Final close — respectful, no further follow-ups."
+            ),
+            "followup_type": f"cta_{followup_number}",
+            "kb_ids_used": [],
+        }
+
+    @staticmethod
+    def _industry_to_vertical(industry: str) -> str:
+        """Map Apollo industry string to KB vertical."""
+        ind = (industry or "").lower()
+        if any(k in ind for k in ("fintech", "finance", "banking", "insurance", "lending")):
+            return "data_science"
+        if any(k in ind for k in ("retail", "ecommerce", "consumer", "fmcg", "cpg")):
+            return "data_science"
+        if any(k in ind for k in ("manufactur", "semiconductor", "cement", "industrial")):
+            return "data_science"
+        if any(k in ind for k in ("devops", "infrastructure", "cloud", "platform")):
+            return "devops"
+        if any(k in ind for k in ("data engineer", "analytics", "warehouse")):
+            return "data_engineering"
+        return "generic"
 
     def _build_message(self, record: dict) -> str:
         context = record.get("context", {})

@@ -165,6 +165,63 @@ Write a natural, non-pushy follow-up email.
 Respond as JSON with keys: subject, body.
 """
 
+# ── Structured follow-up sequence templates ───────────────────────────────────
+# Sequence rules:
+#   #2, #4 → Trust building: relevant case study from KB, no fact repetition across emails
+#   #3, #5 → Call to action: soft close (#3), hard close (#5)
+
+FOLLOWUP_TRUST_TEMPLATE = """
+You are a B2B outreach specialist writing a follow-up email to build trust through a relevant case study.
+
+Lead context:
+- First name: {first_name}
+- Company: {company}
+- Industry: {industry}
+- Company pain points: {pain_points}
+
+Previous email subject: "{prior_subject}"
+Opening hook already used (do NOT repeat these facts): "{prior_hook}"
+
+Available case studies — pick the ONE most relevant to this lead's pain points and industry:
+{case_studies}
+
+Rules:
+1. Start with "Hi {first_name},"
+2. One-line reference to the prior email (e.g. "Wanted to follow up on my earlier note about...")
+3. Introduce the case study: Challenge the client faced, what Ganit built, and the measurable Impact
+4. Connect it explicitly to {company} — why is this relevant to them specifically?
+5. End with a soft CTA (15-20 min call)
+6. Tone: professional, conversational, never pushy
+7. Do NOT use buzzwords like "synergy", "revolutionary", "game-changer"
+8. Do NOT repeat any specific fact or phrase already used in the opening hook above
+9. Total body: 4-6 sentences max
+
+Respond as JSON:
+{{
+  "subject": "Re: {prior_subject}",
+  "body": "full email body with line breaks between paragraphs",
+  "reasoning": "one sentence on why this case study fits this lead",
+  "kb_ids_used": ["exactly one ID from the case studies list above"]
+}}
+"""
+
+FOLLOWUP_CTA_TEMPLATE_3 = (
+    "Hi {first_name},\n\n"
+    "I haven't heard back, so I'll assume this isn't a priority at the moment.\n\n"
+    "Before I close the loop — would it make sense to revisit this later, or is there "
+    "someone else on your team I should connect with for data and AI initiatives at {company}?\n\n"
+    "Happy to reconnect whenever the timing is better.\n\n"
+    "With regards,\nGanit team"
+)
+
+FOLLOWUP_CTA_TEMPLATE_5 = (
+    "Hi {first_name},\n\n"
+    "I'll take your silence as a no for now, and I won't follow up further.\n\n"
+    "If a data or AI initiative moves up the priority list at {company}, I'm just a message away.\n\n"
+    "Wishing you and your team the best.\n\n"
+    "With regards,\nGanit team"
+)
+
 OBJECTION_RESPONSE_TEMPLATE = """
 You are an expert SDR handling a sales objection.
 
