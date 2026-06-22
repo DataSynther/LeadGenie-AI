@@ -409,7 +409,11 @@ jobs:
       - name: Extract CDK outputs
         id: cdk-out
         run: |
-          ALB=$(jq -r '.ComputeStack.AlbDns // ""' infrastructure/cdk/cdk-outputs.json 2>/dev/null || echo "")
+          # AlbDns is in ComputeStack (Stage 2), not in cdk-outputs.json (Stage 3 only) — fetch from CF
+          ALB=$(aws cloudformation describe-stacks \
+            --stack-name ComputeStack \
+            --query "Stacks[0].Outputs[?OutputKey=='AlbDns'].OutputValue" \
+            --output text 2>/dev/null || echo "")
           CF=$(jq  -r '.FrontendStack.CloudFrontUrl // ""' infrastructure/cdk/cdk-outputs.json 2>/dev/null || echo "")
           WAKE=$(jq -r '.MonitoringStack.WakeUrl // ""' infrastructure/cdk/cdk-outputs.json 2>/dev/null || echo "")
           echo "alb_dns=$ALB"        >> $GITHUB_OUTPUT
