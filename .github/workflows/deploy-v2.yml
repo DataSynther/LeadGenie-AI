@@ -254,8 +254,8 @@ jobs:
                 echo "  → No stuck resources found, continuing rollback..."
                 aws cloudformation continue-update-rollback --stack-name $STACK || true
               fi
-              echo "  → Waiting for rollback to complete (up to 10 min)..."
-              aws cloudformation wait stack-rollback-complete --stack-name $STACK || true
+              echo "  → Waiting for rollback to complete (up to 8 min)..."
+              timeout 480 aws cloudformation wait stack-rollback-complete --stack-name $STACK || true
               STATUS=$(aws cloudformation describe-stacks \
                 --stack-name $STACK --query "Stacks[0].StackStatus" --output text 2>/dev/null || echo "UNKNOWN")
               echo "  → $STACK after recovery: $STATUS"
@@ -269,9 +269,15 @@ jobs:
                 --output text 2>/dev/null || echo "")
               SKIP_ARGS=$(echo "$STUCK" | tr '\t\n' ' ' | xargs -n1 echo "--resources-to-skip" | tr '\n' ' ')
               aws cloudformation continue-update-rollback --stack-name $STACK $SKIP_ARGS || true
-              aws cloudformation wait stack-rollback-complete --stack-name $STACK || true
+              timeout 480 aws cloudformation wait stack-rollback-complete --stack-name $STACK || true
             fi
           done
+
+      - name: Refresh AWS credentials before deploy
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: CDK Deploy all stacks
         id: cdk-deploy
