@@ -124,6 +124,7 @@ class OutreachQueueStore:
         grounding_facts: Optional[dict] = None,
         lead_email: str = "",
         lead_phone: str = "",
+        followup_sequence: Optional[list] = None,
     ) -> str:
         """Write an email to the queue. Returns the event_id."""
         passed = attempt_history[-1].get("passed", True) if attempt_history else True
@@ -184,9 +185,28 @@ class OutreachQueueStore:
             "checkpoints":   checkpoints,
             "citations":     citations,
             "attempt_history": attempt_history,
+            "followup_sequence": followup_sequence or [],
         }
         _append(record)
         return event_id
+
+    def update_followup_sequence(self, event_id: str, followup_sequence: list) -> bool:
+        """Persist edited follow-up sequence (subjects, bodies, delays) for a queued item."""
+        items = _read_all()
+        found = False
+        updated: list[dict] = []
+        for item in items:
+            if item.get("event_id") == event_id:
+                item = dict(item)
+                item["followup_sequence"] = followup_sequence
+                item["followup_sequence_updated_at"] = datetime.now(timezone.utc).isoformat()
+                found = True
+            updated.append(item)
+        if found:
+            with open(QUEUE_FILE, "w") as f:
+                for rec in updated:
+                    f.write(json.dumps(rec) + "\n")
+        return found
 
     def get_item(self, event_id: str) -> Optional[dict]:
         """Return the latest record for a single event_id."""

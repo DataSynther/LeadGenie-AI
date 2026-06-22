@@ -210,12 +210,23 @@ export type CitationEntry2 = {
   url?: string;
 };
 
+export type FollowupDraft = {
+  number: number;
+  subject: string;
+  body: string;
+  reasoning?: string;
+  followup_type?: string;
+  kb_ids_used?: string[];
+  delay_days: number;
+};
+
 export type ApprovalItem = {
   event_id: string;
   lead_id: string;
   lead_name: string;
   lead_title: string;
   company_name: string;
+  lead_email?: string;
   risk_level: "high" | "medium" | "low";
   risk_score: number;
   timestamp: string;
@@ -227,6 +238,7 @@ export type ApprovalItem = {
   policy: string;
   confidence: number;
   email?: { subject: string; body: string; reasoning?: string };
+  followup_sequence?: FollowupDraft[];
   status_updated_at?: string;
   checkpoints?: ValidatorCheckpoints;
   citations?: Record<string, CitationEntry2>;
@@ -254,10 +266,25 @@ async function action<T>(path: string): Promise<T> {
   return res.json();
 }
 
-export const approveOutreach = (eventId: string) =>
-  action<{ status: string; event_id: string }>(`/approval-queue/${eventId}/approve`);
+export const approveOutreach = async (eventId: string, followupSequence?: FollowupDraft[]) => {
+  const body = followupSequence ? JSON.stringify({ followup_sequence: followupSequence }) : "{}";
+  const r = await fetch(`${BASE_URL}/approval-queue/${eventId}/approve`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body,
+  });
+  if (!r.ok) throw new Error(`approve → ${r.status}`);
+  return r.json();
+};
 export const rejectOutreach = (eventId: string) =>
   action<{ status: string; event_id: string }>(`/approval-queue/${eventId}/reject`);
+
+export const saveFollowupSequence = (eventId: string, sequence: FollowupDraft[]) =>
+  fetch(`${BASE_URL}/approval-queue/${eventId}/sequence`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ followup_sequence: sequence }),
+  }).then(r => { if (!r.ok) throw new Error(`sequence → ${r.status}`); return r.json(); });
 
 export const editEmail = (eventId: string, subject: string, body: string) =>
   post<{ status: string; event_id: string }>(

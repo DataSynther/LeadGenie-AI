@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { cn, formatRelativeTime } from "../../lib/utils";
 import { api } from "../../lib/api";
-import type { ApprovalItem as ApprovalItemType, ValidatorCheckpoints, CitationEntry2 } from "../../lib/api";
+import type { ApprovalItem as ApprovalItemType, FollowupDraft, ValidatorCheckpoints, CitationEntry2 } from "../../lib/api";
 
 interface ApprovalItemProps {
   item: ApprovalItemType;
@@ -12,7 +12,106 @@ interface ApprovalItemProps {
   highlight?: string;
 }
 
-type Tab = "email" | "validation" | "citations";
+type Tab = "email" | "sequence" | "validation" | "citations";
+
+const DELAY_OPTIONS = [1, 2, 3, 5, 7, 10, 14];
+
+function SequenceTab({
+  sequence,
+  onChange,
+}: {
+  sequence: FollowupDraft[];
+  onChange: (seq: FollowupDraft[]) => void;
+}) {
+  const [open, setOpen] = useState<number | null>(null);
+
+  const update = (idx: number, patch: Partial<FollowupDraft>) => {
+    const next = sequence.map((s, i) => i === idx ? { ...s, ...patch } : s);
+    onChange(next);
+  };
+
+  const typeLabel: Record<string, string> = {
+    trust_building_2: "Trust — Case Study",
+    trust_building_4: "Trust — Case Study",
+    cta_3: "Call to Action",
+    cta_5: "Final Close",
+  };
+
+  return (
+    <div className="space-y-2">
+      {sequence.length === 0 && (
+        <p className="text-[11px] text-ink-mute py-4 text-center">
+          No follow-up sequence generated yet.
+        </p>
+      )}
+      {sequence.map((item, idx) => (
+        <div key={item.number} className="border border-line-soft rounded-md bg-surface-2">
+          {/* Accordion header */}
+          <button
+            onClick={() => setOpen(open === idx ? null : idx)}
+            className="w-full flex items-center justify-between px-3 py-2.5 text-left"
+          >
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-[10px] text-ink-mute w-5">#{item.number}</span>
+              <span className={cn(
+                "text-[9px] font-mono uppercase px-1.5 py-0.5 rounded",
+                item.followup_type?.startsWith("trust")
+                  ? "bg-violet-500/10 text-violet-400"
+                  : "bg-sky-500/10 text-sky-400"
+              )}>
+                {typeLabel[item.followup_type ?? ""] ?? item.followup_type ?? "follow-up"}
+              </span>
+              <span className="text-[12px] text-ink truncate max-w-[260px]">{item.subject}</span>
+            </div>
+            <div className="flex items-center gap-3 shrink-0 ml-2">
+              {/* Delay picker */}
+              <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                <span className="text-[10px] text-ink-mute font-mono">send after</span>
+                <select
+                  value={item.delay_days}
+                  onChange={e => update(idx, { delay_days: Number(e.target.value) })}
+                  className="text-[10px] font-mono bg-surface border border-line-soft rounded px-1 py-0.5 text-ink"
+                >
+                  {DELAY_OPTIONS.map(d => (
+                    <option key={d} value={d}>{d}d</option>
+                  ))}
+                </select>
+                <span className="text-[10px] text-ink-mute font-mono">no reply</span>
+              </div>
+              <span className="text-ink-mute text-[10px]">{open === idx ? "▲" : "▼"}</span>
+            </div>
+          </button>
+
+          {/* Accordion body */}
+          {open === idx && (
+            <div className="px-3 pb-3 border-t border-line-soft space-y-2">
+              <div>
+                <label className="label-mono mb-1 block">Subject</label>
+                <input
+                  value={item.subject}
+                  onChange={e => update(idx, { subject: e.target.value })}
+                  className="w-full text-[12px] font-mono bg-surface border border-line-soft rounded px-2.5 py-1.5 text-ink focus:outline-none focus:border-brand/50"
+                />
+              </div>
+              <div>
+                <label className="label-mono mb-1 block">Body</label>
+                <textarea
+                  value={item.body}
+                  onChange={e => update(idx, { body: e.target.value })}
+                  rows={6}
+                  className="w-full text-[12px] font-mono bg-surface border border-line-soft rounded px-2.5 py-1.5 text-ink focus:outline-none focus:border-brand/50 resize-y"
+                />
+              </div>
+              {item.reasoning && (
+                <p className="text-[10px] text-ink-mute italic">{item.reasoning}</p>
+              )}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 /** Render text with query matches highlighted */
 function HighlightedText({ text, query }: { text: string; query: string }) {
@@ -492,6 +591,8 @@ export function ApprovalItem({ item, initialExpanded = false, initialTab, highli
   // Local overrides for email content and hallucination status after in-page edits
   const [localEmail, setLocalEmail] = useState(item.email);
   const [localCheckpoints, setLocalCheckpoints] = useState(item.checkpoints);
+  const [localSequence, setLocalSequence] = useState<FollowupDraft[]>(item.followup_sequence ?? []);
+  const sequenceDirty = JSON.stringify(localSequence) !== JSON.stringify(item.followup_sequence ?? []);
 
   const removeFromCache = () =>
     queryClient.setQueryData(["approvalQueue"], (old: ApprovalItemType[] = []) =>
@@ -499,8 +600,17 @@ export function ApprovalItem({ item, initialExpanded = false, initialTab, highli
     );
 
   const approveMutation = useMutation({
-    mutationFn: () => api.approveOutreach(item.event_id),
+    mutationFn: () => api.approveOutreach(item.event_id, localSequence.length > 0 ? localSequence : undefined),
     onSuccess: removeFromCache,
+  });
+
+  const saveSequenceMutation = useMutation({
+    mutationFn: () => api.saveFollowupSequence(item.event_id, localSequence),
+    onSuccess: () => {
+      queryClient.setQueryData(["approvalQueue"], (old: ApprovalItemType[] = []) =>
+        old.map(i => i.event_id === item.event_id ? { ...i, followup_sequence: localSequence } : i)
+      );
+    },
   });
 
   const rejectMutation = useMutation({
@@ -520,6 +630,11 @@ export function ApprovalItem({ item, initialExpanded = false, initialTab, highli
 
   const tabs: { id: Tab; label: string; badge?: string | number }[] = [
     { id: "email", label: "Email" },
+    {
+      id: "sequence",
+      label: "Sequence",
+      badge: localSequence.length > 0 ? `${localSequence.length} follow-ups` : undefined,
+    },
     {
       id: "validation",
       label: "Validation",
@@ -667,6 +782,33 @@ export function ApprovalItem({ item, initialExpanded = false, initialTab, highli
                 onRecheckDone={handleRecheckDone}
               />
             )}
+            {tab === "sequence" && (
+              <div className="space-y-3">
+                <p className="text-[11px] text-ink-mute">
+                  Review and edit all follow-up emails before approving. Adjust the delay between each one.
+                </p>
+                <SequenceTab sequence={localSequence} onChange={setLocalSequence} />
+                {sequenceDirty && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => saveSequenceMutation.mutate()}
+                      disabled={saveSequenceMutation.isPending}
+                      className="px-3 py-1.5 rounded text-[11px] font-medium bg-surface-2 text-ink border border-line hover:bg-surface disabled:opacity-50 transition-colors"
+                    >
+                      {saveSequenceMutation.isPending ? "Saving…" : "Save Sequence"}
+                    </button>
+                    {saveSequenceMutation.isSuccess && (
+                      <span className="text-[10px] font-mono text-emerald-400">✓ Saved</span>
+                    )}
+                    {saveSequenceMutation.isError && (
+                      <span className="text-[10px] font-mono text-red-400">
+                        ✗ {(saveSequenceMutation.error as Error).message}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
             {tab === "citations" && <CitationsTab citations={item.citations} leadId={item.lead_id} />}
           </div>
         )}
@@ -680,7 +822,11 @@ export function ApprovalItem({ item, initialExpanded = false, initialTab, highli
             disabled={acting}
             className="px-3 py-1.5 rounded text-[11px] font-medium bg-brand text-white disabled:opacity-50 hover:bg-brand/80 transition-colors"
           >
-            {approveMutation.isPending ? "Approving…" : "Approve & Send"}
+            {approveMutation.isPending
+              ? "Approving…"
+              : localSequence.length > 0
+                ? `Approve & Send All (${localSequence.length + 1})`
+                : "Approve & Send"}
           </button>
           <button
             onClick={() => rejectMutation.mutate()}
@@ -689,6 +835,14 @@ export function ApprovalItem({ item, initialExpanded = false, initialTab, highli
           >
             {rejectMutation.isPending ? "Rejecting…" : "Reject"}
           </button>
+          {localSequence.length > 0 && (
+            <button
+              onClick={() => { setExpanded(true); setTab("sequence"); }}
+              className="px-2.5 py-1.5 rounded text-[11px] font-medium bg-violet-500/10 text-violet-400 border border-violet-500/30 hover:bg-violet-500/15 transition-colors"
+            >
+              ✉ Review Sequence ({localSequence.length})
+            </button>
+          )}
           <button
             onClick={() => { setExpanded(true); setTab("validation"); }}
             className="px-2.5 py-1.5 rounded text-[11px] font-medium bg-surface-2 text-ink border border-line hover:bg-surface transition-colors"

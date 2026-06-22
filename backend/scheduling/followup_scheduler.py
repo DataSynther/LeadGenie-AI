@@ -27,9 +27,51 @@ STORE_DIR = Path(__file__).parent.parent / "storage" / "followups"
 STORE_DIR.mkdir(parents=True, exist_ok=True)
 WHATSAPP_SENDER_INTRO = "I am Prasant from Ganit."
 
+# Default delay (days) between each follow-up when no custom schedule is set
+DEFAULT_FOLLOWUP_DELAYS = {2: 3, 3: 5, 4: 7, 5: 10}
+
 
 class FollowupScheduler:
     """Schedules WhatsApp fallbacks when email outreach gets no reply."""
+
+    def generate_sequence_draft(
+        self,
+        context: dict,
+        outreach: dict,
+        max_followups: int = 4,
+    ) -> list[dict]:
+        """Pre-generate the full follow-up sequence (emails #2–#5) for human review.
+
+        Called at pipeline time so the sender can see, edit, and approve all emails
+        before the initial outreach is sent. Uses Claude Haiku for trust emails (#2, #4)
+        and plain templates for CTA emails (#3, #5).
+        """
+        fake_record: dict = {
+            "context": context,
+            "outreach": outreach,
+            "email_followups": [],
+        }
+        sequence: list[dict] = []
+        for n in range(2, min(max_followups + 2, 6)):
+            try:
+                email = self.build_email_followup(fake_record, n)
+                if email.get("kb_ids_used"):
+                    fake_record["email_followups"].append({
+                        "followup_number": n,
+                        "kb_ids_used": email.get("kb_ids_used", []),
+                    })
+                sequence.append({
+                    "number":       n,
+                    "subject":      email.get("subject", ""),
+                    "body":         email.get("body", ""),
+                    "reasoning":    email.get("reasoning", ""),
+                    "followup_type": email.get("followup_type", ""),
+                    "kb_ids_used":  email.get("kb_ids_used", []),
+                    "delay_days":   DEFAULT_FOLLOWUP_DELAYS.get(n, 3),
+                })
+            except Exception as exc:
+                logger.warning("Failed to pre-generate follow-up #%d: %s", n, exc)
+        return sequence
 
     def schedule_followup(
         self,
@@ -38,22 +80,111 @@ class FollowupScheduler:
         context: dict,
         outreach: Optional[dict] = None,
         wait_minutes: Optional[int] = None,
+        followup_sequence: Optional[list] = None,
     ) -> dict:
+        """Schedule follow-ups after outreach is sent.
+
+        If followup_sequence is provided (pre-approved by sender), email follow-ups
+        are sent on the custom delay schedule. WhatsApp fallback fires first via
+        WHATSAPP_FOLLOWUP_WAIT_MINUTES, then email follow-ups start from sequence[0].
+        """
         wait = wait_minutes or int(os.getenv("WHATSAPP_FOLLOWUP_WAIT_MINUTES", "2"))
         now = datetime.utcnow()
+
+        # Compute due_at for each email follow-up from the approved sequence
+        email_schedule: list[dict] = []
+        if followup_sequence:
+            for item in followup_sequence:
+                delay_days = int(item.get("delay_days") or DEFAULT_FOLLOWUP_DELAYS.get(item["number"], 3))
+                due = now + timedelta(days=delay_days)
+                email_schedule.append({
+                    **item,
+                    "due_at":  due.isoformat(),
+                    "status":  "scheduled",
+                    "sent_at": None,
+                })
+
         record = {
-            "lead_id": lead_id,
-            "phone": phone,
-            "context": context,
-            "outreach": outreach or context.get("outreach") or {},
-            "email_sent_at": now.isoformat(),
-            "due_at": (now + timedelta(minutes=wait)).isoformat(),
-            "status": "waiting",
+            "lead_id":         lead_id,
+            "phone":           phone,
+            "context":         context,
+            "outreach":        outreach or context.get("outreach") or {},
+            "email_sent_at":   now.isoformat(),
+            "due_at":          (now + timedelta(minutes=wait)).isoformat(),
+            "status":          "waiting",
             "whatsapp_sent_at": None,
-            "whatsapp_error": None,
+            "whatsapp_error":  None,
+            "email_schedule":  email_schedule,
         }
         self._write(lead_id, record)
         return record
+
+    def process_due_email_followups(self) -> list[dict]:
+        """Send email follow-ups whose due_at has passed and status is 'scheduled'.
+
+        Called by the background loop alongside process_due() (WhatsApp).
+        Cancels remaining scheduled follow-ups when a reply is detected.
+        """
+        from services.email_sender import EmailSender
+        results = []
+        now = datetime.utcnow()
+
+        for path in STORE_DIR.glob("*.json"):
+            try:
+                record = json.loads(path.read_text())
+            except (json.JSONDecodeError, OSError):
+                continue
+
+            if record.get("status") == "replied":
+                # Cancel any still-scheduled email follow-ups
+                changed = False
+                for item in record.get("email_schedule") or []:
+                    if item.get("status") == "scheduled":
+                        item["status"] = "cancelled"
+                        item["cancelled_reason"] = "lead_replied"
+                        changed = True
+                if changed:
+                    self._write(record["lead_id"], record)
+                continue
+
+            email_schedule = record.get("email_schedule") or []
+            for item in email_schedule:
+                if item.get("status") != "scheduled":
+                    continue
+                due = datetime.fromisoformat(item["due_at"])
+                if now < due:
+                    continue
+
+                lead_id  = record["lead_id"]
+                context  = record.get("context") or {}
+                lead     = context.get("lead") or {}
+                to_email = lead.get("email") or ""
+                if not to_email:
+                    item["status"] = "error"
+                    item["error"]  = "no lead email"
+                    self._write(lead_id, record)
+                    continue
+
+                send_result = EmailSender().send(
+                    to_email=to_email,
+                    subject=item.get("subject", ""),
+                    body=item.get("body", ""),
+                )
+                if send_result.get("sent"):
+                    item["status"]  = "sent"
+                    item["sent_at"] = now.isoformat()
+                    logger.info("Email follow-up #%d sent to %s lead_id=%s", item["number"], to_email, lead_id)
+                    results.append({"lead_id": lead_id, "number": item["number"], "sent": True})
+                else:
+                    item["status"] = "error"
+                    item["error"]  = send_result.get("error", "unknown")
+                    logger.warning("Email follow-up #%d failed lead_id=%s: %s", item["number"], lead_id, item["error"])
+                    results.append({"lead_id": lead_id, "number": item["number"], "sent": False, "error": item["error"]})
+
+                self._write(lead_id, record)
+                break  # send one per lead per loop tick
+
+        return results
 
     def mark_replied(self, lead_id: str) -> bool:
         path = self._path(lead_id)

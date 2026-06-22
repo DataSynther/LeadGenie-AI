@@ -180,14 +180,15 @@ _followup_task = None
 
 async def _followup_scheduler_loop():
     interval = int(os.getenv("FOLLOWUP_SCHEDULER_INTERVAL_SECONDS", "15"))
-    logger.info("WhatsApp follow-up scheduler loop started; interval=%ss", interval)
+    logger.info("Follow-up scheduler loop started; interval=%ss", interval)
     while True:
         try:
             await asyncio.to_thread(followup_scheduler.process_due)
+            await asyncio.to_thread(followup_scheduler.process_due_email_followups)
         except asyncio.CancelledError:
             raise
         except Exception:
-            logger.exception("WhatsApp follow-up scheduler loop failed")
+            logger.exception("Follow-up scheduler loop failed")
         await asyncio.sleep(interval)
 
 
@@ -485,6 +486,23 @@ async def generate_outreach(req: OutreachRequest):
     # Always enqueue for human review regardless of governance outcome
     from agents.conversation.memory_manager import GroundingMemory
     grounding_facts = GroundingMemory().read(req.lead_id)
+
+    # Pre-generate follow-up sequence so sender can review/edit all emails before approving
+    outreach_email = result["email"]
+    outreach_dict  = {"subject": outreach_email.get("subject", ""), "body": outreach_email.get("body", ""),
+                      "opening_hook": outreach_email.get("opening_hook", "")}
+    pipeline_context = {"lead": lead, "company": company, "research": research,
+                        "outreach": outreach_dict}
+    try:
+        followup_sequence = followup_scheduler.generate_sequence_draft(
+            context=pipeline_context,
+            outreach=outreach_dict,
+            max_followups=4,
+        )
+    except Exception as _seq_err:
+        logger.warning("Follow-up sequence pre-generation failed: %s", _seq_err)
+        followup_sequence = []
+
     event_id = outreach_queue.enqueue(
         lead_id=req.lead_id,
         lead_name=lead.get("name", ""),
@@ -495,6 +513,7 @@ async def generate_outreach(req: OutreachRequest):
         governance=result["governance"],
         attempt_history=result["governance_attempt_history"],
         grounding_facts=grounding_facts,
+        followup_sequence=followup_sequence,
     )
 
     # Write compact outreach example to industry memory for future few-shot learning
@@ -1053,9 +1072,24 @@ async def sent_emails():
     return outreach_queue.get_queue(status="approved")
 
 
+class SequenceUpdateRequest(BaseModel):
+    followup_sequence: list[dict]
+
+@app.put("/approval-queue/{event_id}/sequence")
+async def update_followup_sequence(event_id: str, req: SequenceUpdateRequest):
+    """Save sender's edits to the follow-up sequence (subject, body, delay_days)."""
+    found = outreach_queue.update_followup_sequence(event_id, req.followup_sequence)
+    if not found:
+        raise HTTPException(status_code=404, detail="Event not found")
+    return {"updated": True, "event_id": event_id, "count": len(req.followup_sequence)}
+
+
+class ApproveWithSequenceRequest(BaseModel):
+    followup_sequence: Optional[list[dict]] = None
+
 @app.post("/approval-queue/{event_id}/approve")
-async def approve_outreach(event_id: str):
-    """Approve and immediately send the outreach email."""
+async def approve_outreach(event_id: str, req: ApproveWithSequenceRequest = ApproveWithSequenceRequest()):
+    """Approve and immediately send the outreach email, then schedule the follow-up sequence."""
     item = outreach_queue.get_item(event_id)
     if not item:
         raise HTTPException(status_code=404, detail="Event not found")
@@ -1076,22 +1110,30 @@ async def approve_outreach(event_id: str):
     stats_store.update_outreach_status(event_id, "approved")
     stats_store.record_agent_event(agent="gov", message=f"Outreach approved & sent to {to_email}", lead_id=item.get("lead_id", ""))
 
-    # Schedule WhatsApp follow-up if phone is available
+    # Use sequence from request body (sender's edits) or fall back to stored draft
+    approved_sequence = req.followup_sequence or item.get("followup_sequence") or []
+
+    # Schedule WhatsApp follow-up + email sequence
     test_phone = os.getenv("WHATSAPP_TEST_PHONE", "")
     lead_phone = test_phone or item.get("lead_phone", "")
-    if lead_phone:
-        context = {"lead": {"email": to_email, "phone": lead_phone, "name": item.get("lead_name", "")},
-                   "company": {"name": item.get("company_name", "")},
-                   "outreach": {"subject": subject, "body": body}}
-        lead_context_store.save(to_email, item.get("lead_id", ""), context)
-        followup_scheduler.schedule_followup(
-            lead_id=item.get("lead_id", ""),
-            phone=lead_phone,
-            context=context,
-            outreach={"subject": subject, "body": body},
-        )
+    context = {
+        "lead":    {"email": to_email, "phone": lead_phone, "name": item.get("lead_name", "")},
+        "company": {"name": item.get("company_name", "")},
+        "outreach": {"subject": subject, "body": body},
+    }
+    lead_context_store.save(to_email, item.get("lead_id", ""), context)
+    followup_scheduler.schedule_followup(
+        lead_id=item.get("lead_id", ""),
+        phone=lead_phone,
+        context=context,
+        outreach={"subject": subject, "body": body},
+        followup_sequence=approved_sequence,
+    )
 
-    return {"status": "approved", "sent": True, "to": to_email, "event_id": event_id}
+    return {
+        "status": "approved", "sent": True, "to": to_email, "event_id": event_id,
+        "followups_scheduled": len(approved_sequence),
+    }
 
 
 @app.post("/approval-queue/{event_id}/reject")
