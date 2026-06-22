@@ -236,22 +236,40 @@ jobs:
               --stack-name $STACK \
               --query "Stacks[0].StackStatus" \
               --output text 2>/dev/null || echo "DOES_NOT_EXIST")
-            echo "$STACK status: $STATUS"
-            # If stuck in ROLLBACK_IN_PROGRESS, wait for it to complete
-            if [[ "$STATUS" == *"IN_PROGRESS"* ]]; then
-              echo "Stack $STACK is $STATUS — waiting for it to settle..."
-              aws cloudformation wait stack-exists --stack-name $STACK || true
-              sleep 10
-              STATUS=$(aws cloudformation describe-stacks \
+            echo "$STACK: $STATUS"
+
+            if [[ "$STATUS" == "UPDATE_ROLLBACK_IN_PROGRESS" ]]; then
+              echo "  → $STACK is stuck in UPDATE_ROLLBACK_IN_PROGRESS"
+              echo "  → Finding stuck resources to skip..."
+              # Get logical IDs of resources currently in UPDATE_ROLLBACK_IN_PROGRESS
+              STUCK=$(aws cloudformation describe-stack-resources \
                 --stack-name $STACK \
-                --query "Stacks[0].StackStatus" --output text 2>/dev/null || echo "UNKNOWN")
-              echo "$STACK status after wait: $STATUS"
+                --query "StackResources[?ResourceStatus=='UPDATE_ROLLBACK_IN_PROGRESS'].LogicalResourceId" \
+                --output text 2>/dev/null || echo "")
+              if [ -n "$STUCK" ]; then
+                SKIP_ARGS=$(echo "$STUCK" | tr '\t\n' ' ' | xargs -n1 echo "--resources-to-skip" | tr '\n' ' ')
+                echo "  → Skipping stuck resources: $STUCK"
+                aws cloudformation continue-update-rollback --stack-name $STACK $SKIP_ARGS || true
+              else
+                echo "  → No stuck resources found, continuing rollback..."
+                aws cloudformation continue-update-rollback --stack-name $STACK || true
+              fi
+              echo "  → Waiting for rollback to complete (up to 10 min)..."
+              aws cloudformation wait stack-rollback-complete --stack-name $STACK || true
+              STATUS=$(aws cloudformation describe-stacks \
+                --stack-name $STACK --query "Stacks[0].StackStatus" --output text 2>/dev/null || echo "UNKNOWN")
+              echo "  → $STACK after recovery: $STATUS"
             fi
-            # If in UPDATE_ROLLBACK_FAILED, continue rollback
+
             if [[ "$STATUS" == "UPDATE_ROLLBACK_FAILED" ]]; then
-              echo "Stack $STACK in UPDATE_ROLLBACK_FAILED — continuing rollback..."
-              aws cloudformation continue-update-rollback --stack-name $STACK || true
-              sleep 30
+              echo "  → $STACK in UPDATE_ROLLBACK_FAILED — forcing continue-rollback skipping all failed resources..."
+              STUCK=$(aws cloudformation describe-stack-resources \
+                --stack-name $STACK \
+                --query "StackResources[?ResourceStatus=='UPDATE_FAILED' || ResourceStatus=='UPDATE_ROLLBACK_FAILED'].LogicalResourceId" \
+                --output text 2>/dev/null || echo "")
+              SKIP_ARGS=$(echo "$STUCK" | tr '\t\n' ' ' | xargs -n1 echo "--resources-to-skip" | tr '\n' ' ')
+              aws cloudformation continue-update-rollback --stack-name $STACK $SKIP_ARGS || true
+              aws cloudformation wait stack-rollback-complete --stack-name $STACK || true
             fi
           done
 
