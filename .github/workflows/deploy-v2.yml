@@ -229,6 +229,32 @@ jobs:
             --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess
         working-directory: infrastructure/cdk
 
+      - name: Check and stabilize CloudFormation stacks
+        run: |
+          for STACK in VpcStack DataStack ComputeStack FrontendStack MonitoringStack; do
+            STATUS=$(aws cloudformation describe-stacks \
+              --stack-name $STACK \
+              --query "Stacks[0].StackStatus" \
+              --output text 2>/dev/null || echo "DOES_NOT_EXIST")
+            echo "$STACK status: $STATUS"
+            # If stuck in ROLLBACK_IN_PROGRESS, wait for it to complete
+            if [[ "$STATUS" == *"IN_PROGRESS"* ]]; then
+              echo "Stack $STACK is $STATUS — waiting for it to settle..."
+              aws cloudformation wait stack-exists --stack-name $STACK || true
+              sleep 10
+              STATUS=$(aws cloudformation describe-stacks \
+                --stack-name $STACK \
+                --query "Stacks[0].StackStatus" --output text 2>/dev/null || echo "UNKNOWN")
+              echo "$STACK status after wait: $STATUS"
+            fi
+            # If in UPDATE_ROLLBACK_FAILED, continue rollback
+            if [[ "$STATUS" == "UPDATE_ROLLBACK_FAILED" ]]; then
+              echo "Stack $STACK in UPDATE_ROLLBACK_FAILED — continuing rollback..."
+              aws cloudformation continue-update-rollback --stack-name $STACK || true
+              sleep 30
+            fi
+          done
+
       - name: CDK Deploy all stacks
         id: cdk-deploy
         env:
@@ -256,6 +282,30 @@ jobs:
           cdk deploy --all --require-approval never --outputs-file cdk-outputs.json \
             --app "python app.py"
         working-directory: infrastructure/cdk
+
+      - name: Capture CloudFormation errors on failure
+        if: failure() && steps.cdk-deploy.outcome == 'failure'
+        run: |
+          echo "=== CloudFormation Stack States ==="
+          for STACK in VpcStack DataStack ComputeStack FrontendStack MonitoringStack; do
+            STATUS=$(aws cloudformation describe-stacks \
+              --stack-name $STACK \
+              --query "Stacks[0].StackStatus" \
+              --output text 2>/dev/null || echo "NOT_FOUND")
+            echo "$STACK: $STATUS"
+          done
+          echo ""
+          echo "=== Recent FAILED events from all stacks ==="
+          for STACK in VpcStack DataStack ComputeStack FrontendStack MonitoringStack; do
+            EVENTS=$(aws cloudformation describe-stack-events \
+              --stack-name $STACK \
+              --query "StackEvents[?ResourceStatus=='CREATE_FAILED' || ResourceStatus=='UPDATE_FAILED' || ResourceStatus=='DELETE_FAILED'].[Timestamp,LogicalResourceId,ResourceType,ResourceStatus,ResourceStatusReason]" \
+              --output table 2>/dev/null | head -30 || echo "")
+            if [ -n "$EVENTS" ]; then
+              echo "--- $STACK FAILURES ---"
+              echo "$EVENTS"
+            fi
+          done
 
       - name: Extract CDK outputs
         id: cdk-out
