@@ -297,14 +297,17 @@ jobs:
           NEO4J_USERNAME:    ${{ secrets.NEO4J_USERNAME }}
           NEO4J_PASSWORD:    ${{ secrets.NEO4J_PASSWORD }}
         run: |
-          # Stage 1: update VpcStack + DataStack first — VpcStack exports (e.g. efs_sg)
-          # must exist before DataStack references them, and DataStack secrets must
-          # exist before ComputeStack task definitions reference them
+          set -euo pipefail
+          echo "=== Stage 1: VpcStack + DataStack ===" | tee -a /tmp/cdk.log
           cdk deploy VpcStack DataStack --exclusively --require-approval never \
-            --app "python app.py"
-          # Stage 2: deploy all remaining stacks
-          cdk deploy --all --require-approval never --outputs-file cdk-outputs.json \
-            --app "python app.py"
+            --app "python app.py" 2>&1 | tee -a /tmp/cdk.log
+          echo "=== Stage 2: ComputeStack ===" | tee -a /tmp/cdk.log
+          cdk deploy ComputeStack --exclusively --require-approval never \
+            --app "python app.py" 2>&1 | tee -a /tmp/cdk.log
+          echo "=== Stage 3: FrontendStack MonitoringStack ===" | tee -a /tmp/cdk.log
+          cdk deploy FrontendStack MonitoringStack --exclusively --require-approval never \
+            --outputs-file cdk-outputs.json \
+            --app "python app.py" 2>&1 | tee -a /tmp/cdk.log
         working-directory: infrastructure/cdk
 
       - name: Capture CloudFormation errors on failure
@@ -312,6 +315,11 @@ jobs:
         run: |
           {
             echo "## CDK Deploy Failure — CloudFormation Diagnostics"
+            echo "### CDK Output (last 80 lines)"
+            echo '```'
+            tail -80 /tmp/cdk.log 2>/dev/null || echo "(no cdk log)"
+            echo '```'
+            echo ""
             echo ""
             echo "### Stack States"
             echo "| Stack | Status |"
