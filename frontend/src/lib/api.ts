@@ -1183,6 +1183,7 @@ export const api = {
   networkLeads,
   networkGraph,
   networkTagLead,
+  saveFollowupSequence,
 };
 
 export default api;

@@ -243,6 +243,9 @@ jobs:
           RESEND_API_KEY:    ${{ secrets.RESEND_API_KEY }}
           LEADGENIE_GMAIL:   ${{ secrets.LEADGENIE_GMAIL }}
           LEADGENIE_GMAIL_PASSWORD: ${{ secrets.LEADGENIE_GMAIL_PASSWORD }}
+          NEO4J_URI:         ${{ secrets.NEO4J_URI }}
+          NEO4J_USERNAME:    ${{ secrets.NEO4J_USERNAME }}
+          NEO4J_PASSWORD:    ${{ secrets.NEO4J_PASSWORD }}
         run: |
           # Stage 1: update VpcStack + DataStack first — VpcStack exports (e.g. efs_sg)
           # must exist before DataStack references them, and DataStack secrets must

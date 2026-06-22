@@ -23,13 +23,16 @@ class DataStack(Stack):
             secret_name="leadgenie/app-secrets",
             description="LeadGenie-AI API keys and credentials",
             secret_object_value={
-                "ANTHROPIC_API_KEY":      SecretValue.unsafe_plain_text(os.environ.get("ANTHROPIC_API_KEY", "")),
-                "APOLLO_API_KEY":         SecretValue.unsafe_plain_text(os.environ.get("APOLLO_API_KEY", "")),
-                "VOYAGE_API_KEY":         SecretValue.unsafe_plain_text(os.environ.get("VOYAGE_API_KEY", "")),
-                "GMAIL_APP_PASSWORD":     SecretValue.unsafe_plain_text(os.environ.get("GMAIL_APP_PASSWORD", "")),
-                "RESEND_API_KEY":         SecretValue.unsafe_plain_text(os.environ.get("RESEND_API_KEY", "")),
-                "LEADGENIE_GMAIL":        SecretValue.unsafe_plain_text(os.environ.get("LEADGENIE_GMAIL", "")),
+                "ANTHROPIC_API_KEY":        SecretValue.unsafe_plain_text(os.environ.get("ANTHROPIC_API_KEY", "")),
+                "APOLLO_API_KEY":           SecretValue.unsafe_plain_text(os.environ.get("APOLLO_API_KEY", "")),
+                "VOYAGE_API_KEY":           SecretValue.unsafe_plain_text(os.environ.get("VOYAGE_API_KEY", "")),
+                "GMAIL_APP_PASSWORD":       SecretValue.unsafe_plain_text(os.environ.get("GMAIL_APP_PASSWORD", "")),
+                "RESEND_API_KEY":           SecretValue.unsafe_plain_text(os.environ.get("RESEND_API_KEY", "")),
+                "LEADGENIE_GMAIL":          SecretValue.unsafe_plain_text(os.environ.get("LEADGENIE_GMAIL", "")),
                 "LEADGENIE_GMAIL_PASSWORD": SecretValue.unsafe_plain_text(os.environ.get("LEADGENIE_GMAIL_PASSWORD", "")),
+                "NEO4J_URI":               SecretValue.unsafe_plain_text(os.environ.get("NEO4J_URI", "")),
+                "NEO4J_USERNAME":          SecretValue.unsafe_plain_text(os.environ.get("NEO4J_USERNAME", "")),
+                "NEO4J_PASSWORD":          SecretValue.unsafe_plain_text(os.environ.get("NEO4J_PASSWORD", "")),
             },
         )
 
