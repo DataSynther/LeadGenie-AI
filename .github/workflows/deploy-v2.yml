@@ -286,26 +286,34 @@ jobs:
       - name: Capture CloudFormation errors on failure
         if: failure() && steps.cdk-deploy.outcome == 'failure'
         run: |
-          echo "=== CloudFormation Stack States ==="
-          for STACK in VpcStack DataStack ComputeStack FrontendStack MonitoringStack; do
-            STATUS=$(aws cloudformation describe-stacks \
-              --stack-name $STACK \
-              --query "Stacks[0].StackStatus" \
-              --output text 2>/dev/null || echo "NOT_FOUND")
-            echo "$STACK: $STATUS"
-          done
-          echo ""
-          echo "=== Recent FAILED events from all stacks ==="
-          for STACK in VpcStack DataStack ComputeStack FrontendStack MonitoringStack; do
-            EVENTS=$(aws cloudformation describe-stack-events \
-              --stack-name $STACK \
-              --query "StackEvents[?ResourceStatus=='CREATE_FAILED' || ResourceStatus=='UPDATE_FAILED' || ResourceStatus=='DELETE_FAILED'].[Timestamp,LogicalResourceId,ResourceType,ResourceStatus,ResourceStatusReason]" \
-              --output table 2>/dev/null | head -30 || echo "")
-            if [ -n "$EVENTS" ]; then
-              echo "--- $STACK FAILURES ---"
-              echo "$EVENTS"
-            fi
-          done
+          {
+            echo "## CDK Deploy Failure — CloudFormation Diagnostics"
+            echo ""
+            echo "### Stack States"
+            echo "| Stack | Status |"
+            echo "|-------|--------|"
+            for STACK in VpcStack DataStack ComputeStack FrontendStack MonitoringStack; do
+              STATUS=$(aws cloudformation describe-stacks \
+                --stack-name $STACK \
+                --query "Stacks[0].StackStatus" \
+                --output text 2>/dev/null || echo "NOT_FOUND")
+              echo "| $STACK | $STATUS |"
+            done
+            echo ""
+            echo "### Failed Events"
+            for STACK in VpcStack DataStack ComputeStack FrontendStack MonitoringStack; do
+              EVENTS=$(aws cloudformation describe-stack-events \
+                --stack-name $STACK \
+                --query "StackEvents[?ResourceStatus=='CREATE_FAILED' || ResourceStatus=='UPDATE_FAILED' || ResourceStatus=='DELETE_FAILED'].[Timestamp,LogicalResourceId,ResourceStatusReason]" \
+                --output text 2>/dev/null | head -20 || echo "")
+              if [ -n "$EVENTS" ]; then
+                echo "**$STACK failures:**"
+                echo '```'
+                echo "$EVENTS"
+                echo '```'
+              fi
+            done
+          } >> $GITHUB_STEP_SUMMARY
 
       - name: Extract CDK outputs
         id: cdk-out
