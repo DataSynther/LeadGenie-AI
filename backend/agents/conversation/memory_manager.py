@@ -395,8 +395,21 @@ class GroundingMemory:
             "_source":     "pipeline:apollo+research+trends",
             **facts,
         }
-        path = _GROUNDING / f"{lead_id}.json"
-        path.write_text(json.dumps(record, indent=2))
+        # Write to Redis (48h TTL) — falls back to local file if Redis unavailable
+        serialised = json.dumps(record, indent=2)
+        redis_ok = False
+        try:
+            from storage.redis_client import get_redis
+            r = get_redis()
+            if r:
+                r.set(f"grounding:{lead_id}", serialised, ex=self._TTL_HOURS * 3600)
+                redis_ok = True
+        except Exception as _re:
+            import logging; logging.getLogger(__name__).warning("Redis grounding write failed: %s", _re)
+
+        if not redis_ok:
+            path = _GROUNDING / f"{lead_id}.json"
+            path.write_text(serialised)
 
         MemoryEventStore().record_grounding_write(lead_id, len(facts))
         return facts
@@ -405,6 +418,24 @@ class GroundingMemory:
         """Return verified facts, or {} if not found / expired."""
         from memory.event_store import MemoryEventStore
         es = MemoryEventStore()
+
+        # Try Redis first
+        try:
+            from storage.redis_client import get_redis
+            r = get_redis()
+            if r:
+                raw = r.get(f"grounding:{lead_id}")
+                if raw is None:
+                    es.record_grounding_read(lead_id, found=False, facts_count=0)
+                    return {}
+                record = json.loads(raw)
+                facts = {k: v for k, v in record.items() if not k.startswith("_")}
+                es.record_grounding_read(lead_id, found=True, facts_count=len(facts))
+                return facts
+        except Exception as _re:
+            import logging; logging.getLogger(__name__).warning("Redis grounding read failed: %s", _re)
+
+        # Fallback: local file with manual TTL check
         path = _GROUNDING / f"{lead_id}.json"
         if not path.exists():
             es.record_grounding_read(lead_id, found=False, facts_count=0)
@@ -427,6 +458,13 @@ class GroundingMemory:
         return facts
 
     def exists(self, lead_id: str) -> bool:
+        try:
+            from storage.redis_client import get_redis
+            r = get_redis()
+            if r:
+                return r.exists(f"grounding:{lead_id}") > 0
+        except Exception:
+            pass
         return (_GROUNDING / f"{lead_id}.json").exists()
 
 
