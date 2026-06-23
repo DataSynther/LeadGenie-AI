@@ -51,6 +51,7 @@ class DynamoOutreachQueueStore:
         grounding_facts: Optional[dict] = None,
         lead_email: str = "",
         lead_phone: str = "",
+        followup_sequence: Optional[list] = None,
     ) -> str:
         passed = attempt_history[-1].get("passed", True) if attempt_history else True
         risk_score = governance.get("risk_score", 0.0)
@@ -108,6 +109,7 @@ class DynamoOutreachQueueStore:
             "checkpoints":       checkpoints,
             "citations":         citations,
             "attempt_history":   attempt_history,
+            "followup_sequence": followup_sequence or [],
         }
 
         _table().put_item(Item={
@@ -186,6 +188,12 @@ class DynamoOutreachQueueStore:
             rec["content_snippet"] = body[:300]
             rec["manually_edited"] = True
             rec["manually_edited_at"] = datetime.now(timezone.utc).isoformat()
+        return self._update_payload(event_id, _mutate)
+
+    def update_followup_sequence(self, event_id: str, followup_sequence: list) -> bool:
+        def _mutate(rec):
+            rec["followup_sequence"] = followup_sequence
+            rec["followup_sequence_updated_at"] = datetime.now(timezone.utc).isoformat()
         return self._update_payload(event_id, _mutate)
 
     def update_hallucination(self, event_id: str, hallucination_result: dict) -> bool:

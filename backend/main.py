@@ -745,23 +745,7 @@ async def generate_outreach_stream(req: OutreachRequest):
             _test_phone = os.getenv("WHATSAPP_TEST_PHONE", "")
             _lead_phone = _test_phone or lead.get("phone") or ""
 
-            # Pre-generate follow-up sequence for human review in the queue
-            _outreach_email = result["email"]
-            _outreach_dict = {"subject": _outreach_email.get("subject", ""),
-                              "body": _outreach_email.get("body", ""),
-                              "opening_hook": _outreach_email.get("opening_hook", "")}
-            _pipeline_ctx = {"lead": lead, "company": company, "research": research,
-                             "outreach": _outreach_dict}
-            try:
-                _followup_sequence = followup_scheduler.generate_sequence_draft(
-                    context=_pipeline_ctx,
-                    outreach=_outreach_dict,
-                    max_followups=4,
-                )
-            except Exception as _seq_err:
-                logger.warning("Follow-up sequence pre-generation failed: %s", _seq_err)
-                _followup_sequence = []
-
+            # Enqueue immediately so the user isn't blocked by sequence generation
             event_id = outreach_queue.enqueue(
                 lead_id=req.lead_id,
                 lead_name=lead.get("name", ""),
@@ -773,8 +757,28 @@ async def generate_outreach_stream(req: OutreachRequest):
                 governance=result["governance"],
                 attempt_history=result["governance_attempt_history"],
                 grounding_facts=grounding_facts,
-                followup_sequence=_followup_sequence,
             )
+
+            # Generate follow-up sequence in background and patch the queue item
+            # (2 Haiku calls ~5–10s — don't make the user wait for this)
+            _outreach_email = result["email"]
+            _outreach_dict = {"subject": _outreach_email.get("subject", ""),
+                              "body": _outreach_email.get("body", ""),
+                              "opening_hook": _outreach_email.get("opening_hook", "")}
+            _pipeline_ctx = {"lead": lead, "company": company, "research": research,
+                             "outreach": _outreach_dict}
+            _captured_event_id = event_id
+            async def _patch_sequence():
+                try:
+                    seq = await asyncio.to_thread(
+                        followup_scheduler.generate_sequence_draft,
+                        _pipeline_ctx, _outreach_dict, 4,
+                    )
+                    if seq:
+                        outreach_queue.update_followup_sequence(_captured_event_id, seq)
+                except Exception as _seq_err:
+                    logger.warning("Follow-up sequence background generation failed: %s", _seq_err)
+            asyncio.create_task(_patch_sequence())
 
             # Background bookkeeping (non-blocking, best-effort)
             try:
