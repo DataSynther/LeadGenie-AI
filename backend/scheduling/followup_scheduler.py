@@ -150,6 +150,11 @@ class FollowupScheduler:
                 self._write(lead_id, record)
                 continue
 
+            if record.get("whatsapp_sent_at"):
+                queued = self.queue_next_email_followup(lead_id)
+                results.append({"lead_id": lead_id, "sent": False, "followup_queued": bool(queued), "event_id": queued})
+                continue
+
             if not record.get("phone"):
                 queued = self.queue_next_email_followup(lead_id)
                 results.append({"lead_id": lead_id, "sent": False, "followup_queued": bool(queued), "event_id": queued})
@@ -399,10 +404,43 @@ class FollowupScheduler:
         prior_subject = subject.replace("Re: ", "")
         stage = {
             2: ("Reminder", "I wanted to follow up on my previous email."),
-            3: ("Call To Action", "Would you be open to a quick conversation?"),
-            4: ("Still Interested", "I am checking whether this is still relevant."),
+            3: ("Soft CTA", None),
+            4: ("Still Interested / Breakup Email", None),
             5: ("Feedback / Future Interest", "If now is not the right time, would it make sense to reconnect later?"),
         }.get(followup_number, ("Follow-up", "I wanted to follow up."))
+
+        if followup_number == 3:
+            body = (
+                f"Hi {first_name},\n\n"
+                "Just checking back on my previous emails.\n\n"
+                f"I understand priorities shift quickly, but I wanted to see if a short discussion around data and AI initiatives at {company_name} would be relevant at this time.\n\n"
+                "Even a brief 15-20 minute conversation could help identify opportunities around customer analytics, personalization, operational efficiency, or AI adoption.\n\n"
+                "Would you be open to connecting sometime this week?\n\n"
+                "Regards,\nGanit Team"
+            )
+            return {
+                "subject": f"Re: {prior_subject}"[:60],
+                "body": body,
+                "reasoning": f"Follow-up #{followup_number} ({stage[0]}) generated from the configured template.",
+                "followup_type": stage[0],
+            }
+
+        if followup_number == 4:
+            body = (
+                f"Hi {first_name},\n\n"
+                "I haven't been able to connect with you regarding my previous emails, so I wanted to send one final follow-up.\n\n"
+                "If improving customer experience, analytics, AI, or data modernization is currently on your roadmap, "
+                "I'd be happy to share how Ganit has helped organizations drive measurable business outcomes in these areas.\n\n"
+                "If this is not a priority right now, no worries at all.\n\n"
+                "Would it make sense to reconnect at a later time, or is there someone else on your team who would be the right person to speak with?\n\n"
+                "Regards,\nGanit Team"
+            )
+            return {
+                "subject": f"Re: {prior_subject}"[:60],
+                "body": body,
+                "reasoning": f"Follow-up #{followup_number} ({stage[0]}) generated from the configured template.",
+                "followup_type": stage[0],
+            }
 
         history_bits = []
         if outreach.get("body"):
