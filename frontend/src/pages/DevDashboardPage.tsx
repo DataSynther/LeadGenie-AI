@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { BarChart, Bar as RechartsBar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { cn } from "../lib/utils";
 import { Topbar } from "../components/layout/Topbar";
 import { StatusPill } from "../components/StatusPill";
@@ -734,7 +734,7 @@ function PipelineLatencyChartDev({ data }: { data: PipelineRunPoint[] }) {
             formatter={(val, key) => { const v = Number(val); return v > 0 ? [`${v}s`, STAGE_LABELS[String(key)] ?? String(key)] : ["", ""]; }}
           />
           {STAGE_KEYS.map((stage, i) => (
-            <Bar key={stage} dataKey={stage} name={STAGE_LABELS[stage]} stackId="run" fill={STAGE_COLOURS[stage]}
+            <RechartsBar key={stage} dataKey={stage} name={STAGE_LABELS[stage]} stackId="run" fill={STAGE_COLOURS[stage]}
               radius={i === STAGE_KEYS.length - 1 ? [3, 3, 0, 0] : [0, 0, 0, 0]} />
           ))}
         </BarChart>
