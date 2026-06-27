@@ -31,7 +31,7 @@ const RISK_C: Record<string, { text: string; bg: string }> = {
 // ── Individual email message (collapsible) ────────────────────────────────────
 
 function EmailMessage({
-  from, to, subject, body, date, isInitial, followupNumber,
+  from, to, subject, body, date, isInitial, followupNumber, isSent,
 }: {
   from: string;
   to?: string;
@@ -40,13 +40,17 @@ function EmailMessage({
   date: string;
   isInitial?: boolean;
   followupNumber?: number;
+  isSent?: boolean;
 }) {
   const [expanded, setExpanded] = useState(isInitial ?? false);
+  const scheduled = followupNumber != null && !isSent;
 
   return (
     <div className={cn(
-      "border border-line-soft rounded-lg mb-3 overflow-hidden",
-      isInitial ? "bg-surface shadow-sm" : "bg-surface-2/30",
+      "border rounded-lg mb-3 overflow-hidden transition-opacity",
+      isInitial ? "bg-surface shadow-sm border-line-soft" :
+      scheduled  ? "bg-surface-2/10 border-line-soft/40 opacity-50" :
+                   "bg-surface-2/30 border-line-soft",
     )}>
       <button
         className="w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-surface-2/30 transition-colors"
@@ -56,30 +60,52 @@ function EmailMessage({
           "w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 mt-0.5 border",
           isInitial
             ? "bg-brand/10 text-brand border-brand/20"
-            : "bg-surface-2 text-ink-2 border-line-soft",
+            : scheduled
+              ? "bg-surface-2/50 text-ink-mute border-line-soft/40"
+              : "bg-surface-2 text-ink-2 border-line-soft",
         )}>
           {from.charAt(0).toUpperCase()}
         </div>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-[12px] font-semibold text-ink">{from}</span>
+            <span className={cn(
+              "text-[12px] truncate",
+              scheduled ? "font-normal text-ink-mute" : "font-bold text-ink",
+            )}>
+              {from}
+            </span>
             {isInitial && (
               <span className="text-[9px] font-mono px-1.5 py-px rounded-full bg-brand/10 text-brand font-semibold border border-brand/20">
                 Initial
               </span>
             )}
             {followupNumber != null && (
-              <span className="text-[9px] font-mono px-1.5 py-px rounded-full bg-violet-500/10 text-violet-400 font-semibold border border-violet-500/20">
-                Follow-up #{followupNumber}
+              <span className={cn(
+                "text-[9px] font-mono px-1.5 py-px rounded-full font-semibold border",
+                scheduled
+                  ? "bg-surface-2/30 text-ink-mute border-line-soft/40"
+                  : "bg-violet-500/10 text-violet-400 border-violet-500/20",
+              )}>
+                {scheduled ? `Scheduled: Follow-up #${followupNumber}` : `Follow-up #${followupNumber}`}
               </span>
             )}
-            <span className="ml-auto text-[10px] text-ink-mute font-mono flex-shrink-0">{date}</span>
+            <span className={cn(
+              "ml-auto text-[10px] font-mono flex-shrink-0",
+              scheduled ? "text-ink-mute/60" : "text-ink-mute",
+            )}>
+              {date}
+            </span>
             <span className={cn("text-ink-mute text-[10px] ml-1 select-none transition-transform duration-150", expanded ? "rotate-180" : "")}>
               ▾
             </span>
           </div>
-          <div className="text-[11px] font-medium text-ink-2 truncate">{subject}</div>
+          <div className={cn(
+            "text-[11px] truncate",
+            scheduled ? "font-normal text-ink-mute/60" : "font-medium text-ink-2",
+          )}>
+            {subject}
+          </div>
           {!expanded && (
             <div className="text-[10px] text-ink-mute truncate mt-0.5">
               {body.replace(/\n+/g, " ").slice(0, 120)}…
@@ -93,7 +119,10 @@ function EmailMessage({
           {to && (
             <div className="text-[10px] text-ink-mute mb-3 font-mono">To: {to}</div>
           )}
-          <div className="text-[12.5px] text-ink leading-relaxed whitespace-pre-wrap font-sans">
+          <div className={cn(
+            "text-[12.5px] leading-relaxed whitespace-pre-wrap font-sans",
+            scheduled ? "text-ink-mute/70" : "text-ink",
+          )}>
             {body}
           </div>
         </div>
@@ -136,17 +165,21 @@ function EmailThread({ item }: { item: ApprovalItemType }) {
           isInitial
         />
 
-        {sequence.map((fu) => (
-          <EmailMessage
-            key={fu.number}
-            from={senderName}
-            to={recipientEmail}
-            subject={fu.subject ?? `Re: ${item.email?.subject ?? ""}`}
-            body={fu.body ?? ""}
-            date={`Scheduled: Day +${fu.delay_days ?? fu.number * 3}`}
-            followupNumber={fu.number}
-          />
-        ))}
+        {sequence.map((fu) => {
+          const sent = fu.sent_at != null;
+          return (
+            <EmailMessage
+              key={fu.number}
+              from={senderName}
+              to={recipientEmail}
+              subject={fu.subject ?? `Re: ${item.email?.subject ?? ""}`}
+              body={fu.body ?? ""}
+              date={sent ? fmtDate(fu.sent_at!) : `Day +${fu.delay_days ?? fu.number * 3}`}
+              followupNumber={fu.number}
+              isSent={sent}
+            />
+          );
+        })}
 
         {sequence.length === 0 && (
           <div className="text-center text-[11px] text-ink-mute py-5 border border-dashed border-line-soft rounded-lg mt-2">
@@ -315,12 +348,12 @@ export function ApprovalQueuePage() {
     [sentItems, search],
   );
 
-  // Follow Up: sent items with auto-generated follow-up sequences but no reply yet
+  // Follow Up: sent items where at least the 1st follow-up has been sent, no reply yet
   const repliedLeadIds = useMemo(() => new Set(repliedItems.map(i => i.lead_id)), [repliedItems]);
   const followupItems = useMemo(
     () => sentItems.filter(i =>
-      (i.followup_sequence?.length ?? 0) > 0 &&
-      !repliedLeadIds.has(i.lead_id) &&        // remove once replied
+      (i.followup_sequence ?? []).some(fu => fu.sent_at != null) &&  // at least 1 sent
+      !repliedLeadIds.has(i.lead_id) &&                               // remove once replied
       filterFn(i)
     ),
     [sentItems, repliedLeadIds, search],

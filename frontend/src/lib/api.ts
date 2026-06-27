@@ -218,6 +218,7 @@ export type FollowupDraft = {
   followup_type?: string;
   kb_ids_used?: string[];
   delay_days: number;
+  sent_at?: string | null;
 };
 
 export type ApprovalItem = {
