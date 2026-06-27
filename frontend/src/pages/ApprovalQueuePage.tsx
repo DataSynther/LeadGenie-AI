@@ -174,7 +174,12 @@ function EmailThread({ item }: { item: ApprovalItemType }) {
               to={recipientEmail}
               subject={fu.subject ?? `Re: ${item.email?.subject ?? ""}`}
               body={fu.body ?? ""}
-              date={sent ? fmtDate(fu.sent_at!) : `Day +${fu.delay_days ?? fu.number * 3}`}
+              date={sent
+                ? fmtDate(fu.sent_at!)
+                : fu.delay_seconds != null
+                  ? `In ${fu.delay_seconds}s`
+                  : `Day +${fu.delay_days ?? fu.number * 3}`
+              }
               followupNumber={fu.number}
               isSent={sent}
             />

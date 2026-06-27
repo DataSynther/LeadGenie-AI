@@ -95,8 +95,12 @@ class FollowupScheduler:
         email_schedule: list[dict] = []
         if followup_sequence:
             for item in followup_sequence:
-                delay_days = int(item.get("delay_days") or DEFAULT_FOLLOWUP_DELAYS.get(item["number"], 3))
-                due = now + timedelta(days=delay_days)
+                delay_secs = item.get("delay_seconds")
+                if delay_secs is not None:
+                    due = now + timedelta(seconds=int(delay_secs))
+                else:
+                    delay_days = int(item.get("delay_days") or DEFAULT_FOLLOWUP_DELAYS.get(item["number"], 3))
+                    due = now + timedelta(days=delay_days)
                 email_schedule.append({
                     **item,
                     "due_at":  due.isoformat(),

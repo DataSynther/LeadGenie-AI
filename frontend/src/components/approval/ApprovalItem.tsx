@@ -14,8 +14,6 @@ interface ApprovalItemProps {
 
 type Tab = "email" | "sequence" | "validation" | "citations";
 
-const DELAY_OPTIONS = [1, 2, 3, 5, 7, 10, 14];
-
 function SequenceTab({
   sequence,
   onChange,
@@ -29,6 +27,9 @@ function SequenceTab({
     const next = sequence.map((s, i) => i === idx ? { ...s, ...patch } : s);
     onChange(next);
   };
+
+  const unitOf = (item: FollowupDraft): "days" | "seconds" =>
+    item.delay_seconds != null ? "seconds" : "days";
 
   const typeLabel: Record<string, string> = {
     trust_building_2: "Trust — Case Study",
@@ -67,14 +68,28 @@ function SequenceTab({
               {/* Delay picker */}
               <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
                 <span className="text-[10px] text-ink-mute font-mono">send after</span>
+                <input
+                  type="number"
+                  min={1}
+                  value={unitOf(item) === "seconds" ? (item.delay_seconds ?? 30) : item.delay_days}
+                  onChange={e => {
+                    const v = Math.max(1, Number(e.target.value));
+                    if (unitOf(item) === "seconds") update(idx, { delay_seconds: v });
+                    else update(idx, { delay_days: v });
+                  }}
+                  className="w-12 text-center text-[10px] font-mono bg-surface border border-line-soft rounded px-1 py-0.5 text-ink"
+                />
                 <select
-                  value={item.delay_days}
-                  onChange={e => update(idx, { delay_days: Number(e.target.value) })}
+                  value={unitOf(item)}
+                  onChange={e => {
+                    const u = e.target.value as "days" | "seconds";
+                    if (u === "seconds") update(idx, { delay_seconds: 30, delay_days: 0 });
+                    else update(idx, { delay_seconds: null, delay_days: 3 });
+                  }}
                   className="text-[10px] font-mono bg-surface border border-line-soft rounded px-1 py-0.5 text-ink"
                 >
-                  {DELAY_OPTIONS.map(d => (
-                    <option key={d} value={d}>{d}d</option>
-                  ))}
+                  <option value="days">days</option>
+                  <option value="seconds">sec</option>
                 </select>
                 <span className="text-[10px] text-ink-mute font-mono">no reply</span>
               </div>
