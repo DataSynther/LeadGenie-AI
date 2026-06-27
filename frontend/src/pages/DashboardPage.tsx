@@ -1,13 +1,12 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { Topbar } from "../components/layout/Topbar";
 import { StatusPill } from "../components/StatusPill";
 import { KpiCard } from "../components/dashboard/KpiCard";
 import { FunnelCard } from "../components/dashboard/FunnelCard";
 import { RiskDistributionCard } from "../components/dashboard/RiskDistributionCard";
-import { api, type DashboardExtendedStats, type FinOpsSummary, type KbInsights, type ApprovalItem, type OutreachTrendPoint, type PipelineRunPoint } from "../lib/api";
+import { api, type DashboardExtendedStats, type FinOpsSummary, type KbInsights } from "../lib/api";
 import { formatNumber, cn } from "../lib/utils";
 
 // ── Design tokens (CommandCenter palette) ─────────────────────────────────────
@@ -938,190 +937,124 @@ function ValidationGovernanceRow({ val, gov, intent }: {
   );
 }
 
-// ── Sent Emails panel ─────────────────────────────────────────────────────────
+// ── Outreach Cost Trend mini ──────────────────────────────────────────────────
 
-const RISK_C: Record<string, { text: string; bg: string }> = {
-  high:   { text: "text-red-400",    bg: "bg-red-500/10"    },
-  medium: { text: "text-amber-500",  bg: "bg-amber-500/10"  },
-  low:    { text: "text-emerald-500",bg: "bg-emerald-500/10" },
-};
-
-function SentEmailsPanel({ items }: { items: ApprovalItem[] }) {
-  const fmtDate = (ts: string) => {
-    const d = new Date(ts);
-    return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" }) +
-      " · " + d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+function OutreachCostTrendMini({ data }: { data: FinOpsSummary }) {
+  const AGENTS = ["research", "outreach", "conversation", "intent"];
+  const COLORS: Record<string, string> = {
+    research: "#0ea5e9", outreach: "#8b5cf6", conversation: "#10b981", intent: "#f59e0b",
   };
 
-  return (
-    <Panel className="h-full flex flex-col min-h-0">
-      <div className="flex items-center justify-between mb-4 flex-shrink-0">
-        <PanelTitle
-          title="Sent Emails"
-          sub={`${items.length} outreach email${items.length !== 1 ? "s" : ""} delivered · most recent first`}
-        />
-      </div>
+  const allDates = [...new Set(data.agent_daily_series.map(s => s.date))].sort();
+  const outreachOutputs: Record<string, number> = {};
+  for (const e of data.agent_daily_series) {
+    if (e.agent === "outreach") outreachOutputs[e.date] = (outreachOutputs[e.date] ?? 0) + e.success_calls;
+  }
 
-      {items.length === 0 ? (
-        <p className="text-[11px] text-ink-mute py-6 text-center">No sent emails yet.</p>
-      ) : (
-        <div className="divide-y divide-line-soft overflow-y-auto flex-1 min-h-0 -mx-4 px-4">
-          {items.map((item) => {
-            const rc = RISK_C[item.risk_level] ?? RISK_C.low;
-            const sentAt = item.status_updated_at ?? item.timestamp;
-            return (
-              <div key={item.event_id} className="py-3 flex items-start gap-3 group">
-                {/* Avatar initials */}
-                <div className="w-8 h-8 rounded-full bg-brand/10 border border-brand/20 flex items-center justify-center text-[10px] font-bold text-brand flex-shrink-0 mt-0.5">
-                  {(item.lead_name ?? "?").split(" ").map(w => w[0]).slice(0, 2).join("")}
-                </div>
+  const byAgentDate: Record<string, Record<string, number>> = {};
+  for (const e of data.agent_daily_series) {
+    if (!AGENTS.includes(e.agent)) continue;
+    const outputs = outreachOutputs[e.date] ?? 0;
+    if (outputs === 0) continue;
+    if (!byAgentDate[e.agent]) byAgentDate[e.agent] = {};
+    byAgentDate[e.agent][e.date] = (byAgentDate[e.agent][e.date] ?? 0) + e.cost_usd / outputs;
+  }
 
-                <div className="flex-1 min-w-0">
-                  {/* Header row */}
-                  <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                    <span className="text-[12px] font-semibold text-ink">{item.lead_name}</span>
-                    <span className="text-[10px] text-ink-mute">·</span>
-                    <span className="text-[11px] text-ink-2 font-medium truncate">{item.lead_title}</span>
-                    <span className="text-[10px] text-ink-mute">@</span>
-                    <span className="text-[11px] font-semibold text-brand truncate">{item.company_name}</span>
-                    <span className={cn("ml-auto text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded flex-shrink-0", rc.text, rc.bg)}>
-                      {item.risk_level}
-                    </span>
-                  </div>
+  const totalRawByDate: Record<string, number> = {};
+  for (const e of data.agent_daily_series) {
+    totalRawByDate[e.date] = (totalRawByDate[e.date] ?? 0) + e.cost_usd;
+  }
+  const totalAvgByDate: Record<string, number> = {};
+  for (const d of allDates) {
+    const out = outreachOutputs[d] ?? 0;
+    if (out > 0) totalAvgByDate[d] = (totalRawByDate[d] ?? 0) / out;
+  }
 
-                  {/* Subject */}
-                  {item.email?.subject && (
-                    <div className="text-[11px] font-semibold text-ink mb-0.5 truncate">
-                      {item.email.subject}
-                    </div>
-                  )}
+  const activeAgents = AGENTS.filter(a => byAgentDate[a]);
+  const datesWithData = allDates.filter(d => outreachOutputs[d] > 0);
 
-                  {/* Snippet */}
-                  {item.content_snippet && (
-                    <p className="text-[10px] text-ink-2 leading-snug line-clamp-2">{item.content_snippet}</p>
-                  )}
-
-                  {/* Footer */}
-                  <div className="flex items-center gap-3 mt-1 text-[9px] text-ink-mute font-mono">
-                    <span>{fmtDate(sentAt)}</span>
-                    {item.total_attempts > 1 && (
-                      <span className="text-amber-500">{item.total_attempts} attempts</span>
-                    )}
-                    {item.confidence != null && (
-                      <span>conf {(item.confidence * 100).toFixed(0)}%</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </Panel>
-  );
-}
-
-// ── Pipeline Latency Chart ────────────────────────────────────────────────────
-
-const STAGE_COLOURS: Record<string, string> = {
-  enriching_lead:     "#38bdf8",
-  enriching_company:  "#60a5fa",
-  detecting_signals:  "#a78bfa",
-  researching:        "#fb923c",
-  building_context:   "#34d399",
-  fetching_trends:    "#2dd4bf",
-  ranking_relevance:  "#818cf8",
-  generating_email:   "#c084fc",
-  queueing:           "#94a3b8",
-};
-
-const STAGE_LABELS: Record<string, string> = {
-  enriching_lead:     "Lead Enrich",
-  enriching_company:  "Co. Enrich",
-  detecting_signals:  "Signals",
-  researching:        "Research",
-  building_context:   "Context",
-  fetching_trends:    "Trends",
-  ranking_relevance:  "Ranking",
-  generating_email:   "Email Gen",
-  queueing:           "Queue",
-};
-
-const STAGE_KEYS = Object.keys(STAGE_COLOURS);
-
-function PipelineLatencyChart({ data }: { data: PipelineRunPoint[] }) {
-  const formatted = data.map(d => ({
-    ...d,
-    label: new Date(d.ts).toLocaleString("en-GB", {
-      day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", hour12: false,
-    }),
-  }));
-
-  if (!formatted.length) {
+  if (datesWithData.length < 2) {
     return (
-      <Panel>
-        <PanelTitle title="Pipeline Latency" sub="Per-stage breakdown · seconds per run" />
-        <p className="text-[11px] text-ink-mute">No runs recorded yet — generate your first outreach to see timings.</p>
+      <Panel className="h-full flex flex-col">
+        <div className="flex items-start justify-between mb-3 flex-shrink-0">
+          <PanelTitle title="Outreach Cost Trend" sub="Cost per email generated · by agent" />
+          <Link to="/finops" className="text-[10px] text-brand font-medium hover:underline flex-shrink-0 mt-1">Full FinOps →</Link>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-[11px] text-ink-mute text-center">Not enough data — need at least 2 days of outreach.</p>
+        </div>
       </Panel>
     );
   }
 
+  const H = 170;
+  const PAD = { top: 12, right: 12, bottom: 28, left: 48 };
+
+  const allVals = [
+    ...Object.values(totalAvgByDate),
+    ...activeAgents.flatMap(a => Object.values(byAgentDate[a])),
+  ].filter(v => v > 0);
+  const maxVal = Math.max(...allVals) || 1;
+
+  const xPct  = (i: number) => PAD.left + (i / Math.max(datesWithData.length - 1, 1)) * (100 - PAD.left - PAD.right);
+  const yPct  = (v: number) => PAD.top + (H - PAD.top - PAD.bottom) - (v / maxVal) * (H - PAD.top - PAD.bottom);
+
+  const linePath = (vals: Record<string, number>) => {
+    const pts = datesWithData
+      .map((d, i) => vals[d] != null ? `${xPct(i).toFixed(1)}%,${yPct(vals[d]).toFixed(1)}` : null)
+      .filter(Boolean) as string[];
+    return pts.length >= 2 ? `M ${pts.join(" L ")}` : "";
+  };
+
+  const fmtDate = (d: string) => { const dt = new Date(d); return `${dt.getDate()} ${dt.toLocaleString("en", { month: "short" })}`; };
+  const fmtCost = (v: number) => v < 0.001 ? `$${(v * 1000).toFixed(2)}m` : `$${v.toFixed(4)}`;
+
   return (
-    <Panel>
-      <PanelTitle
-        title="Pipeline Latency"
-        sub="Per-stage breakdown per run · seconds · hover for detail"
-      />
-      <ResponsiveContainer width="100%" height={200}>
-        <BarChart data={formatted} barCategoryGap="25%" margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
-          <CartesianGrid vertical={false} stroke="rgba(148,163,184,0.15)" strokeDasharray="3 3" />
-          <XAxis
-            dataKey="label"
-            tick={{ fontSize: 9, fill: "#94a3b8", fontFamily: "monospace" }}
-            tickLine={false}
-            axisLine={false}
-            interval="preserveStartEnd"
-          />
-          <YAxis
-            tick={{ fontSize: 9, fill: "#94a3b8", fontFamily: "monospace" }}
-            tickLine={false}
-            axisLine={false}
-            width={28}
-            unit="s"
-          />
-          <Tooltip
-            contentStyle={{
-              background: "rgb(var(--c-surface))",
-              border: "1px solid rgb(var(--c-line-soft))",
-              borderRadius: 8,
-              fontSize: 11,
-            }}
-            labelStyle={{ color: "rgb(var(--c-ink))", fontWeight: 600, marginBottom: 4 }}
-            cursor={{ fill: "rgba(148,163,184,0.08)" }}
-            formatter={(val, key) => {
-              const v = Number(val);
-              return v > 0 ? [`${v}s`, STAGE_LABELS[String(key)] ?? String(key)] : ["", ""];
-            }}
-          />
-          {STAGE_KEYS.map((stage, i) => (
-            <Bar
-              key={stage}
-              dataKey={stage}
-              name={STAGE_LABELS[stage]}
-              stackId="run"
-              fill={STAGE_COLOURS[stage]}
-              radius={i === STAGE_KEYS.length - 1 ? [3, 3, 0, 0] : [0, 0, 0, 0]}
-            />
+    <Panel className="h-full flex flex-col">
+      <div className="flex items-start justify-between mb-3 flex-shrink-0">
+        <PanelTitle title="Outreach Cost Trend" sub="Avg cost per email generated · by agent" />
+        <Link to="/finops" className="text-[10px] text-brand font-medium hover:underline flex-shrink-0 mt-1">Full FinOps →</Link>
+      </div>
+      <div className="flex-1 min-h-0 relative">
+        <svg viewBox={`0 0 100 ${H}`} preserveAspectRatio="none" style={{ width: "100%", height: H }}>
+          {[0.25, 0.5, 0.75, 1].map(t => (
+            <line key={t} x1={`${PAD.left}%`} x2={`${100 - PAD.right}%`}
+              y1={yPct(maxVal * t)} y2={yPct(maxVal * t)}
+              stroke="rgba(148,163,184,0.12)" strokeDasharray="2 2" strokeWidth="0.4" />
           ))}
-        </BarChart>
-      </ResponsiveContainer>
-      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3">
-        {STAGE_KEYS.map(s => (
-          <div key={s} className="flex items-center gap-1.5 text-[9px] text-ink-mute font-mono">
-            <div className="w-2.5 h-2 rounded-sm flex-shrink-0" style={{ background: STAGE_COLOURS[s] }} />
-            {STAGE_LABELS[s]}
+          {[0, 0.5, 1].map(t => (
+            <text key={t} x={`${PAD.left - 1}%`} y={yPct(maxVal * t) + 2}
+              textAnchor="end" fill="#64748b" fontSize="4" fontFamily="monospace">
+              {fmtCost(maxVal * t)}
+            </text>
+          ))}
+          {datesWithData.filter((_, i, arr) => i === 0 || i === arr.length - 1 || (arr.length > 4 && i === Math.floor(arr.length / 2))).map(d => {
+            const idx = datesWithData.indexOf(d);
+            return (
+              <text key={d} x={`${xPct(idx)}%`} y={H - 4}
+                textAnchor="middle" fill="#64748b" fontSize="4" fontFamily="monospace">
+                {fmtDate(d)}
+              </text>
+            );
+          })}
+          {activeAgents.map(agent => {
+            const path = linePath(byAgentDate[agent]);
+            return path ? <path key={agent} d={path} fill="none" stroke={COLORS[agent] ?? "#94a3b8"} strokeWidth="0.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.75" vectorEffect="non-scaling-stroke" /> : null;
+          })}
+          {(() => { const path = linePath(totalAvgByDate); return path ? <path d={path} fill="none" stroke="#e2e8f0" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" /> : null; })()}
+        </svg>
+      </div>
+      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 flex-shrink-0">
+        {activeAgents.map(a => (
+          <div key={a} className="flex items-center gap-1.5 text-[9px] text-ink-mute font-mono">
+            <div className="w-2.5 h-1.5 rounded-sm" style={{ background: COLORS[a] }} />
+            {a}
           </div>
         ))}
+        <div className="flex items-center gap-1.5 text-[9px] text-ink-mute font-mono">
+          <div className="w-2.5 h-1.5 rounded-sm bg-slate-300/50" />
+          total
+        </div>
       </div>
     </Panel>
   );
@@ -1158,18 +1091,6 @@ export function DashboardPage() {
     queryKey: ["kbInsights"],
     queryFn: api.dashboardKbInsights,
     refetchInterval: 120_000,
-  });
-
-  const { data: sentEmailItems = [] } = useQuery({
-    queryKey: ["sentEmails"],
-    queryFn: api.sentEmails,
-    refetchInterval: 30_000,
-  });
-
-  const { data: pipelineLatency } = useQuery({
-    queryKey: ["pipelineLatency"],
-    queryFn: () => api.getPipelineLatency(30),
-    refetchInterval: 30_000,
   });
 
   const empty = !stats || stats.messages_sent.value === 0;
@@ -1254,17 +1175,10 @@ export function DashboardPage() {
               {extended && <CompanyInsightsPanel data={extended.company_breakdown} />}
             </div>
 
-            {/* ── Pipeline Latency ──────────────────────────────────────────── */}
-            {pipelineLatency && (
-              <div className="mb-5">
-                <PipelineLatencyChart data={pipelineLatency} />
-              </div>
-            )}
-
-            {/* ── AI Spend · Risk Distribution ──────────────────────────── */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5 items-stretch">
+            {/* ── AI Spend · Outreach Cost Trend ────────────────────────── */}
+            <div className="grid grid-cols-1 md:grid-cols-[3fr_2fr] gap-5 mb-5 items-stretch">
               {finops && <MiniFinOpsPanel data={finops} />}
-              <RiskDistributionCard />
+              {finops && <OutreachCostTrendMini data={finops} />}
             </div>
 
             {/* ── KB Retrieval Insights ─────────────────────────────────────── */}
@@ -1274,17 +1188,16 @@ export function DashboardPage() {
               </div>
             )}
 
-            {/* ── Governance Outcomes · Sent Emails ────────────────────────── */}
+            {/* ── Governance Outcomes · Risk Distribution ──────────────── */}
             {extended && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5" style={{ height: 600 }}>
                 <GovernanceOutcomesCard
                   gov={extended.governance_summary}
                   intent={extended.intent_distribution}
                 />
-                <SentEmailsPanel items={sentEmailItems} />
+                <RiskDistributionCard />
               </div>
             )}
-            {!extended && <SentEmailsPanel items={sentEmailItems} />}
           </>
         )}
       </div>

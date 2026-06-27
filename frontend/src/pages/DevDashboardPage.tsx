@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { cn } from "../lib/utils";
 import { Topbar } from "../components/layout/Topbar";
 import { StatusPill } from "../components/StatusPill";
-import { api, type AgentMetrics, type TraceRecord, type ValidationRecord } from "../lib/api";
+import { api, type AgentMetrics, type TraceRecord, type ValidationRecord, type PipelineRunPoint } from "../lib/api";
 import type { CitationEntry, RetrievalStats, InterpretationSummary, SelfEvalStats } from "../lib/api";
 import { RetryEfficiencyCard } from "../components/dashboard/RetryEfficiencyCard";
 import { RiskDistributionCard } from "../components/dashboard/RiskDistributionCard";
 import { PromptVersionsPage } from "./PromptVersionsPage";
 import { PipelineLineagePage } from "./PipelineLineagePage";
+import { CommandCenterPage } from "./CommandCenterPage";
 
 // ── Colour tokens for diagnostic categories ──────────────────────────────────
 const CATEGORY_COLOURS: Record<string, string> = {
@@ -672,13 +674,94 @@ function InterpretationDriftPanel() {
   );
 }
 
-type DevTab = "observability" | "governance-debug" | "prompts" | "lineage";
+// ── Pipeline Latency Chart ────────────────────────────────────────────────────
+
+const STAGE_COLOURS: Record<string, string> = {
+  enriching_lead:    "#38bdf8",
+  enriching_company: "#60a5fa",
+  detecting_signals: "#a78bfa",
+  researching:       "#fb923c",
+  building_context:  "#34d399",
+  fetching_trends:   "#2dd4bf",
+  ranking_relevance: "#818cf8",
+  generating_email:  "#c084fc",
+  queueing:          "#94a3b8",
+};
+
+const STAGE_LABELS: Record<string, string> = {
+  enriching_lead:    "Lead Enrich",
+  enriching_company: "Co. Enrich",
+  detecting_signals: "Signals",
+  researching:       "Research",
+  building_context:  "Context",
+  fetching_trends:   "Trends",
+  ranking_relevance: "Ranking",
+  generating_email:  "Email Gen",
+  queueing:          "Queue",
+};
+
+const STAGE_KEYS = Object.keys(STAGE_COLOURS);
+
+function PipelineLatencyChartDev({ data }: { data: PipelineRunPoint[] }) {
+  const formatted = data.map(d => ({
+    ...d,
+    label: new Date(d.ts).toLocaleString("en-GB", {
+      day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", hour12: false,
+    }),
+  }));
+
+  if (!formatted.length) {
+    return (
+      <Card>
+        <SectionHeader title="Pipeline Latency" sub="Per-stage breakdown · seconds per run" />
+        <p className="text-[11px] text-ink-mute mt-2">No runs recorded yet — generate your first outreach to see timings.</p>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <SectionHeader title="Pipeline Latency" sub="Per-stage breakdown per run · seconds · hover for detail" />
+      <ResponsiveContainer width="100%" height={240}>
+        <BarChart data={formatted} barCategoryGap="25%" margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+          <CartesianGrid vertical={false} stroke="rgba(148,163,184,0.15)" strokeDasharray="3 3" />
+          <XAxis dataKey="label" tick={{ fontSize: 9, fill: "#94a3b8", fontFamily: "monospace" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+          <YAxis tick={{ fontSize: 9, fill: "#94a3b8", fontFamily: "monospace" }} tickLine={false} axisLine={false} width={28} unit="s" />
+          <Tooltip
+            contentStyle={{ background: "rgb(var(--c-surface))", border: "1px solid rgb(var(--c-line-soft))", borderRadius: 8, fontSize: 11 }}
+            labelStyle={{ color: "rgb(var(--c-ink))", fontWeight: 600, marginBottom: 4 }}
+            cursor={{ fill: "rgba(148,163,184,0.08)" }}
+            formatter={(val, key) => { const v = Number(val); return v > 0 ? [`${v}s`, STAGE_LABELS[String(key)] ?? String(key)] : ["", ""]; }}
+          />
+          {STAGE_KEYS.map((stage, i) => (
+            <Bar key={stage} dataKey={stage} name={STAGE_LABELS[stage]} stackId="run" fill={STAGE_COLOURS[stage]}
+              radius={i === STAGE_KEYS.length - 1 ? [3, 3, 0, 0] : [0, 0, 0, 0]} />
+          ))}
+        </BarChart>
+      </ResponsiveContainer>
+      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3">
+        {STAGE_KEYS.map(s => (
+          <div key={s} className="flex items-center gap-1.5 text-[9px] text-ink-mute font-mono">
+            <div className="w-2.5 h-2 rounded-sm flex-shrink-0" style={{ background: STAGE_COLOURS[s] }} />
+            {STAGE_LABELS[s]}
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+// ── Tab types ─────────────────────────────────────────────────────────────────
+
+type DevTab = "observability" | "governance-debug" | "prompts" | "lineage" | "latency" | "command-center";
 
 const DEV_TABS: { id: DevTab; label: string }[] = [
   { id: "observability",    label: "Observability" },
   { id: "governance-debug", label: "Governance Debug" },
   { id: "prompts",          label: "Prompts" },
   { id: "lineage",          label: "Lineage" },
+  { id: "latency",          label: "Pipeline Latency" },
+  { id: "command-center",   label: "Command Center" },
 ];
 
 export function DevDashboardPage() {
@@ -699,6 +782,12 @@ export function DevDashboardPage() {
   const { data: extended } = useQuery({
     queryKey: ["dashboardExtended"],
     queryFn: api.dashboardExtendedStats,
+    refetchInterval: 30_000,
+  });
+
+  const { data: pipelineLatency } = useQuery({
+    queryKey: ["pipelineLatency"],
+    queryFn: () => api.getPipelineLatency(30),
     refetchInterval: 30_000,
   });
 
@@ -800,6 +889,20 @@ export function DevDashboardPage() {
       {activeTab === "lineage" && (
         <div className="overflow-y-auto">
           <PipelineLineagePage />
+        </div>
+      )}
+
+      {/* ── Tab: Pipeline Latency ─────────────────────────────────────────────── */}
+      {activeTab === "latency" && (
+        <div className="p-4 sm:p-8 pb-20">
+          <PipelineLatencyChartDev data={pipelineLatency ?? []} />
+        </div>
+      )}
+
+      {/* ── Tab: Command Center ────────────────────────────────────────────────── */}
+      {activeTab === "command-center" && (
+        <div className="overflow-y-auto">
+          <CommandCenterPage />
         </div>
       )}
     </>

@@ -1,247 +1,488 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
 import { Topbar } from "../components/layout/Topbar";
 import { StatusPill } from "../components/StatusPill";
-import { GovStatCard } from "../components/approval/GovStatCard";
-import { ApprovalItem } from "../components/approval/ApprovalItem";
-import { api, type ApprovalItem as ApprovalItemType } from "../lib/api";
+import { ApprovalItem as ApprovalItemComponent } from "../components/approval/ApprovalItem";
+import { api, type ApprovalItem as ApprovalItemType, type FollowupDraft } from "../lib/api";
+import { cn } from "../lib/utils";
 
-function matchesSearch(item: ApprovalItemType, q: string): boolean {
-  const lq = q.toLowerCase();
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+type QueueTab = "outreach" | "interested" | "followup";
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function fmtDate(ts: string) {
+  const d = new Date(ts);
+  const now = new Date();
+  const diffDays = Math.floor((now.getTime() - d.getTime()) / 86400000);
+  if (diffDays === 0) return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return d.toLocaleDateString("en-GB", { weekday: "short" });
+  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
+}
+
+const RISK_C: Record<string, { text: string; bg: string }> = {
+  high:   { text: "text-red-400",     bg: "bg-red-500/10"     },
+  medium: { text: "text-amber-500",   bg: "bg-amber-500/10"   },
+  low:    { text: "text-emerald-500", bg: "bg-emerald-500/10" },
+};
+
+// ── Individual email message (collapsible) ────────────────────────────────────
+
+function EmailMessage({
+  from, to, subject, body, date, isInitial, followupNumber,
+}: {
+  from: string;
+  to?: string;
+  subject: string;
+  body: string;
+  date: string;
+  isInitial?: boolean;
+  followupNumber?: number;
+}) {
+  const [expanded, setExpanded] = useState(isInitial ?? false);
+
   return (
-    item.lead_name.toLowerCase().includes(lq) ||
-    item.company_name.toLowerCase().includes(lq) ||
-    item.content_snippet.toLowerCase().includes(lq) ||
-    (item.email?.subject ?? "").toLowerCase().includes(lq) ||
-    (item.email?.body ?? "").toLowerCase().includes(lq) ||
-    item.trigger.toLowerCase().includes(lq)
+    <div className={cn(
+      "border border-line-soft rounded-lg mb-3 overflow-hidden",
+      isInitial ? "bg-surface shadow-sm" : "bg-surface-2/30",
+    )}>
+      <button
+        className="w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-surface-2/30 transition-colors"
+        onClick={() => setExpanded(e => !e)}
+      >
+        <div className={cn(
+          "w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 mt-0.5 border",
+          isInitial
+            ? "bg-brand/10 text-brand border-brand/20"
+            : "bg-surface-2 text-ink-2 border-line-soft",
+        )}>
+          {from.charAt(0).toUpperCase()}
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="text-[12px] font-semibold text-ink">{from}</span>
+            {isInitial && (
+              <span className="text-[9px] font-mono px-1.5 py-px rounded-full bg-brand/10 text-brand font-semibold border border-brand/20">
+                Initial
+              </span>
+            )}
+            {followupNumber != null && (
+              <span className="text-[9px] font-mono px-1.5 py-px rounded-full bg-violet-500/10 text-violet-400 font-semibold border border-violet-500/20">
+                Follow-up #{followupNumber}
+              </span>
+            )}
+            <span className="ml-auto text-[10px] text-ink-mute font-mono flex-shrink-0">{date}</span>
+            <span className={cn("text-ink-mute text-[10px] ml-1 select-none transition-transform duration-150", expanded ? "rotate-180" : "")}>
+              ▾
+            </span>
+          </div>
+          <div className="text-[11px] font-medium text-ink-2 truncate">{subject}</div>
+          {!expanded && (
+            <div className="text-[10px] text-ink-mute truncate mt-0.5">
+              {body.replace(/\n+/g, " ").slice(0, 120)}…
+            </div>
+          )}
+        </div>
+      </button>
+
+      {expanded && (
+        <div className="px-4 pb-5 pt-2 border-t border-line-soft/50">
+          {to && (
+            <div className="text-[10px] text-ink-mute mb-3 font-mono">To: {to}</div>
+          )}
+          <div className="text-[12.5px] text-ink leading-relaxed whitespace-pre-wrap font-sans">
+            {body}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
+// ── Full email thread (initial + follow-ups) ──────────────────────────────────
+
+function EmailThread({ item }: { item: ApprovalItemType }) {
+  const senderName = "LeadGenie AI";
+  const recipientEmail = item.lead_email ?? item.lead_name ?? "Lead";
+  const sequence: FollowupDraft[] = item.followup_sequence ?? [];
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Thread header */}
+      <div className="px-5 py-3.5 border-b border-line-soft flex-shrink-0">
+        <div className="text-[13px] font-semibold text-ink truncate mb-1">
+          {item.email?.subject ?? "(No subject)"}
+        </div>
+        <div className="flex items-center gap-2 flex-wrap text-[10px] text-ink-mute font-mono">
+          <span className="text-ink-2 font-semibold">{item.lead_name}</span>
+          <span>·</span>
+          <span className="text-brand">{item.company_name}</span>
+          {item.lead_title && <><span>·</span><span>{item.lead_title}</span></>}
+          {item.lead_email && <><span>·</span><span>{item.lead_email}</span></>}
+        </div>
+      </div>
+
+      {/* Scrollable email messages */}
+      <div className="flex-1 overflow-y-auto p-5 min-h-0">
+        <EmailMessage
+          from={senderName}
+          to={recipientEmail}
+          subject={item.email?.subject ?? "(No subject)"}
+          body={item.email?.body ?? ""}
+          date={fmtDate(item.timestamp)}
+          isInitial
+        />
+
+        {sequence.map((fu) => (
+          <EmailMessage
+            key={fu.number}
+            from={senderName}
+            to={recipientEmail}
+            subject={fu.subject ?? `Re: ${item.email?.subject ?? ""}`}
+            body={fu.body ?? ""}
+            date={`Scheduled: Day +${fu.delay_days ?? fu.number * 3}`}
+            followupNumber={fu.number}
+          />
+        ))}
+
+        {sequence.length === 0 && (
+          <div className="text-center text-[11px] text-ink-mute py-5 border border-dashed border-line-soft rounded-lg mt-2">
+            Follow-up sequence generating in background…
+          </div>
+        )}
+      </div>
+
+      {/* Status footer */}
+      <div className="border-t border-line-soft px-5 py-3 flex items-center gap-2.5 flex-shrink-0 bg-surface-2/30">
+        <span className={cn(
+          "text-[10px] font-mono font-semibold px-2 py-0.5 rounded",
+          (RISK_C[item.risk_level] ?? RISK_C.low).text,
+          (RISK_C[item.risk_level] ?? RISK_C.low).bg,
+        )}>
+          {item.risk_level} risk
+        </span>
+        <span className="text-[10px] text-ink-mute font-mono">
+          conf {((item.confidence ?? 0.5) * 100).toFixed(0)}%
+        </span>
+        {item.total_attempts > 1 && (
+          <span className="text-[10px] font-mono text-amber-500">{item.total_attempts} attempts</span>
+        )}
+        <span className="flex-1" />
+        <span className={cn(
+          "text-[10px] font-mono px-2 py-0.5 rounded",
+          item.governance_passed
+            ? "bg-emerald-500/10 text-emerald-400"
+            : "bg-red-500/10 text-red-400",
+        )}>
+          {item.governance_passed ? "✓ Gov passed" : "✗ Gov failed"}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ── Left panel: conversation list row ────────────────────────────────────────
+
+function ConvRow({
+  item,
+  isSelected,
+  onClick,
+  showFollowupBadge = false,
+}: {
+  item: ApprovalItemType;
+  isSelected: boolean;
+  onClick: () => void;
+  showFollowupBadge?: boolean;
+}) {
+  const rc = RISK_C[item.risk_level] ?? RISK_C.low;
+  const ts = item.status_updated_at ?? item.timestamp;
+  const followupCount = item.followup_sequence?.length ?? 0;
+  const initials = (item.lead_name ?? "?").split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
+
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "w-full text-left px-4 py-3.5 border-b border-line-soft/60 transition-all",
+        "border-l-[3px]",
+        isSelected
+          ? "bg-brand/5 border-l-brand"
+          : "hover:bg-surface-2/40 border-l-transparent",
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <div className={cn(
+          "w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 border",
+          isSelected
+            ? "bg-brand/15 text-brand border-brand/30"
+            : "bg-surface-2 text-ink-2 border-line-soft",
+        )}>
+          {initials}
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline justify-between mb-0.5 gap-1">
+            <span className={cn("text-[12px] font-semibold truncate", isSelected ? "text-brand" : "text-ink")}>
+              {item.lead_name}
+            </span>
+            <span className="text-[10px] text-ink-mute font-mono flex-shrink-0">{fmtDate(ts)}</span>
+          </div>
+          <div className="text-[11px] text-ink-2 truncate mb-1">{item.company_name}</div>
+          <div className="text-[10px] text-ink-mute truncate mb-1.5">
+            {item.email?.subject ?? "(No subject)"}
+          </div>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className={cn("text-[9px] font-mono px-1.5 py-px rounded-full font-semibold border", rc.text, rc.bg,
+              rc.text.replace("text-", "border-").replace("400", "400/30").replace("500", "500/30"))}>
+              {item.risk_level}
+            </span>
+            {showFollowupBadge && followupCount > 0 && (
+              <span className="text-[9px] font-mono px-1.5 py-px rounded-full bg-violet-500/10 text-violet-400 border border-violet-500/20 font-semibold">
+                {followupCount} follow-ups
+              </span>
+            )}
+            {!item.governance_passed && (
+              <span className="text-[9px] font-mono px-1.5 py-px rounded-full bg-red-500/10 text-red-400 border border-red-500/20">
+                gov failed
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+// ── Empty state ───────────────────────────────────────────────────────────────
+
+function EmptyState({ icon = "✉", message }: { icon?: string; message: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center h-full text-ink-mute select-none">
+      <div className="text-5xl mb-3 opacity-20">{icon}</div>
+      <div className="text-[12px] font-medium">{message}</div>
+    </div>
+  );
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+
 export function ApprovalQueuePage() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const qParam   = searchParams.get("q") ?? "";
-  const tabParam = searchParams.get("tab") as "email" | "validation" | "citations" | null;
-  const [search, setSearch] = useState(qParam);
+  const [activeTab, setActiveTab] = useState<QueueTab>("outreach");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [showApprovalDetail, setShowApprovalDetail] = useState(false);
+  const [search, setSearch] = useState("");
 
-  // Sync input when URL param changes (e.g. navigating from dashboard)
-  useEffect(() => { setSearch(qParam); }, [qParam]);
-
-  const { data: items = [], isLoading } = useQuery({
+  const { data: queueItems = [], isLoading: queueLoading } = useQuery({
     queryKey: ["approvalQueue"],
     queryFn: api.approvalQueue,
     refetchInterval: 15_000,
   });
 
-  const { data: sentItems = [] } = useQuery({
+  const { data: sentItems = [], isLoading: sentLoading } = useQuery({
     queryKey: ["sentEmails"],
     queryFn: api.sentEmails,
-    refetchInterval: 10_000,
+    refetchInterval: 15_000,
   });
 
-  const allItems = search
-    ? [
-        ...items.filter(i => matchesSearch(i, search)),
-        ...sentItems.filter(i => matchesSearch(i, search)),
-      ]
-    : items;
-
-  const displayItems   = search ? allItems : items;
-  const failedCount    = items.filter(i => !i.governance_passed).length;
-  const passedCount    = items.filter(i => i.governance_passed).length;
-  const retriedCount   = items.filter(i => i.total_attempts > 1).length;
-  const highRisk       = items.filter(i => i.risk_level === "high").length;
-  const sentMatches    = search ? sentItems.filter(i => matchesSearch(i, search)) : [];
-
-  const clearSearch = () => {
-    setSearch("");
-    setSearchParams({});
+  const filterFn = (item: ApprovalItemType) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (
+      (item.lead_name ?? "").toLowerCase().includes(q) ||
+      (item.company_name ?? "").toLowerCase().includes(q) ||
+      (item.email?.subject ?? "").toLowerCase().includes(q)
+    );
   };
+
+  // Tab data
+  const outreachItems  = useMemo(() => queueItems.filter(filterFn), [queueItems, search]);
+  const interestedItems = useMemo(() => sentItems.filter(filterFn), [sentItems, search]);
+  const followupItems  = useMemo(
+    () => sentItems.filter(i => (i.followup_sequence?.length ?? 0) > 0 && filterFn(i)),
+    [sentItems, search],
+  );
+
+  const activeItems =
+    activeTab === "outreach"   ? outreachItems  :
+    activeTab === "interested" ? interestedItems :
+    followupItems;
+
+  const selectedItem = activeItems.find(i => i.event_id === selectedId) ?? null;
+
+  const govFailed = queueItems.filter(i => !i.governance_passed).length;
+
+  const TABS: { id: QueueTab; label: string; count: number; desc: string }[] = [
+    { id: "outreach",   label: "Outreach",   count: queueItems.length,   desc: "Pending approval" },
+    { id: "interested", label: "Interested", count: sentItems.length,    desc: "Sent & delivered"  },
+    { id: "followup",   label: "Follow Up",  count: followupItems.length, desc: "With sequences"   },
+  ];
+
+  const handleTabChange = (tab: QueueTab) => {
+    setActiveTab(tab);
+    setSelectedId(null);
+    setShowApprovalDetail(false);
+  };
+
+  const isLoading = queueLoading || sentLoading;
 
   return (
     <>
       <Topbar
-        breadcrumb="Governance / Approval Queue"
+        breadcrumb="Workspace / Outreach Queue"
         title={<>Outreach <em className="text-brand italic">Queue</em></>}
         right={
-          <>
-            <StatusPill tone={failedCount > 0 ? "danger" : "brand"}>
-              {items.length} pending
+          <div className="flex items-center gap-2">
+            <StatusPill tone={govFailed > 0 ? "danger" : "brand"}>
+              {queueItems.length} pending
             </StatusPill>
-            {failedCount > 0 && (
-              <StatusPill tone="danger">{failedCount} governance failed</StatusPill>
+            {govFailed > 0 && (
+              <StatusPill tone="danger">{govFailed} gov failed</StatusPill>
             )}
-          </>
+          </div>
         }
       />
 
-      <div className="p-8 pb-20">
-        <div className="grid grid-cols-4 gap-3.5 mb-6">
-          <GovStatCard label="Awaiting review"  value={items.length}    tone="brand" />
-          <GovStatCard label="Governance failed" value={failedCount}     tone="danger" />
-          <GovStatCard label="Passed (queued)"   value={passedCount}     tone="brand" />
-          <GovStatCard label="Required retry"    value={retriedCount}    tone="gold" />
+      {/* Full-viewport Outlook-style layout */}
+      <div className="flex flex-col" style={{ height: "calc(100vh - 57px)" }}>
+
+        {/* ── Tab bar + search ─────────────────────────────────────────────── */}
+        <div className="flex items-center border-b border-line-soft bg-surface flex-shrink-0">
+          <div className="flex">
+            {TABS.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => handleTabChange(tab.id)}
+                className={cn(
+                  "px-5 py-3 text-[13px] font-medium border-b-2 -mb-px transition-colors flex items-center gap-2",
+                  activeTab === tab.id
+                    ? "border-brand text-brand"
+                    : "border-transparent text-ink-2 hover:text-ink hover:bg-surface-2/40",
+                )}
+              >
+                {tab.label}
+                {tab.count > 0 && (
+                  <span className={cn(
+                    "text-[10px] font-mono px-1.5 py-px rounded-full font-semibold",
+                    activeTab === tab.id
+                      ? (tab.id === "outreach" && govFailed > 0 ? "bg-red-500/15 text-red-400" : "bg-brand/10 text-brand")
+                      : "bg-surface-2 text-ink-mute",
+                  )}>
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Search bar */}
+          <div className="ml-auto px-4">
+            <div className="relative">
+              <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-ink-mute" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 12a7.5 7.5 0 0012.15 5.65z" />
+              </svg>
+              <input
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search…"
+                className="pl-7 pr-6 py-1.5 text-[11px] rounded-md border border-line-soft bg-surface-2/50 text-ink placeholder:text-ink-mute focus:outline-none focus:border-brand/40 focus:ring-1 focus:ring-brand/10 w-44"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-ink-mute hover:text-ink text-sm leading-none"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* ── Search / filter bar ── */}
-        <div className="mb-4 flex items-center gap-3">
-          <div className="relative flex-1 max-w-md">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ink-mute" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 12a7.5 7.5 0 0012.15 5.65z" />
-            </svg>
-            <input
-              type="text"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search emails by keyword, company, lead…"
-              className="w-full pl-8 pr-8 py-2 text-[12px] rounded-lg border border-line-soft bg-surface text-ink placeholder:text-ink-mute focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20"
-            />
-            {search && (
-              <button
-                onClick={clearSearch}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-mute hover:text-ink text-[14px] leading-none"
-                title="Clear search">
-                ×
-              </button>
+        {/* ── Two-panel layout ─────────────────────────────────────────────── */}
+        <div className="flex flex-1 min-h-0 overflow-hidden">
+
+          {/* Left: conversation list */}
+          <div className="w-[300px] flex-shrink-0 border-r border-line-soft flex flex-col min-h-0 bg-surface">
+            {/* Sub-header */}
+            <div className="px-4 py-2 border-b border-line-soft flex-shrink-0 bg-surface-2/20">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-ink-mute">
+                {isLoading ? "Loading…" : `${activeItems.length} ${TABS.find(t => t.id === activeTab)?.desc ?? ""}`}
+              </span>
+            </div>
+
+            {/* List */}
+            <div className="flex-1 overflow-y-auto min-h-0">
+              {!isLoading && activeItems.length === 0 && (
+                <EmptyState message={
+                  activeTab === "outreach"   ? "Queue is empty" :
+                  activeTab === "interested" ? "No sent emails yet" :
+                  "No follow-up sequences yet"
+                } />
+              )}
+              {activeItems.map(item => (
+                <ConvRow
+                  key={item.event_id}
+                  item={item}
+                  isSelected={selectedId === item.event_id}
+                  showFollowupBadge={activeTab === "followup"}
+                  onClick={() => {
+                    setSelectedId(item.event_id);
+                    setShowApprovalDetail(false);
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Right: reading pane */}
+          <div className="flex-1 min-w-0 flex flex-col min-h-0 bg-surface">
+            {!selectedItem ? (
+              <EmptyState icon="✉" message="Select an email to read the thread" />
+            ) : (
+              <>
+                {/* View toggle (only on Outreach tab) */}
+                {activeTab === "outreach" && (
+                  <div className="px-5 py-2 border-b border-line-soft flex-shrink-0 flex items-center gap-1.5 bg-surface-2/15">
+                    {[
+                      { id: false, label: "Email Thread" },
+                      { id: true,  label: "Approval Detail" },
+                    ].map(opt => (
+                      <button
+                        key={String(opt.id)}
+                        onClick={() => setShowApprovalDetail(opt.id)}
+                        className={cn(
+                          "text-[11px] px-3 py-1 rounded-md font-medium transition-colors",
+                          showApprovalDetail === opt.id
+                            ? "bg-brand/10 text-brand"
+                            : "text-ink-2 hover:text-ink hover:bg-surface-2/50",
+                        )}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Email thread */}
+                {(!showApprovalDetail || activeTab !== "outreach") && (
+                  <div className="flex-1 min-h-0 overflow-hidden">
+                    <EmailThread item={selectedItem} />
+                  </div>
+                )}
+
+                {/* Approval detail (existing component) */}
+                {showApprovalDetail && activeTab === "outreach" && (
+                  <div className="flex-1 overflow-y-auto p-4 min-h-0">
+                    <ApprovalItemComponent item={selectedItem} initialExpanded />
+                  </div>
+                )}
+              </>
             )}
           </div>
-          {search && (
-            <span className="text-[11px] text-ink-mute font-mono">
-              {displayItems.length + sentMatches.length} match{displayItems.length + sentMatches.length !== 1 ? "es" : ""}
-              {sentMatches.length > 0 && <span className="text-brand ml-1">({sentMatches.length} sent)</span>}
-            </span>
-          )}
-        </div>
-
-        {/* ── Active KB filter banner ── */}
-        {qParam && (
-          <div className="mb-4 flex items-center gap-2 px-3 py-2.5 rounded-lg border border-brand/30 bg-brand/5 text-[11px]">
-            <span className="text-[15px]">🔍</span>
-            <div>
-              <span className="text-brand font-semibold">KB fact:</span>
-              <span className="font-mono text-ink ml-1.5">"{qParam}"</span>
-              <span className="text-ink-mute ml-1.5">— emails where this fact appears in the generated content are expanded below</span>
-            </div>
-            <button onClick={clearSearch} className="ml-auto text-ink-mute hover:text-ink transition-colors text-[10px] font-mono flex-shrink-0">
-              clear ×
-            </button>
-          </div>
-        )}
-
-        <div className="card-base">
-          <div className="px-5 py-4 border-b border-line-soft flex items-center justify-between">
-            <div className="font-serif text-display-md text-ink">
-              {search
-                ? <>Emails matching <em className="text-brand italic">"{search}"</em></>
-                : <>All emails awaiting your <em className="text-brand italic">approval</em></>}
-            </div>
-            <div className="flex items-center gap-3">
-              {search ? (
-                <>
-                  <span className="text-[11px] font-mono text-brand">{displayItems.length} queued</span>
-                  <span className="text-[11px] font-mono text-emerald-400">{sentMatches.length} sent</span>
-                </>
-              ) : (
-                <>
-                  {highRisk > 0 && <span className="text-[11px] font-mono text-danger">{highRisk} high-risk</span>}
-                  <div className="label-mono">Sorted by risk score</div>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* ── Default queue view (single scrollable column) ── */}
-          {!search && (
-            <div className="p-5 overflow-y-auto max-h-[calc(100vh-340px)]">
-              {isLoading && (
-                <div className="py-12 text-center text-ink-mute text-sm animate-pulse">Loading queue…</div>
-              )}
-              {!isLoading && items.length === 0 && (
-                <div className="py-12 text-center text-ink-mute text-sm">
-                  <div className="text-2xl mb-2">✓</div>Queue is empty.
-                </div>
-              )}
-              {!isLoading && failedCount > 0 && (
-                <div className="mb-4">
-                  <div className="label-mono mb-2 text-red-400">⚠ Governance failed — requires review</div>
-                  {items.filter(i => !i.governance_passed).map(item => (
-                    <ApprovalItem key={item.event_id} item={item} />
-                  ))}
-                </div>
-              )}
-              {!isLoading && passedCount > 0 && (
-                <div>
-                  {failedCount > 0 && <div className="label-mono mb-2 text-emerald-400">✓ Passed governance — ready to send</div>}
-                  {items.filter(i => i.governance_passed).map(item => (
-                    <ApprovalItem key={item.event_id} item={item} />
-                  ))}
-                </div>
-              )}
-              {!isLoading && sentItems.length > 0 && (
-                <div className="mt-6 pt-4 border-t border-line-soft">
-                  <div className="label-mono mb-2 text-emerald-400">✓ Recently sent ({sentItems.slice(0, 5).length})</div>
-                  {sentItems.slice(0, 5).map(item => (
-                    <ApprovalItem key={item.event_id} item={item} />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ── Search results: two aligned scrollable columns ── */}
-          {search && (
-            <div className="grid grid-cols-2 divide-x divide-line-soft" style={{ height: "calc(100vh - 340px)", minHeight: 400 }}>
-
-              {/* Left: In queue */}
-              <div className="flex flex-col min-h-0">
-                <div className="px-5 py-2.5 border-b border-line-soft flex items-center gap-2 flex-shrink-0">
-                  <div className="w-2 h-2 rounded-full bg-brand flex-shrink-0" />
-                  <span className="label-mono text-brand">In queue</span>
-                  <span className="font-mono text-[11px] text-ink-mute ml-auto">{displayItems.length} match{displayItems.length !== 1 ? "es" : ""}</span>
-                </div>
-                <div className="overflow-y-auto flex-1 p-4">
-                  {isLoading && <div className="py-8 text-center text-ink-mute text-sm animate-pulse">Loading…</div>}
-                  {!isLoading && displayItems.length === 0 && (
-                    <div className="py-12 text-center text-ink-mute text-sm">No queued emails match this term.</div>
-                  )}
-                  {!isLoading && displayItems.map(item => (
-                    <ApprovalItem
-                      key={item.event_id}
-                      item={item}
-                      initialExpanded
-                      initialTab={tabParam ?? "email"}
-                      highlight={search}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Right: Already sent */}
-              <div className="flex flex-col min-h-0">
-                <div className="px-5 py-2.5 border-b border-line-soft flex items-center gap-2 flex-shrink-0">
-                  <div className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
-                  <span className="label-mono text-emerald-400">Already sent</span>
-                  <span className="font-mono text-[11px] text-ink-mute ml-auto">{sentMatches.length} match{sentMatches.length !== 1 ? "es" : ""}</span>
-                </div>
-                <div className="overflow-y-auto flex-1 p-4">
-                  {sentMatches.length === 0 && (
-                    <div className="py-12 text-center text-ink-mute text-sm">No sent emails match this term.</div>
-                  )}
-                  {sentMatches.map(item => (
-                    <ApprovalItem
-                      key={item.event_id}
-                      item={item}
-                      initialExpanded
-                      initialTab={tabParam ?? "email"}
-                      highlight={search}
-                    />
-                  ))}
-                </div>
-              </div>
-
-            </div>
-          )}
         </div>
       </div>
     </>

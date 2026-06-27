@@ -4,7 +4,6 @@ import {
   Search,
   X,
   Activity,
-  ShieldCheck,
   LayoutDashboard,
   InboxIcon,
   MessageCircle,
@@ -31,16 +30,15 @@ interface NavItem {
 }
 
 const WORKSPACE: NavItem[] = [
-  { to: "/discover",        label: "Discover Leads",    icon: Search },
-  { to: "/dashboard",       label: "Mission Control",   icon: LayoutDashboard },
-  { to: "/command-center",  label: "Command Center",    icon: ShieldCheck },
-  { to: "/approval",        label: "Outreach Queue",    icon: InboxIcon,    liveBadge: true },
-  { to: "/finops",          label: "AI FinOps",         icon: DollarSign },
-  { to: "/dev",             label: "Developer's Tool",  icon: Activity },
-  { to: "/whatsapp",        label: "WhatsApp Inbox",    icon: MessageCircle },
-  { to: "/architecture",    label: "Pipeline Diagram",  icon: Network },
-  { to: "/network",          label: "Lead Network",       icon: Globe },
-  { to: "/governance",      label: "Contact Governance", icon: Lock },
+  { to: "/discover",    label: "Discover Leads",    icon: Search },
+  { to: "/dashboard",   label: "Mission Control",   icon: LayoutDashboard },
+  { to: "/approval",    label: "Outreach Queue",    icon: InboxIcon,    liveBadge: true },
+  { to: "/finops",      label: "AI FinOps",         icon: DollarSign },
+  { to: "/dev",         label: "Developer's Tool",  icon: Activity },
+  { to: "/whatsapp",    label: "WhatsApp Inbox",    icon: MessageCircle },
+  { to: "/architecture",label: "Pipeline Diagram",  icon: Network },
+  { to: "/network",     label: "Lead Network",      icon: Globe },
+  { to: "/governance",  label: "Contact Governance",icon: Lock },
 ];
 
 
