@@ -1,0 +1,1185 @@
+[
+  {
+    "input": {
+      "website": "traya.health"
+    },
+    "status_code": 200,
+    "response": {
+      "status": 200,
+      "data": [
+        {
+          "id": "HwM3NHBQVeCBTNe4kAfcmQshLJO6",
+          "name": "traya",
+          "display_name": "Traya",
+          "size": "501-1000",
+          "employee_count": 447,
+          "founded": 2019,
+          "industry": "health, wellness and fitness",
+          "industry_v2": "public health",
+          "naics": null,
+          "sic": null,
+          "location": {
+            "name": "malad, maharashtra, india",
+            "locality": "malad",
+            "region": "maharashtra",
+            "metro": null,
+            "country": "india",
+            "continent": "asia",
+            "street_address": "16 interface off link road",
+            "address_line_2": "unit no 101",
+            "postal_code": "400064",
+            "geo": "18.75,73.60"
+          },
+          "linkedin_id": "26662654",
+          "linkedin_url": "linkedin.com/company/trayahealth",
+          "linkedin_slug": "trayahealth",
+          "facebook_url": "facebook.com/traya.health",
+          "twitter_url": null,
+          "profiles": [
+            "facebook.com/traya.health",
+            "linkedin.com/company/26662654",
+            "crunchbase.com/organization/traya-health",
+            "linkedin.com/company/trayahealth",
+            "linkedin.com/company/tatvahealth"
+          ],
+          "website": "traya.health",
+          "ticker": null,
+          "mic_exchange": null,
+          "type": "private",
+          "summary": "we're on a mission to revolutionize the way you think about hair health. founded on the belief that true transformation begins from within, we've pioneered a holistic approach that targets the root cause of hair issues.\n\nour unique blend of ancient ayurveda, modern dermatological insights, and nutritional expertise forms the foundation of our approach. we're not here to offer quick fixes; we're here to empower you with the knowledge and tools you need to nurture your hair back to health. with our trademarked doctor-backed algorithms, we delve deep into your hair health, offering a free hair test that reveals the root causes of your hairfall. armed with this understanding, our patients receive personalized treatment kits and complimentary diet plans, carefully curated by our team of experts.\n\nbut we understand that the journey to healthier hair isn't always easy. that's why we've assembled a dedicated network of hair coaches, ready to provide guidance and support every step of the way. from adjusting treatment plans to offering encouragement, our coaches are committed to ensuring your success. the results speak for themselves \u2013 with a remarkable efficacy rate of 93%, we've transformed the lives of over 8 lakh customers and counting. but our impact goes beyond numbers; it's about the stories of real people experiencing real transformations.\n\nat traya, we're more than just a brand \u2013 we're your partner in the journey towards healthier, happier hair. so if you're ready to take the first step towards transformation, join us at traya, where your hair health is our priority.",
+          "tags": null,
+          "headline": "Honest | Safe | Doctor Prescribed \n\ud83c\udf3fAyurveda \n\ud83d\udc8a Allopathy \n\ud83c\udf72 Nutrition \n#itworks",
+          "alternative_names": [
+            "traya health"
+          ],
+          "alternative_domains": [],
+          "affiliated_profiles": [],
+          "total_funding_raised": 11772749.0,
+          "latest_funding_stage": "series_a",
+          "last_funding_date": "2024-04-02",
+          "number_funding_rounds": 3,
+          "funding_stages": [
+            "seed",
+            "series_a"
+          ],
+          "employee_count_by_country": {
+            "india": 446,
+            "united arab emirates": 1
+          },
+          "dataset_version": "34.2"
+        }
+      ],
+      "scroll_token": "-9223372036854775808$13.986097$928308",
+      "total": 1,
+      "dataset_version": "34.2"
+    }
+  },
+  {
+    "input": {
+      "website": "economictimes.com"
+    },
+    "status_code": 404,
+    "response": {
+      "status": 404,
+      "error": {
+        "type": "not_found",
+        "message": "No records were found matching your search"
+      },
+      "total": 0
+    }
+  },
+  {
+    "input": {
+      "website": "geeksforgeeks.org"
+    },
+    "status_code": 200,
+    "response": {
+      "status": 200,
+      "data": [
+        {
+          "id": "KZ03KIWIK3Z08KURQEbWGQLh5zbi",
+          "name": "geeksforgeeks",
+          "display_name": "GeeksforGeeks",
+          "size": "201-500",
+          "employee_count": 1549,
+          "founded": 2009,
+          "industry": "higher education",
+          "industry_v2": "education",
+          "naics": [
+            {
+              "naics_code": "5112",
+              "sector": "information",
+              "sub_sector": "publishing industries (except internet)",
+              "industry_group": "software publishers",
+              "naics_industry": null,
+              "national_industry": null
+            }
+          ],
+          "sic": [
+            {
+              "sic_code": "7372",
+              "major_group": "business services",
+              "industry_group": "computer programming, data processing, and other computer related services",
+              "industry_sector": "prepackaged software"
+            }
+          ],
+          "location": {
+            "name": "nepz post office, uttar pradesh, india",
+            "locality": "nepz post office",
+            "region": "uttar pradesh",
+            "metro": null,
+            "country": "india",
+            "continent": "asia",
+            "street_address": null,
+            "address_line_2": null,
+            "postal_code": "201305",
+            "geo": "28.54,77.40"
+          },
+          "linkedin_id": "1299009",
+          "linkedin_url": "linkedin.com/company/geeksforgeeks",
+          "linkedin_slug": "geeksforgeeks",
+          "facebook_url": null,
+          "twitter_url": "twitter.com/geeksforgeeks",
+          "profiles": [
+            "crunchbase.com/organization/geeks-for-geeks",
+            "linkedin.com/company/geeksforgeeks-learn-to-code",
+            "twitter.com/geeksforgeeks",
+            "linkedin.com/company/geeksforgeeks",
+            "linkedin.com/company/1299009"
+          ],
+          "website": "geeksforgeeks.org",
+          "ticker": null,
+          "mic_exchange": null,
+          "type": "private",
+          "summary": "with the idea of imparting programming knowledge, mr. sandeep jain, an iit roorkee alumnus started a dream- geeksforgeeks. whether programming excites you or you feel stifled, wondering how to prepare for interview questions or how to ace data structures and algorithms, geeksforgeeks is the one-stop solution for you.\nwith every tick of time, we are adding arrows in our quiver. from articles on various computer science subjects to programming problems for practice, from basic to premium courses, from technologies to entrance examinations, we have been building ample content with superior quality.\n\nin a short span, we have built a community of 20 million+ geeks around the world, 20,000+ contributors and 500+ campus ambassadors in various colleges across the nation. our success stories include a lot of students who benefited in their placements and landed jobs at tech giants.\n\nso start exploring the plethora of resources that geeksforgeeks has to offer and start your journey of becoming more skilled and employable!",
+          "tags": [
+            "coding platform",
+            "cs it",
+            "internship opportunities",
+            "job search",
+            "sde job help",
+            "coding jobs",
+            "technical blogs",
+            "jobs",
+            "learn coding",
+            "find a job"
+          ],
+          "headline": "1 DSA Problem a Day, Keeps Joblessness Away \ud83d\udcbb",
+          "alternative_names": [],
+          "alternative_domains": [],
+          "affiliated_profiles": [],
+          "total_funding_raised": null,
+          "latest_funding_stage": null,
+          "last_funding_date": null,
+          "number_funding_rounds": null,
+          "funding_stages": [],
+          "employee_count_by_country": {
+            "bangladesh": 3,
+            "canada": 1,
+            "czechia": 1,
+            "germany": 1,
+            "haiti": 1,
+            "india": 1500,
+            "iran": 1,
+            "kenya": 4,
+            "malaysia": 2,
+            "new zealand": 1,
+            "nigeria": 2,
+            "norway": 1,
+            "other_uncategorized": 10,
+            "pakistan": 4,
+            "palestine": 1,
+            "saudi arabia": 1,
+            "serbia": 1,
+            "syria": 1,
+            "ukraine": 3,
+            "united arab emirates": 1,
+            "united states": 8,
+            "vietnam": 1
+          },
+          "dataset_version": "34.2"
+        }
+      ],
+      "scroll_token": "-9223372036854775808$13.98542$1377391",
+      "total": 1,
+      "dataset_version": "34.2"
+    }
+  },
+  {
+    "input": {
+      "website": "swiggy.com"
+    },
+    "status_code": 200,
+    "response": {
+      "status": 200,
+      "data": [
+        {
+          "id": "HKrQhJCFnCWRVSbpzhXXIAuAgTpm",
+          "name": "swiggy",
+          "display_name": "Swiggy",
+          "size": "1001-5000",
+          "employee_count": 9272,
+          "founded": 2014,
+          "industry": "internet",
+          "industry_v2": "technology, information and internet",
+          "naics": [
+            {
+              "naics_code": "72251",
+              "sector": "accommodation and food services",
+              "sub_sector": "food services and drinking places",
+              "industry_group": "restaurants and other eating places",
+              "naics_industry": "restaurants and other eating places",
+              "national_industry": null
+            }
+          ],
+          "sic": [
+            {
+              "sic_code": "5812",
+              "major_group": "eating and drinking places",
+              "industry_group": "eating and drinking places",
+              "industry_sector": "eating places"
+            }
+          ],
+          "location": {
+            "name": "bangalore, karnataka, india",
+            "locality": "bangalore",
+            "region": "karnataka",
+            "metro": null,
+            "country": "india",
+            "continent": "asia",
+            "street_address": null,
+            "address_line_2": null,
+            "postal_code": null,
+            "geo": "12.97,77.59"
+          },
+          "linkedin_id": "9252341",
+          "linkedin_url": "linkedin.com/company/swiggy-in",
+          "linkedin_slug": "swiggy-in",
+          "facebook_url": "facebook.com/swiggy.in",
+          "twitter_url": "twitter.com/swiggy_in",
+          "profiles": [
+            "facebook.com/swiggy.in",
+            "linkedin.com/company/swiggy-in",
+            "linkedin.com/company/9252341",
+            "crunchbase.com/organization/swiggy",
+            "twitter.com/swiggy_in"
+          ],
+          "website": "swiggy.com",
+          "ticker": "SWIGGY.NS",
+          "mic_exchange": "xnse",
+          "type": "public",
+          "summary": "swiggy is india\u2019s pioneering on-demand convenience platform, catering to millions of consumers each month. founded in 2014, its mission is to elevate the quality of life for the urban consumer by offering unparalleled convenience. with an extensive footprint in food delivery, swiggy food collaborates with nearly 2 lakh restaurants across 600+ cities. swiggy instamart, its quick commerce platform operating in 120+ cities, delivers groceries and other essentials across 40+ categories in 10 minutes. fueled by a commitment to innovation, swiggy continually incubates and integrates new services like swiggy dineout and swiggy genie into its multi-service app. leveraging cutting-edge technology and swiggy one, the country\u2019s only membership program offering benefits across food, quick commerce, dining out, and pick-up and drop services, swiggy aims to provide a superior experience to its consumers. \n\nfor more information, visit www.swiggy.com",
+          "tags": [
+            "food and beverage",
+            "transportation",
+            "internet services",
+            "internet",
+            "snack food",
+            "software",
+            "food delivery",
+            "food processing"
+          ],
+          "headline": "<\u200b/decoding hyperlocal>",
+          "alternative_names": [
+            "swiggy.com",
+            "prime sales and services"
+          ],
+          "alternative_domains": [
+            "swiggy.in"
+          ],
+          "affiliated_profiles": [
+            "CmFC17J6BE8cZmLfnYtPRAW9WGMP",
+            "VWNhACiNGQPYaHCbiMgAVQwSk5BV",
+            "azcCB3c1SP84cBDWHf9hIQwsjYAG",
+            "j1CbA0sKLmKk4IJTLMCInANEPQXO",
+            "Jf0T7KLdzRNlXdNUSrCqBQZWSn7B"
+          ],
+          "total_funding_raised": 5099589233.0,
+          "latest_funding_stage": "post_ipo_equity",
+          "last_funding_date": "2025-12-09",
+          "number_funding_rounds": 22,
+          "funding_stages": [
+            "series_h",
+            "post_ipo_equity",
+            "series_c",
+            "series_e",
+            "secondary_market",
+            "series_unknown",
+            "series_i",
+            "series_d",
+            "series_b",
+            "debt_financing",
+            "series_f",
+            "series_a",
+            "series_g",
+            "post_ipo_secondary",
+            "series_j",
+            "undisclosed"
+          ],
+          "employee_count_by_country": {
+            "argentina": 1,
+            "austria": 1,
+            "bangladesh": 1,
+            "brazil": 1,
+            "canada": 9,
+            "croatia": 1,
+            "finland": 1,
+            "france": 1,
+            "germany": 2,
+            "hungary": 1,
+            "india": 9157,
+            "indonesia": 1,
+            "ireland": 1,
+            "japan": 1,
+            "kuwait": 1,
+            "nepal": 1,
+            "netherlands": 3,
+            "oman": 1,
+            "other_uncategorized": 15,
+            "pakistan": 1,
+            "qatar": 1,
+            "saudi arabia": 5,
+            "singapore": 3,
+            "south korea": 2,
+            "taiwan": 1,
+            "turkey": 1,
+            "united arab emirates": 26,
+            "united kingdom": 5,
+            "united states": 27
+          },
+          "dataset_version": "34.2"
+        }
+      ],
+      "scroll_token": "-9223372036854775808$13.985054$43697",
+      "total": 1,
+      "dataset_version": "34.2"
+    }
+  },
+  {
+    "input": {
+      "website": "zomato.com"
+    },
+    "status_code": 200,
+    "response": {
+      "status": 200,
+      "data": [
+        {
+          "id": "faQQCJCbtZGuTCIkwFkeJwuoxvK5",
+          "name": "zomato",
+          "display_name": "Zomato",
+          "size": "1001-5000",
+          "employee_count": 7856,
+          "founded": 2008,
+          "industry": "internet",
+          "industry_v2": "technology, information and internet",
+          "naics": [
+            {
+              "naics_code": "54151",
+              "sector": "professional, scientific, and technical services",
+              "sub_sector": "professional, scientific, and technical services",
+              "industry_group": "computer systems design and related services",
+              "naics_industry": "computer systems design and related services",
+              "national_industry": null
+            }
+          ],
+          "sic": [
+            {
+              "sic_code": "737",
+              "major_group": "business services",
+              "industry_group": "computer programming, data processing, and other computer related services",
+              "industry_sector": null
+            }
+          ],
+          "location": {
+            "name": "gurugram, haryana, india",
+            "locality": "gurugram",
+            "region": "haryana",
+            "metro": null,
+            "country": "india",
+            "continent": "asia",
+            "street_address": "course extension road",
+            "address_line_2": null,
+            "postal_code": null,
+            "geo": null
+          },
+          "linkedin_id": "422813",
+          "linkedin_url": "linkedin.com/company/zomato",
+          "linkedin_slug": "zomato",
+          "facebook_url": "facebook.com/zomato",
+          "twitter_url": "twitter.com/zomato",
+          "profiles": [
+            "linkedin.com/company/zomato",
+            "facebook.com/zomato",
+            "twitter.com/zomato",
+            "crunchbase.com/organization/zomato",
+            "linkedin.com/company/422813"
+          ],
+          "website": "zomato.com",
+          "ticker": "ETERNAL.NS",
+          "mic_exchange": "xnse",
+          "type": "public",
+          "summary": "zomato\u2019s mission statement is \u201cbetter food for more people.\u201d since our inception in 2010, we have grown tremendously, both in scope and scale - and emerged as india\u2019s most trusted brand during the pandemic, along with being one of the largest hyperlocal delivery networks in the country.\n\ntoday, zomato represents a wide range of cultures through its diversified 5000+ team members, 3.5 lakh+ delivery partners, and our biggest collective of the finest restaurant partners. we are grateful that our business is able to provide upward social and economic movement for millions of households \u2013 of our delivery partners, as well as restaurant staff. we think of all of us as one big family!\n\nour passion is driven by purpose and we take immense pride in our initiative \u2018feeding india\u2019, one of india\u2019s largest not-for-profits working to ensure that nobody in india goes to bed hungry. as of now, feeding india provides over 150,000 nutritious meals to the underprivileged every day.\n\nin april 2020, feeding india ran one of the largest food distribution drives in the world during the first wave of covid, and distributed 78 million meals to daily wagers across the length and breadth of the country.\n\nduring the second wave of covid-19, feeding india was again the first to act. we were able to source over 9,000 oxygen concentrators and distributed them for free to government hospitals across the country. this helped save millions of lives during one of the worst humanitarian crises faced by india in the recent times.\n\nwe\u2019re innovating hard to make last-mile delivery carbon neutral, to eliminate the use of plastic packaging, create meaningful opportunities in the gig economy, and to feed our country\u2019s ever-growing appetite for high-quality, affordable, and hygienic food, one delivery at a time!",
+          "tags": [
+            "table reservations",
+            "online classifieds",
+            "restaurant search & discovery",
+            "reservations",
+            "online consumer insights",
+            "sales",
+            "startups",
+            "food delivery",
+            "food ordering online",
+            "food and beverage"
+          ],
+          "headline": "Mission - better food for more people",
+          "alternative_names": [
+            "zomato media private limited",
+            "zomato czech republic",
+            "zomato media pvt ltd",
+            "zomato portugal",
+            "zomato media pvt. ltd.",
+            "self-employed"
+          ],
+          "alternative_domains": [],
+          "affiliated_profiles": [
+            "AtmCns3rTDAtgQ6Nm036lALm33pT",
+            "hXGf5SUpylCC90wTyfZVCguB68Vo",
+            "3iLBBOAdBq7qtlq0t6084A04C9S8",
+            "sv6CMWmL7Ij1WtslH7QvZQ9knPU3",
+            "ZFom9TpmBRm334YlHpsPDAGXWkad",
+            "I3G0BFiH8cm0FtqncTKKtQ3qVKCp",
+            "gt9o3NPtatQ5qpgpcKMj2QZwbyab",
+            "su6SADBmgGxZB5o1A8BBugp5PxAw",
+            "2hNEJ8K3vQxq1r5t0nov6QQfN0C6",
+            "qJaGPhjofwOv8KsOytmKWwYqVY1j",
+            "MaDdhNgBQnox3asQMHMx0QrixjWm",
+            "eXSsHNFtAGEuf1xWmspgKwQQWs7j",
+            "0knCEbhZqTP02CaslTzbpgntrcdi"
+          ],
+          "total_funding_raised": 4437113336.0,
+          "latest_funding_stage": "post_ipo_equity",
+          "last_funding_date": "2024-11-28",
+          "number_funding_rounds": 26,
+          "funding_stages": [
+            "series_h",
+            "post_ipo_equity",
+            "series_c",
+            "series_e",
+            "seed",
+            "series_i",
+            "series_a",
+            "series_b",
+            "series_d",
+            "series_f",
+            "corporate_round",
+            "post_ipo_secondary",
+            "series_j",
+            "series_g"
+          ],
+          "employee_count_by_country": {
+            "argentina": 1,
+            "armenia": 1,
+            "australia": 16,
+            "austria": 1,
+            "bangladesh": 1,
+            "canada": 11,
+            "croatia": 1,
+            "egypt": 1,
+            "finland": 1,
+            "france": 2,
+            "georgia": 1,
+            "germany": 1,
+            "india": 7592,
+            "indonesia": 13,
+            "ireland": 1,
+            "italy": 2,
+            "japan": 2,
+            "lebanon": 6,
+            "luxembourg": 1,
+            "malaysia": 2,
+            "malta": 2,
+            "netherlands": 1,
+            "new zealand": 2,
+            "nigeria": 2,
+            "other_uncategorized": 9,
+            "pakistan": 9,
+            "philippines": 19,
+            "poland": 2,
+            "portugal": 11,
+            "qatar": 3,
+            "saudi arabia": 4,
+            "singapore": 1,
+            "south africa": 16,
+            "spain": 1,
+            "sri lanka": 1,
+            "turkey": 11,
+            "united arab emirates": 70,
+            "united kingdom": 9,
+            "united states": 26
+          },
+          "dataset_version": "34.2"
+        }
+      ],
+      "scroll_token": "-9223372036854775808$13.9863205$2494308",
+      "total": 1,
+      "dataset_version": "34.2"
+    }
+  },
+  {
+    "input": {
+      "website": "britannia.co.in"
+    },
+    "status_code": 200,
+    "response": {
+      "status": 200,
+      "data": [
+        {
+          "id": "IhLOi3D1VCjBChQlrlqIFQk2yELs",
+          "name": "britannia industries limited",
+          "display_name": "Britannia Industries Limited",
+          "size": "1001-5000",
+          "employee_count": 4139,
+          "founded": 1892,
+          "industry": "food & beverages",
+          "industry_v2": "food and beverage services",
+          "naics": [
+            {
+              "naics_code": "311",
+              "sector": "manufacturing",
+              "sub_sector": "food manufacturing",
+              "industry_group": null,
+              "naics_industry": null,
+              "national_industry": null
+            }
+          ],
+          "sic": [
+            {
+              "sic_code": "2099",
+              "major_group": "food and kindred products",
+              "industry_group": "miscellaneous food preparations and kindred",
+              "industry_sector": "food preparations, not elsewhere classified"
+            }
+          ],
+          "location": {
+            "name": "mahadevapura, karnataka, india",
+            "locality": "mahadevapura",
+            "region": "karnataka",
+            "metro": null,
+            "country": "india",
+            "continent": "asia",
+            "street_address": null,
+            "address_line_2": null,
+            "postal_code": "560048",
+            "geo": "12.87,77.05"
+          },
+          "linkedin_id": "16271",
+          "linkedin_url": "linkedin.com/company/britannia-industries-limited",
+          "linkedin_slug": "britannia-industries-limited",
+          "facebook_url": "facebook.com/britanniaindustrieslimited",
+          "twitter_url": "twitter.com/britanniaindltd",
+          "profiles": [
+            "crunchbase.com/organization/britannia-industries",
+            "linkedin.com/company/britannia-industries-limited",
+            "facebook.com/britanniaindustrieslimited",
+            "linkedin.com/company/16271",
+            "twitter.com/britanniaindltd"
+          ],
+          "website": "britannia.co.in",
+          "ticker": "BRITANNIA.NS",
+          "mic_exchange": "xnse",
+          "type": "public",
+          "summary": "britannia is a 100 year+ organization with presence in biscuits, breads, cake, rusk, dairy and snacking. the company celebrated its 100th year in 2018 and has emerged as a market leader in the biscuit space, while also launching a host of new products and entering new categories, inching closer to the vision of being a global total foods company. we are one of the best employers in india as per the aon best employers study, 2019 and kincentric best employer study, 2020 while holding the position as brand equity's most trusted food brand, 2019. \n\nour employer brand is \u201cmake ti)ngs happen\u201d, with the intent of bringing alive the new corporate brand \u201cexciting goodness\u201d into the lives of britannians because it is the britannians who have been making things happen through the 100 year journey. the corporate values of britannia are:\n1. inviti)ng, come home to britannia\n2. igniti)ng, fuel the hunger\n3. creati)ng, build enriching careers\n4. respecti)ng, do the right ting\n\ntogether these 4 tings sum up the culture at britannia and guide britannians to make \u2018tings\u2019 happen all across. the work environment exudes warm professionalism and is accepting of diverse ideas and thoughts while empowering employees as owners. britannians have always prided themselves in the quality of work, width of role that one gets to handle at an early stage. employees talk about the \u201cenriched learning\u201d that they get on the job at britannia and the scope to move internally as potential is valued and bet on. employees are encouraged to do more with less and strive for excellence in their jobs. britannia is also a socially responsible organization with a strong sustainability agenda to address malnutrition in marginalized communities of the country and provides platforms to employees to add purpose to their contribution.\n\nso, everyday, every minute while britannians are at work, they make ti)ngs happen ! \n\nfollow us / join us and witness this momentous experience called britannia !",
+          "tags": [
+            "breads",
+            "biscuits",
+            "cake & rusk",
+            "dairy"
+          ],
+          "headline": "India\u2019s largest Bakery Foods Company that has delighted consumers for over a 100 years with exciting goodness ",
+          "alternative_names": [
+            "britannia industries ltd",
+            "britannia industries ltd.",
+            "britannia industries"
+          ],
+          "alternative_domains": [],
+          "affiliated_profiles": [
+            "44kA6uXQ3iWGeKmTZTuCUQ3UEtt4"
+          ],
+          "total_funding_raised": null,
+          "latest_funding_stage": null,
+          "last_funding_date": null,
+          "number_funding_rounds": null,
+          "funding_stages": [],
+          "employee_count_by_country": {
+            "argentina": 3,
+            "austria": 2,
+            "bangladesh": 4,
+            "bhutan": 3,
+            "brazil": 7,
+            "canada": 3,
+            "ecuador": 1,
+            "egypt": 3,
+            "france": 3,
+            "french guiana": 1,
+            "hong kong": 1,
+            "iceland": 1,
+            "india": 3948,
+            "indonesia": 1,
+            "ireland": 1,
+            "italy": 2,
+            "kenya": 6,
+            "malaysia": 1,
+            "nepal": 30,
+            "nigeria": 1,
+            "norway": 2,
+            "oman": 12,
+            "other_uncategorized": 8,
+            "pakistan": 4,
+            "poland": 1,
+            "qatar": 2,
+            "romania": 1,
+            "russia": 3,
+            "saudi arabia": 5,
+            "singapore": 1,
+            "south africa": 1,
+            "spain": 2,
+            "sri lanka": 1,
+            "sweden": 1,
+            "uganda": 7,
+            "united arab emirates": 22,
+            "united kingdom": 28,
+            "united states": 14,
+            "zambia": 1,
+            "zimbabwe": 1
+          },
+          "dataset_version": "34.2"
+        }
+      ],
+      "scroll_token": "-9223372036854775808$13.9854355$2265773",
+      "total": 1,
+      "dataset_version": "34.2"
+    }
+  },
+  {
+    "input": {
+      "website": "engineeringlearner.com"
+    },
+    "status_code": 200,
+    "response": {
+      "status": 200,
+      "data": [
+        {
+          "id": "KaYCQ4RTAK6lqDMBnCcUQwGieHAU",
+          "name": "mechanical engineering world",
+          "display_name": "Mechanical Engineering World",
+          "size": "1-10",
+          "employee_count": 983,
+          "founded": null,
+          "industry": "e-learning",
+          "industry_v2": "e-learning providers",
+          "naics": null,
+          "sic": null,
+          "location": {
+            "name": "india",
+            "locality": null,
+            "region": null,
+            "metro": null,
+            "country": "india",
+            "continent": "asia",
+            "street_address": null,
+            "address_line_2": null,
+            "postal_code": null,
+            "geo": null
+          },
+          "linkedin_id": "43239614",
+          "linkedin_url": "linkedin.com/company/mechanical-engineering-worlds",
+          "linkedin_slug": "mechanical-engineering-worlds",
+          "facebook_url": null,
+          "twitter_url": null,
+          "profiles": [
+            "linkedin.com/company/43239614",
+            "linkedin.com/company/mechanical-engineering-worlds"
+          ],
+          "website": "engineeringlearner.com",
+          "ticker": null,
+          "mic_exchange": null,
+          "type": "private",
+          "summary": "improve your knowledge with help of \"mechanical engineering world\". we are sharing daily basis mechanical engineering related stuffs.",
+          "tags": null,
+          "headline": null,
+          "alternative_names": [],
+          "alternative_domains": [
+            "mechanicalengineeringworld.com"
+          ],
+          "affiliated_profiles": [],
+          "total_funding_raised": null,
+          "latest_funding_stage": null,
+          "last_funding_date": null,
+          "number_funding_rounds": null,
+          "funding_stages": [],
+          "employee_count_by_country": {
+            "albania": 1,
+            "algeria": 4,
+            "angola": 1,
+            "argentina": 1,
+            "australia": 8,
+            "bahamas": 6,
+            "bangladesh": 8,
+            "bolivia": 2,
+            "brazil": 2,
+            "bulgaria": 2,
+            "burkina faso": 1,
+            "burundi": 1,
+            "cameroon": 2,
+            "canada": 6,
+            "china": 7,
+            "costa rica": 1,
+            "cyprus": 1,
+            "egypt": 31,
+            "ethiopia": 7,
+            "fiji": 1,
+            "france": 2,
+            "germany": 7,
+            "ghana": 10,
+            "greece": 4,
+            "hungary": 1,
+            "india": 476,
+            "indonesia": 19,
+            "iran": 21,
+            "iraq": 11,
+            "ireland": 4,
+            "italy": 2,
+            "jordan": 8,
+            "kenya": 8,
+            "kuwait": 5,
+            "lebanon": 6,
+            "libya": 1,
+            "lithuania": 1,
+            "malawi": 1,
+            "malaysia": 4,
+            "malta": 1,
+            "mauritius": 1,
+            "mexico": 2,
+            "morocco": 3,
+            "myanmar": 4,
+            "nepal": 3,
+            "netherlands": 3,
+            "new zealand": 1,
+            "nigeria": 38,
+            "north macedonia": 1,
+            "norway": 1,
+            "oman": 1,
+            "other_uncategorized": 3,
+            "pakistan": 32,
+            "philippines": 6,
+            "poland": 2,
+            "portugal": 1,
+            "qatar": 3,
+            "republic of the congo": 1,
+            "romania": 2,
+            "russia": 3,
+            "saudi arabia": 13,
+            "senegal": 1,
+            "singapore": 4,
+            "slovakia": 1,
+            "slovenia": 1,
+            "somalia": 1,
+            "south africa": 23,
+            "spain": 1,
+            "sri lanka": 3,
+            "sudan": 3,
+            "suriname": 1,
+            "switzerland": 1,
+            "syria": 1,
+            "taiwan": 1,
+            "tanzania": 1,
+            "thailand": 4,
+            "the gambia": 1,
+            "timor-leste": 1,
+            "togo": 1,
+            "tunisia": 3,
+            "turkey": 3,
+            "united arab emirates": 16,
+            "united kingdom": 31,
+            "united states": 64,
+            "vietnam": 2,
+            "zambia": 2,
+            "zimbabwe": 3
+          },
+          "dataset_version": "34.2"
+        }
+      ],
+      "scroll_token": "-9223372036854775808$13.985365$2122787",
+      "total": 1,
+      "dataset_version": "34.2"
+    }
+  },
+  {
+    "input": {
+      "website": "hyundaiusa.com"
+    },
+    "status_code": 200,
+    "response": {
+      "status": 200,
+      "data": [
+        {
+          "id": "rMl0DSmGBBQ9Uugpx31smgaJJpGQ",
+          "name": "hyundai motor america",
+          "display_name": "Hyundai Motor America",
+          "size": "1001-5000",
+          "employee_count": 447,
+          "founded": 1986,
+          "industry": "automotive",
+          "industry_v2": "motor vehicle manufacturing",
+          "naics": [
+            {
+              "naics_code": "4231",
+              "sector": "wholesale trade",
+              "sub_sector": "merchant wholesalers, durable goods",
+              "industry_group": "motor vehicle and motor vehicle parts and supplies merchant wholesalers",
+              "naics_industry": null,
+              "national_industry": null
+            }
+          ],
+          "sic": [
+            {
+              "sic_code": "50",
+              "major_group": "wholesale trade-durable goods",
+              "industry_group": null,
+              "industry_sector": null
+            }
+          ],
+          "location": {
+            "name": "fountain valley, california, united states",
+            "locality": "fountain valley",
+            "region": "california",
+            "metro": "los angeles, california",
+            "country": "united states",
+            "continent": "north america",
+            "street_address": "10550 talbert avenue",
+            "address_line_2": null,
+            "postal_code": "92708",
+            "geo": "33.71,-117.93"
+          },
+          "linkedin_id": "235938",
+          "linkedin_url": "linkedin.com/company/hyundai-motor-america",
+          "linkedin_slug": "hyundai-motor-america",
+          "facebook_url": "facebook.com/hyundai",
+          "twitter_url": null,
+          "profiles": [
+            "linkedin.com/company/hyundai-motor-america",
+            "facebook.com/hyundai",
+            "crunchbase.com/organization/hyundai-motor-america",
+            "linkedin.com/company/235938"
+          ],
+          "website": "hyundaiusa.com",
+          "ticker": null,
+          "mic_exchange": null,
+          "type": "private",
+          "summary": "hyundai motor america focuses on \u2018progress for humanity\u2019 and smart mobility solutions. hyundai offers u.s. consumers a technology-rich lineup of cars, suvs and electrified vehicles. our 820 dealers sold more than 738,000 vehicles in the u.s. in 2021, and nearly half were built at hyundai motor manufacturing alabama. for more information, visit www.hyundainews.com.",
+          "tags": [
+            "retail",
+            "marketing",
+            "trucks",
+            "service",
+            "distribution",
+            "financial services",
+            "commercial vehicles",
+            "sales",
+            "truck",
+            "mobility"
+          ],
+          "headline": "Progress For Humanity",
+          "alternative_names": [
+            "hyundai motors america",
+            "hyundai motor",
+            "hyundai"
+          ],
+          "alternative_domains": [],
+          "affiliated_profiles": [],
+          "total_funding_raised": null,
+          "latest_funding_stage": null,
+          "last_funding_date": null,
+          "number_funding_rounds": null,
+          "funding_stages": [],
+          "employee_count_by_country": {
+            "bangladesh": 6,
+            "brazil": 7,
+            "bulgaria": 1,
+            "canada": 12,
+            "china": 1,
+            "colombia": 2,
+            "costa rica": 2,
+            "ecuador": 1,
+            "germany": 1,
+            "ghana": 1,
+            "india": 38,
+            "indonesia": 1,
+            "iran": 1,
+            "kuwait": 2,
+            "mali": 1,
+            "mexico": 7,
+            "myanmar": 1,
+            "pakistan": 1,
+            "philippines": 5,
+            "russia": 1,
+            "saudi arabia": 3,
+            "south africa": 3,
+            "south korea": 17,
+            "spain": 1,
+            "sri lanka": 1,
+            "togo": 1,
+            "turkey": 3,
+            "united arab emirates": 3,
+            "united kingdom": 2,
+            "united states": 320,
+            "vietnam": 1
+          },
+          "dataset_version": "34.2"
+        }
+      ],
+      "scroll_token": "-9223372036854775808$13.986149$3510453",
+      "total": 1,
+      "dataset_version": "34.2"
+    }
+  },
+  {
+    "input": {
+      "website": "mechzo.com"
+    },
+    "status_code": 200,
+    "response": {
+      "status": 200,
+      "data": [
+        {
+          "id": "1YctMmC4WVsuyedqT3h0TAIOaCNk",
+          "name": "world of electrical",
+          "display_name": "World of Electrical",
+          "size": "1-10",
+          "employee_count": 74,
+          "founded": null,
+          "industry": "education management",
+          "industry_v2": "education administration programs",
+          "naics": null,
+          "sic": null,
+          "location": {
+            "name": "chennai, tamil nadu, india",
+            "locality": "chennai",
+            "region": "tamil nadu",
+            "metro": null,
+            "country": "india",
+            "continent": "asia",
+            "street_address": null,
+            "address_line_2": null,
+            "postal_code": null,
+            "geo": "13.08,80.27"
+          },
+          "linkedin_id": "77732480",
+          "linkedin_url": "linkedin.com/company/worldofelectrical",
+          "linkedin_slug": "worldofelectrical",
+          "facebook_url": null,
+          "twitter_url": null,
+          "profiles": [
+            "linkedin.com/company/leyesx-electrical",
+            "linkedin.com/company/worldofelectrical",
+            "linkedin.com/company/77732480",
+            "linkedin.com/company/world-of-electrical"
+          ],
+          "website": "mechzo.com",
+          "ticker": null,
+          "mic_exchange": null,
+          "type": "private",
+          "summary": "learn more electrical info from the basics.",
+          "tags": null,
+          "headline": "A Single Source to Learn Electrical ",
+          "alternative_names": [],
+          "alternative_domains": [
+            "leyesx.com",
+            "tamizidea.blogspot.com"
+          ],
+          "affiliated_profiles": [],
+          "total_funding_raised": null,
+          "latest_funding_stage": null,
+          "last_funding_date": null,
+          "number_funding_rounds": null,
+          "funding_stages": [],
+          "employee_count_by_country": {
+            "australia": 2,
+            "belgium": 1,
+            "bolivia": 1,
+            "cameroon": 1,
+            "egypt": 3,
+            "france": 1,
+            "ghana": 2,
+            "india": 13,
+            "indonesia": 1,
+            "iran": 3,
+            "italy": 1,
+            "kenya": 4,
+            "liberia": 1,
+            "malaysia": 2,
+            "mauritania": 1,
+            "mexico": 1,
+            "morocco": 2,
+            "nigeria": 2,
+            "pakistan": 5,
+            "papua new guinea": 1,
+            "philippines": 1,
+            "romania": 1,
+            "rwanda": 3,
+            "saudi arabia": 1,
+            "singapore": 1,
+            "south africa": 4,
+            "tanzania": 1,
+            "tunisia": 1,
+            "turkey": 1,
+            "uganda": 1,
+            "united arab emirates": 3,
+            "united states": 7,
+            "zambia": 1
+          },
+          "dataset_version": "34.2"
+        }
+      ],
+      "scroll_token": "-9223372036854775808$13.983852$99602",
+      "total": 1,
+      "dataset_version": "34.2"
+    }
+  },
+  {
+    "input": {
+      "website": "dabur.com"
+    },
+    "status_code": 200,
+    "response": {
+      "status": 200,
+      "data": [
+        {
+          "id": "jXJL8dyODLjH6rpJaBUkQQABy89N",
+          "name": "dabur india limited",
+          "display_name": "Dabur India Limited",
+          "size": "5001-10000",
+          "employee_count": 4060,
+          "founded": 1884,
+          "industry": "consumer goods",
+          "industry_v2": "manufacturing",
+          "naics": [
+            {
+              "naics_code": "3256",
+              "sector": "manufacturing",
+              "sub_sector": "chemical manufacturing",
+              "industry_group": "soap, cleaning compound, and toilet preparation manufacturing",
+              "naics_industry": null,
+              "national_industry": null
+            }
+          ],
+          "sic": [
+            {
+              "sic_code": "28",
+              "major_group": "chemicals and allied products",
+              "industry_group": null,
+              "industry_sector": null
+            }
+          ],
+          "location": {
+            "name": "hasanpur bhowapur, uttar pradesh, india",
+            "locality": "hasanpur bhowapur",
+            "region": "uttar pradesh",
+            "metro": null,
+            "country": "india",
+            "continent": "asia",
+            "street_address": null,
+            "address_line_2": null,
+            "postal_code": "201010",
+            "geo": "28.76,77.48"
+          },
+          "linkedin_id": "7203",
+          "linkedin_url": "linkedin.com/company/dabur-india-limited",
+          "linkedin_slug": "dabur-india-limited",
+          "facebook_url": "facebook.com/daburindia",
+          "twitter_url": "twitter.com/daburindia",
+          "profiles": [
+            "linkedin.com/company/dabur-india-limited",
+            "twitter.com/daburindia",
+            "facebook.com/daburindia",
+            "linkedin.com/company/7203",
+            "crunchbase.com/organization/dabur-india-limited"
+          ],
+          "website": "dabur.com",
+          "ticker": "DABUR.NS",
+          "mic_exchange": "xnse",
+          "type": "public",
+          "summary": "we are dabur, an indian transnational offering the best nature-based solutions to provide holistic health & well-being to households in more than 120 markets spanning asia, europe and the us. a world leader in ayurveda, we are a family of over 7,000 individuals continuously striving to conduct business in an environmentally sustainable manner.\nhome to trusted household brands like dabur chyawanprash, dabur honey, dabur red paste, dabur amla, vatika and real, we are recognized the world over for our leadership, innovation and ability to reinvent ourselves and stay relevant for consumers across generations and geographies.\nat the heart of our success is our team of diverse, experienced and talented employees. they play a key role in seamlessly driving of our operations, developing and delivering nature-based solutions on time, every time, with their passion, excellence and innovative spirit.\nbe a part of one of the world\u2019s most trusted brands... it\u2019s an opportunity to learn, develop and enhance your skills, while improving the lives of consumers and communities.",
+          "tags": [
+            "ayurveda",
+            "hair care",
+            "skin care",
+            "health supplements",
+            "home care",
+            "healthcare",
+            "oral care",
+            "ayurvedic/natural health & personal care",
+            "packaged juices"
+          ],
+          "headline": "Dedicated to the Health & Well-Being of Every Household.",
+          "alternative_names": [
+            "dabur india ltd",
+            "dabur india ltd.",
+            "dabur",
+            "dabur research foundation",
+            "dabur international limited",
+            "dabur international",
+            "dabur pakistan",
+            "dabur international ltd",
+            "dabur egypt limited"
+          ],
+          "alternative_domains": [],
+          "affiliated_profiles": [
+            "yBBIXjBeUWV70XXk3ZygVQLQNFEJ",
+            "jFNF2sNVE6zQy3pB37GI1wKGQm87",
+            "aVB2CxXPMnjb2P1qXF3AsAzmKSI1"
+          ],
+          "total_funding_raised": null,
+          "latest_funding_stage": null,
+          "last_funding_date": null,
+          "number_funding_rounds": null,
+          "funding_stages": [],
+          "employee_count_by_country": {
+            "austria": 1,
+            "bangladesh": 10,
+            "bolivia": 2,
+            "british indian ocean territory": 1,
+            "canada": 2,
+            "chile": 1,
+            "egypt": 5,
+            "france": 1,
+            "india": 3931,
+            "iran": 1,
+            "kenya": 2,
+            "malaysia": 1,
+            "morocco": 1,
+            "nepal": 11,
+            "netherlands": 1,
+            "nigeria": 7,
+            "norway": 1,
+            "other_uncategorized": 6,
+            "pakistan": 17,
+            "saudi arabia": 4,
+            "south africa": 11,
+            "spain": 1,
+            "sri lanka": 2,
+            "tunisia": 2,
+            "turkey": 5,
+            "united arab emirates": 14,
+            "united kingdom": 5,
+            "united states": 14
+          },
+          "dataset_version": "34.2"
+        }
+      ],
+      "scroll_token": "-9223372036854775808$13.9854355$3379134",
+      "total": 1,
+      "dataset_version": "34.2"
+    }
+  }
+]
