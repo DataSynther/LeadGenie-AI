@@ -8,7 +8,7 @@ import { cn } from "../lib/utils";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type QueueTab = "outreach" | "interested" | "followup";
+type QueueTab = "outreach" | "replied" | "followup";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -298,16 +298,37 @@ export function ApprovalQueuePage() {
   };
 
   // Tab data
-  const outreachItems  = useMemo(() => queueItems.filter(filterFn), [queueItems, search]);
-  const interestedItems = useMemo(() => sentItems.filter(filterFn), [sentItems, search]);
-  const followupItems  = useMemo(
-    () => sentItems.filter(i => (i.followup_sequence?.length ?? 0) > 0 && filterFn(i)),
+  // Outreach: pending items awaiting first send approval
+  const outreachItems = useMemo(() => queueItems.filter(filterFn), [queueItems, search]);
+
+  // Replied Back: sent emails where a reply was detected (trigger/policy indicates engagement)
+  const REPLY_SIGNALS = new Set([
+    "intent_detected", "replied", "reply", "meeting_request", "pricing_inquiry",
+    "interested", "positive_reply", "not_interested", "out_of_office",
+  ]);
+  const repliedItems = useMemo(
+    () => sentItems.filter(i =>
+      (REPLY_SIGNALS.has(i.trigger?.toLowerCase() ?? "") ||
+       REPLY_SIGNALS.has(i.policy?.toLowerCase() ?? "")) &&
+      filterFn(i)
+    ),
     [sentItems, search],
   );
 
+  // Follow Up: sent items with auto-generated follow-up sequences but no reply yet
+  const repliedLeadIds = useMemo(() => new Set(repliedItems.map(i => i.lead_id)), [repliedItems]);
+  const followupItems = useMemo(
+    () => sentItems.filter(i =>
+      (i.followup_sequence?.length ?? 0) > 0 &&
+      !repliedLeadIds.has(i.lead_id) &&        // remove once replied
+      filterFn(i)
+    ),
+    [sentItems, repliedLeadIds, search],
+  );
+
   const activeItems =
-    activeTab === "outreach"   ? outreachItems  :
-    activeTab === "interested" ? interestedItems :
+    activeTab === "outreach" ? outreachItems :
+    activeTab === "replied"  ? repliedItems  :
     followupItems;
 
   const selectedItem = activeItems.find(i => i.event_id === selectedId) ?? null;
@@ -315,9 +336,9 @@ export function ApprovalQueuePage() {
   const govFailed = queueItems.filter(i => !i.governance_passed).length;
 
   const TABS: { id: QueueTab; label: string; count: number; desc: string }[] = [
-    { id: "outreach",   label: "Outreach",   count: queueItems.length,   desc: "Pending approval" },
-    { id: "interested", label: "Interested", count: sentItems.length,    desc: "Sent & delivered"  },
-    { id: "followup",   label: "Follow Up",  count: followupItems.length, desc: "With sequences"   },
+    { id: "outreach", label: "Outreach",     count: queueItems.length,   desc: "Queued for first send" },
+    { id: "replied",  label: "Replied Back", count: repliedItems.length, desc: "Prospect replied"       },
+    { id: "followup", label: "Follow Up",    count: followupItems.length, desc: "Auto follow-ups sent"  },
   ];
 
   const handleTabChange = (tab: QueueTab) => {
@@ -418,9 +439,9 @@ export function ApprovalQueuePage() {
             <div className="flex-1 overflow-y-auto min-h-0">
               {!isLoading && activeItems.length === 0 && (
                 <EmptyState message={
-                  activeTab === "outreach"   ? "Queue is empty" :
-                  activeTab === "interested" ? "No sent emails yet" :
-                  "No follow-up sequences yet"
+                  activeTab === "outreach" ? "Queue is empty — no pending emails" :
+                  activeTab === "replied"  ? "No replies detected yet" :
+                  "No unreplied follow-up sequences"
                 } />
               )}
               {activeItems.map(item => (
@@ -444,7 +465,7 @@ export function ApprovalQueuePage() {
               <EmptyState icon="✉" message="Select an email to read the thread" />
             ) : (
               <>
-                {/* View toggle (only on Outreach tab) */}
+                {/* Thread/Approval toggle — only on Outreach tab */}
                 {activeTab === "outreach" && (
                   <div className="px-5 py-2 border-b border-line-soft flex-shrink-0 flex items-center gap-1.5 bg-surface-2/15">
                     {[
