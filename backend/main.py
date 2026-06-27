@@ -1091,8 +1091,30 @@ async def approval_queue():
 
 @app.get("/approval-queue/sent")
 async def sent_emails():
-    """Return approved/sent outreach emails sorted by recency."""
-    return outreach_queue.get_queue(status="approved")
+    """Return approved/sent outreach emails sorted by recency.
+
+    Enriches followup_sequence items with sent_at from the scheduler store
+    so the frontend can distinguish sent vs scheduled follow-ups.
+    """
+    items = outreach_queue.get_queue(status="approved")
+    for item in items:
+        lead_id = item.get("lead_id")
+        if not lead_id:
+            continue
+        sched_record = followup_scheduler.get(lead_id)
+        if not sched_record:
+            continue
+        sched_map = {
+            e["number"]: e.get("sent_at")
+            for e in (sched_record.get("email_schedule") or [])
+        }
+        if not sched_map:
+            continue
+        seq = item.get("followup_sequence") or []
+        for fu in seq:
+            if fu.get("number") in sched_map and sched_map[fu["number"]]:
+                fu["sent_at"] = sched_map[fu["number"]]
+    return items
 
 
 class SequenceUpdateRequest(BaseModel):
