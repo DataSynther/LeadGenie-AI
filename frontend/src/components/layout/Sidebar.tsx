@@ -13,6 +13,10 @@ import {
   Lock,
   LogOut,
   Globe,
+  GitBranch,
+  BookOpen,
+  FileCode2,
+  ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
@@ -20,40 +24,39 @@ import { useSidebar } from "../../context/SidebarContext";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../lib/api";
 import { ThemeToggle } from "../ThemeToggle";
+import { ROLE_NAV, type UserRole } from "../../lib/rbac";
 
-interface NavItem {
+const ICON_MAP: Record<string, LucideIcon> = {
+  "/dashboard":       LayoutDashboard,
+  "/discover":        Search,
+  "/approval":        InboxIcon,
+  "/finops":          DollarSign,
+  "/dev":             Activity,
+  "/whatsapp":        MessageCircle,
+  "/architecture":    Network,
+  "/network":         Globe,
+  "/governance":      Lock,
+  "/audit":           ShieldCheck,
+  "/lineage":         GitBranch,
+  "/kb-facts":        BookOpen,
+  "/prompt-versions": FileCode2,
+};
+
+function NavItemRow({
+  to, label, liveBadge, queueCount, onNavigate,
+}: {
   to: string;
   label: string;
-  icon: LucideIcon;
-  badge?: { text: string; tone: "danger" | "brand" | "neutral" };
   liveBadge?: boolean;
-}
+  queueCount?: number;
+  onNavigate: () => void;
+}) {
+  const Icon = ICON_MAP[to] ?? Activity;
+  const showLive = liveBadge && queueCount != null && queueCount > 0;
 
-const WORKSPACE: NavItem[] = [
-  { to: "/discover",    label: "Discover Leads",    icon: Search },
-  { to: "/dashboard",   label: "Mission Control",   icon: LayoutDashboard },
-  { to: "/approval",    label: "Outreach Queue",    icon: InboxIcon,    liveBadge: true },
-  { to: "/finops",      label: "AI FinOps",         icon: DollarSign },
-  { to: "/dev",         label: "Developer's Tool",  icon: Activity },
-  { to: "/whatsapp",    label: "WhatsApp Inbox",    icon: MessageCircle },
-  { to: "/architecture",label: "Pipeline Diagram",  icon: Network },
-  { to: "/network",     label: "Lead Network",      icon: Globe },
-  { to: "/governance",  label: "Contact Governance",icon: Lock },
-];
-
-
-function badgeClasses(tone: "danger" | "brand" | "neutral") {
-  if (tone === "danger") return "bg-danger text-white";
-  if (tone === "brand") return "bg-brand text-white";
-  return "bg-surface-2 text-ink-2";
-}
-
-function NavItemRow({ item, onNavigate, queueCount }: { item: NavItem; onNavigate: () => void; queueCount?: number }) {
-  const Icon = item.icon;
-  const showLive = item.liveBadge && queueCount != null && queueCount > 0;
   return (
     <NavLink
-      to={item.to}
+      to={to}
       onClick={onNavigate}
       className={({ isActive }) =>
         cn(
@@ -70,20 +73,10 @@ function NavItemRow({ item, onNavigate, queueCount }: { item: NavItem; onNavigat
             <span className="absolute -left-4 top-1/2 -translate-y-1/2 w-[3px] h-4 bg-brand rounded-r" />
           )}
           <Icon size={14} strokeWidth={2} />
-          <span>{item.label}</span>
+          <span>{label}</span>
           {showLive && (
             <span className="ml-auto font-mono text-[10px] px-1.5 py-px rounded-lg font-medium bg-danger text-white">
               {queueCount}
-            </span>
-          )}
-          {item.badge && !showLive && (
-            <span
-              className={cn(
-                "ml-auto font-mono text-[10px] px-1.5 py-px rounded-lg font-medium",
-                badgeClasses(item.badge.tone),
-              )}
-            >
-              {item.badge.text}
             </span>
           )}
         </>
@@ -92,22 +85,19 @@ function NavItemRow({ item, onNavigate, queueCount }: { item: NavItem; onNavigat
   );
 }
 
-const ROLE_RANK: Record<string, number> = { viewer: 0, sdr: 1, manager: 2, admin: 3 };
-
 export function Sidebar() {
   const { isOpen, close, isCollapsed, toggleCollapse } = useSidebar();
   const { user, logout } = useAuth();
-  const role = user?.role ?? "viewer";
+  const role = (user?.role ?? "viewer") as UserRole;
+
   const { data: queueItems = [] } = useQuery({
     queryKey: ["approvalQueue"],
     queryFn: api.approvalQueue,
     refetchInterval: 30_000,
   });
   const queueCount = queueItems.length;
-  const visibleNav = WORKSPACE.filter((item) => {
-    if (item.to === "/governance") return ROLE_RANK[role] >= ROLE_RANK["manager"];
-    return true;
-  });
+
+  const navItems = ROLE_NAV[role] ?? ROLE_NAV.viewer;
 
   return (
     <aside
@@ -128,7 +118,7 @@ export function Sidebar() {
         <X size={18} strokeWidth={2} />
       </button>
 
-      {/* Desktop collapse button */}
+      {/* Desktop collapse */}
       <button
         className="hidden md:flex absolute top-3 right-3 items-center justify-center w-7 h-7 rounded-md text-ink-2 hover:text-ink hover:bg-surface-2 transition-colors z-10"
         onClick={toggleCollapse}
@@ -137,6 +127,7 @@ export function Sidebar() {
         <PanelLeftClose size={14} strokeWidth={2} />
       </button>
 
+      {/* Logo */}
       <div className="flex flex-col items-center pb-6 pt-2">
         <img
           src="/bot-logo.png"
@@ -151,13 +142,22 @@ export function Sidebar() {
         </div>
       </div>
 
+      {/* Nav */}
       <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-ink-mute px-3 pt-4 pb-2">
         Workspace
       </div>
-      {visibleNav.map((item) => (
-        <NavItemRow key={item.to} item={item} onNavigate={close} queueCount={queueCount} />
+      {navItems.map((item) => (
+        <NavItemRow
+          key={item.to}
+          to={item.to}
+          label={item.label}
+          liveBadge={item.liveBadge}
+          queueCount={queueCount}
+          onNavigate={close}
+        />
       ))}
 
+      {/* User footer */}
       <div className="mt-auto pt-3 border-t border-line-soft flex flex-col gap-3 px-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">

@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import { AppShell } from "./components/layout/AppShell";
 import { PrivateLayout } from "./components/PrivateLayout";
+import { RoleGuard } from "./components/RoleGuard";
 import { PipelineToast } from "./components/PipelineToast";
 import { LoginPage } from "./pages/LoginPage";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -22,35 +22,39 @@ import { QuidditchPage } from "./pages/QuidditchPage";
 import { GovernanceDashboardPage } from "./pages/GovernanceDashboardPage";
 import { LeadNetworkPage } from "./pages/LeadNetworkPage";
 
+function G({ children }: { children: React.ReactNode }) {
+  return <RoleGuard>{children}</RoleGuard>;
+}
+
 function App() {
   return (
     <>
-    <PipelineToast />
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route element={<PrivateLayout />}>
-        <Route index element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/discover" element={<LeadDiscoveryPage />} />
-        <Route path="/campaigns" element={<CampaignsPage />} />
-        <Route path="/pipeline" element={<PipelinePage />} />
-        <Route path="/conversations" element={<ConversationsPage />} />
-        <Route path="/approval" element={<ApprovalQueuePage />} />
-        <Route path="/audit" element={<AuditTrailPage />} />
-        <Route path="/audit/:leadId" element={<AuditTrailPage />} />
-        <Route path="/dev" element={<DevDashboardPage />} />
-        <Route path="/command-center" element={<CommandCenterPage />} />
-        <Route path="/lineage" element={<PipelineLineagePage />} />
-        <Route path="/prompt-versions" element={<PromptVersionsPage />} />
-        <Route path="/whatsapp" element={<WhatsAppInboxPage />} />
-        <Route path="/finops" element={<FinOpsDashboardPage />} />
-        <Route path="/architecture" element={<ArchitecturePage />} />
-        <Route path="/kb-facts" element={<KbFactsPage />} />
-        <Route path="/quidditch" element={<QuidditchPage />} />
-        <Route path="/governance" element={<GovernanceDashboardPage />} />
-        <Route path="/network" element={<LeadNetworkPage />} />
-      </Route>
-    </Routes>
+      <PipelineToast />
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route element={<PrivateLayout />}>
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard"       element={<G><DashboardPage /></G>} />
+          <Route path="/discover"        element={<G><LeadDiscoveryPage /></G>} />
+          <Route path="/campaigns"       element={<G><CampaignsPage /></G>} />
+          <Route path="/pipeline"        element={<G><PipelinePage /></G>} />
+          <Route path="/conversations"   element={<G><ConversationsPage /></G>} />
+          <Route path="/approval"        element={<G><ApprovalQueuePage /></G>} />
+          <Route path="/audit"           element={<G><AuditTrailPage /></G>} />
+          <Route path="/audit/:leadId"   element={<G><AuditTrailPage /></G>} />
+          <Route path="/dev"             element={<G><DevDashboardPage /></G>} />
+          <Route path="/command-center"  element={<G><CommandCenterPage /></G>} />
+          <Route path="/lineage"         element={<G><PipelineLineagePage /></G>} />
+          <Route path="/prompt-versions" element={<G><PromptVersionsPage /></G>} />
+          <Route path="/whatsapp"        element={<G><WhatsAppInboxPage /></G>} />
+          <Route path="/finops"          element={<G><FinOpsDashboardPage /></G>} />
+          <Route path="/architecture"    element={<G><ArchitecturePage /></G>} />
+          <Route path="/kb-facts"        element={<G><KbFactsPage /></G>} />
+          <Route path="/quidditch"       element={<G><QuidditchPage /></G>} />
+          <Route path="/governance"      element={<G><GovernanceDashboardPage /></G>} />
+          <Route path="/network"         element={<G><LeadNetworkPage /></G>} />
+        </Route>
+      </Routes>
     </>
   );
 }

@@ -27,13 +27,14 @@ def _hash(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
 
 # Role hierarchy — higher rank = more permissions
-_ROLE_RANK: dict[str, int] = {"viewer": 0, "sdr": 1, "manager": 2, "admin": 3}
+_ROLE_RANK: dict[str, int] = {"viewer": 0, "sdr": 1, "developer": 2, "manager": 2, "admin": 3}
 
 _USERS: dict[str, dict] = {
-    "admin":   {"password": _hash("leadgenie123"), "role": "admin"},
-    "manager": {"password": _hash("manager123"),   "role": "manager"},
-    "sdr":     {"password": _hash("sdr123"),       "role": "sdr"},
-    "demo":    {"password": _hash("demo123"),       "role": "viewer"},
+    "admin":     {"password": _hash("leadgenie123"), "role": "admin"},
+    "manager":   {"password": _hash("manager123"),   "role": "manager"},
+    "sdr":       {"password": _hash("sdr123"),       "role": "sdr"},
+    "developer": {"password": _hash("dev123"),       "role": "developer"},
+    "demo":      {"password": _hash("demo123"),       "role": "viewer"},
 }
 _SESSIONS: dict[str, dict] = {}
 _bearer = HTTPBearer(auto_error=False)

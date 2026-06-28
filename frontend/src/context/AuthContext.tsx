@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
 
-export type UserRole = "admin" | "manager" | "sdr" | "viewer";
+export type UserRole = "admin" | "manager" | "developer" | "sdr" | "viewer";
 
 export interface AuthUser {
   username: string;
