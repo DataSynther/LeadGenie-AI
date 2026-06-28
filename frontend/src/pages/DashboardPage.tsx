@@ -5,7 +5,6 @@ import { Topbar } from "../components/layout/Topbar";
 import { StatusPill } from "../components/StatusPill";
 import { KpiCard } from "../components/dashboard/KpiCard";
 import { FunnelCard } from "../components/dashboard/FunnelCard";
-import { RiskDistributionCard } from "../components/dashboard/RiskDistributionCard";
 import { api, type DashboardExtendedStats, type FinOpsSummary, type KbInsights } from "../lib/api";
 import { formatNumber, cn } from "../lib/utils";
 
@@ -733,14 +732,77 @@ function IntentDistPanel({ data }: { data: DashboardExtendedStats["intent_distri
 
 type GovStats = DashboardExtendedStats["governance_summary"];
 
-function GovernanceOutcomesCard({ gov, intent }: {
-  gov: GovStats; intent: DashboardExtendedStats["intent_distribution"];
+function GovernanceOutcomesCard({ gov, riskDist }: {
+  gov: GovStats;
+  riskDist?: { low: number; medium: number; high: number };
 }) {
-  return (
-    <Panel className="flex flex-col">
-      <PanelTitle title="Governance Outcomes" sub="Decisions · retry overhead · reply intent" />
+  const riskTotal = (riskDist?.low ?? 0) + (riskDist?.medium ?? 0) + (riskDist?.high ?? 0) || 1;
+  const RISK_SEGS = [
+    { key: "low"    as const, label: "Low",    color: "#8b5cf6" },
+    { key: "medium" as const, label: "Medium", color: "#f59e0b" },
+    { key: "high"   as const, label: "High",   color: "#f87171" },
+  ];
 
-      <div className="grid grid-cols-3 gap-2 mb-3">
+  return (
+    <Panel className="flex flex-col gap-3">
+      <PanelTitle title="Governance Outcomes" sub="Decisions · retry overhead · risk distribution" />
+
+      {/* Risk Distribution at top */}
+      {riskDist && (
+        <div className="pb-3 border-b border-line-soft">
+          <div className="text-[10px] uppercase tracking-widest text-ink font-semibold mb-2">Risk Distribution</div>
+          <div className="flex items-center gap-4">
+            {/* Mini donut */}
+            {(() => {
+              const r = 22; const cx = 28; const cy = 28; let angle = -90;
+              return (
+                <svg width={56} height={56} viewBox="0 0 56 56" className="flex-shrink-0">
+                  <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgb(var(--c-surface-2))" strokeWidth="10" />
+                  {RISK_SEGS.map(seg => {
+                    const v = riskDist[seg.key];
+                    const sweep = (v / riskTotal) * 360;
+                    if (sweep < 1) { angle += sweep; return null; }
+                    const s = (angle * Math.PI) / 180;
+                    const e = ((angle + sweep) * Math.PI) / 180;
+                    const x1 = cx + r * Math.cos(s), y1 = cy + r * Math.sin(s);
+                    const x2 = cx + r * Math.cos(e), y2 = cy + r * Math.sin(e);
+                    angle += sweep;
+                    return (
+                      <path key={seg.key}
+                        d={`M ${x1} ${y1} A ${r} ${r} 0 ${sweep > 180 ? 1 : 0} 1 ${x2} ${y2}`}
+                        fill="none" stroke={seg.color} strokeWidth="10" strokeLinecap="butt">
+                        <title>{seg.label}: {v}</title>
+                      </path>
+                    );
+                  })}
+                  <text x={cx} y={cy + 4} textAnchor="middle" fill="rgb(var(--c-ink))" fontSize="9" fontWeight="700">
+                    {riskTotal}
+                  </text>
+                </svg>
+              );
+            })()}
+            <div className="flex flex-col gap-1.5 flex-1">
+              {RISK_SEGS.map(seg => {
+                const v = riskDist[seg.key];
+                return (
+                  <div key={seg.key} className="flex items-center justify-between text-[10px]">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: seg.color }} />
+                      <span className="text-ink-2">{seg.label}</span>
+                    </div>
+                    <span className="font-mono font-semibold" style={{ color: seg.color }}>
+                      {v} <span className="text-ink-mute font-normal">({((v / riskTotal) * 100).toFixed(0)}%)</span>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Governance decision counts */}
+      <div className="grid grid-cols-3 gap-2">
         {([
           { label: "Approved", value: gov.approved, color: "text-emerald-500", bg: "bg-emerald-500/10" },
           { label: "Blocked",  value: gov.blocked,  color: "text-red-400",     bg: "bg-red-500/10"    },
@@ -753,7 +815,7 @@ function GovernanceOutcomesCard({ gov, intent }: {
         ))}
       </div>
 
-      <div className="h-2 rounded-full overflow-hidden flex mb-3">
+      <div className="h-2 rounded-full overflow-hidden flex">
         {([
           { v: gov.approved, c: "#10b981" },
           { v: gov.blocked,  c: "#f87171" },
@@ -766,13 +828,11 @@ function GovernanceOutcomesCard({ gov, intent }: {
         })}
       </div>
 
-      <div className="flex items-center justify-between px-2 py-1.5 rounded-lg bg-amber-500/8 border border-amber-500/20 mb-3 text-[10px]">
+      <div className="flex items-center justify-between px-2 py-1.5 rounded-lg bg-amber-500/8 border border-amber-500/20 text-[10px]">
         <span className="text-ink font-semibold">Retry overhead</span>
         <span className="text-ink-mute">avg {gov.avg_attempts} attempts</span>
         <span className="font-mono font-bold text-amber-500">{gov.multi_attempt_pct}%</span>
       </div>
-
-      <IntentDistPanel data={intent} />
     </Panel>
   );
 }
@@ -1015,8 +1075,8 @@ function OutreachCostTrendMini({ data }: { data: FinOpsSummary }) {
         <PanelTitle title="Outreach Cost Trend" sub="Avg cost per email generated · by agent" />
         <Link to="/finops" className="text-[10px] text-brand font-medium hover:underline flex-shrink-0 mt-1">Full FinOps →</Link>
       </div>
-      <div className="flex-1 min-h-0 relative">
-        <svg viewBox={`0 0 100 ${H}`} preserveAspectRatio="none" style={{ width: "100%", height: H }}>
+      <div className="flex-1 min-h-0 relative" style={{ minHeight: 160 }}>
+        <svg viewBox={`0 0 100 ${H}`} preserveAspectRatio="none" style={{ width: "100%", height: "100%", display: "block" }}>
           {[0.25, 0.5, 0.75, 1].map(t => (
             <line key={t} x1={`${PAD.left}%`} x2={`${100 - PAD.right}%`}
               y1={yPct(maxVal * t)} y2={yPct(maxVal * t)}
@@ -1105,13 +1165,7 @@ export function DashboardPage() {
           </>
         }
         right={
-          <>
-            <div className="hidden sm:flex items-center gap-2.5">
-              <StatusPill>{isLoading ? "loading…" : empty ? "no data yet" : "live"}</StatusPill>
-              <button className="btn-ghost">Export</button>
-            </div>
-            <button className="btn-primary">+ Campaign</button>
-          </>
+          <StatusPill>{isLoading ? "loading…" : empty ? "no data yet" : "live"}</StatusPill>
         }
       />
 
@@ -1188,14 +1242,17 @@ export function DashboardPage() {
               </div>
             )}
 
-            {/* ── Governance Outcomes · Risk Distribution ──────────────── */}
+            {/* ── Governance Outcomes (+ risk) · Reply Intent ──────────── */}
             {extended && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5" style={{ height: 600 }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
                 <GovernanceOutcomesCard
                   gov={extended.governance_summary}
-                  intent={extended.intent_distribution}
+                  riskDist={stats.risk_distribution}
                 />
-                <RiskDistributionCard />
+                <Panel className="flex flex-col">
+                  <PanelTitle title="Reply Intent" sub="Prospect engagement signals detected from replies" />
+                  <IntentDistPanel data={extended.intent_distribution} />
+                </Panel>
               </div>
             )}
           </>

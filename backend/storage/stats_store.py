@@ -260,6 +260,62 @@ def _trace_to_message(agent: str, lead_id: str, trace: dict) -> str:
 
 # ── Public init ───────────────────────────────────────────────────────────────
 
+def _sync_dynamo(conn: sqlite3.Connection) -> int:
+    """Sync outreach_events from DynamoDB when QUEUE_BACKEND=dynamodb.
+    Called during init() so KPI stats survive ECS container restarts.
+    """
+    import os
+    if os.getenv("QUEUE_BACKEND", "").lower() != "dynamodb":
+        return 0
+    try:
+        from governance.dynamo_queue_store import DynamoQueueStore
+        items = DynamoQueueStore().get_queue()
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).warning("_sync_dynamo failed: %s", exc)
+        return 0
+    inserted = 0
+    for r in items:
+        event_id = r.get("event_id", "")
+        if not event_id:
+            continue
+        existing = conn.execute(
+            "SELECT 1 FROM outreach_events WHERE event_id=?", (event_id,)
+        ).fetchone()
+        if existing:
+            continue
+        checkpoints = r.get("checkpoints") or {}
+        tone_passed = int(checkpoints.get("tone", {}).get("passed", True))
+        halluc_passed = int(checkpoints.get("hallucination", {}).get("ok", True))
+        tone_issues = json.dumps(checkpoints.get("tone", {}).get("issues", []))
+        halluc_violations = json.dumps(checkpoints.get("hallucination", {}).get("violations", []))
+        conn.execute(
+            """INSERT OR IGNORE INTO outreach_events
+               (event_id, lead_id, lead_name, company_name, risk_score, risk_level,
+                status, tone_passed, hallucination_passed, tone_issues,
+                hallucination_violations, total_attempts, timestamp)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (
+                event_id,
+                r.get("lead_id", ""),
+                r.get("lead_name", ""),
+                r.get("company_name", ""),
+                r.get("risk_score"),
+                r.get("risk_level", "low"),
+                r.get("status", "pending"),
+                tone_passed,
+                halluc_passed,
+                tone_issues,
+                halluc_violations,
+                r.get("total_attempts", 1),
+                r.get("timestamp", ""),
+            ),
+        )
+        inserted += 1
+    conn.commit()
+    return inserted
+
+
 def init() -> None:
     """Create tables and sync existing JSONL data. Call once at startup."""
     with _lock:
@@ -268,6 +324,7 @@ def init() -> None:
         _sync_queue(conn)
         _sync_intent(conn)
         _sync_traces(conn)
+        _sync_dynamo(conn)
         conn.close()
 
 
@@ -399,10 +456,9 @@ def get_dashboard_stats() -> dict:
 
         # ── Funnel (last 30 days) — all counts are DISTINCT lead_ids ────────
         total_leads    = scalar("SELECT COUNT(DISTINCT lead_id) FROM outreach_events WHERE timestamp>=?", (now_30,))
-        total_sent     = scalar("SELECT COUNT(DISTINCT lead_id) FROM outreach_events WHERE status!='rejected' AND timestamp>=?", (now_30,))
+        total_sent     = scalar("SELECT COUNT(DISTINCT lead_id) FROM outreach_events WHERE status='approved' AND timestamp>=?", (now_30,))
         total_engaged  = scalar("SELECT COUNT(DISTINCT lead_id) FROM conversation_events WHERE timestamp>=?", (now_30,))
         total_mtg_30   = scalar("SELECT COUNT(DISTINCT lead_id) FROM conversation_events WHERE intent='meeting_request' AND timestamp>=?", (now_30,))
-        total_approved = scalar("SELECT COUNT(DISTINCT lead_id) FROM outreach_events WHERE status='approved' AND timestamp>=?", (now_30,))
 
         funnel_base = max(total_leads, 1)
         funnel = [
