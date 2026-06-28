@@ -1119,10 +1119,10 @@ function OutreachCostTrendMini({ data }: { data: FinOpsSummary }) {
         </div>
       </div>
 
-      {/* Chart + legend side by side */}
-      <div className="flex-1 min-h-0 flex gap-3">
+      {/* Chart top 70%, legend bottom ~20% */}
+      <div className="flex-1 min-h-0 flex flex-col gap-2">
         {/* SVG chart */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-[7] min-h-0">
           <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet"
             style={{ width: "100%", height: "100%", display: "block" }}>
             <defs>
@@ -1199,12 +1199,12 @@ function OutreachCostTrendMini({ data }: { data: FinOpsSummary }) {
           </svg>
         </div>
 
-        {/* Legend */}
-        <div className="border-l border-line-soft pl-3 flex flex-col gap-2 pt-1 flex-shrink-0 w-[120px]">
-          <div className="flex items-center gap-1.5 pb-1.5 border-b border-line-soft">
+        {/* Legend — horizontal row across bottom */}
+        <div className="flex-[2] border-t border-line-soft pt-1.5 flex flex-row flex-wrap items-center gap-x-4 gap-y-1">
+          <div className="flex items-center gap-1.5">
             <div className="w-4 h-0.5 rounded-full bg-ink opacity-90 flex-shrink-0" />
             <span className="text-[10px] font-bold text-ink">Avg / email</span>
-            <span className="font-mono text-[9px] text-ink ml-auto">{fmtY(avgOverall)}</span>
+            <span className="font-mono text-[9px] text-ink">{fmtY(avgOverall)}</span>
           </div>
           {activeAgents.map(agent => {
             const color = TREND_AGENT_C[agent] ?? "#94a3b8";
@@ -1215,21 +1215,19 @@ function OutreachCostTrendMini({ data }: { data: FinOpsSummary }) {
               <div key={agent} className="flex items-center gap-1.5 text-[10px]">
                 <div className="w-3 h-0.5 rounded-full flex-shrink-0" style={{ background: color, opacity: 0.7 }} />
                 <span className={cn("capitalize font-medium", textClass)}>{agent}</span>
-                <span className="text-ink-mute font-mono text-[9px] ml-auto">{fmtY(agentAvg)}</span>
+                <span className="text-ink-mute font-mono text-[9px]">{fmtY(agentAvg)}</span>
               </div>
             );
           })}
           {hasRetry && (
-            <div className="flex items-center gap-1.5 text-[10px] pt-1 border-t border-line-soft">
+            <div className="flex items-center gap-1.5 text-[10px]">
               <svg width="12" height="6" viewBox="0 0 12 6" className="flex-shrink-0">
                 <line x1="0" y1="3" x2="12" y2="3" stroke="#f87171" strokeWidth="1.8" strokeDasharray="4 3" />
               </svg>
               <span className="text-red-400 font-medium">Retries</span>
             </div>
           )}
-          <div className="pt-1 text-[8px] text-ink-mute leading-snug border-t border-line-soft mt-auto">
-            Y = cost per outreach email<br />Thin = per-agent share
-          </div>
+          <span className="text-[8px] text-ink-mute ml-auto">Y = cost per email · Thin = per-agent</span>
         </div>
       </div>
     </Panel>
