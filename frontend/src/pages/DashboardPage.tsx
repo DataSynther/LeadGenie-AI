@@ -1064,8 +1064,8 @@ function OutreachCostTrendMini({ data }: { data: FinOpsSummary }) {
   }
 
   // SVG coordinate system (fixed viewBox, scales to container)
-  const W = 480; const H = 180;
-  const PAD = { top: 14, right: 12, bottom: 24, left: 50 };
+  const W = 480; const H = 300;
+  const PAD = { top: 18, right: 14, bottom: 32, left: 56 };
   const cW = W - PAD.left - PAD.right;
   const cH = H - PAD.top - PAD.bottom;
 
@@ -1121,9 +1121,9 @@ function OutreachCostTrendMini({ data }: { data: FinOpsSummary }) {
 
       {/* Chart fills available space; legend pinned at bottom */}
       <div className="flex-1 min-h-0 flex flex-col">
-        {/* SVG chart — stretches to fill, no letterboxing */}
-        <div className="flex-1 min-h-0">
-          <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none"
+        {/* SVG chart — aspect-ratio box keeps proportions; no distortion */}
+        <div className="w-full" style={{ aspectRatio: `${W}/${H}` }}>
+          <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet"
             style={{ width: "100%", height: "100%", display: "block" }}>
             <defs>
               <linearGradient id="mcAreaGrad" x1="0" y1="0" x2="0" y2="1">
