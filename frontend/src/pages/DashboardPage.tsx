@@ -1109,7 +1109,7 @@ function OutreachCostTrendMini({ data }: { data: FinOpsSummary }) {
       {/* Header */}
       <div className="flex items-start justify-between mb-3 flex-shrink-0">
         <div>
-          <div className="text-[13px] font-semibold text-ink">Outreach Cost Trend</div>
+          <div className="text-[13px] font-semibold text-ink">Cost per Outreach Trend</div>
           <div className="text-[10px] text-ink-mute mt-0.5">Avg cost per outreach email · by agent</div>
         </div>
         <div className="text-right flex-shrink-0">
@@ -1200,7 +1200,7 @@ function OutreachCostTrendMini({ data }: { data: FinOpsSummary }) {
         </div>
 
         {/* Legend — compact horizontal strip at bottom */}
-        <div className="flex-shrink-0 border-t border-line-soft pt-2 mt-1 flex flex-row flex-wrap items-center gap-x-4 gap-y-1">
+        <div className="flex-shrink-0 border-t border-line-soft pt-2 mt-4 flex flex-row flex-wrap items-center gap-x-4 gap-y-1">
           <div className="flex items-center gap-1.5">
             <div className="w-4 h-0.5 rounded-full bg-ink opacity-90 flex-shrink-0" />
             <span className="text-[11px] font-bold text-ink">Avg / email</span>
