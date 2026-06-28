@@ -999,20 +999,26 @@ function ValidationGovernanceRow({ val, gov, intent }: {
 
 // ── Outreach Cost Trend mini ──────────────────────────────────────────────────
 
+const TREND_AGENT_C: Record<string, string> = {
+  research: "#0ea5e9", outreach: "#8b5cf6", conversation: "#10b981", intent: "#f59e0b",
+};
+const TREND_AGENT_TEXT: Record<string, string> = {
+  research: "text-sky-500", outreach: "text-violet-500",
+  conversation: "text-emerald-500", intent: "text-amber-500",
+};
+
 function OutreachCostTrendMini({ data }: { data: FinOpsSummary }) {
   const AGENTS = ["research", "outreach", "conversation", "intent"];
-  const COLORS: Record<string, string> = {
-    research: "#0ea5e9", outreach: "#8b5cf6", conversation: "#10b981", intent: "#f59e0b",
-  };
+  const series = data.agent_daily_series;
+  const allDates = [...new Set(series.map(s => s.date))].sort();
 
-  const allDates = [...new Set(data.agent_daily_series.map(s => s.date))].sort();
   const outreachOutputs: Record<string, number> = {};
-  for (const e of data.agent_daily_series) {
+  for (const e of series) {
     if (e.agent === "outreach") outreachOutputs[e.date] = (outreachOutputs[e.date] ?? 0) + e.success_calls;
   }
 
   const byAgentDate: Record<string, Record<string, number>> = {};
-  for (const e of data.agent_daily_series) {
+  for (const e of series) {
     if (!AGENTS.includes(e.agent)) continue;
     const outputs = outreachOutputs[e.date] ?? 0;
     if (outputs === 0) continue;
@@ -1021,23 +1027,33 @@ function OutreachCostTrendMini({ data }: { data: FinOpsSummary }) {
   }
 
   const totalRawByDate: Record<string, number> = {};
-  for (const e of data.agent_daily_series) {
-    totalRawByDate[e.date] = (totalRawByDate[e.date] ?? 0) + e.cost_usd;
-  }
-  const totalAvgByDate: Record<string, number> = {};
+  for (const e of series) totalRawByDate[e.date] = (totalRawByDate[e.date] ?? 0) + e.cost_usd;
+
+  const totalByDate: Record<string, number> = {};
   for (const d of allDates) {
     const out = outreachOutputs[d] ?? 0;
-    if (out > 0) totalAvgByDate[d] = (totalRawByDate[d] ?? 0) / out;
+    if (out > 0) totalByDate[d] = (totalRawByDate[d] ?? 0) / out;
+  }
+
+  const retryRawByDate: Record<string, number> = {};
+  for (const e of series) {
+    const rc = (e as any).retry_cost_usd ?? 0;
+    if (rc > 0) retryRawByDate[e.date] = (retryRawByDate[e.date] ?? 0) + rc;
+  }
+  const retryByDate: Record<string, number> = {};
+  for (const d of allDates) {
+    const out = outreachOutputs[d] ?? 0;
+    if (out > 0 && retryRawByDate[d]) retryByDate[d] = retryRawByDate[d] / out;
   }
 
   const activeAgents = AGENTS.filter(a => byAgentDate[a]);
-  const datesWithData = allDates.filter(d => outreachOutputs[d] > 0);
+  const datesWithData = allDates.filter(d => (outreachOutputs[d] ?? 0) > 0);
 
   if (datesWithData.length < 2) {
     return (
       <Panel className="h-full flex flex-col">
         <div className="flex items-start justify-between mb-3 flex-shrink-0">
-          <PanelTitle title="Outreach Cost Trend" sub="Cost per email generated · by agent" />
+          <PanelTitle title="Outreach Cost Trend" sub="Avg cost per email · by agent" />
           <Link to="/finops" className="text-[10px] text-brand font-medium hover:underline flex-shrink-0 mt-1">Full FinOps →</Link>
         </div>
         <div className="flex-1 flex items-center justify-center">
@@ -1047,73 +1063,173 @@ function OutreachCostTrendMini({ data }: { data: FinOpsSummary }) {
     );
   }
 
-  const H = 170;
-  const PAD = { top: 12, right: 12, bottom: 28, left: 48 };
+  // SVG coordinate system (fixed viewBox, scales to container)
+  const W = 480; const H = 180;
+  const PAD = { top: 14, right: 12, bottom: 24, left: 50 };
+  const cW = W - PAD.left - PAD.right;
+  const cH = H - PAD.top - PAD.bottom;
 
-  const allVals = [
-    ...Object.values(totalAvgByDate),
-    ...activeAgents.flatMap(a => Object.values(byAgentDate[a])),
-  ].filter(v => v > 0);
-  const maxVal = Math.max(...allVals) || 1;
+  const allVals = [...Object.values(totalByDate), ...Object.values(retryByDate)].filter(v => v > 0);
+  const yMax = Math.max(...allVals, 0.0001) * 1.15;
+  const xS = (i: number) => PAD.left + (i / Math.max(datesWithData.length - 1, 1)) * cW;
+  const yS = (v: number) => PAD.top + cH - (v / yMax) * cH;
+  const fmtY = (v: number) => v < 0.001 ? `$${v.toFixed(5)}` : v < 0.01 ? `$${v.toFixed(4)}` : `$${v.toFixed(3)}`;
 
-  const xPct  = (i: number) => PAD.left + (i / Math.max(datesWithData.length - 1, 1)) * (100 - PAD.left - PAD.right);
-  const yPct  = (v: number) => PAD.top + (H - PAD.top - PAD.bottom) - (v / maxVal) * (H - PAD.top - PAD.bottom);
-
-  const linePath = (vals: Record<string, number>) => {
-    const pts = datesWithData
-      .map((d, i) => vals[d] != null ? `${xPct(i).toFixed(1)}%,${yPct(vals[d]).toFixed(1)}` : null)
-      .filter(Boolean) as string[];
-    return pts.length >= 2 ? `M ${pts.join(" L ")}` : "";
+  const buildSegs = (getValue: (d: string) => number | null) => {
+    const segs: string[][] = [];
+    let cur: string[] = [];
+    datesWithData.forEach((d, i) => {
+      const v = getValue(d);
+      if (v != null && v > 0) cur.push(`${xS(i).toFixed(1)},${yS(v).toFixed(1)}`);
+      else if (cur.length) { segs.push(cur); cur = []; }
+    });
+    if (cur.length) segs.push(cur);
+    return segs;
   };
 
-  const fmtDate = (d: string) => { const dt = new Date(d); return `${dt.getDate()} ${dt.toLocaleString("en", { month: "short" })}`; };
-  const fmtCost = (v: number) => v < 0.001 ? `$${(v * 1000).toFixed(2)}m` : `$${v.toFixed(4)}`;
+  const areaPoints = datesWithData
+    .map((d, i) => ({ x: xS(i), y: yS(totalByDate[d] ?? 0), has: (totalByDate[d] ?? 0) > 0 }))
+    .filter(p => p.has);
+  const areaPath = areaPoints.length >= 2
+    ? `M ${areaPoints[0].x} ${areaPoints[0].y} ` +
+      areaPoints.slice(1).map(p => `L ${p.x} ${p.y}`).join(" ") +
+      ` L ${areaPoints[areaPoints.length - 1].x} ${yS(0)} L ${areaPoints[0].x} ${yS(0)} Z`
+    : "";
+
+  const daysWithOut = datesWithData.length;
+  const avgOverall = daysWithOut > 0
+    ? Object.values(totalByDate).reduce((s, v) => s + v, 0) / daysWithOut : 0;
+  const hasRetry = Object.keys(retryByDate).length > 0;
+
+  const yTicks = [0, 0.25, 0.5, 0.75, 1].map(f => f * yMax);
+  const every = datesWithData.length > 7 ? Math.ceil(datesWithData.length / 5) : 1;
 
   return (
     <Panel className="h-full flex flex-col">
+      {/* Header */}
       <div className="flex items-start justify-between mb-3 flex-shrink-0">
-        <PanelTitle title="Outreach Cost Trend" sub="Avg cost per email generated · by agent" />
-        <Link to="/finops" className="text-[10px] text-brand font-medium hover:underline flex-shrink-0 mt-1">Full FinOps →</Link>
+        <div>
+          <div className="text-[13px] font-semibold text-ink">Outreach Cost Trend</div>
+          <div className="text-[10px] text-ink-mute mt-0.5">Avg cost per outreach email · by agent</div>
+        </div>
+        <div className="text-right flex-shrink-0">
+          <div className="text-[8px] text-ink-mute uppercase tracking-wide">Avg Cost / Email</div>
+          <div className="text-[16px] font-bold font-mono text-ink">{fmtY(avgOverall)}</div>
+          <Link to="/finops" className="text-[9px] text-brand font-medium hover:underline">Full FinOps →</Link>
+        </div>
       </div>
-      <div className="flex-1 min-h-0 relative" style={{ minHeight: 160 }}>
-        <svg viewBox={`0 0 100 ${H}`} preserveAspectRatio="none" style={{ width: "100%", height: "100%", display: "block" }}>
-          {[0.25, 0.5, 0.75, 1].map(t => (
-            <line key={t} x1={`${PAD.left}%`} x2={`${100 - PAD.right}%`}
-              y1={yPct(maxVal * t)} y2={yPct(maxVal * t)}
-              stroke="rgba(148,163,184,0.12)" strokeDasharray="2 2" strokeWidth="0.4" />
-          ))}
-          {[0, 0.5, 1].map(t => (
-            <text key={t} x={`${PAD.left - 1}%`} y={yPct(maxVal * t) + 2}
-              textAnchor="end" fill="#64748b" fontSize="4" fontFamily="monospace">
-              {fmtCost(maxVal * t)}
-            </text>
-          ))}
-          {datesWithData.filter((_, i, arr) => i === 0 || i === arr.length - 1 || (arr.length > 4 && i === Math.floor(arr.length / 2))).map(d => {
-            const idx = datesWithData.indexOf(d);
+
+      {/* Chart + legend side by side */}
+      <div className="flex-1 min-h-0 flex gap-3">
+        {/* SVG chart */}
+        <div className="flex-1 min-w-0">
+          <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet"
+            style={{ width: "100%", height: "100%", display: "block" }}>
+            <defs>
+              <linearGradient id="mcAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"   stopColor="rgb(var(--c-ink))" stopOpacity="0.12" />
+                <stop offset="100%" stopColor="rgb(var(--c-ink))" stopOpacity="0.01" />
+              </linearGradient>
+            </defs>
+
+            {/* Y grid + labels */}
+            {yTicks.map((v, i) => (
+              <g key={i}>
+                <line x1={PAD.left} y1={yS(v)} x2={W - PAD.right} y2={yS(v)}
+                  stroke="rgb(var(--c-line-soft))" strokeWidth="0.5" />
+                <text x={PAD.left - 4} y={yS(v) + 3} textAnchor="end"
+                  fill="rgb(var(--c-ink-mute))" fontSize="9">{fmtY(v)}</text>
+              </g>
+            ))}
+
+            {/* X labels */}
+            {datesWithData.map((d, i) => {
+              if (i % every !== 0 && i !== datesWithData.length - 1) return null;
+              return (
+                <text key={d} x={xS(i)} y={H - 4} textAnchor="middle"
+                  fill="rgb(var(--c-ink-mute))" fontSize="9">{d.slice(5)}</text>
+              );
+            })}
+
+            {/* Agent lines (thin, coloured) */}
+            {activeAgents.map(agent => {
+              const color = TREND_AGENT_C[agent] ?? "#94a3b8";
+              return (
+                <g key={agent}>
+                  {buildSegs(d => byAgentDate[agent]?.[d] ?? null).map((seg, si) => (
+                    <polyline key={si} points={seg.join(" ")}
+                      fill="none" stroke={color} strokeWidth="1.5"
+                      strokeLinejoin="round" strokeLinecap="round" opacity="0.6" />
+                  ))}
+                  {datesWithData.map((d, i) => {
+                    const v = byAgentDate[agent]?.[d];
+                    if (!v) return null;
+                    return <circle key={d} cx={xS(i)} cy={yS(v)} r="2" fill={color} opacity="0.7">
+                      <title>{agent} · {d}: {fmtY(v)}/email</title>
+                    </circle>;
+                  })}
+                </g>
+              );
+            })}
+
+            {/* Area fill under total line */}
+            {areaPath && <path d={areaPath} fill="url(#mcAreaGrad)" />}
+
+            {/* Total avg cost line — thick, ink */}
+            {buildSegs(d => totalByDate[d] ?? null).map((seg, si) => (
+              <polyline key={si} points={seg.join(" ")}
+                fill="none" stroke="rgb(var(--c-ink))" strokeWidth="2.5"
+                strokeLinejoin="round" strokeLinecap="round" opacity="0.9" />
+            ))}
+            {datesWithData.map((d, i) => {
+              const v = totalByDate[d];
+              if (!v) return null;
+              return <circle key={d} cx={xS(i)} cy={yS(v)} r="3.5"
+                fill="rgb(var(--c-ink))" opacity="0.9">
+                <title>Total · {d}: {fmtY(v)}/email</title>
+              </circle>;
+            })}
+
+            {/* Retry line — red dotted */}
+            {hasRetry && buildSegs(d => retryByDate[d] ?? null).map((seg, si) => (
+              <polyline key={si} points={seg.join(" ")}
+                fill="none" stroke="#f87171" strokeWidth="1.8"
+                strokeDasharray="4 3" strokeLinejoin="round" strokeLinecap="round" opacity="0.85" />
+            ))}
+          </svg>
+        </div>
+
+        {/* Legend */}
+        <div className="border-l border-line-soft pl-3 flex flex-col gap-2 pt-1 flex-shrink-0 w-[120px]">
+          <div className="flex items-center gap-1.5 pb-1.5 border-b border-line-soft">
+            <div className="w-4 h-0.5 rounded-full bg-ink opacity-90 flex-shrink-0" />
+            <span className="text-[10px] font-bold text-ink">Avg / email</span>
+            <span className="font-mono text-[9px] text-ink ml-auto">{fmtY(avgOverall)}</span>
+          </div>
+          {activeAgents.map(agent => {
+            const color = TREND_AGENT_C[agent] ?? "#94a3b8";
+            const textClass = TREND_AGENT_TEXT[agent] ?? "text-ink-2";
+            const vals = Object.values(byAgentDate[agent] || {}).filter(v => v > 0);
+            const agentAvg = vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : 0;
             return (
-              <text key={d} x={`${xPct(idx)}%`} y={H - 4}
-                textAnchor="middle" fill="#64748b" fontSize="4" fontFamily="monospace">
-                {fmtDate(d)}
-              </text>
+              <div key={agent} className="flex items-center gap-1.5 text-[10px]">
+                <div className="w-3 h-0.5 rounded-full flex-shrink-0" style={{ background: color, opacity: 0.7 }} />
+                <span className={cn("capitalize font-medium", textClass)}>{agent}</span>
+                <span className="text-ink-mute font-mono text-[9px] ml-auto">{fmtY(agentAvg)}</span>
+              </div>
             );
           })}
-          {activeAgents.map(agent => {
-            const path = linePath(byAgentDate[agent]);
-            return path ? <path key={agent} d={path} fill="none" stroke={COLORS[agent] ?? "#94a3b8"} strokeWidth="0.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.75" vectorEffect="non-scaling-stroke" /> : null;
-          })}
-          {(() => { const path = linePath(totalAvgByDate); return path ? <path d={path} fill="none" stroke="#e2e8f0" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" /> : null; })()}
-        </svg>
-      </div>
-      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 flex-shrink-0">
-        {activeAgents.map(a => (
-          <div key={a} className="flex items-center gap-1.5 text-[9px] text-ink-mute font-mono">
-            <div className="w-2.5 h-1.5 rounded-sm" style={{ background: COLORS[a] }} />
-            {a}
+          {hasRetry && (
+            <div className="flex items-center gap-1.5 text-[10px] pt-1 border-t border-line-soft">
+              <svg width="12" height="6" viewBox="0 0 12 6" className="flex-shrink-0">
+                <line x1="0" y1="3" x2="12" y2="3" stroke="#f87171" strokeWidth="1.8" strokeDasharray="4 3" />
+              </svg>
+              <span className="text-red-400 font-medium">Retries</span>
+            </div>
+          )}
+          <div className="pt-1 text-[8px] text-ink-mute leading-snug border-t border-line-soft mt-auto">
+            Y = cost per outreach email<br />Thin = per-agent share
           </div>
-        ))}
-        <div className="flex items-center gap-1.5 text-[9px] text-ink-mute font-mono">
-          <div className="w-2.5 h-1.5 rounded-sm bg-slate-300/50" />
-          total
         </div>
       </div>
     </Panel>
