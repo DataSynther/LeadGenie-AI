@@ -209,9 +209,16 @@ def _sync_intent(conn: sqlite3.Connection) -> int:
             r = json.loads(line)
         except json.JSONDecodeError:
             continue
+        lead_id_v = r.get("lead_id", "")
+        ts_v = r.get("timestamp", "")
+        existing = conn.execute(
+            "SELECT 1 FROM conversation_events WHERE lead_id=? AND timestamp=?", (lead_id_v, ts_v)
+        ).fetchone()
+        if existing:
+            continue
         conn.execute(
             "INSERT INTO conversation_events (lead_id, intent, confidence, timestamp) VALUES (?,?,?,?)",
-            (r.get("lead_id", ""), r.get("intent", ""), r.get("confidence"), r.get("timestamp", "")),
+            (lead_id_v, r.get("intent", ""), r.get("confidence"), ts_v),
         )
         inserted += 1
     conn.commit()
@@ -381,6 +388,10 @@ def record_conversation(
         )
         conn.commit()
         conn.close()
+    # Persist to JSONL so _sync_intent can restore it after container restart
+    _INTENT_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with open(_INTENT_FILE, "a") as f:
+        f.write(json.dumps({"lead_id": lead_id, "intent": intent, "confidence": confidence, "timestamp": ts}) + "\n")
 
 
 def record_agent_event(

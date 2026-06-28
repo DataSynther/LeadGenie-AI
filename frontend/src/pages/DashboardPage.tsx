@@ -221,21 +221,21 @@ function MiniFinOpsPanel({ data }: { data: FinOpsSummary }) {
         });
 
         return (
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center justify-center gap-3 mb-4">
             <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="flex-shrink-0">
               <circle cx={cx} cy={cy} r={r} fill="rgb(var(--c-surface-2))" />
               {wedges}
             </svg>
-            <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+            <div className="flex flex-col gap-1.5">
               {entries.map(([agent, cost]) => {
                 const pct = (cost / chartTotal) * 100;
                 const colour = AGENT_LINE[agent] ?? "#94a3b8";
                 return (
                   <div key={agent} className="flex items-center gap-1.5 text-[10px]">
                     <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: colour }} />
-                    <span className="text-ink-2 capitalize flex-1 truncate">{agent}</span>
-                    <span className="font-mono font-semibold text-ink">{pct.toFixed(0)}%</span>
-                    <span className="font-mono text-ink-mute text-[9px]">${cost.toFixed(4)}</span>
+                    <span className="text-ink-2 capitalize w-[72px]">{agent}</span>
+                    <span className="font-mono font-semibold text-ink w-8 text-right">{pct.toFixed(0)}%</span>
+                    <span className="font-mono text-ink-mute text-[9px] w-14 text-right">${cost.toFixed(4)}</span>
                   </div>
                 );
               })}
