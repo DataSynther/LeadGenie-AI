@@ -1119,11 +1119,11 @@ function OutreachCostTrendMini({ data }: { data: FinOpsSummary }) {
         </div>
       </div>
 
-      {/* Chart top 70%, legend bottom ~20% */}
-      <div className="flex-1 min-h-0 flex flex-col gap-2">
-        {/* SVG chart */}
-        <div className="flex-[7] min-h-0">
-          <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet"
+      {/* Chart fills available space; legend pinned at bottom */}
+      <div className="flex-1 min-h-0 flex flex-col">
+        {/* SVG chart — stretches to fill, no letterboxing */}
+        <div className="flex-1 min-h-0">
+          <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none"
             style={{ width: "100%", height: "100%", display: "block" }}>
             <defs>
               <linearGradient id="mcAreaGrad" x1="0" y1="0" x2="0" y2="1">
@@ -1138,7 +1138,7 @@ function OutreachCostTrendMini({ data }: { data: FinOpsSummary }) {
                 <line x1={PAD.left} y1={yS(v)} x2={W - PAD.right} y2={yS(v)}
                   stroke="rgb(var(--c-line-soft))" strokeWidth="0.5" />
                 <text x={PAD.left - 4} y={yS(v) + 3} textAnchor="end"
-                  fill="rgb(var(--c-ink-mute))" fontSize="9">{fmtY(v)}</text>
+                  fill="rgb(var(--c-ink-mute))" fontSize="11">{fmtY(v)}</text>
               </g>
             ))}
 
@@ -1147,7 +1147,7 @@ function OutreachCostTrendMini({ data }: { data: FinOpsSummary }) {
               if (i % every !== 0 && i !== datesWithData.length - 1) return null;
               return (
                 <text key={d} x={xS(i)} y={H - 4} textAnchor="middle"
-                  fill="rgb(var(--c-ink-mute))" fontSize="9">{d.slice(5)}</text>
+                  fill="rgb(var(--c-ink-mute))" fontSize="11">{d.slice(5)}</text>
               );
             })}
 
@@ -1164,7 +1164,7 @@ function OutreachCostTrendMini({ data }: { data: FinOpsSummary }) {
                   {datesWithData.map((d, i) => {
                     const v = byAgentDate[agent]?.[d];
                     if (!v) return null;
-                    return <circle key={d} cx={xS(i)} cy={yS(v)} r="2" fill={color} opacity="0.7">
+                    return <circle key={d} cx={xS(i)} cy={yS(v)} r="2.5" fill={color} opacity="0.7">
                       <title>{agent} · {d}: {fmtY(v)}/email</title>
                     </circle>;
                   })}
@@ -1184,7 +1184,7 @@ function OutreachCostTrendMini({ data }: { data: FinOpsSummary }) {
             {datesWithData.map((d, i) => {
               const v = totalByDate[d];
               if (!v) return null;
-              return <circle key={d} cx={xS(i)} cy={yS(v)} r="3.5"
+              return <circle key={d} cx={xS(i)} cy={yS(v)} r="4"
                 fill="rgb(var(--c-ink))" opacity="0.9">
                 <title>Total · {d}: {fmtY(v)}/email</title>
               </circle>;
@@ -1199,12 +1199,12 @@ function OutreachCostTrendMini({ data }: { data: FinOpsSummary }) {
           </svg>
         </div>
 
-        {/* Legend — horizontal row across bottom */}
-        <div className="flex-[2] border-t border-line-soft pt-1.5 flex flex-row flex-wrap items-center gap-x-4 gap-y-1">
+        {/* Legend — compact horizontal strip at bottom */}
+        <div className="flex-shrink-0 border-t border-line-soft pt-2 mt-1 flex flex-row flex-wrap items-center gap-x-4 gap-y-1">
           <div className="flex items-center gap-1.5">
             <div className="w-4 h-0.5 rounded-full bg-ink opacity-90 flex-shrink-0" />
-            <span className="text-[10px] font-bold text-ink">Avg / email</span>
-            <span className="font-mono text-[9px] text-ink">{fmtY(avgOverall)}</span>
+            <span className="text-[11px] font-bold text-ink">Avg / email</span>
+            <span className="font-mono text-[10px] text-ink">{fmtY(avgOverall)}</span>
           </div>
           {activeAgents.map(agent => {
             const color = TREND_AGENT_C[agent] ?? "#94a3b8";
@@ -1212,22 +1212,22 @@ function OutreachCostTrendMini({ data }: { data: FinOpsSummary }) {
             const vals = Object.values(byAgentDate[agent] || {}).filter(v => v > 0);
             const agentAvg = vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : 0;
             return (
-              <div key={agent} className="flex items-center gap-1.5 text-[10px]">
+              <div key={agent} className="flex items-center gap-1.5 text-[11px]">
                 <div className="w-3 h-0.5 rounded-full flex-shrink-0" style={{ background: color, opacity: 0.7 }} />
                 <span className={cn("capitalize font-medium", textClass)}>{agent}</span>
-                <span className="text-ink-mute font-mono text-[9px]">{fmtY(agentAvg)}</span>
+                <span className="text-ink-mute font-mono text-[10px]">{fmtY(agentAvg)}</span>
               </div>
             );
           })}
           {hasRetry && (
-            <div className="flex items-center gap-1.5 text-[10px]">
+            <div className="flex items-center gap-1.5 text-[11px]">
               <svg width="12" height="6" viewBox="0 0 12 6" className="flex-shrink-0">
                 <line x1="0" y1="3" x2="12" y2="3" stroke="#f87171" strokeWidth="1.8" strokeDasharray="4 3" />
               </svg>
               <span className="text-red-400 font-medium">Retries</span>
             </div>
           )}
-          <span className="text-[8px] text-ink-mute ml-auto">Y = cost per email · Thin = per-agent</span>
+          <span className="text-[9px] text-ink-mute ml-auto">Y = cost per email · Thin = per-agent</span>
         </div>
       </div>
     </Panel>
