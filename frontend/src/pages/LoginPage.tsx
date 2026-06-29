@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Eye, EyeOff, Loader2, TrendingUp, Users, Zap } from "lucide-react";
+import { Eye, EyeOff, Loader2, Users, Zap } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 /* ── Injected CSS ─────────────────────────────────────────────────────────── */
@@ -207,15 +207,13 @@ function EmailParticles() {
 
 /* ── Floating stat cards ─────────────────────────────────────────────────── */
 function StatCard({
-  icon, label, value, sub, color, animClass, delay,
+  icon, label, value, sub, color, delay,
 }: {
   icon: React.ReactNode; label: string; value: string; sub: string;
-  color: string; animClass: string; delay: string;
+  color: string; delay: string;
 }) {
   return (
-    <div className={animClass} style={{
-      animation: `${animClass.replace("anim-", "")} 4s ease-in-out infinite`,
-      animationDelay: delay,
+    <div style={{
       background: "rgba(255,255,255,0.06)",
       backdropFilter: "blur(12px)",
       border: "1px solid rgba(255,255,255,0.12)",
@@ -376,7 +374,6 @@ export function LoginPage() {
               value="247"
               sub="↑ 12% this week"
               color="#a855f7"
-              animClass=""
               delay="0s"
             />
             <MiniLineChart />
@@ -386,7 +383,6 @@ export function LoginPage() {
               value="8"
               sub="↑ 3 vs last week"
               color="#f59e0b"
-              animClass=""
               delay="1s"
             />
           </div>
