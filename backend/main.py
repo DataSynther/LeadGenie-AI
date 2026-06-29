@@ -2210,7 +2210,7 @@ async def network_get_lead(
     lead_id: str,
     session: dict = Depends(_require_role("viewer")),
 ):
-    lead = await asyncio.to_thread(network_store.get_lead, lead_id)
+    lead = await asyncio.to_thread(network_store.get_lead_full, lead_id)
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found in network")
     return lead
@@ -2349,3 +2349,50 @@ async def network_backfill(
 
     background_tasks.add_task(_do_backfill)
     return {"status": "backfill started in background", "message": "Check /network/leads in ~30s"}
+
+
+@app.post("/network/seed-pdl")
+async def network_seed_pdl(
+    background_tasks: BackgroundTasks,
+    session: dict = Depends(_require_role("manager")),
+):
+    """Seed Neo4j from the PDL enriched leads JSON file (runs in background)."""
+    from agents.relevance.embedding_service import EmbeddingService
+    from pathlib import Path
+
+    pdl_path = str(
+        Path(__file__).resolve().parent.parent
+        / "sample_data" / "PDL" / "pdl_enriched_leads.json"
+    )
+
+    async def _do_seed():
+        svc = EmbeddingService()
+        result = await asyncio.to_thread(
+            network_store.seed_from_pdl, pdl_path, svc.embed_text
+        )
+        logger.info("PDL seed complete: %s", result)
+
+    background_tasks.add_task(_do_seed)
+    return {"status": "PDL seed started in background", "path": pdl_path}
+
+
+@app.get("/network/skills")
+async def network_by_skill(
+    skill: str,
+    limit: int = 20,
+    session: dict = Depends(_require_role("viewer")),
+):
+    """Find leads who have a given skill (fuzzy match)."""
+    results = await asyncio.to_thread(network_store.find_by_skill, skill, limit)
+    return {"skill": skill, "count": len(results), "leads": results}
+
+
+@app.get("/network/education")
+async def network_by_education(
+    school: str,
+    limit: int = 20,
+    session: dict = Depends(_require_role("viewer")),
+):
+    """Find leads who studied at a given school (fuzzy match)."""
+    results = await asyncio.to_thread(network_store.find_by_school, school, limit)
+    return {"school": school, "count": len(results), "leads": results}

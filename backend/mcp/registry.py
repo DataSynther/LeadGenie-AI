@@ -16,6 +16,9 @@ TOOL_REGISTRY: dict[str, dict] = {
     "get_network_graph":     {"type": "READ",  "governance": False, "min_role": "viewer",  "description": "Return company-lead graph nodes and edges for visualisation"},
     "tag_lead":              {"type": "WRITE", "governance": False, "min_role": "sdr",     "description": "Manually add topic tags to a lead node in the knowledge graph"},
     "enrich_lead_linkedin":  {"type": "WRITE", "governance": False, "min_role": "manager", "description": "Enrich lead profile from LinkedIn via ProxyCurl"},
+    "find_leads_by_skill":   {"type": "READ",  "governance": False, "min_role": "viewer",  "description": "Find leads in Neo4j who have a specific skill (PDL-enriched)"},
+    "find_leads_by_school":  {"type": "READ",  "governance": False, "min_role": "viewer",  "description": "Find leads in Neo4j who attended a specific school (PDL-enriched)"},
+    "seed_pdl_leads":        {"type": "WRITE", "governance": False, "min_role": "manager", "description": "Seed Neo4j from PDL-enriched leads JSON with job history, skills, and education"},
 
     # ── WRITE — always routed through governance ───────────────────────────────
     "reveal_contact":        {"type": "WRITE", "governance": True,  "min_role": "sdr",     "description": "Reveal masked contact information"},
