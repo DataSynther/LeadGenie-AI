@@ -17,10 +17,10 @@ const ANIM = `
 
 /* ── Dashed attraction arcs ──────────────────────────────────────────────── */
 const ARC_PATHS = [
-  "M98,82 Q155,128 233,195",  "M372,82 Q315,128 237,195",
-  "M98,318 Q155,265 233,205", "M372,318 Q315,265 237,205",
-  "M30,50 Q120,110 233,195",  "M440,50 Q350,110 237,195",
-  "M18,200 Q110,200 233,200", "M460,200 Q365,200 237,200",
+  "M98,82 Q160,130 238,197",  "M375,82 Q318,130 242,197",
+  "M98,318 Q160,265 238,207", "M375,318 Q318,265 242,207",
+  "M30,50 Q125,112 238,197",  "M445,50 Q355,112 242,197",
+  "M18,200 Q112,202 238,202", "M462,200 Q368,202 242,202",
 ];
 function AttractionArcs() {
   return (
@@ -279,12 +279,12 @@ type LeadDef = {
 };
 
 const LEADS: LeadDef[] = [
-  { cx: 28,  cy: 50,  name: "AM", company: "SF", skinC: "#fde8d6", hairC: "#3d1200", c: "#a855f7", compC: "#00a1e0", d: "0s",   t: "3.2s", p: "M0,0 Q90,70 207,150" },
-  { cx: 445, cy: 50,  name: "SK", company: "GL", skinC: "#fff2e2", hairC: "#1a1a1a", c: "#06b6d4", compC: "#4285f4", d: "0.7s",  t: "3.5s", p: "M0,0 Q-90,70 -210,150" },
-  { cx: 15,  cy: 200, name: "JR", company: "HB", skinC: "#ffe4cc", hairC: "#7b3200", c: "#10b981", compC: "#ff7a59", d: "1.5s",  t: "3.1s", p: "M0,0 Q110,0 220,0" },
-  { cx: 455, cy: 200, name: "LT", company: "LN", skinC: "#fef3e2", hairC: "#2c1654", c: "#f59e0b", compC: "#0077b5", d: "2.3s",  t: "3.4s", p: "M0,0 Q-110,0 -220,0" },
-  { cx: 28,  cy: 345, name: "EW", company: "ST", skinC: "#fde8d6", hairC: "#6b2a1a", c: "#ec4899", compC: "#635bff", d: "1.1s",  t: "3.7s", p: "M0,0 Q90,-72 207,-145" },
-  { cx: 445, cy: 345, name: "JD", company: "SL", skinC: "#ffdecf", hairC: "#1e293b", c: "#14b8a6", compC: "#4a154b", d: "2.0s",  t: "3.3s", p: "M0,0 Q-90,-72 -210,-145" },
+  { cx: 28,  cy: 50,  name: "AM", company: "SF", skinC: "#fde8d6", hairC: "#3d1200", c: "#a855f7", compC: "#00a1e0", d: "0s",   t: "3.2s", p: "M0,0 Q95,75 212,157" },
+  { cx: 445, cy: 50,  name: "SK", company: "GL", skinC: "#fff2e2", hairC: "#1a1a1a", c: "#06b6d4", compC: "#4285f4", d: "0.7s",  t: "3.5s", p: "M0,0 Q-92,75 -213,157" },
+  { cx: 15,  cy: 207, name: "JR", company: "HB", skinC: "#ffe4cc", hairC: "#7b3200", c: "#10b981", compC: "#ff7a59", d: "1.5s",  t: "3.1s", p: "M0,0 Q115,0 225,0" },
+  { cx: 458, cy: 207, name: "LT", company: "LN", skinC: "#fef3e2", hairC: "#2c1654", c: "#f59e0b", compC: "#0077b5", d: "2.3s",  t: "3.4s", p: "M0,0 Q-115,0 -225,0" },
+  { cx: 28,  cy: 348, name: "EW", company: "ST", skinC: "#fde8d6", hairC: "#6b2a1a", c: "#ec4899", compC: "#635bff", d: "1.1s",  t: "3.7s", p: "M0,0 Q95,-75 212,-141" },
+  { cx: 445, cy: 348, name: "JD", company: "SL", skinC: "#ffdecf", hairC: "#1e293b", c: "#14b8a6", compC: "#4a154b", d: "2.0s",  t: "3.3s", p: "M0,0 Q-92,-75 -213,-141" },
 ];
 
 function AnimeFace({ skinC, hairC }: { skinC: string; hairC: string }) {
@@ -449,7 +449,7 @@ export function LoginPage() {
 
               {/* Pulse rings */}
               {[72,115,160].map((r,i) => (
-                <circle key={r} cx="235" cy="200" r={r} fill={`rgba(139,92,246,${0.055-i*0.015})`}>
+                <circle key={r} cx="240" cy="207" r={r} fill={`rgba(139,92,246,${0.055-i*0.015})`}>
                   <animate attributeName="opacity"
                     values={`${0.055-i*0.015};${0.13-i*0.02};${0.055-i*0.015}`}
                     dur={`${2.5+i*0.5}s`} begin={`${i*0.5}s`} repeatCount="indefinite" />
@@ -468,11 +468,11 @@ export function LoginPage() {
               {/* Lead bubbles */}
               {LEADS.map((l, i) => <LeadBubble key={i} {...l} />)}
 
-              {/* Magnet — centered just above laptop */}
-              <Magnet x={202} y={96} />
+              {/* Laptop — centered horizontally: (480-128)/2 = 176 */}
+              <Laptop x={176} y={165} />
 
-              {/* Laptop */}
-              <Laptop x={171} y={162} />
+              {/* Magnet — centered over laptop: 176+64-32 = 208 */}
+              <Magnet x={208} y={102} />
             </svg>
           </div>
 
