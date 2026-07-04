@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   X, ExternalLink, TrendingUp, TrendingDown, Minus,
   Building2, Users, DollarSign, Calendar, Zap, Cpu, RefreshCw, Send, MessageCircle,
-  CheckCircle2, AlertCircle, Loader2,
+  CheckCircle2, AlertCircle, Loader2, Gauge, Target, Flag,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import type { Lead, OutreachResult, OutreachSuggestion, PipelineStageEvent } from "../../lib/api";
@@ -474,6 +474,9 @@ export function ResearchPanel({ lead, onClose, autoGenerate = false, defaultChan
         {/* Editable email preview + send (shown after generation) */}
         {editableEmail && !sendMutation.data?.sent && (
           <div className="border-t border-line-soft bg-surface px-6 py-4 shrink-0 max-h-[44vh] overflow-y-auto">
+            {outreachResult?.research && (
+              <ResearchBrief research={outreachResult.research} revenue={company?.revenue} />
+            )}
             <div className="label-mono text-brand mb-3">
               {channel === "whatsapp" ? "WhatsApp Message" : "Generated Email"}
             </div>
@@ -710,6 +713,95 @@ function GrowthStat({ label, value, fmt }: { label: string; value: number | null
       )}>
         {fmt(value)}
       </div>
+    </div>
+  );
+}
+
+// ── AI Research Brief — shown right before send, so the reviewer sees the
+// AI's underlying reasoning (incl. revenue) rather than just the final email ──
+
+function ReadinessMeter({ score }: { score: number }) {
+  const pct = Math.max(0, Math.min(100, (score / 10) * 100));
+  return (
+    <div className="flex items-center gap-2.5">
+      <div className="flex-1 h-2 rounded-full bg-brand/10 overflow-hidden">
+        <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${pct}%` }} />
+      </div>
+      <span className="font-mono text-[12px] font-semibold text-ink shrink-0">{score.toFixed(1)}/10</span>
+    </div>
+  );
+}
+
+function ResearchBrief({ research, revenue }: { research: NonNullable<OutreachResult["research"]>; revenue?: string | null }) {
+  const painPoints = research.likely_pain_points ?? [];
+  const priorities = research.strategic_priorities ?? [];
+
+  if (!research.summary && !painPoints.length && !priorities.length && research.ai_readiness_score == null) {
+    return null;
+  }
+
+  return (
+    <div className="rounded-md border border-brand/15 bg-brand-soft/40 p-3.5 mb-3.5">
+      <div className="flex items-center justify-between mb-2.5 flex-wrap gap-1.5">
+        <div className="font-mono text-[9px] uppercase tracking-[0.08em] text-brand font-semibold">
+          AI Research Brief
+        </div>
+        <div className="flex items-center gap-1.5">
+          {revenue && (
+            <span className="flex items-center gap-1 font-mono text-[10px] px-1.5 py-0.5 rounded bg-surface border border-line-soft text-ink-2">
+              <DollarSign size={9} />{revenue}
+            </span>
+          )}
+          {research.growth_stage && (
+            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-surface border border-line-soft text-ink-2 capitalize">
+              {research.growth_stage}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {research.summary && (
+        <p className="text-[12px] text-ink leading-relaxed mb-3">{research.summary}</p>
+      )}
+
+      {research.ai_readiness_score != null && (
+        <div className="mb-3">
+          <div className="flex items-center gap-1.5 mb-1.5 font-mono text-[9px] uppercase tracking-[0.08em] text-ink-2">
+            <Gauge size={11} /> AI Readiness
+          </div>
+          <ReadinessMeter score={research.ai_readiness_score} />
+        </div>
+      )}
+
+      {painPoints.length > 0 && (
+        <div className="mb-3">
+          <div className="flex items-center gap-1.5 mb-1.5 font-mono text-[9px] uppercase tracking-[0.08em] text-ink-2">
+            <Target size={11} /> Likely Pain Points
+          </div>
+          <ul className="space-y-1">
+            {painPoints.map((p, i) => (
+              <li key={i} className="text-[11px] text-ink leading-snug flex gap-1.5">
+                <span className="text-brand shrink-0">•</span>{p}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {priorities.length > 0 && (
+        <div>
+          <div className="flex items-center gap-1.5 mb-1.5 font-mono text-[9px] uppercase tracking-[0.08em] text-ink-2">
+            <Flag size={11} /> Strategic Priorities
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {priorities.map((p, i) => (
+              <span key={i} className="px-2 py-0.5 rounded text-[10px] font-mono bg-surface text-ink border border-line-soft">
+                {p}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -19,6 +19,7 @@ export const ROUTE_ROLES: Record<string, UserRole[]> = {
   "/prompt-versions": ["manager", "developer"],
   "/command-center":  ["admin", "manager"],
   "/audit":           ["admin", "manager"],
+  "/kickoff-notes":   ["admin", "manager"],
 };
 
 export function canAccess(role: UserRole, path: string): boolean {
@@ -39,10 +40,11 @@ export interface NavDef {
 
 export const ROLE_NAV: Record<UserRole, NavDef[]> = {
   admin: [
-    { to: "/dashboard",  label: "Mission Control" },
-    { to: "/governance", label: "Contact Governance" },
-    { to: "/finops",     label: "AI FinOps" },
-    { to: "/audit",      label: "Audit Trail" },
+    { to: "/dashboard",      label: "Mission Control" },
+    { to: "/governance",     label: "Contact Governance" },
+    { to: "/finops",         label: "AI FinOps" },
+    { to: "/audit",          label: "Audit Trail" },
+    { to: "/kickoff-notes",  label: "Kickoff Notes" },
   ],
   sdr: [
     { to: "/discover",  label: "Discover Leads" },
@@ -71,6 +73,7 @@ export const ROLE_NAV: Record<UserRole, NavDef[]> = {
     { to: "/dev",          label: "Developer's Tool" },
     { to: "/architecture", label: "Pipeline Diagram" },
     { to: "/audit",        label: "Audit Trail" },
+    { to: "/kickoff-notes", label: "Kickoff Notes" },
   ],
   viewer: [
     { to: "/dashboard", label: "Mission Control" },

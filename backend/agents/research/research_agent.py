@@ -23,7 +23,7 @@ Company Data:
 - Name: {company.get('name')}
 - Industry: {company.get('industry')}
 - Employees: {company.get('employee_count')}
-- Revenue: {company.get('revenue_estimate')}
+- Revenue: {company.get('revenue')}
 - Funding Stage: {company.get('funding_stage')}
 - Technologies: {', '.join(company.get('technologies', []))}
 - Description: {company.get('description')}

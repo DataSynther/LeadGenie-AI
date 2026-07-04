@@ -176,6 +176,13 @@ whatsapp_conversation_store = WhatsAppConversationStore()
 render_whatsapp_mailbox = RenderWhatsAppMailbox()
 outreach_queue = DynamoOutreachQueueStore() if os.environ.get("QUEUE_TABLE") else OutreachQueueStore()
 credit_store = CreditStore()
+
+from agents.notes.kickoff_note_generator import KickoffNoteGenerator
+from memory.sender_kb import SenderKnowledgeBase
+from storage import kickoff_notes_store
+
+kickoff_note_generator = KickoffNoteGenerator()
+sender_kb = SenderKnowledgeBase()
 _followup_task = None
 
 
@@ -233,6 +240,11 @@ class OutreachRequest(BaseModel):
 class OutreachSuggestRequest(BaseModel):
     lead_id: str
     company_domain: str
+
+
+class KickoffNoteRequest(BaseModel):
+    company_domain: str
+    company_name: Optional[str] = None
 
 
 class ConversationRequest(BaseModel):
@@ -611,6 +623,7 @@ async def generate_outreach(req: OutreachRequest):
         "lead": lead,
         "company": company,
         "top_trends": top_trends,
+        "research": research,
         "email": result["email"],
         "governance": result["governance"],
         "governance_attempt_history": result["governance_attempt_history"],
@@ -850,6 +863,7 @@ async def generate_outreach_stream(req: OutreachRequest):
                 "lead": lead,
                 "company": company,
                 "top_trends": top_trends,
+                "research": research,
                 "email": result["email"],
                 "governance": result["governance"],
                 "governance_attempt_history": result["governance_attempt_history"],
@@ -2396,3 +2410,58 @@ async def network_by_education(
     """Find leads who studied at a given school (fuzzy match)."""
     results = await asyncio.to_thread(network_store.find_by_school, school, limit)
     return {"school": school, "count": len(results), "leads": results}
+
+
+# ── Kickoff Notes (leadership — manager/admin) ────────────────────────────────
+# Generates an internal meeting-prep note for a target company, grounding the
+# "pain points we've already solved" section in the sender knowledge base
+# rather than letting the model invent case studies.
+
+@app.post("/notes/kickoff")
+async def generate_kickoff_note(
+    req: KickoffNoteRequest,
+    session: dict = Depends(_require_role("manager")),
+):
+    company = await asyncio.to_thread(apollo_company.enrich_company, req.company_domain)
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+
+    signals = await asyncio.to_thread(apollo_signals.detect_hiring_trends, company.get("id", "") or "")
+    research = await asyncio.to_thread(research_agent.research_company, company, signals)
+
+    from agents.outreach.template_categorizer import DomainDetector
+    domain = DomainDetector().detect(company)
+    technologies = company.get("technologies", []) or []
+
+    # Pull matches across both known verticals so the note can draw on relevant
+    # past work regardless of which discipline the target company leans toward.
+    matches: list[dict] = []
+    seen_ids: set[str] = set()
+    for vertical in ("data_engineering", "data_science"):
+        for m in sender_kb.retrieve(vertical=vertical, domain=domain, technologies=technologies, n=4):
+            if m["id"] not in seen_ids:
+                matches.append(m)
+                seen_ids.add(m["id"])
+    matches = matches[:6]
+
+    note = await asyncio.to_thread(kickoff_note_generator.generate, company, research, matches)
+    record = kickoff_notes_store.save_note(
+        company_name=company.get("name") or req.company_name or req.company_domain,
+        company_domain=req.company_domain,
+        note=note,
+        created_by=session["username"],
+    )
+    return record
+
+
+@app.get("/notes/kickoff")
+async def list_kickoff_notes(session: dict = Depends(_require_role("manager"))):
+    return {"notes": kickoff_notes_store.list_notes()}
+
+
+@app.get("/notes/kickoff/{note_id}")
+async def get_kickoff_note(note_id: str, session: dict = Depends(_require_role("manager"))):
+    record = kickoff_notes_store.get_note(note_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Note not found")
+    return record

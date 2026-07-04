@@ -17,6 +17,7 @@ import {
   BookOpen,
   FileCode2,
   ShieldCheck,
+  NotebookPen,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
@@ -40,6 +41,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   "/lineage":         GitBranch,
   "/kb-facts":        BookOpen,
   "/prompt-versions": FileCode2,
+  "/kickoff-notes":   NotebookPen,
 };
 
 function NavItemRow({

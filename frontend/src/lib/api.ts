@@ -346,10 +346,19 @@ export const conversationReply = (leadId: string, reply: string, context: unknow
 
 // ── Outreach ─────────────────────────────────────────────────────────────────
 
+export type OutreachResearch = {
+  summary?: string | null;
+  growth_stage?: string | null;
+  likely_pain_points?: string[];
+  strategic_priorities?: string[];
+  ai_readiness_score?: number | null;
+};
+
 export type OutreachResult = {
   lead: unknown;
   company: unknown;
   top_trends: unknown[];
+  research?: OutreachResearch;
   queued_event_id: string;
   email: { subject: string; body: string; reasoning: string };
   governance: {
@@ -1168,6 +1177,35 @@ export const networkLeadFull = (lead_id: string) =>
 export const networkTagLead = (lead_id: string, tags: string[]) =>
   post<{ tags_added: string[] }>(`/network/leads/${lead_id}/tags`, { tags });
 
+// ── Kickoff Notes (manager/admin) ─────────────────────────────────────────────
+
+export interface KickoffNoteContent {
+  headline: string;
+  company_snapshot: string;
+  likely_pain_points: string[];
+  relevant_ganit_work: { claim: string; why_relevant: string }[];
+  talking_points: string[];
+  open_questions: string[];
+}
+
+export interface KickoffNoteRecord {
+  note_id: string;
+  company_name: string;
+  company_domain: string;
+  note: KickoffNoteContent;
+  created_by: string;
+  created_at: string;
+}
+
+export const generateKickoffNote = (companyDomain: string, companyName?: string) =>
+  post<KickoffNoteRecord>("/notes/kickoff", { company_domain: companyDomain, company_name: companyName ?? null });
+
+export const listKickoffNotes = () =>
+  get<{ notes: KickoffNoteRecord[] }>("/notes/kickoff");
+
+export const getKickoffNote = (noteId: string) =>
+  get<KickoffNoteRecord>(`/notes/kickoff/${noteId}`);
+
 export const api = {
   dashboardStats,
   agentFeedRecent,
@@ -1225,6 +1263,9 @@ export const api = {
   networkGraph,
   networkLeadFull,
   networkTagLead,
+  generateKickoffNote,
+  listKickoffNotes,
+  getKickoffNote,
   saveFollowupSequence,
 };
 
