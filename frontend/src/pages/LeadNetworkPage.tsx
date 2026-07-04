@@ -1,9 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Search, Network, List, ExternalLink, Tag, X, Loader2 } from "lucide-react";
+import { Search, Network, List, ExternalLink, Tag, X, Loader2, Eye, GraduationCap, Sparkles, Briefcase } from "lucide-react";
 import { Topbar } from "../components/layout/Topbar";
 import { api, type NetworkLead, type NetworkGraphData } from "../lib/api";
 import { cn } from "../lib/utils";
+
+const SKILL_COLOUR  = "#34d399";
+const SCHOOL_COLOUR = "#fbbf24";
 
 // ── Colour palette ─────────────────────────────────────────────────────────────
 const INDUSTRY_COLOURS: Record<string, string> = {
@@ -29,11 +32,22 @@ function industryColour(industry = "") {
 // ── Force-directed graph (vanilla canvas) ────────────────────────────────────
 
 interface FNode {
-  id: string; label: string; type: "lead" | "company";
+  id: string; label: string; type: "lead" | "company" | "skill" | "school";
   industry?: string; x: number; y: number; vx: number; vy: number;
   title?: string; linkedin_url?: string;
 }
 interface FEdge { source: string; target: string; label: string; type?: string }
+
+function nodeRadius(type: FNode["type"]) {
+  return type === "company" ? 14 : type === "lead" ? 8 : 6;
+}
+
+function nodeColour(n: { type: FNode["type"]; industry?: string }) {
+  if (n.type === "company") return industryColour(n.industry);
+  if (n.type === "skill")   return SKILL_COLOUR;
+  if (n.type === "school")  return SCHOOL_COLOUR;
+  return "#94a3b8"; // lead
+}
 
 function useForceGraph(data: NetworkGraphData | undefined, width: number, height: number) {
   const [nodes, setNodes] = useState<FNode[]>([]);
@@ -128,16 +142,32 @@ function GraphCanvas({
       ctx.beginPath();
       ctx.moveTo(s.x, s.y);
       ctx.lineTo(t.x, t.y);
-      ctx.strokeStyle = e.type === "shared_topic" ? "rgba(139,92,246,0.25)" : "rgba(148,163,184,0.2)";
-      ctx.lineWidth = e.type === "shared_topic" ? 1.5 : 1;
+      if (e.type === "shared_topic") {
+        ctx.setLineDash([]);
+        ctx.strokeStyle = "rgba(139,92,246,0.25)";
+        ctx.lineWidth = 1.5;
+      } else if (e.type === "has_skill") {
+        ctx.setLineDash([3, 2]);
+        ctx.strokeStyle = "rgba(52,211,153,0.35)";
+        ctx.lineWidth = 1;
+      } else if (e.type === "studied_at") {
+        ctx.setLineDash([3, 2]);
+        ctx.strokeStyle = "rgba(251,191,36,0.35)";
+        ctx.lineWidth = 1;
+      } else {
+        ctx.setLineDash([]);
+        ctx.strokeStyle = "rgba(148,163,184,0.2)";
+        ctx.lineWidth = 1;
+      }
       ctx.stroke();
+      ctx.setLineDash([]);
     }
 
     // Draw nodes
     for (const n of nodes) {
       const isSelected = n.id === selected;
-      const r  = n.type === "company" ? 14 : 8;
-      const col = n.type === "company" ? industryColour(n.industry) : "#94a3b8";
+      const r   = nodeRadius(n.type);
+      const col = nodeColour(n);
       ctx.beginPath();
       ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
       ctx.fillStyle = isSelected ? "#ffffff" : col + "cc";
@@ -159,7 +189,7 @@ function GraphCanvas({
     const mx = (e.clientX - rect.left) * (W / rect.width);
     const my = (e.clientY - rect.top)  * (H / rect.height);
     for (const n of nodes) {
-      const r = n.type === "company" ? 14 : 8;
+      const r = nodeRadius(n.type);
       const dx = mx - n.x; const dy = my - n.y;
       if (dx * dx + dy * dy < r * r + 20) {
         const id = n.id === selected ? null : n.id;
@@ -184,14 +214,16 @@ function GraphCanvas({
 
 // ── Lead table row ─────────────────────────────────────────────────────────────
 
-function LeadRow({ lead, onTag }: { lead: NetworkLead; onTag: (id: string, tag: string) => void }) {
+function LeadRow({ lead, onTag, onView }: { lead: NetworkLead; onTag: (id: string, tag: string) => void; onView: (id: string) => void }) {
   const [tagInput, setTagInput] = useState("");
   const [showTag, setShowTag]   = useState(false);
   return (
     <tr className="border-b border-line-soft hover:bg-surface-2/50 transition-colors">
       <td className="px-3 py-2">
-        <div className="text-[12px] font-medium text-ink">{lead.name}</div>
-        <div className="text-[10px] text-ink-mute">{lead.title}</div>
+        <button onClick={() => onView(lead.lead_id)} className="text-left group">
+          <div className="text-[12px] font-medium text-ink group-hover:text-brand transition-colors">{lead.name}</div>
+          <div className="text-[10px] text-ink-mute">{lead.title}</div>
+        </button>
       </td>
       <td className="px-3 py-2 text-[11px] text-ink-2">{lead.company}</td>
       <td className="px-3 py-2 text-[11px] text-ink-2">{lead.industry}</td>
@@ -217,6 +249,10 @@ function LeadRow({ lead, onTag }: { lead: NetworkLead; onTag: (id: string, tag: 
       </td>
       <td className="px-3 py-2">
         <div className="flex items-center gap-1">
+          <button onClick={() => onView(lead.lead_id)}
+            className="text-ink-mute hover:text-brand transition-colors" title="View full profile">
+            <Eye size={12} />
+          </button>
           {lead.linkedin_url && (
             <a href={lead.linkedin_url} target="_blank" rel="noreferrer"
               className="text-ink-mute hover:text-brand transition-colors">
@@ -249,6 +285,127 @@ function LeadRow({ lead, onTag }: { lead: NetworkLead; onTag: (id: string, tag: 
   );
 }
 
+// ── Lead detail drawer (skills / education / past roles via get_lead_full) ────
+
+function LeadDetailDrawer({ leadId, onClose }: { leadId: string; onClose: () => void }) {
+  const { data: lead, isLoading } = useQuery({
+    queryKey: ["networkLeadFull", leadId],
+    queryFn:  () => api.networkLeadFull(leadId),
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="relative w-full max-w-sm h-full bg-[rgb(var(--c-surface))] border-l border-line-soft shadow-2xl overflow-y-auto p-5 space-y-5">
+        <div className="flex items-center justify-between">
+          <span className="font-mono text-[10px] uppercase tracking-widest text-ink-mute">Lead Profile</span>
+          <button onClick={onClose} className="text-ink-mute hover:text-ink transition-colors">
+            <X size={16} />
+          </button>
+        </div>
+
+        {isLoading && (
+          <div className="flex items-center justify-center h-32 text-[11px] text-ink-mute">
+            <Loader2 size={14} className="animate-spin mr-2" /> Loading profile…
+          </div>
+        )}
+
+        {!isLoading && !lead && (
+          <div className="text-[11px] text-ink-mute">Lead not found in network.</div>
+        )}
+
+        {lead && (
+          <>
+            <div>
+              <div className="text-[15px] font-medium text-ink">{lead.name}</div>
+              <div className="text-[12px] text-ink-2">{lead.title}{lead.company ? ` · ${lead.company}` : ""}</div>
+              <div className="text-[11px] text-ink-mute">{lead.industry}{lead.region ? ` · ${lead.region}` : ""}</div>
+              {lead.linkedin_url && (
+                <a href={lead.linkedin_url} target="_blank" rel="noreferrer"
+                  className="flex items-center gap-1 text-[11px] text-brand hover:underline mt-1">
+                  <ExternalLink size={11} /> LinkedIn Profile
+                </a>
+              )}
+            </div>
+
+            {(lead.work_email || lead.phone) && (
+              <div className="space-y-1 text-[11px] text-ink-2">
+                {lead.work_email && <div>{lead.work_email}</div>}
+                {lead.phone && <div>{lead.phone}</div>}
+              </div>
+            )}
+
+            {lead.topics?.length > 0 && (
+              <div>
+                <div className="flex items-center gap-1.5 mb-1.5 text-[10px] uppercase tracking-widest text-ink-mute">
+                  <Tag size={11} /> Topics
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {lead.topics.map(t => (
+                    <span key={t} className="font-mono text-[9px] px-1.5 py-px rounded bg-brand/10 text-brand border border-brand/20">{t}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {lead.skills?.length > 0 && (
+              <div>
+                <div className="flex items-center gap-1.5 mb-1.5 text-[10px] uppercase tracking-widest text-ink-mute">
+                  <Sparkles size={11} style={{ color: SKILL_COLOUR }} /> Skills
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {lead.skills.map(s => (
+                    <span key={s} className="font-mono text-[9px] px-1.5 py-px rounded border"
+                      style={{ background: `${SKILL_COLOUR}1a`, color: SKILL_COLOUR, borderColor: `${SKILL_COLOUR}33` }}>
+                      {s}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {lead.education?.length > 0 && (
+              <div>
+                <div className="flex items-center gap-1.5 mb-1.5 text-[10px] uppercase tracking-widest text-ink-mute">
+                  <GraduationCap size={11} style={{ color: SCHOOL_COLOUR }} /> Education
+                </div>
+                <div className="space-y-1.5">
+                  {lead.education.filter(e => e.school).map((e, i) => (
+                    <div key={i} className="text-[11px]">
+                      <div className="text-ink">{e.school}</div>
+                      <div className="text-ink-mute text-[10px]">
+                        {[e.degree, [e.start, e.end].filter(Boolean).join(" – ")].filter(Boolean).join(" · ")}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {lead.past_roles?.length > 0 && (
+              <div>
+                <div className="flex items-center gap-1.5 mb-1.5 text-[10px] uppercase tracking-widest text-ink-mute">
+                  <Briefcase size={11} /> Past Roles
+                </div>
+                <div className="space-y-1.5">
+                  {lead.past_roles.filter(r => r.company).map((r, i) => (
+                    <div key={i} className="text-[11px]">
+                      <div className="text-ink">{r.title}{r.title && r.company ? " · " : ""}{r.company}</div>
+                      <div className="text-ink-mute text-[10px]">
+                        {[r.start, r.end].filter(Boolean).join(" – ")}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 type ViewMode = "graph" | "list";
@@ -258,6 +415,7 @@ export function LeadNetworkPage() {
   const [query, setQuery]   = useState("");
   const [submitted, setSubmitted] = useState("");
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
+  const [detailLeadId, setDetailLeadId] = useState<string | null>(null);
 
   const leadsQuery = useQuery({
     queryKey: ["networkLeads"],
@@ -403,7 +561,7 @@ export function LeadNetworkPage() {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full flex-shrink-0"
-                      style={{ background: industryColour(selectedNodeData.industry) }} />
+                      style={{ background: nodeColour(selectedNodeData) }} />
                     <span className="text-[13px] font-medium text-ink">{selectedNodeData.label}</span>
                   </div>
                   <div className="text-[10px] text-ink-mute capitalize">{selectedNodeData.type}</div>
@@ -419,6 +577,14 @@ export function LeadNetworkPage() {
                       <ExternalLink size={11} /> LinkedIn Profile
                     </a>
                   )}
+                  {selectedNodeData.type === "lead" && (
+                    <button
+                      onClick={() => setDetailLeadId(selectedNodeData.id.replace(/^lead:/, ""))}
+                      className="flex items-center gap-1.5 mt-2 px-2.5 py-1.5 rounded-lg bg-brand/10 text-brand text-[11px] font-medium hover:bg-brand/20 transition-colors"
+                    >
+                      <Eye size={12} /> View full profile
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-2 text-[10px] text-ink-2">
@@ -429,10 +595,22 @@ export function LeadNetworkPage() {
                     <div className="w-2 h-2 rounded-full bg-slate-400" />Lead node
                   </div>
                   <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full" style={{ background: SKILL_COLOUR }} />Skill node (PDL)
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full" style={{ background: SCHOOL_COLOUR }} />School node (PDL)
+                  </div>
+                  <div className="flex items-center gap-2">
                     <div className="w-6 h-px bg-violet-400/50" />Shared topic
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-px bg-slate-400/40" />Works at
+                    <div className="w-6 h-px bg-slate-400/40" />Works at / previously at
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-px border-t border-dashed" style={{ borderColor: SKILL_COLOUR }} />Has skill
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-px border-t border-dashed" style={{ borderColor: SCHOOL_COLOUR }} />Studied at
                   </div>
                   <div className="mt-3 text-ink-mute">Click a node to inspect it.</div>
                 </div>
@@ -477,6 +655,7 @@ export function LeadNetworkPage() {
                         key={lead.lead_id}
                         lead={lead}
                         onTag={(id, tag) => tagMutation.mutate({ lead_id: id, tag })}
+                        onView={setDetailLeadId}
                       />
                     ))}
                   </tbody>
@@ -486,6 +665,10 @@ export function LeadNetworkPage() {
           </div>
         )}
       </div>
+
+      {detailLeadId && (
+        <LeadDetailDrawer leadId={detailLeadId} onClose={() => setDetailLeadId(null)} />
+      )}
     </>
   );
 }

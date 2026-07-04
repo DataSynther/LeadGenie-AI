@@ -42,12 +42,15 @@ class HallucinationChecker:
             facts.update(source_facts)
 
         if not facts:
-            # No facts available — skip check rather than flag everything
+            # No facts available — cannot verify either way. Defer to human
+            # review instead of auto-passing; auto-passing let ungrounded
+            # content through with zero hallucination signal.
             return {
-                "passed": True,
+                "passed": False,
+                "deferred": True,
                 "violations": [],
-                "confidence": 0.5,
-                "explanation": "No source facts available for verification — check skipped.",
+                "confidence": 0.0,
+                "explanation": "No source facts available for verification — deferred for human review.",
             }
 
         # Accept either a plain string or a structured email dict (new scaffold format)
@@ -94,6 +97,19 @@ Respond as JSON:
         raw = response.content[0].text.strip()
         # Extract JSON object, handling code fences and surrounding prose
         match = re.search(r"\{[\s\S]*\}", raw)
-        if not match:
-            return {"passed": True, "violations": [], "confidence": 0.5, "explanation": "No JSON in response — check skipped."}
-        return json.loads(match.group())
+        if match:
+            try:
+                result = json.loads(match.group())
+                result.setdefault("deferred", False)
+                return result
+            except json.JSONDecodeError:
+                pass
+        # Checker response was unparseable — this is a checker failure, not
+        # evidence either way. Defer to human review rather than auto-pass.
+        return {
+            "passed": False,
+            "deferred": True,
+            "violations": [],
+            "confidence": 0.0,
+            "explanation": "Fact-checker response was unparseable — deferred for human review.",
+        }

@@ -1099,8 +1099,8 @@ export interface NetworkLead {
 }
 
 export interface NetworkGraphData {
-  nodes: Array<{ id: string; label: string; type: "lead" | "company"; industry?: string; tech?: string[]; title?: string; linkedin_url?: string; seniority?: string }>;
-  edges: Array<{ source: string; target: string; label: string; type?: string }>;
+  nodes: Array<{ id: string; label: string; type: "lead" | "company" | "skill" | "school"; industry?: string; tech?: string[]; title?: string; linkedin_url?: string; seniority?: string }>;
+  edges: Array<{ source: string; target: string; label: string; type?: string; degree?: string }>;
 }
 
 export interface NetworkQueryResult {
@@ -1108,6 +1108,42 @@ export interface NetworkQueryResult {
   intent: { topics?: string[]; region?: string | null; industry?: string | null };
   results: NetworkLead[];
   total: number;
+}
+
+export interface NetworkLeadEducation {
+  school: string | null;
+  degree: string | null;
+  start: string | null;
+  end: string | null;
+}
+
+export interface NetworkLeadPastRole {
+  company: string | null;
+  title: string | null;
+  start: string | null;
+  end: string | null;
+}
+
+export interface NetworkLeadFull {
+  lead_id: string;
+  name: string;
+  title: string;
+  company: string;
+  industry: string;
+  linkedin_url: string;
+  work_email?: string;
+  phone?: string;
+  region: string;
+  seniority: string;
+  stored_at: string;
+  job_start_date?: string;
+  job_last_verified?: string;
+  pdl_likelihood?: number;
+  engaged_via?: string;
+  topics: string[];
+  skills: string[];
+  education: NetworkLeadEducation[];
+  past_roles: NetworkLeadPastRole[];
 }
 
 export const networkQuery = (query: string, top_k = 10) =>
@@ -1125,6 +1161,9 @@ export const networkLeads = (params?: { region?: string; industry?: string; topi
 
 export const networkGraph = (limit = 30) =>
   get<NetworkGraphData>(`/network/graph?limit=${limit}`);
+
+export const networkLeadFull = (lead_id: string) =>
+  get<NetworkLeadFull>(`/network/leads/${lead_id}`);
 
 export const networkTagLead = (lead_id: string, tags: string[]) =>
   post<{ tags_added: string[] }>(`/network/leads/${lead_id}/tags`, { tags });
@@ -1184,6 +1223,7 @@ export const api = {
   networkQuery,
   networkLeads,
   networkGraph,
+  networkLeadFull,
   networkTagLead,
   saveFollowupSequence,
 };

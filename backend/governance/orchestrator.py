@@ -3,10 +3,11 @@
 Generation flow per run:
   1. Pre-generation context check  — rule-based, free. Aborts if lead/company data
      is too sparse to generate without hallucination risk.
-  2. Retry loop (validator + tone only). Shape-only failures use a cheap fix-up
-     prompt instead of full regeneration.
-  3. Single hallucination check on the final output, outside the retry loop.
-     Failed intermediate attempts never pay for a hallucination check.
+  2. Retry loop (validator + tone + hallucination, all in-loop). Shape-only
+     failures use a cheap fix-up prompt instead of full regeneration.
+     Hallucination violations (not merely a "deferred — no facts" result)
+     count as a failure and trigger a full regeneration with a correction
+     note, same as shape/tone issues, up to MAX_ATTEMPTS.
 
 Human review:
   Every generated email reaches the approval queue regardless of outcome.
@@ -98,7 +99,7 @@ class GovernanceOrchestrator:
                 "governance_attempt_history": [],
             }
 
-        # ── 2. Retry loop — validator + tone only, NO hallucination inside ───
+        # ── 2. Retry loop — validator + tone + hallucination, all in-loop ────
         for attempt in range(1, MAX_ATTEMPTS + 1):
             if attempt > 1 and use_fix_shape and email:
                 raw = outreach_agent.fix_shape(email, shape_missing_fields, attempt)
@@ -118,8 +119,30 @@ class GovernanceOrchestrator:
             # Tone
             tone = self.tone_validator.validate(email)
 
+            # Hallucination — merge verified KB sender claims into source_facts
+            # so the checker doesn't flag them as fabrications (Domain B — cite
+            # exactly). Runs every attempt so violations can trigger regeneration.
+            enriched_source_facts = dict(source_facts or {})
+            kb_ids_used = email.get("kb_ids_used") or []
+            if kb_ids_used:
+                try:
+                    kb_text = _sender_kb.get_claims_text(kb_ids_used)
+                    if kb_text:
+                        enriched_source_facts["sender_kb_claims"] = kb_text
+                except Exception as exc:
+                    logger.warning("Failed to enrich source_facts with KB claims: %s", exc)
+
+            hallucination = self.hallucination_checker.check(
+                email, enriched_source_facts, lead_id=lead_id
+            )
+            halluc_deferred = hallucination.get("deferred", False)
+            # A deferred result (no grounding facts to check against, or an
+            # unparseable checker response) can't be fixed by regenerating —
+            # only actual violations can. So only violations block the loop.
+            halluc_blocking = (not hallucination.get("passed", True)) and not halluc_deferred
+
             all_issues = val["issues"] + tone["issues"]
-            passed_without_halluc = not all_issues
+            passed = not all_issues and not halluc_blocking
 
             layer_results = {
                 "validator": {
@@ -131,8 +154,13 @@ class GovernanceOrchestrator:
                     "passed": tone["passed"],
                     "issues": tone["issues"],
                 },
-                # Hallucination is run once after the loop — placeholder here
-                "hallucination": {"passed": True, "violations": [], "skipped": True},
+                "hallucination": {
+                    "passed":      hallucination.get("passed", True),
+                    "deferred":    halluc_deferred,
+                    "violations":  hallucination.get("violations", []),
+                    "confidence":  hallucination.get("confidence"),
+                    "explanation": hallucination.get("explanation", ""),
+                },
             }
 
             if attempt == 1 or not correction_used:
@@ -144,7 +172,7 @@ class GovernanceOrchestrator:
 
             attempt_history.append({
                 "attempt":         attempt,
-                "passed":          passed_without_halluc,
+                "passed":          passed,
                 "prompt_preview":  preview,
                 "correction_note": correction_used,
                 "email": {
@@ -156,20 +184,22 @@ class GovernanceOrchestrator:
             })
 
             logger.info(
-                "Governance attempt %d/%d: passed=%s issues=%d",
-                attempt, MAX_ATTEMPTS, passed_without_halluc, len(all_issues),
+                "Governance attempt %d/%d: passed=%s issues=%d halluc_blocking=%s",
+                attempt, MAX_ATTEMPTS, passed, len(all_issues), halluc_blocking,
             )
 
-            if passed_without_halluc:
+            if passed:
                 break
 
             if attempt < MAX_ATTEMPTS:
-                # Shape-only failure → use cheap fix-up prompt next attempt
+                # Shape-only failure (and no hallucination violations) → use
+                # cheap fix-up prompt next attempt instead of full regeneration.
                 shape_issues = [i for i in val["issues"] if i.startswith("shape:")]
                 shape_only = (
                     shape_issues
                     and len(shape_issues) == len(val["issues"])
                     and not tone["issues"]
+                    and not halluc_blocking
                 )
                 if shape_only:
                     use_fix_shape = True
@@ -185,41 +215,13 @@ class GovernanceOrchestrator:
                     use_fix_shape = False
                     correction_note = self._build_correction(layer_results, attempt)
 
-        # ── 3. Single hallucination check on final output ────────────────────
-        # Merge verified KB sender claims into source_facts so the checker
-        # doesn't flag them as fabrications (Domain B — cite exactly).
-        enriched_source_facts = dict(source_facts or {})
-        kb_ids_used = email.get("kb_ids_used") or []
-        if kb_ids_used:
-            try:
-                kb_text = _sender_kb.get_claims_text(kb_ids_used)
-                if kb_text:
-                    enriched_source_facts["sender_kb_claims"] = kb_text
-            except Exception as exc:
-                logger.warning("Failed to enrich source_facts with KB claims: %s", exc)
-
-        hallucination = self.hallucination_checker.check(
-            email, enriched_source_facts, lead_id=lead_id
-        )
-        halluc_layer = {
-            "passed":      hallucination.get("passed", True),
-            "violations":  hallucination.get("violations", []),
-            "confidence":  hallucination.get("confidence"),
-            "explanation": hallucination.get("explanation", ""),
-        }
-        if attempt_history:
-            attempt_history[-1]["layers"]["hallucination"] = halluc_layer
-            # Overall pass includes hallucination
-            halluc_ok = hallucination.get("passed", True)
-            attempt_history[-1]["passed"] = attempt_history[-1]["passed"] and halluc_ok
-
-        # ── 4. Risk score ─────────────────────────────────────────────────────
+        # ── 3. Risk score ──────────────────────────────────────────────────────
         governance = self.risk_engine.evaluate(lead_id, email, source_facts)
         governance["governance_attempt_history"] = attempt_history
         governance["total_attempts"] = len(attempt_history)
         governance["context_sufficient"] = True
 
-        # ── 5. Persist governance run for PromptVersionsPage ─────────────────
+        # ── 4. Persist governance run for PromptVersionsPage ─────────────────
         final_passed = attempt_history[-1].get("passed", True) if attempt_history else True
         try:
             diagnostic_store.write_governance_run(
@@ -299,6 +301,14 @@ class GovernanceOrchestrator:
                 lines.append("  ✗ TONE: Remove excessive exclamation marks.")
             else:
                 lines.append(f"  ✗ TONE: {issue}")
+
+        halluc = layers.get("hallucination", {})
+        if not halluc.get("passed", True) and not halluc.get("deferred", False):
+            for violation in halluc.get("violations", []):
+                lines.append(
+                    f"  ✗ HALLUCINATION: {violation}. Remove this claim or rephrase "
+                    "it to only state facts given above — do not invent specifics."
+                )
 
         lines.append("\nRegenerate the COMPLETE email JSON addressing every issue above.")
         return "\n".join(lines)

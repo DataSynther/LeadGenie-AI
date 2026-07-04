@@ -381,6 +381,42 @@ def get_graph_data(limit_companies: int = 30) -> dict:
             edges.append({"source": f"co:{row['a']}", "target": f"co:{row['b']}",
                           "label": row["topic"], "type": "shared_topic"})
 
+    # HAS_SKILL edges — Skill nodes (PDL-enriched), only for leads already shown
+    skill_rows = _run("""
+        MATCH (l:Lead)-[:HAS_SKILL]->(sk:Skill)
+        WHERE l.lead_id IN $lead_ids
+        RETURN l.lead_id AS lead_id, sk.name AS skill
+        LIMIT 200
+    """, {"lead_ids": list(seen_leads)})
+    seen_skills: set[str] = set()
+    for row in skill_rows:
+        skill = row["skill"]
+        if not skill:
+            continue
+        if skill not in seen_skills:
+            nodes.append({"id": f"skill:{skill}", "label": skill, "type": "skill"})
+            seen_skills.add(skill)
+        edges.append({"source": f"lead:{row['lead_id']}", "target": f"skill:{skill}",
+                      "label": "HAS_SKILL", "type": "has_skill"})
+
+    # STUDIED_AT edges — School nodes (PDL-enriched), only for leads already shown
+    school_rows = _run("""
+        MATCH (l:Lead)-[r:STUDIED_AT]->(sc:School)
+        WHERE l.lead_id IN $lead_ids
+        RETURN l.lead_id AS lead_id, sc.name AS school, r.degree AS degree
+        LIMIT 200
+    """, {"lead_ids": list(seen_leads)})
+    seen_schools: set[str] = set()
+    for row in school_rows:
+        school = row["school"]
+        if not school:
+            continue
+        if school not in seen_schools:
+            nodes.append({"id": f"school:{school}", "label": school, "type": "school"})
+            seen_schools.add(school)
+        edges.append({"source": f"lead:{row['lead_id']}", "target": f"school:{school}",
+                      "label": "STUDIED_AT", "type": "studied_at", "degree": row["degree"]})
+
     return {"nodes": nodes, "edges": edges}
 
 
