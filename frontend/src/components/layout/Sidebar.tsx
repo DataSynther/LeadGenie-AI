@@ -18,6 +18,7 @@ import {
   FileCode2,
   ShieldCheck,
   NotebookPen,
+  Megaphone,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
@@ -42,6 +43,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   "/kb-facts":        BookOpen,
   "/prompt-versions": FileCode2,
   "/kickoff-notes":   NotebookPen,
+  "/announcements":   Megaphone,
 };
 
 function NavItemRow({

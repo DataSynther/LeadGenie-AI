@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Search, UserPlus, Zap, MessageCircle, Lock, Unlock } from "lucide-react";
 import { Topbar } from "../components/layout/Topbar";
 import { ResearchPanel } from "../components/research/ResearchPanel";
+import { KnowYourCustomerRow } from "../components/discovery/KnowYourCustomer";
 import { api } from "../lib/api";
 import type { Lead, RevealResult } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
@@ -284,8 +285,8 @@ export function LeadDiscoveryPage() {
                   </thead>
                   <tbody>
                     {search.data.map((lead) => (
+                      <Fragment key={lead.id}>
                       <tr
-                        key={lead.id}
                         onClick={() => openOutreach(lead, "email")}
                         className={cn(
                           "hover:bg-surface-2 transition-colors cursor-pointer",
@@ -369,6 +370,8 @@ export function LeadDiscoveryPage() {
                           </div>
                         </td>
                       </tr>
+                      <KnowYourCustomerRow companyName={lead.company} colSpan={6} />
+                      </Fragment>
                     ))}
                   </tbody>
                 </table>

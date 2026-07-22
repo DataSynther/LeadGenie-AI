@@ -327,6 +327,9 @@ export type CompanyResearch = {
 export const companyResearch = (name: string) =>
   get<CompanyResearch>(`/company/research/${encodeURIComponent(name)}`);
 
+export const companyResearchBrief = (name: string) =>
+  get<OutreachResearch>(`/company/research-brief/${encodeURIComponent(name)}`);
+
 // ── Audit ────────────────────────────────────────────────────────────────────
 
 export const auditTrail = (leadId: string) =>
@@ -1206,6 +1209,60 @@ export const listKickoffNotes = () =>
 export const getKickoffNote = (noteId: string) =>
   get<KickoffNoteRecord>(`/notes/kickoff/${noteId}`);
 
+// ── Achievement Campaigns (manager/admin) ─────────────────────────────────────
+
+export interface CampaignGroup {
+  group: string;
+  count: number;
+}
+
+export interface Subscriber {
+  subscriber_id: string;
+  email: string;
+  name: string;
+  groups: string[];
+  added_at: string;
+}
+
+export interface CampaignSendResult {
+  email: string;
+  name?: string;
+  sent: boolean;
+  to: string;
+  error: string | null;
+}
+
+export interface CampaignRecord {
+  campaign_id: string;
+  subject: string;
+  body: string;
+  groups: string[];
+  recipient_count: number;
+  sent_count: number;
+  failed_count: number;
+  results: CampaignSendResult[];
+  created_by: string;
+  created_at: string;
+}
+
+export const campaignGroups = () =>
+  get<{ groups: CampaignGroup[] }>("/campaigns/groups");
+
+export const campaignSubscribers = () =>
+  get<{ subscribers: Subscriber[] }>("/campaigns/subscribers");
+
+export const addCampaignSubscriber = (email: string, name: string, groups: string[]) =>
+  post<Subscriber>("/campaigns/subscribers", { email, name, groups });
+
+export const suggestCampaignDraft = (group: string) =>
+  get<{ subject: string; body: string }>(`/campaigns/suggest-draft?group=${encodeURIComponent(group)}`);
+
+export const sendCampaign = (subject: string, body: string, groups: string[]) =>
+  post<CampaignRecord>("/campaigns/send", { subject, body, groups });
+
+export const campaignHistory = () =>
+  get<{ campaigns: CampaignRecord[] }>("/campaigns/history");
+
 export const api = {
   dashboardStats,
   agentFeedRecent,
@@ -1221,6 +1278,7 @@ export const api = {
   getCredits,
   companyList,
   companyResearch,
+  companyResearchBrief,
   auditTrail,
   conversationReply,
   suggestOutreachContext,
@@ -1266,6 +1324,12 @@ export const api = {
   generateKickoffNote,
   listKickoffNotes,
   getKickoffNote,
+  campaignGroups,
+  campaignSubscribers,
+  addCampaignSubscriber,
+  suggestCampaignDraft,
+  sendCampaign,
+  campaignHistory,
   saveFollowupSequence,
 };
 

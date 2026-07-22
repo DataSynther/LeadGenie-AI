@@ -22,6 +22,7 @@ import { QuidditchPage } from "./pages/QuidditchPage";
 import { GovernanceDashboardPage } from "./pages/GovernanceDashboardPage";
 import { LeadNetworkPage } from "./pages/LeadNetworkPage";
 import { KickoffNotesPage } from "./pages/KickoffNotesPage";
+import { AnnouncementsPage } from "./pages/AnnouncementsPage";
 
 function G({ children }: { children: React.ReactNode }) {
   return <RoleGuard>{children}</RoleGuard>;
@@ -55,6 +56,7 @@ function App() {
           <Route path="/governance"      element={<G><GovernanceDashboardPage /></G>} />
           <Route path="/network"         element={<G><LeadNetworkPage /></G>} />
           <Route path="/kickoff-notes"   element={<G><KickoffNotesPage /></G>} />
+          <Route path="/announcements"   element={<G><AnnouncementsPage /></G>} />
         </Route>
       </Routes>
     </>

@@ -72,6 +72,7 @@ class FrontendStack(Stack):
                         "/governance/*",
                         "/network/*",
                         "/notes/*",
+                        "/campaigns/*",
                     ]
                 },
             },

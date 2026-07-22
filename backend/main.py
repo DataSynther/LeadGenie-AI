@@ -183,6 +183,12 @@ from storage import kickoff_notes_store
 
 kickoff_note_generator = KickoffNoteGenerator()
 sender_kb = SenderKnowledgeBase()
+
+from agents.campaigns.draft_suggester import DraftSuggester
+from storage import subscribers_store, campaigns_store
+
+campaign_draft_suggester = DraftSuggester(sender_kb)
+campaign_email_sender = EmailSender()
 _followup_task = None
 
 
@@ -245,6 +251,18 @@ class OutreachSuggestRequest(BaseModel):
 class KickoffNoteRequest(BaseModel):
     company_domain: str
     company_name: Optional[str] = None
+
+
+class CampaignSendRequest(BaseModel):
+    subject: str
+    body: str
+    groups: list[str]
+
+
+class SubscriberAddRequest(BaseModel):
+    email: str
+    name: Optional[str] = None
+    groups: list[str] = []
 
 
 class ConversationRequest(BaseModel):
@@ -1291,6 +1309,27 @@ async def company_research(company_name: str):
     if not match:
         raise HTTPException(status_code=404, detail="Company not found")
     return {**match, "signals": _compute_signals(match)}
+
+
+@app.get("/company/research-brief/{company_name}")
+async def company_research_brief(
+    company_name: str,
+    session: dict = Depends(_require_role("sdr")),
+):
+    """AI-derived growth stage / pain points / strategic priorities for a
+    company — lightweight, on-demand (no trends/email/governance pipeline).
+    Used by the Discover Leads 'Know Your Customer' panel."""
+    match = next(
+        (c for c in _SAMPLE_COMPANIES if c["name"].lower() == company_name.lower()),
+        None,
+    )
+    if not match:
+        raise HTTPException(status_code=404, detail="Company not found")
+    signals = await asyncio.to_thread(
+        apollo_signals.detect_hiring_trends, match.get("id", "") or "", match
+    )
+    research = await asyncio.to_thread(research_agent.research_company, match, signals)
+    return research
 
 
 @app.get("/company/list")
@@ -2465,3 +2504,74 @@ async def get_kickoff_note(note_id: str, session: dict = Depends(_require_role("
     if not record:
         raise HTTPException(status_code=404, detail="Note not found")
     return record
+
+
+# ── Achievement Campaigns (leadership — manager/admin) ────────────────────────
+# Draft an announcement, pick target groups, send to every subscriber in any
+# of those groups. Groups are a fixed discipline/technology/vertical taxonomy;
+# subscribers are a simple local audience list (see storage/subscribers_store.py).
+
+@app.get("/campaigns/groups")
+async def campaign_groups(session: dict = Depends(_require_role("manager"))):
+    counts = subscribers_store.group_counts()
+    return {"groups": [{"group": g, "count": counts.get(g, 0)} for g in subscribers_store.CAMPAIGN_GROUPS]}
+
+
+@app.get("/campaigns/subscribers")
+async def list_campaign_subscribers(session: dict = Depends(_require_role("manager"))):
+    return {"subscribers": subscribers_store.list_subscribers()}
+
+
+@app.post("/campaigns/subscribers")
+async def add_campaign_subscriber(
+    req: SubscriberAddRequest,
+    session: dict = Depends(_require_role("manager")),
+):
+    if not req.email.strip():
+        raise HTTPException(status_code=400, detail="email is required")
+    record = subscribers_store.add_subscriber(req.email, req.name or "", req.groups)
+    return record
+
+
+@app.get("/campaigns/suggest-draft")
+async def suggest_campaign_draft(
+    group: str,
+    session: dict = Depends(_require_role("manager")),
+):
+    if group not in subscribers_store.CAMPAIGN_GROUPS:
+        raise HTTPException(status_code=400, detail=f"Unknown group '{group}'")
+    draft = await asyncio.to_thread(campaign_draft_suggester.suggest, group)
+    return draft
+
+
+@app.post("/campaigns/send")
+async def send_campaign(
+    req: CampaignSendRequest,
+    session: dict = Depends(_require_role("manager")),
+):
+    if not req.subject.strip() or not req.body.strip():
+        raise HTTPException(status_code=400, detail="subject and body are required")
+    if not req.groups:
+        raise HTTPException(status_code=400, detail="select at least one group")
+
+    recipients = subscribers_store.resolve_recipients(req.groups)
+    results = []
+    for r in recipients:
+        outcome = await asyncio.to_thread(
+            campaign_email_sender.send, r["email"], req.subject, req.body
+        )
+        results.append({"email": r["email"], "name": r.get("name"), **outcome})
+
+    record = campaigns_store.save_campaign(
+        subject=req.subject,
+        body=req.body,
+        groups=req.groups,
+        results=results,
+        created_by=session["username"],
+    )
+    return record
+
+
+@app.get("/campaigns/history")
+async def campaign_history(session: dict = Depends(_require_role("manager"))):
+    return {"campaigns": campaigns_store.list_campaigns()}
