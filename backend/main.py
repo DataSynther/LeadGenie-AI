@@ -189,6 +189,11 @@ from storage import subscribers_store, campaigns_store
 
 campaign_draft_suggester = DraftSuggester(sender_kb)
 campaign_email_sender = EmailSender()
+
+from agents.kyc.onepager_generator import OnePagerGenerator
+from storage import kyc_onepagers_store
+
+kyc_onepager_generator = OnePagerGenerator()
 _followup_task = None
 
 
@@ -233,7 +238,14 @@ class LeadSearchRequest(BaseModel):
     company_names: list[str] = []
     titles: list[str] = []
     seniorities: list[str] = ["director", "vp", "c_suite"]
+    industries: list[str] = []
+    locations: list[str] = []
     per_page: int = 10
+
+
+class NLLeadSearchRequest(BaseModel):
+    query: str
+    per_page: int = 25
 
 
 class OutreachRequest(BaseModel):
@@ -249,6 +261,11 @@ class OutreachSuggestRequest(BaseModel):
 
 
 class KickoffNoteRequest(BaseModel):
+    company_domain: str
+    company_name: Optional[str] = None
+
+
+class KYCOnePagerRequest(BaseModel):
     company_domain: str
     company_name: Optional[str] = None
 
@@ -357,6 +374,61 @@ async def search_leads(req: LeadSearchRequest,
         return results
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Apollo API error: {e}")
+
+
+@app.post("/leads/search/nl")
+async def search_leads_nl(req: NLLeadSearchRequest,
+                          session: dict = Depends(_require_role("viewer"))):
+    """Natural-language lead search — Claude extracts structured filters
+    from the free-text query, then runs the same search as the manual form."""
+    import re as _re
+    import anthropic as _ac
+    client = _ac.Anthropic()
+
+    prompt = f"""Extract lead-search filters from this SDR query as JSON.
+
+Query: "{req.query}"
+
+IMPORTANT — how these filters are applied: every field is combined with AND, and
+each one does a plain case-insensitive SUBSTRING match against the raw field
+text (not semantic matching). So "engineering leaders" will NOT match a title
+like "Director of Engineering" — only the literal word "engineering" would.
+Prefer short, single, literal keywords over descriptive phrases, and prefer
+extracting FEWER filters over guessing ones you're not confident about — one
+imprecise keyword combined with AND can zero out results that would otherwise
+have matched.
+
+Valid seniorities (use ONLY these lowercase values, or omit if unclear): c_suite, vp, director, manager, senior
+Valid locations (use ONLY these exact country names, or omit if unclear): India, United States, United Kingdom, Australia, France, Germany, Singapore, United Arab Emirates
+company_names: specific company names mentioned by name, else [].
+titles: short literal keyword fragments likely to appear inside an actual job title (e.g. "engineer", "engineering", "CTO", "VP", "product", "data") — not full role descriptions, else [].
+industries: short lowercase keyword fragments for industry/domain (e.g. "fintech", "data", "healthcare"), else [].
+
+Respond as JSON only: {{"company_names": [], "titles": [], "seniorities": [], "industries": [], "locations": []}}"""
+
+    response = await asyncio.to_thread(
+        client.messages.create,
+        model="claude-haiku-4-5-20251001",
+        max_tokens=300,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    text = response.content[0].text
+    match = _re.search(r"\{.*\}", text, _re.DOTALL)
+    filters = json.loads(match.group()) if match else {}
+    filters["per_page"] = req.per_page
+
+    try:
+        results = await asyncio.to_thread(apollo_people.search_people, filters)
+        masked = [_mask_contact(p) for p in results] if isinstance(results, list) else []
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Apollo API error: {e}")
+
+    return {
+        "query":   req.query,
+        "filters": filters,
+        "results": masked,
+        "total":   len(masked),
+    }
 
 
 @app.post("/contact/reveal/{lead_id}")
@@ -1317,7 +1389,7 @@ async def company_research_brief(
     session: dict = Depends(_require_role("sdr")),
 ):
     """AI-derived growth stage / pain points / strategic priorities for a
-    company — lightweight, on-demand (no trends/email/governance pipeline).
+    company — lightweight, on-demand (no email/governance pipeline).
     Used by the Discover Leads 'Know Your Customer' panel."""
     match = next(
         (c for c in _SAMPLE_COMPANIES if c["name"].lower() == company_name.lower()),
@@ -1329,6 +1401,30 @@ async def company_research_brief(
         apollo_signals.detect_hiring_trends, match.get("id", "") or "", match
     )
     research = await asyncio.to_thread(research_agent.research_company, match, signals)
+
+    # Attach the single most relevant funding trend for this company — real,
+    # cited data (see storage/market_data/funding_trends.jsonl), not an
+    # AI-invented figure. Always show the best match among funding-category
+    # trends rather than gating on a relevance score, since embedding
+    # similarity is too noisy a signal to reliably threshold on.
+    try:
+        trends = await asyncio.to_thread(trend_agent.get_current_trends)
+        funding_only = [t for t in trends if t.get("category") == "funding" and t.get("url")]
+        ranked = await asyncio.to_thread(
+            relevance_engine.rank_trends, {"company": match, "research": research}, funding_only, 1
+        )
+        if ranked:
+            top = ranked[0]
+            research["funding_trend"] = {
+                "title": top.get("title"),
+                "source": top.get("source"),
+                "url": top.get("url"),
+                "region": top.get("region"),
+                "quarter": top.get("quarter"),
+            }
+    except Exception as exc:
+        logger.warning("funding trend attach failed: %s", exc)
+
     return research
 
 
@@ -2575,3 +2671,93 @@ async def send_campaign(
 @app.get("/campaigns/history")
 async def campaign_history(session: dict = Depends(_require_role("manager"))):
     return {"campaigns": campaigns_store.list_campaigns()}
+
+
+# ── KYC One-Pager (all sales roles — sdr+) ─────────────────────────────────────
+# A standalone, citable company briefing. Not tied to a lead, outreach, or
+# booked meeting — any salesperson can generate one for any company before
+# any conversation. Every bullet carries a numbered, click-to-reveal source;
+# company facts cite Apollo directly (no LLM in that path), pain points and
+# strategic reads are clearly labeled as AI inference, and talking points
+# cite Ganit's own knowledge base where a real past-work match exists.
+
+@app.post("/kyc/onepager")
+async def generate_kyc_onepager(
+    req: KYCOnePagerRequest,
+    session: dict = Depends(_require_role("sdr")),
+):
+    company = await asyncio.to_thread(apollo_company.enrich_company, req.company_domain)
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+
+    signals = await asyncio.to_thread(
+        apollo_signals.detect_hiring_trends, company.get("id", "") or "", company
+    )
+    research = await asyncio.to_thread(research_agent.research_company, company, signals)
+
+    from agents.outreach.template_categorizer import DomainDetector
+    domain = DomainDetector().detect(company)
+    technologies = company.get("technologies", []) or []
+
+    matches: list[dict] = []
+    seen_ids: set[str] = set()
+    for vertical in ("data_engineering", "data_science"):
+        for m in sender_kb.retrieve(vertical=vertical, domain=domain, technologies=technologies, n=4):
+            if m["id"] not in seen_ids:
+                matches.append(m)
+                seen_ids.add(m["id"])
+    matches = matches[:6]
+
+    funding_trend = None
+    try:
+        trends = await asyncio.to_thread(trend_agent.get_current_trends)
+        funding_only = [t for t in trends if t.get("category") == "funding" and t.get("url")]
+        ranked = await asyncio.to_thread(
+            relevance_engine.rank_trends, {"company": company, "research": research}, funding_only, 1
+        )
+        if ranked:
+            top = ranked[0]
+            funding_trend = {
+                "title": top.get("title"), "source": top.get("source"), "url": top.get("url"),
+            }
+    except Exception as exc:
+        logger.warning("KYC one-pager funding trend attach failed: %s", exc)
+
+    onepager = await asyncio.to_thread(
+        kyc_onepager_generator.generate, company, research, matches, funding_trend
+    )
+    record = kyc_onepagers_store.save_onepager(
+        company_name=company.get("name") or req.company_name or req.company_domain,
+        company_domain=req.company_domain,
+        onepager=onepager,
+        created_by=session["username"],
+    )
+    return record
+
+
+@app.get("/kyc/onepager")
+async def list_kyc_onepagers(session: dict = Depends(_require_role("sdr"))):
+    return {"onepagers": kyc_onepagers_store.list_onepagers()}
+
+
+@app.get("/kyc/onepager/{onepager_id}")
+async def get_kyc_onepager(onepager_id: str, session: dict = Depends(_require_role("sdr"))):
+    record = kyc_onepagers_store.get_onepager(onepager_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="One-pager not found")
+    return record
+
+
+@app.get("/kyc/onepager/{onepager_id}/export.docx")
+async def export_kyc_onepager_docx(onepager_id: str, session: dict = Depends(_require_role("sdr"))):
+    record = kyc_onepagers_store.get_onepager(onepager_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="One-pager not found")
+    from services.docx_export import render_onepager_docx
+    buf = await asyncio.to_thread(render_onepager_docx, record)
+    filename = f"{(record.get('company_name') or 'company').replace(' ', '_')}_KYC_Brief.docx"
+    return StreamingResponse(
+        buf,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )

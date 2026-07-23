@@ -145,6 +145,24 @@ export const leadSearch = (params: {
   per_page?: number;
 }) => post<Lead[]>("/leads/search", params);
 
+export type NLLeadSearchFilters = {
+  company_names?: string[];
+  titles?: string[];
+  seniorities?: string[];
+  industries?: string[];
+  locations?: string[];
+};
+
+export type NLLeadSearchResult = {
+  query: string;
+  filters: NLLeadSearchFilters;
+  results: Lead[];
+  total: number;
+};
+
+export const leadSearchNL = (query: string, perPage = 25) =>
+  post<NLLeadSearchResult>("/leads/search/nl", { query, per_page: perPage });
+
 export type RevealResult = {
   status?: "deferred" | "approved";
   request_id?: string;
@@ -349,12 +367,21 @@ export const conversationReply = (leadId: string, reply: string, context: unknow
 
 // ── Outreach ─────────────────────────────────────────────────────────────────
 
+export type FundingTrend = {
+  title?: string | null;
+  source?: string | null;
+  url?: string | null;
+  region?: string | null;
+  quarter?: string | null;
+};
+
 export type OutreachResearch = {
   summary?: string | null;
   growth_stage?: string | null;
   likely_pain_points?: string[];
   strategic_priorities?: string[];
   ai_readiness_score?: number | null;
+  funding_trend?: FundingTrend | null;
 };
 
 export type OutreachResult = {
@@ -1209,6 +1236,63 @@ export const listKickoffNotes = () =>
 export const getKickoffNote = (noteId: string) =>
   get<KickoffNoteRecord>(`/notes/kickoff/${noteId}`);
 
+// ── KYC One-Pager (sdr+) ───────────────────────────────────────────────────────
+
+export interface OnePagerBullet {
+  text: string;
+  source_id: number;
+}
+
+export interface OnePagerSection {
+  title: string;
+  bullets: OnePagerBullet[];
+}
+
+export interface OnePagerSource {
+  id: number;
+  label: string;
+  url?: string;
+}
+
+export interface OnePagerContent {
+  company_name: string;
+  headline: string;
+  sections: OnePagerSection[];
+  sources: OnePagerSource[];
+}
+
+export interface KYCOnePagerRecord {
+  onepager_id: string;
+  company_name: string;
+  company_domain: string;
+  onepager: OnePagerContent;
+  created_by: string;
+  created_at: string;
+}
+
+export const generateKycOnepager = (companyDomain: string, companyName?: string) =>
+  post<KYCOnePagerRecord>("/kyc/onepager", { company_domain: companyDomain, company_name: companyName ?? null });
+
+export const listKycOnepagers = () =>
+  get<{ onepagers: KYCOnePagerRecord[] }>("/kyc/onepager");
+
+export const getKycOnepager = (id: string) =>
+  get<KYCOnePagerRecord>(`/kyc/onepager/${id}`);
+
+export async function downloadKycOnepagerDocx(id: string, companyName: string): Promise<void> {
+  const res = await fetch(`${BASE_URL}/kyc/onepager/${id}/export.docx`, { headers: authHeaders() });
+  handleStatus(res, "GET export.docx");
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${companyName.replace(/\s+/g, "_")}_KYC_Brief.docx`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 // ── Achievement Campaigns (manager/admin) ─────────────────────────────────────
 
 export interface CampaignGroup {
@@ -1269,6 +1353,7 @@ export const api = {
   recentAgentEvents,
   pipeline,
   leadSearch,
+  leadSearchNL,
   approvalQueue,
   sentEmails,
   approveOutreach,
@@ -1324,6 +1409,10 @@ export const api = {
   generateKickoffNote,
   listKickoffNotes,
   getKickoffNote,
+  generateKycOnepager,
+  listKycOnepagers,
+  getKycOnepager,
+  downloadKycOnepagerDocx,
   campaignGroups,
   campaignSubscribers,
   addCampaignSubscriber,

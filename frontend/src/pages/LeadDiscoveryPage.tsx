@@ -1,6 +1,6 @@
 import { useState, Fragment } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Search, UserPlus, Zap, MessageCircle, Lock, Unlock } from "lucide-react";
+import { Search, UserPlus, Zap, MessageCircle, Lock, Unlock, Sparkles, Loader2, X } from "lucide-react";
 import { Topbar } from "../components/layout/Topbar";
 import { ResearchPanel } from "../components/research/ResearchPanel";
 import { KnowYourCustomerRow } from "../components/discovery/KnowYourCustomer";
@@ -93,6 +93,8 @@ export function LeadDiscoveryPage() {
   const [outreachChannel, setOutreachChannel] = useState<"email" | "whatsapp">("email");
   const [revealed, setRevealed] = useState<Record<string, RevealResult>>({});
   const [revealing, setRevealing] = useState<string | null>(null);
+  const [nlQuery, setNlQuery]     = useState("");
+  const [resultsSource, setResultsSource] = useState<"structured" | "nl">("structured");
 
   const search = useMutation({
     mutationFn: () =>
@@ -104,7 +106,23 @@ export function LeadDiscoveryPage() {
         locations,
         per_page: perPage,
       }),
+    onSuccess: () => setResultsSource("structured"),
   });
+
+  const nlSearch = useMutation({
+    mutationFn: () => api.leadSearchNL(nlQuery.trim(), perPage),
+    onSuccess: () => setResultsSource("nl"),
+  });
+
+  function handleNlSearch() {
+    if (!nlQuery.trim()) return;
+    setResultsSource("nl");
+    nlSearch.mutate();
+  }
+
+  const activeData    = resultsSource === "nl" ? nlSearch.data?.results : search.data;
+  const activePending = resultsSource === "nl" ? nlSearch.isPending : search.isPending;
+  const activeError   = resultsSource === "nl" ? nlSearch.error : search.error;
 
   const { data: approvalItems = [] } = useQuery({
     queryKey: ["approval"],
@@ -140,6 +158,66 @@ export function LeadDiscoveryPage() {
       />
 
       <div className="p-4 sm:p-8 pb-20">
+        {/* Natural language search */}
+        <div className="card-base mb-5 p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-ink-mute">
+              Ask in Plain English
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <input
+              value={nlQuery}
+              onChange={(e) => setNlQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleNlSearch()}
+              placeholder='e.g. "VP Engineering at fintech companies in India" or "CTOs at funded startups in the US"'
+              className="flex-1 text-[13px] px-3 py-2.5 rounded-md border border-line bg-surface text-ink placeholder:text-ink-2 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand-soft"
+            />
+            <button
+              onClick={handleNlSearch}
+              disabled={nlSearch.isPending || !nlQuery.trim()}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-md bg-brand text-white text-[13px] font-medium disabled:opacity-50 transition-opacity"
+            >
+              {nlSearch.isPending
+                ? <Loader2 size={14} className="animate-spin" />
+                : <Sparkles size={14} />}
+              Search
+            </button>
+            {resultsSource === "nl" && nlSearch.data && (
+              <button
+                onClick={() => { setNlQuery(""); nlSearch.reset(); setResultsSource("structured"); }}
+                className="p-2.5 rounded-md text-ink-mute hover:text-ink hover:bg-surface-2 transition-colors"
+              ><X size={16} /></button>
+            )}
+          </div>
+
+          {resultsSource === "nl" && nlSearch.data?.filters && (
+            <div className="flex flex-wrap gap-1.5 mt-2.5">
+              {(nlSearch.data.filters.titles ?? []).map((t) => (
+                <span key={t} className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-brand/10 text-brand border border-brand/20">{t}</span>
+              ))}
+              {(nlSearch.data.filters.seniorities ?? []).map((s) => (
+                <span key={s} className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-surface-2 text-ink-2 border border-line-soft">{s}</span>
+              ))}
+              {(nlSearch.data.filters.industries ?? []).map((i) => (
+                <span key={i} className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20">{i}</span>
+              ))}
+              {(nlSearch.data.filters.locations ?? []).map((l) => (
+                <span key={l} className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">📍 {l}</span>
+              ))}
+              {(nlSearch.data.filters.company_names ?? []).map((c) => (
+                <span key={c} className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-gold-tint text-gold-dark border border-gold/20">{c}</span>
+              ))}
+              <span className="font-mono text-[9px] text-ink-mute self-center">{nlSearch.data.total} results</span>
+            </div>
+          )}
+          {nlSearch.isError && (
+            <div className="text-[10px] text-red-400 font-mono mt-2">
+              ✗ {(nlSearch.error as Error)?.message || "Failed — check backend"}
+            </div>
+          )}
+        </div>
+
         {/* Search parameters */}
         <div className="card-base mb-5">
           <div className="px-5 py-4 border-b border-line-soft">
@@ -210,7 +288,7 @@ export function LeadDiscoveryPage() {
                 </select>
               </div>
               <button
-                onClick={() => search.mutate()}
+                onClick={() => { setResultsSource("structured"); search.mutate(); }}
                 disabled={search.isPending}
                 className="btn-primary flex items-center gap-2"
               >
@@ -228,18 +306,18 @@ export function LeadDiscoveryPage() {
           <div className="card-base">
             <div className="px-5 py-4 border-b border-line-soft flex items-center justify-between">
               <div className="text-display-md font-semibold text-ink">
-                {search.data ? (
-                  <>Found <span className="text-brand">{search.data.length}</span> Leads</>
+                {activeData ? (
+                  <>Found <span className="text-brand">{activeData.length}</span> Leads</>
                 ) : (
                   <>Results</>
                 )}
               </div>
-              {search.data && (
-                <div className="label-mono">{search.data.length} prospects ready</div>
+              {activeData && (
+                <div className="label-mono">{activeData.length} prospects ready</div>
               )}
             </div>
 
-            {!search.data && !search.isPending && !search.error && (
+            {!activeData && !activePending && !activeError && (
               <div className="py-20 text-center">
                 <Search size={32} className="text-ink-mute mx-auto mb-3" strokeWidth={1.5} />
                 <div className="text-ink-2 text-sm">Set your parameters above and search to discover leads.</div>
@@ -247,28 +325,28 @@ export function LeadDiscoveryPage() {
               </div>
             )}
 
-            {search.isPending && (
+            {activePending && (
               <div className="py-20 text-center text-ink-mute text-sm font-mono">
                 Searching Apollo.io...
               </div>
             )}
 
-            {search.error && (
+            {activeError && (
               <div className="py-20 text-center">
                 <div className="text-danger text-sm font-medium mb-1">Search failed</div>
                 <div className="text-ink-mute text-xs font-mono">
-                  {(search.error as Error).message}
+                  {(activeError as Error).message}
                 </div>
               </div>
             )}
 
-            {search.data && search.data.length === 0 && (
+            {activeData && activeData.length === 0 && (
               <div className="py-20 text-center text-ink-mute text-sm">
                 No leads found. Try broadening your search parameters.
               </div>
             )}
 
-            {search.data && search.data.length > 0 && (
+            {activeData && activeData.length > 0 && (
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[600px] text-xs">
                   <thead>
@@ -284,7 +362,7 @@ export function LeadDiscoveryPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {search.data.map((lead) => (
+                    {activeData.map((lead) => (
                       <Fragment key={lead.id}>
                       <tr
                         onClick={() => openOutreach(lead, "email")}

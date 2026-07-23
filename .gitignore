@@ -41,6 +41,7 @@ backend/storage/diagnostics/
 backend/storage/outreach_queue/
 backend/storage/kickoff_notes/
 backend/storage/campaigns/
+backend/storage/kyc_onepagers/
 backend/storage/credits.json
 # SQLite stats database (binary, regenerated from JSONL on startup)
 backend/storage/stats.db

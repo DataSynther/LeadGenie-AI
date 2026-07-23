@@ -3,7 +3,12 @@
     "id": "t001",
     "title": "AI Governance Concerns Increasing",
     "category": "regulatory",
-    "relevance_tags": ["ai", "governance", "compliance", "risk"],
+    "relevance_tags": [
+      "ai",
+      "governance",
+      "compliance",
+      "risk"
+    ],
     "source": "curated",
     "date": "2026-05-01"
   },
@@ -11,7 +16,12 @@
     "id": "t002",
     "title": "AI Agents Adoption Growing Rapidly",
     "category": "technology",
-    "relevance_tags": ["ai", "agents", "automation", "llm"],
+    "relevance_tags": [
+      "ai",
+      "agents",
+      "automation",
+      "llm"
+    ],
     "source": "curated",
     "date": "2026-05-10"
   },
@@ -19,7 +29,12 @@
     "id": "t003",
     "title": "Snowflake AI Usage Accelerating",
     "category": "technology",
-    "relevance_tags": ["snowflake", "data", "ai", "analytics"],
+    "relevance_tags": [
+      "snowflake",
+      "data",
+      "ai",
+      "analytics"
+    ],
     "source": "curated",
     "date": "2026-05-12"
   },
@@ -27,7 +42,12 @@
     "id": "t004",
     "title": "Cost Optimization Trend in Enterprise Tech",
     "category": "business",
-    "relevance_tags": ["cost", "efficiency", "enterprise", "saas"],
+    "relevance_tags": [
+      "cost",
+      "efficiency",
+      "enterprise",
+      "saas"
+    ],
     "source": "curated",
     "date": "2026-05-15"
   },
@@ -35,8 +55,106 @@
     "id": "t005",
     "title": "Funding Activity Picking Up in AI Infrastructure",
     "category": "funding",
-    "relevance_tags": ["funding", "investment", "ai", "infrastructure"],
+    "relevance_tags": [
+      "funding",
+      "investment",
+      "ai",
+      "infrastructure"
+    ],
     "source": "curated",
     "date": "2026-05-20"
+  },
+  {
+    "id": "ft_2026q1_ai_global",
+    "title": "AI Startups Captured 80% of Global VC in Q1 2026 \u2014 $242B of $300B Total",
+    "category": "funding",
+    "relevance_tags": [
+      "funding",
+      "investment",
+      "ai",
+      "data_science",
+      "generic"
+    ],
+    "source": "Crunchbase News",
+    "region": "Global",
+    "quarter": "2026-Q1",
+    "total_funding_usd": 242000000000,
+    "date": "2026-04-01",
+    "url": "https://news.crunchbase.com/venture/record-breaking-funding-ai-global-q1-2026/"
+  },
+  {
+    "id": "ft_2026h1_na",
+    "title": "North American Startup Funding Hit $392B in H1 2026, Driven by AI Infrastructure",
+    "category": "funding",
+    "relevance_tags": [
+      "funding",
+      "investment",
+      "ai",
+      "cloud",
+      "data_engineering",
+      "north_america"
+    ],
+    "source": "Crunchbase News",
+    "region": "North America",
+    "quarter": "2026-H1",
+    "total_funding_usd": 392000000000,
+    "date": "2026-07-07",
+    "url": "https://news.crunchbase.com/venture/na-startup-funding-ma-shattered-records-ai-q2-2026/"
+  },
+  {
+    "id": "ft_2026q1_europe",
+    "title": "European Venture Funding Rose 30% YoY to $17.6B in Q1 2026 on AI and Fintech Strength",
+    "category": "funding",
+    "relevance_tags": [
+      "funding",
+      "investment",
+      "ai",
+      "fintech",
+      "europe"
+    ],
+    "source": "Crunchbase News",
+    "region": "Europe",
+    "quarter": "2026-Q1",
+    "total_funding_usd": 17600000000,
+    "yoy_change": 0.3,
+    "date": "2026-04-14",
+    "url": "https://news.crunchbase.com/venture/funding-picked-up-ai-led-europe-q1-2026/"
+  },
+  {
+    "id": "ft_2026q1_asia",
+    "title": "China Leads Asia's Startup Funding to a 3-Year High \u2014 $27.4B Deployed in Q1 2026",
+    "category": "funding",
+    "relevance_tags": [
+      "funding",
+      "investment",
+      "ai",
+      "robotics",
+      "asia"
+    ],
+    "source": "Crunchbase News",
+    "region": "Asia",
+    "quarter": "2026-Q1",
+    "total_funding_usd": 27400000000,
+    "date": "2026-04-13",
+    "url": "https://news.crunchbase.com/venture/china-leads-startup-funding-ai-seed-growth-asia-q1-2026/"
+  },
+  {
+    "id": "ft_2025_9m_india_fintech",
+    "title": "India's Fintech Funding Fell 17% YoY to $1.6B in 9M 2025, Yet Ranks 3rd Globally",
+    "category": "funding",
+    "relevance_tags": [
+      "funding",
+      "investment",
+      "fintech",
+      "india",
+      "banking"
+    ],
+    "source": "Tracxn",
+    "region": "India",
+    "quarter": "2025-9M",
+    "total_funding_usd": 1600000000,
+    "yoy_change": -0.17,
+    "date": "2025-10-01",
+    "url": "https://tracxn.com/d/insights/market-reports/india-fintech-funding-report-9m-2025/__YHCnCNVQhF10n7zI6Kxhw7jw4UXE_ilR9hnLy5PnBRQ"
   }
 ]

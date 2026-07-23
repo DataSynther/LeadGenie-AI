@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   Building2, Users, DollarSign, Calendar, Cpu, TrendingUp, TrendingDown, Minus,
-  Sparkles, Target, Flag, Gauge, Loader2,
+  Sparkles, Target, Flag, Gauge, Loader2, ExternalLink, Newspaper,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { cn } from "../../lib/utils";
@@ -158,6 +158,27 @@ function AiInsights({ companyName }: { companyName: string }) {
             ))}
           </div>
         </div>
+      )}
+
+      {research.funding_trend?.title && (
+        <a
+          href={research.funding_trend.url ?? undefined}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-start gap-1.5 px-2.5 py-2 rounded-md bg-surface border border-line-soft hover:border-brand/40 transition-colors group"
+        >
+          <Newspaper size={11} className="text-ink-mute shrink-0 mt-0.5" />
+          <div className="min-w-0">
+            <div className="text-[10px] text-ink-2 leading-snug group-hover:text-ink transition-colors">
+              {research.funding_trend.title}
+            </div>
+            <div className="flex items-center gap-1 mt-0.5 font-mono text-[9px] text-ink-mute">
+              {research.funding_trend.source}
+              {research.funding_trend.quarter ? ` · ${research.funding_trend.quarter}` : ""}
+              {research.funding_trend.url && <ExternalLink size={9} />}
+            </div>
+          </div>
+        </a>
       )}
     </div>
   );

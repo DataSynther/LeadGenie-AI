@@ -21,6 +21,7 @@ export const ROUTE_ROLES: Record<string, UserRole[]> = {
   "/audit":           ["admin", "manager"],
   "/kickoff-notes":   ["admin", "manager"],
   "/announcements":   ["admin", "manager"],
+  "/kyc":             ["admin", "manager", "sdr"],
 };
 
 export function canAccess(role: UserRole, path: string): boolean {
@@ -47,6 +48,7 @@ export const ROLE_NAV: Record<UserRole, NavDef[]> = {
     { to: "/audit",          label: "Audit Trail" },
     { to: "/kickoff-notes",  label: "Kickoff Notes" },
     { to: "/announcements",  label: "Announcements" },
+    { to: "/kyc",            label: "KYC One-Pager" },
   ],
   sdr: [
     { to: "/discover",  label: "Discover Leads" },
@@ -54,6 +56,7 @@ export const ROLE_NAV: Record<UserRole, NavDef[]> = {
     { to: "/approval",  label: "Outreach Queue", liveBadge: true },
     { to: "/network",   label: "Lead Network" },
     { to: "/whatsapp",  label: "WhatsApp Inbox" },
+    { to: "/kyc",       label: "KYC One-Pager" },
   ],
   developer: [
     { to: "/dashboard",    label: "Mission Control" },
@@ -77,6 +80,7 @@ export const ROLE_NAV: Record<UserRole, NavDef[]> = {
     { to: "/audit",        label: "Audit Trail" },
     { to: "/kickoff-notes", label: "Kickoff Notes" },
     { to: "/announcements", label: "Announcements" },
+    { to: "/kyc",           label: "KYC One-Pager" },
   ],
   viewer: [
     { to: "/dashboard", label: "Mission Control" },

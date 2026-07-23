@@ -73,6 +73,7 @@ class FrontendStack(Stack):
                         "/network/*",
                         "/notes/*",
                         "/campaigns/*",
+                        "/kyc/*",
                     ]
                 },
             },

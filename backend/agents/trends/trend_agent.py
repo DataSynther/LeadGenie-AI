@@ -6,6 +6,11 @@ from pathlib import Path
 
 TREND_STORE_PATH = Path(__file__).parent / "trend_store.json"
 
+# Hand-curated, cited quarterly funding data (Crunchbase News, Tracxn, etc.) —
+# real published figures, refreshed manually as new reports come out. See
+# storage/market_data/funding_trends.jsonl for the source list.
+FUNDING_TRENDS_PATH = Path(__file__).parent.parent.parent / "storage" / "market_data" / "funding_trends.jsonl"
+
 RSS_FEEDS = [
     "https://feeds.feedburner.com/venturebeat/SZYF",
     "https://techcrunch.com/feed/",
@@ -55,12 +60,29 @@ CURATED_TRENDS = [
 ]
 
 
+def _load_funding_trends() -> list[dict]:
+    """Load hand-curated, cited quarterly funding trends from disk."""
+    if not FUNDING_TRENDS_PATH.exists():
+        return []
+    trends = []
+    with open(FUNDING_TRENDS_PATH) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                trends.append(json.loads(line))
+            except json.JSONDecodeError:
+                pass
+    return trends
+
+
 class TrendAgent:
     """Manages ingestion and retrieval of market trend intelligence."""
 
     def ingest_trends(self) -> list[dict]:
-        """Pull trends from RSS feeds and merge with curated list."""
-        trends = list(CURATED_TRENDS)
+        """Pull trends from RSS feeds, merge with curated list + cited funding data."""
+        trends = list(CURATED_TRENDS) + _load_funding_trends()
         for url in RSS_FEEDS:
             try:
                 feed = feedparser.parse(url)
