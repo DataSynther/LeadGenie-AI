@@ -24,6 +24,7 @@ import { LeadNetworkPage } from "./pages/LeadNetworkPage";
 import { KickoffNotesPage } from "./pages/KickoffNotesPage";
 import { AnnouncementsPage } from "./pages/AnnouncementsPage";
 import { KYCOnePagerPage } from "./pages/KYCOnePagerPage";
+import { KYCOnePagerDetailPage } from "./pages/KYCOnePagerDetailPage";
 
 function G({ children }: { children: React.ReactNode }) {
   return <RoleGuard>{children}</RoleGuard>;
@@ -59,6 +60,7 @@ function App() {
           <Route path="/kickoff-notes"   element={<G><KickoffNotesPage /></G>} />
           <Route path="/announcements"   element={<G><AnnouncementsPage /></G>} />
           <Route path="/kyc"             element={<G><KYCOnePagerPage /></G>} />
+          <Route path="/kyc/:onepagerId" element={<G><KYCOnePagerDetailPage /></G>} />
         </Route>
       </Routes>
     </>

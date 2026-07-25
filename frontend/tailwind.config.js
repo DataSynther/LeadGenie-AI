@@ -68,10 +68,25 @@ export default {
           from: { opacity: "0", transform: "translateY(8px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
+        "pop-in": {
+          from: { opacity: "0", transform: "scale(0.7) translateY(10px)" },
+          to: { opacity: "1", transform: "scale(1) translateY(0)" },
+        },
+        float: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-6px)" },
+        },
+        "spin-slow": {
+          from: { transform: "rotate(0deg)" },
+          to: { transform: "rotate(360deg)" },
+        },
       },
       animation: {
         "soft-pulse": "pulse 2s infinite",
         "fade-in": "fade-in 0.3s ease",
+        "pop-in": "pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both",
+        float: "float 4s ease-in-out infinite",
+        "spin-slow": "spin-slow 60s linear infinite",
       },
     },
   },
