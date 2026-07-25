@@ -36,15 +36,57 @@ _USERS: dict[str, dict] = {
     "developer": {"password": _hash("dev123"),       "role": "developer"},
     "demo":      {"password": _hash("demo123"),       "role": "viewer"},
 }
+# Sessions live in Redis so every ECS task shares the same session state —
+# an in-process dict here would only be visible to whichever task happened
+# to handle the login, causing random 401s on any request routed to a
+# different task (rolling deploys run 2 tasks briefly; scaling can too).
+# Falls back to an in-process dict only when Redis isn't configured (local
+# dev without Docker/Redis) — fine there since there's only ever one process.
+from storage.redis_client import get_redis
+
 _SESSIONS: dict[str, dict] = {}
+_SESSION_TTL_S = 8 * 3600
 _bearer = HTTPBearer(auto_error=False)
+
+
+def _session_key(token: str) -> str:
+    return f"session:{token}"
+
+
+def _store_session(token: str, username: str, role: str) -> None:
+    r = get_redis()
+    if r is not None:
+        r.setex(_session_key(token), _SESSION_TTL_S, json.dumps({"username": username, "role": role}))
+        return
+    _SESSIONS[token] = {
+        "username": username,
+        "role": role,
+        "expires_at": datetime.utcnow() + timedelta(hours=8),
+    }
+
+
+def _delete_session(token: str) -> None:
+    r = get_redis()
+    if r is not None:
+        r.delete(_session_key(token))
+        return
+    _SESSIONS.pop(token, None)
+
 
 def _get_session(credentials: Optional[HTTPAuthorizationCredentials]) -> dict:
     if not credentials:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    session = _SESSIONS.get(credentials.credentials)
+    token = credentials.credentials
+    r = get_redis()
+    if r is not None:
+        raw = r.get(_session_key(token))
+        if not raw:
+            raise HTTPException(status_code=401, detail="Session expired or invalid")
+        data = json.loads(raw)
+        return {"username": data["username"], "role": data["role"]}
+    session = _SESSIONS.get(token)
     if not session or datetime.utcnow() > session["expires_at"]:
-        _SESSIONS.pop(credentials.credentials, None)
+        _SESSIONS.pop(token, None)
         raise HTTPException(status_code=401, detail="Session expired or invalid")
     return session
 
@@ -348,11 +390,7 @@ def auth_login(req: LoginRequest):
         raise HTTPException(status_code=401, detail="Invalid username or password")
     token = secrets.token_urlsafe(32)
     role  = user_rec["role"]
-    _SESSIONS[token] = {
-        "username":   username,
-        "role":       role,
-        "expires_at": datetime.utcnow() + timedelta(hours=8),
-    }
+    _store_session(token, username, role)
     return {"token": token, "username": username, "role": role}
 
 
@@ -365,7 +403,7 @@ def auth_me(credentials: Optional[HTTPAuthorizationCredentials] = Depends(_beare
 @app.post("/auth/logout")
 def auth_logout(credentials: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
     if credentials:
-        _SESSIONS.pop(credentials.credentials, None)
+        _delete_session(credentials.credentials)
     return {"ok": True}
 
 

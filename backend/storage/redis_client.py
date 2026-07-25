@@ -22,13 +22,12 @@ def get_redis():
         return None
     try:
         import redis
-        _client = redis.from_url(
-            url,
-            decode_responses=True,
-            socket_connect_timeout=3,
-            socket_timeout=3,
-            ssl_cert_reqs=None,  # ElastiCache uses self-signed cert
-        )
+        kwargs = dict(decode_responses=True, socket_connect_timeout=3, socket_timeout=3)
+        if url.startswith("rediss://"):
+            # Only the TLS connection class accepts this kwarg — passing it
+            # for a plain redis:// URL (local Docker) raises a TypeError.
+            kwargs["ssl_cert_reqs"] = None  # ElastiCache uses a self-signed cert
+        _client = redis.from_url(url, **kwargs)
         _client.ping()
         logger.info("Redis connected: %s", url.split("@")[-1])
     except Exception as exc:
