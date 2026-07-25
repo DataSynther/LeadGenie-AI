@@ -2731,8 +2731,8 @@ async def generate_kyc_onepager(
         logger.warning("KYC one-pager funding trend attach failed: %s", exc)
 
     # Real, dated quarterly revenue (US public companies only) + a couple of
-    # extracts from the company's own site — both best-effort, run in parallel.
-    from services import sec_edgar, website_fetcher
+    # extracts from the company's own site — all best-effort, run in parallel.
+    from services import sec_edgar, website_fetcher, leadfeeder
 
     async def _fetch_sec_revenue():
         try:
@@ -2751,11 +2751,24 @@ async def generate_kyc_onepager(
             logger.warning("Website fetch failed: %s", exc)
             return []
 
-    sec_revenue, website_pages = await asyncio.gather(_fetch_sec_revenue(), _fetch_website())
+    async def _fetch_website_visit():
+        if not leadfeeder.is_configured():
+            return None
+        try:
+            return await asyncio.to_thread(
+                leadfeeder.get_visits_for_company, company.get("name") or "", req.company_domain
+            )
+        except Exception as exc:
+            logger.warning("Leadfeeder lookup failed: %s", exc)
+            return None
+
+    sec_revenue, website_pages, website_visit = await asyncio.gather(
+        _fetch_sec_revenue(), _fetch_website(), _fetch_website_visit()
+    )
 
     onepager = await asyncio.to_thread(
         kyc_onepager_generator.generate, company, research, matches, funding_trend,
-        sec_revenue, website_pages,
+        sec_revenue, website_pages, website_visit,
     )
     record = kyc_onepagers_store.save_onepager(
         company_name=company.get("name") or req.company_name or req.company_domain,

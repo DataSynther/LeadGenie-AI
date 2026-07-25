@@ -27,6 +27,7 @@ class OnePagerGenerator:
         funding_trend: dict | None = None,
         sec_revenue: list[dict] | None = None,
         website_pages: list[dict] | None = None,
+        website_visit: dict | None = None,
     ) -> dict:
         sources: list[dict] = []
 
@@ -77,6 +78,19 @@ class OnePagerGenerator:
         # ── From the Company — short extracts from the company's own site ──────
         website_bullets = self._build_website_highlights(company, website_pages, add_source)
 
+        # ── Website Engagement — has THIS company visited OUR site? (Leadfeeder) ──
+        engagement_bullets = []
+        if website_visit:
+            lf_id = add_source("Leadfeeder", "https://app.leadfeeder.com")
+            parts = [f"{website_visit['company_name']} has visited our website"]
+            if website_visit.get("visit_count"):
+                parts.append(f"{website_visit['visit_count']} visit(s)")
+            if website_visit.get("pageviews"):
+                parts.append(f"{website_visit['pageviews']} pageview(s)")
+            if website_visit.get("last_visit"):
+                parts.append(f"last seen {website_visit['last_visit']}")
+            engagement_bullets.append({"text": " — ".join(parts), "source_id": lf_id})
+
         # ── Strategic direction / pain points — from research_agent, AI-inferred ──
         strategy_bullets = [
             {"text": p, "source_id": ai_id} for p in (research.get("strategic_priorities") or [])
@@ -101,6 +115,7 @@ class OnePagerGenerator:
                 *([{"title": "Financial Performance", "bullets": finance_bullets}] if finance_bullets else []),
                 *([{"title": "Market Context", "bullets": market_bullets}] if market_bullets else []),
                 *([{"title": "From the Company", "bullets": website_bullets}] if website_bullets else []),
+                *([{"title": "Website Engagement", "bullets": engagement_bullets}] if engagement_bullets else []),
                 {"title": "Strategic Direction", "bullets": strategy_bullets},
                 {"title": "Pain Points & Challenges", "bullets": pain_bullets},
                 {"title": "Suggested Talking Points", "bullets": talking_points},
