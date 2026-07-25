@@ -270,6 +270,13 @@ class KYCOnePagerRequest(BaseModel):
     company_name: Optional[str] = None
 
 
+class KYCChatRequest(BaseModel):
+    company_name: str
+    onepager: dict
+    message: str
+    history: list[dict] = []
+
+
 class CampaignSendRequest(BaseModel):
     subject: str
     body: str
@@ -2723,8 +2730,32 @@ async def generate_kyc_onepager(
     except Exception as exc:
         logger.warning("KYC one-pager funding trend attach failed: %s", exc)
 
+    # Real, dated quarterly revenue (US public companies only) + a couple of
+    # extracts from the company's own site — both best-effort, run in parallel.
+    from services import sec_edgar, website_fetcher
+
+    async def _fetch_sec_revenue():
+        try:
+            match = await asyncio.to_thread(sec_edgar.lookup_cik, company.get("name") or req.company_name or "")
+            if not match:
+                return []
+            return await asyncio.to_thread(sec_edgar.get_quarterly_revenue, match["cik"], 4)
+        except Exception as exc:
+            logger.warning("SEC EDGAR lookup failed: %s", exc)
+            return []
+
+    async def _fetch_website():
+        try:
+            return await asyncio.to_thread(website_fetcher.fetch_company_pages, req.company_domain)
+        except Exception as exc:
+            logger.warning("Website fetch failed: %s", exc)
+            return []
+
+    sec_revenue, website_pages = await asyncio.gather(_fetch_sec_revenue(), _fetch_website())
+
     onepager = await asyncio.to_thread(
-        kyc_onepager_generator.generate, company, research, matches, funding_trend
+        kyc_onepager_generator.generate, company, research, matches, funding_trend,
+        sec_revenue, website_pages,
     )
     record = kyc_onepagers_store.save_onepager(
         company_name=company.get("name") or req.company_name or req.company_domain,
@@ -2761,3 +2792,15 @@ async def export_kyc_onepager_docx(onepager_id: str, session: dict = Depends(_re
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+@app.post("/kyc/chat")
+async def kyc_chat(req: KYCChatRequest, session: dict = Depends(_require_role("sdr"))):
+    """Follow-up Q&A about a company, grounded strictly in its already-generated
+    briefing — no new data is fetched, so answers outside the briefing say so
+    rather than guessing."""
+    from agents.kyc.chat_agent import answer
+    response_text = await asyncio.to_thread(
+        answer, req.company_name, req.onepager, req.message, req.history
+    )
+    return {"response": response_text}

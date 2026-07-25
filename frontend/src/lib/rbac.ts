@@ -42,21 +42,21 @@ export interface NavDef {
 
 export const ROLE_NAV: Record<UserRole, NavDef[]> = {
   admin: [
+    { to: "/kyc",            label: "KYC One-Pager" },
     { to: "/dashboard",      label: "Mission Control" },
     { to: "/governance",     label: "Contact Governance" },
     { to: "/finops",         label: "AI FinOps" },
     { to: "/audit",          label: "Audit Trail" },
     { to: "/kickoff-notes",  label: "Kickoff Notes" },
     { to: "/announcements",  label: "Announcements" },
-    { to: "/kyc",            label: "KYC One-Pager" },
   ],
   sdr: [
+    { to: "/kyc",       label: "KYC One-Pager" },
     { to: "/discover",  label: "Discover Leads" },
     { to: "/dashboard", label: "Mission Control" },
     { to: "/approval",  label: "Outreach Queue", liveBadge: true },
     { to: "/network",   label: "Lead Network" },
     { to: "/whatsapp",  label: "WhatsApp Inbox" },
-    { to: "/kyc",       label: "KYC One-Pager" },
   ],
   developer: [
     { to: "/dashboard",    label: "Mission Control" },
@@ -68,6 +68,7 @@ export const ROLE_NAV: Record<UserRole, NavDef[]> = {
     { to: "/prompt-versions", label: "Prompt Versions" },
   ],
   manager: [
+    { to: "/kyc",           label: "KYC One-Pager" },
     { to: "/discover",     label: "Discover Leads" },
     { to: "/dashboard",    label: "Mission Control" },
     { to: "/approval",     label: "Outreach Queue", liveBadge: true },
@@ -80,7 +81,6 @@ export const ROLE_NAV: Record<UserRole, NavDef[]> = {
     { to: "/audit",        label: "Audit Trail" },
     { to: "/kickoff-notes", label: "Kickoff Notes" },
     { to: "/announcements", label: "Announcements" },
-    { to: "/kyc",           label: "KYC One-Pager" },
   ],
   viewer: [
     { to: "/dashboard", label: "Mission Control" },

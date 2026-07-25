@@ -1293,6 +1293,14 @@ export async function downloadKycOnepagerDocx(id: string, companyName: string): 
   URL.revokeObjectURL(url);
 }
 
+export interface KycChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export const kycChat = (companyName: string, onepager: OnePagerContent, message: string, history: KycChatMessage[]) =>
+  post<{ response: string }>("/kyc/chat", { company_name: companyName, onepager, message, history });
+
 // ── Achievement Campaigns (manager/admin) ─────────────────────────────────────
 
 export interface CampaignGroup {
@@ -1413,6 +1421,7 @@ export const api = {
   listKycOnepagers,
   getKycOnepager,
   downloadKycOnepagerDocx,
+  kycChat,
   campaignGroups,
   campaignSubscribers,
   addCampaignSubscriber,

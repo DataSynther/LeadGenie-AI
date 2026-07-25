@@ -25,6 +25,8 @@ class OnePagerGenerator:
         research: dict,
         kb_matches: list[dict],
         funding_trend: dict | None = None,
+        sec_revenue: list[dict] | None = None,
+        website_pages: list[dict] | None = None,
     ) -> dict:
         sources: list[dict] = []
 
@@ -63,6 +65,18 @@ class OnePagerGenerator:
             fid = add_source(funding_trend.get("source") or "Market report", funding_trend.get("url"))
             market_bullets.append({"text": funding_trend["title"], "source_id": fid})
 
+        # ── Financial Performance — real, dated, SEC-cited (US public companies only) ──
+        finance_bullets = []
+        for q in (sec_revenue or []):
+            sid = add_source(f"SEC EDGAR filing ({q['form']}, filed {q['filed']})", q.get("url"))
+            finance_bullets.append({
+                "text": f"Revenue for quarter ending {q['end']}: ${q['revenue_usd']:,}",
+                "source_id": sid,
+            })
+
+        # ── From the Company — short extracts from the company's own site ──────
+        website_bullets = self._build_website_highlights(company, website_pages, add_source)
+
         # ── Strategic direction / pain points — from research_agent, AI-inferred ──
         strategy_bullets = [
             {"text": p, "source_id": ai_id} for p in (research.get("strategic_priorities") or [])
@@ -84,13 +98,57 @@ class OnePagerGenerator:
             "headline": headline,
             "sections": [
                 {"title": "Company Overview", "bullets": overview_bullets},
+                *([{"title": "Financial Performance", "bullets": finance_bullets}] if finance_bullets else []),
                 *([{"title": "Market Context", "bullets": market_bullets}] if market_bullets else []),
+                *([{"title": "From the Company", "bullets": website_bullets}] if website_bullets else []),
                 {"title": "Strategic Direction", "bullets": strategy_bullets},
                 {"title": "Pain Points & Challenges", "bullets": pain_bullets},
                 {"title": "Suggested Talking Points", "bullets": talking_points},
             ],
             "sources": sources,
         }
+
+    def _build_website_highlights(
+        self, company: dict, website_pages: list[dict] | None, add_source
+    ) -> list[dict]:
+        """Extract a couple of short, factual statements straight from the
+        company's own site — cited to that exact page, not to AI inference."""
+        if not website_pages:
+            return []
+
+        pages_text = "\n\n".join(
+            f"[Page: {p['url']}]\n{p['text'][:1500]}" for p in website_pages
+        )
+        prompt = f"""Below is raw text extracted from {company.get('name')}'s own website.
+
+{pages_text}
+
+Pull out up to 3 short, notable factual statements about the company's current
+positioning, products, or initiatives — things the company says about itself,
+not your own analysis. Paraphrase for brevity but do not invent anything not
+present in the text. For each, note which page URL it came from.
+
+Respond as a JSON array only: [{{"text": "...", "page_url": "..."}}]
+If nothing notable is present, respond with an empty array []."""
+
+        try:
+            response = client.messages.create(
+                model=MODEL, max_tokens=400,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            text = response.content[0].text.strip()
+            text = re.sub(r"^```(?:json)?\s*", "", text)
+            text = re.sub(r"\s*```$", "", text)
+            items = json.loads(text)
+        except Exception:
+            return []
+
+        bullets = []
+        for item in items:
+            page_url = item.get("page_url")
+            sid = add_source("Company Website", page_url)
+            bullets.append({"text": item.get("text", ""), "source_id": sid})
+        return bullets
 
     def _build_talking_points(
         self, company: dict, research: dict, kb_matches: list[dict], add_source
