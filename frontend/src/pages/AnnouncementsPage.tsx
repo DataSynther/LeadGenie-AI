@@ -110,7 +110,7 @@ export function AnnouncementsPage() {
     <>
       <Topbar
         breadcrumb="Leadership / Announcements"
-        title={<>Announce an <em className="text-brand italic">Achievement</em></>}
+        title={<>Announce an <span className="text-brand">Achievement</span></>}
       />
 
       <div className="p-4 sm:p-8 pb-20 space-y-5">

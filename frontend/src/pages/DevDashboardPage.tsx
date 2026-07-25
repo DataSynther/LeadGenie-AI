@@ -800,7 +800,7 @@ export function DevDashboardPage() {
     <>
       <Topbar
         breadcrumb="Developer's Tool"
-        title={<>Developer's <em className="text-brand italic">Tool</em></>}
+        title={<>Developer's <span className="text-brand">Tool</span></>}
         right={
           <div className="flex items-center gap-2.5">
             {activeTab === "observability" && (

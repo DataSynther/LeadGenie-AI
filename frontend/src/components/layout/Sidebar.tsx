@@ -138,7 +138,7 @@ export function Sidebar() {
         <img
           src="/bot-logo.png"
           alt="LeadGenie bot"
-          className="w-20 h-20 md:w-30 md:h-30 rounded-full object-cover ring-2 ring-brand/40 shadow-[0_0_16px_rgba(106,50,122,0.30)] mb-3"
+          className="w-20 h-20 md:w-30 md:h-30 rounded-full object-cover ring-2 ring-brand/40 shadow-[0_0_16px_rgba(109,40,217,0.30)] mb-3"
         />
         <div className="font-serif text-[28px] md:text-[32px] leading-none tracking-[-0.02em] text-ink">
           Lead<em className="text-brand italic">Genie</em>

@@ -13,8 +13,8 @@ export function StatusPill({
 }: StatusPillProps) {
   const dotColor =
     tone === "danger"
-      ? "bg-danger shadow-[0_0_8px_#FF6F3D]"
-      : "bg-brand shadow-[0_0_8px_#6A327A]";
+      ? "bg-danger shadow-[0_0_8px_#DC2626]"
+      : "bg-brand shadow-[0_0_8px_#6D28D9]";
   return (
     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-surface border border-line rounded-full font-mono text-[10px] uppercase tracking-[0.08em] text-ink-2">
       <span

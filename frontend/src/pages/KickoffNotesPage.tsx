@@ -132,7 +132,7 @@ export function KickoffNotesPage() {
     <>
       <Topbar
         breadcrumb="Leadership / Kickoff Notes"
-        title={<>Kickoff <em className="text-brand italic">Notes</em></>}
+        title={<>Kickoff <span className="text-brand">Notes</span></>}
       />
 
       <div className="p-4 sm:p-8 pb-20 grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-5">

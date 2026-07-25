@@ -49,15 +49,15 @@ export default {
         mono: ['"JetBrains Mono"', "monospace"],
       },
       fontSize: {
-        "display-xl": ["38px", { lineHeight: "1", letterSpacing: "-0.02em" }],
-        "display-lg": ["28px", { lineHeight: "1.1", letterSpacing: "-0.01em" }],
-        "display-md": ["20px", { lineHeight: "1.2", letterSpacing: "-0.01em" }],
+        "display-xl": ["44px", { lineHeight: "1.05", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-lg": ["32px", { lineHeight: "1.15", letterSpacing: "-0.015em", fontWeight: "700" }],
+        "display-md": ["22px", { lineHeight: "1.2", letterSpacing: "-0.01em", fontWeight: "600" }],
         label: ["10px", { lineHeight: "1.4", letterSpacing: "0.12em" }],
       },
       boxShadow: {
         card: "0 1px 2px rgba(0, 0, 0, 0.05)",
         "card-hover": "0 4px 12px rgba(0, 0, 0, 0.08)",
-        "btn-brand": "0 8px 24px -8px rgba(106, 50, 122, 0.45)",
+        "btn-brand": "0 8px 24px -8px rgba(109, 40, 217, 0.45)",
       },
       keyframes: {
         pulse: {

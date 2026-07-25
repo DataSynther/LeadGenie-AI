@@ -391,7 +391,7 @@ export function ApprovalQueuePage() {
     <>
       <Topbar
         breadcrumb="Workspace / Outreach Queue"
-        title={<>Outreach <em className="text-brand italic">Queue</em></>}
+        title={<>Outreach <span className="text-brand">Queue</span></>}
         right={
           <div className="flex items-center gap-2">
             <StatusPill tone={govFailed > 0 ? "danger" : "brand"}>

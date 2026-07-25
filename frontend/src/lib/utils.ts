@@ -21,6 +21,13 @@ export function formatRelativeTime(iso: string): string {
   return `${diffDay}d ago`;
 }
 
+/** Best-effort domain guess for logo lookup when no real domain is on hand
+ * (e.g. a lead/company record that only carries a name and maybe an email). */
+export function guessCompanyDomain(companyName: string, email?: string | null): string {
+  if (email?.includes("@")) return email.split("@")[1];
+  return companyName.toLowerCase().replace(/[^a-z0-9]/g, "") + ".com";
+}
+
 export const STAGE_LABELS: Record<string, string> = {
   new: "New",
   researching: "Researching",

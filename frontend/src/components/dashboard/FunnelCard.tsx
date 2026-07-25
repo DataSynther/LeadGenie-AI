@@ -7,10 +7,10 @@ interface FunnelRow {
 }
 
 const FILL_GRADIENTS = [
-  "linear-gradient(90deg, #4A2256, #6A327A)",
-  "linear-gradient(90deg, #6A327A, #8B4FA0)",
-  "linear-gradient(90deg, #8B4FA0, #B26FBE)",
-  "linear-gradient(90deg, #C58324, #E29F25)",
+  "linear-gradient(90deg, #4C1D95, #6D28D9)",
+  "linear-gradient(90deg, #6D28D9, #8B5CF6)",
+  "linear-gradient(90deg, #8B5CF6, #C4B5FD)",
+  "linear-gradient(90deg, #B45309, #D97706)",
 ];
 
 export function FunnelCard({ rows }: { rows: FunnelRow[] }) {
@@ -18,7 +18,7 @@ export function FunnelCard({ rows }: { rows: FunnelRow[] }) {
     <div className="card-base flex flex-col max-h-[340px]">
       <div className="px-5 py-3 border-b border-line-soft flex items-center justify-between flex-shrink-0">
         <div className="font-serif text-display-md text-ink">
-          Pipeline <em className="text-brand italic">funnel</em>
+          Pipeline <span className="text-brand">funnel</span>
         </div>
         <div className="label-mono">Last 30 days</div>
       </div>

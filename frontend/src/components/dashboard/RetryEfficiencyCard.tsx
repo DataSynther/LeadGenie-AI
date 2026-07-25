@@ -86,7 +86,7 @@ export function RetryEfficiencyCard({ finops, extended }: {
     <div className="card-base h-full flex flex-col">
       <div className="px-5 py-3 border-b border-line-soft flex items-center justify-between flex-shrink-0">
         <div className="font-serif text-display-md text-ink">
-          Retry <em className="text-brand italic">efficiency</em>
+          Retry <span className="text-brand">efficiency</span>
         </div>
         <div className="label-mono">pipeline flow</div>
       </div>

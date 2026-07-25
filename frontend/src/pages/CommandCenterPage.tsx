@@ -337,7 +337,7 @@ export function CommandCenterPage() {
     <>
       <Topbar
         breadcrumb="Command Center / Overview"
-        title={<>AI Governance <em className="text-brand italic">Command Center</em></>}
+        title={<>AI Governance <span className="text-brand">Command Center</span></>}
         right={
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 bg-surface-2 border border-line-soft rounded-lg px-3 py-1.5">

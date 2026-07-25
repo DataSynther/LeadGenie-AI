@@ -5,6 +5,7 @@ import {
   Building2, Landmark, TrendingUp, MessageSquareText, Send, Bot, User,
 } from "lucide-react";
 import { Topbar } from "../components/layout/Topbar";
+import { CompanyLogo } from "../components/CompanyLogo";
 import { api, type KYCOnePagerRecord, type OnePagerSource, type OnePagerSection, type KycChatMessage } from "../lib/api";
 import { cn } from "../lib/utils";
 
@@ -228,11 +229,14 @@ function OnePagerDetail({ record, detailRef }: { record: KYCOnePagerRecord; deta
   return (
     <div ref={detailRef} className="card-base p-6 space-y-5 scroll-mt-6">
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="font-mono text-[10px] uppercase tracking-widest text-brand mb-1.5">
-            {record.company_name} · {new Date(record.created_at).toLocaleDateString()}
+        <div className="flex items-start gap-3 min-w-0">
+          <CompanyLogo domain={record.company_domain} name={record.company_name} size={36} className="mt-0.5" />
+          <div className="min-w-0">
+            <div className="font-mono text-[10px] uppercase tracking-widest text-brand mb-1.5">
+              {record.company_name} · {new Date(record.created_at).toLocaleDateString()}
+            </div>
+            <div className="font-sans font-semibold text-[19px] text-ink leading-snug">{onepager.headline}</div>
           </div>
-          <div className="font-serif text-[19px] text-ink leading-snug">{onepager.headline}</div>
         </div>
         <button
           onClick={handleExport}
@@ -383,7 +387,7 @@ export function KYCOnePagerPage() {
     <>
       <Topbar
         breadcrumb="Sales / Know Your Customer"
-        title={<>KYC <em className="text-brand italic">One-Pager</em></>}
+        title={<>KYC <span className="text-brand">One-Pager</span></>}
       />
 
       <div className="p-4 sm:p-8 pb-20">
@@ -454,9 +458,14 @@ export function KYCOnePagerPage() {
                         : "bg-surface border-line-soft hover:border-line"
                     )}
                   >
-                    <div className="text-[12px] font-medium text-ink truncate">{o.company_name}</div>
-                    <div className="text-[10px] text-ink-mute font-mono mt-0.5">
-                      {new Date(o.created_at).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
+                    <div className="flex items-center gap-2">
+                      <CompanyLogo domain={o.company_domain} name={o.company_name} size={20} />
+                      <div className="min-w-0">
+                        <div className="text-[12px] font-medium text-ink truncate">{o.company_name}</div>
+                        <div className="text-[10px] text-ink-mute font-mono mt-0.5">
+                          {new Date(o.created_at).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
+                        </div>
+                      </div>
                     </div>
                   </button>
                 ))}

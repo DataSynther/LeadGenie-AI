@@ -75,7 +75,7 @@ export function CampaignsPage() {
     <>
       <Topbar
         breadcrumb="Workspace / Campaigns / New"
-        title={<>Campaign <em className="text-brand italic">Studio</em></>}
+        title={<>Campaign <span className="text-brand">Studio</span></>}
         right={
           <>
             <button className="btn-ghost">Save Draft</button>
@@ -88,7 +88,7 @@ export function CampaignsPage() {
         <div className="card-base mb-5">
           <div className="px-5 py-4 border-b border-line-soft flex items-center justify-between">
             <div className="font-serif text-display-md text-ink">
-              Ideal <em className="text-brand italic">Customer Profile</em>
+              Ideal <span className="text-brand">Customer Profile</span>
             </div>
             <div className="label-mono">Step 1 of 3</div>
           </div>
@@ -140,7 +140,7 @@ export function CampaignsPage() {
         <div className="card-base">
           <div className="px-5 py-4 border-b border-line-soft flex items-center justify-between">
             <div className="font-serif text-display-md text-ink">
-              Outreach <em className="text-brand italic">sequence</em>
+              Outreach <span className="text-brand">sequence</span>
             </div>
             <div className="label-mono">Step 2 of 3 · 14 day cadence</div>
           </div>

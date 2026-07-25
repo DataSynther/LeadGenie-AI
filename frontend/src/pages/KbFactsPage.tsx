@@ -57,7 +57,7 @@ export function KbFactsPage() {
       <div className="flex items-center justify-between">
         <div>
           <div className="font-serif text-[26px] text-ink leading-tight">
-            Retrieved <em className="text-brand italic">Fact Highlights</em>
+            Retrieved <span className="text-brand">Fact Highlights</span>
           </div>
           <div className="text-[12px] text-ink-mute mt-1">
             Case studies &amp; verified claims surfaced during email generation

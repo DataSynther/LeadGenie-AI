@@ -27,7 +27,7 @@ export function AgentFeedCard() {
     <div className="card-base">
       <div className="px-5 py-4 border-b border-line-soft flex items-center justify-between">
         <div className="font-serif text-display-md text-ink">
-          Agent <em className="text-brand italic">activity</em>
+          Agent <span className="text-brand">activity</span>
         </div>
         <div className="label-mono">Live</div>
       </div>

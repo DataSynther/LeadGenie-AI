@@ -12,7 +12,7 @@ export function ConversationsPage() {
     <>
       <Topbar
         breadcrumb="Workspace / Conversations"
-        title={<>Active <em className="text-brand italic">Conversations</em></>}
+        title={<>Active <span className="text-brand">Conversations</span></>}
         right={
           <>
             <button className="btn-ghost">All</button>

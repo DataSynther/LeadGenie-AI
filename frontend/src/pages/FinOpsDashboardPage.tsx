@@ -1461,7 +1461,7 @@ export function FinOpsDashboardPage() {
     <>
       <Topbar
         breadcrumb="Workspace / AI FinOps"
-        title={<>AI <em className="text-brand italic">FinOps</em></>}
+        title={<>AI <span className="text-brand">FinOps</span></>}
         right={
           <div className="flex items-center gap-2">
             <button onClick={() => refetch()}

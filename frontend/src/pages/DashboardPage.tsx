@@ -1275,7 +1275,7 @@ export function DashboardPage() {
         breadcrumb="Workspace / Dashboard"
         title={
           <>
-            Mission <em className="text-brand italic">Control</em>
+            Mission <span className="text-brand">Control</span>
           </>
         }
         right={

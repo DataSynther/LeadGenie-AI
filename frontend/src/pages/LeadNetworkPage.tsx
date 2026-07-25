@@ -2,8 +2,9 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Search, Network, List, ExternalLink, Tag, X, Loader2, Eye, GraduationCap, Sparkles, Briefcase } from "lucide-react";
 import { Topbar } from "../components/layout/Topbar";
+import { CompanyLogo } from "../components/CompanyLogo";
 import { api, type NetworkLead, type NetworkGraphData } from "../lib/api";
-import { cn } from "../lib/utils";
+import { cn, guessCompanyDomain } from "../lib/utils";
 
 const SKILL_COLOUR  = "#34d399";
 const SCHOOL_COLOUR = "#fbbf24";
@@ -225,7 +226,14 @@ function LeadRow({ lead, onTag, onView }: { lead: NetworkLead; onTag: (id: strin
           <div className="text-[10px] text-ink-mute">{lead.title}</div>
         </button>
       </td>
-      <td className="px-3 py-2 text-[11px] text-ink-2">{lead.company}</td>
+      <td className="px-3 py-2 text-[11px] text-ink-2">
+        {lead.company && (
+          <div className="flex items-center gap-1.5">
+            <CompanyLogo domain={guessCompanyDomain(lead.company)} name={lead.company} size={18} />
+            {lead.company}
+          </div>
+        )}
+      </td>
       <td className="px-3 py-2 text-[11px] text-ink-2">{lead.industry}</td>
       <td className="px-3 py-2 text-[11px] text-ink-2">{lead.region}</td>
       <td className="px-3 py-2">
@@ -460,7 +468,7 @@ export function LeadNetworkPage() {
     <>
       <Topbar
         breadcrumb="Lead Network"
-        title={<>Lead <em className="text-brand italic">Network</em></>}
+        title={<>Lead <span className="text-brand">Network</span></>}
         right={
           <div className="flex items-center gap-2">
             <span className="font-mono text-[10px] text-ink-mute px-2 py-1 rounded bg-surface-2 border border-line-soft">

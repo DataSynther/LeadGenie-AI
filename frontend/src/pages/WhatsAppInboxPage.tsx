@@ -134,7 +134,7 @@ export function WhatsAppInboxPage() {
     <>
       <Topbar
         breadcrumb="Workspace / WhatsApp Inbox"
-        title={<>WhatsApp <em className="text-brand italic">Inbox</em></>}
+        title={<>WhatsApp <span className="text-brand">Inbox</span></>}
         right={
           inbox.data?.unread_count ? (
             <span className="rounded-md bg-danger text-white px-2.5 py-1 text-[11px] font-mono font-semibold">

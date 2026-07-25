@@ -4,10 +4,11 @@ import { Search, UserPlus, Zap, MessageCircle, Lock, Unlock, Sparkles, Loader2, 
 import { Topbar } from "../components/layout/Topbar";
 import { ResearchPanel } from "../components/research/ResearchPanel";
 import { KnowYourCustomerRow } from "../components/discovery/KnowYourCustomer";
+import { CompanyLogo } from "../components/CompanyLogo";
 import { api } from "../lib/api";
 import type { Lead, RevealResult } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
-import { cn } from "../lib/utils";
+import { cn, guessCompanyDomain } from "../lib/utils";
 
 const ROLE_RANK: Record<string, number> = { viewer: 0, sdr: 1, manager: 2, admin: 3 };
 
@@ -378,7 +379,10 @@ export function LeadDiscoveryPage() {
                           {lead.title}
                         </td>
                         <td className="px-5 py-4 border-b border-line-soft text-ink">
-                          {lead.company}
+                          <div className="flex items-center gap-2">
+                            <CompanyLogo domain={guessCompanyDomain(lead.company, lead.email)} name={lead.company} size={22} />
+                            {lead.company}
+                          </div>
                         </td>
                         <td className="px-5 py-4 border-b border-line-soft">
                           <span className="font-mono text-[10px] uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-2 text-ink border border-line-soft">

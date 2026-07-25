@@ -8,34 +8,39 @@
 :root {
   color-scheme: light;
 
-  --c-brand:         106 50 122;
-  --c-brand-soft:    232 223 255;
-  --c-brand-dark:    74 34 86;
+  /* Vivid violet — modern SaaS accent (Linear/Ashby family), far more
+     saturated than the old muted purple. */
+  --c-brand:         109 40 217;
+  --c-brand-soft:    237 233 254;
+  --c-brand-dark:    76 29 149;
 
-  --c-gold:          250 184 24;
-  --c-gold-tint:     255 248 231;
-  --c-gold-dark:     176 122 0;
+  --c-gold:          217 119 6;
+  --c-gold-tint:     255 251 235;
+  --c-gold-dark:     146 64 14;
 
-  --c-ink:           51 51 51;
-  --c-ink-2:         128 128 128;
-  --c-ink-mute:      176 176 176;
+  /* Near-black text — was mid-gray (51 51 51), which read as faded.
+     17 17 19 is the "modern SaaS black" used by Linear/Vercel/Stripe —
+     softer than pure #000 but reads as solidly black at UI sizes. */
+  --c-ink:           17 17 19;
+  --c-ink-2:          82 82 91;
+  --c-ink-mute:      113 113 122;
 
-  --c-canvas:        250 250 251;
+  --c-canvas:        249 250 251;
   --c-surface:       255 255 255;
-  --c-surface-2:     243 239 245;
-  --c-surface-hover: 226 223 228;
+  --c-surface-2:     244 244 246;
+  --c-surface-hover: 233 233 237;
 
-  --c-line:          208 202 212;
-  --c-line-soft:     234 230 236;
+  --c-line:          212 212 219;
+  --c-line-soft:     229 229 234;
 
-  --c-info:          43 76 255;
-  --c-info-tint:     232 223 255;
+  --c-info:          37 99 235;
+  --c-info-tint:     239 246 255;
 
-  --c-danger:        255 111 61;
-  --c-danger-tint:   255 239 233;
+  --c-danger:        220 38 38;
+  --c-danger-tint:   254 242 242;
 
-  --c-magenta:       234 102 238;
-  --c-magenta-dark:  168 50 168;
+  --c-magenta:       219 39 119;
+  --c-magenta-dark:  157 23 77;
 }
 
 /* ── Dark mode tokens ────────────────────────────────────────── */
@@ -43,34 +48,34 @@
 html.dark {
   color-scheme: dark;
 
-  --c-brand:         148 88 170;
-  --c-brand-soft:    42 22 60;
-  --c-brand-dark:    172 120 195;
+  --c-brand:         167 139 250;
+  --c-brand-soft:    45 30 90;
+  --c-brand-dark:    196 181 253;
 
-  --c-gold:          250 184 24;
+  --c-gold:          251 191 36;
   --c-gold-tint:     40 30 8;
-  --c-gold-dark:     220 165 70;
+  --c-gold-dark:     217 160 60;
 
-  --c-ink:           235 232 242;
-  --c-ink-2:         140 134 158;
-  --c-ink-mute:      78 72 96;
+  --c-ink:           250 250 250;
+  --c-ink-2:         161 161 170;
+  --c-ink-mute:       90 90 100;
 
-  --c-canvas:        11 11 15;
-  --c-surface:       18 18 24;
-  --c-surface-2:     26 24 34;
-  --c-surface-hover: 36 34 46;
+  --c-canvas:        9 9 11;
+  --c-surface:       18 18 23;
+  --c-surface-2:     27 27 34;
+  --c-surface-hover: 39 39 47;
 
-  --c-line:          52 48 64;
-  --c-line-soft:     36 32 50;
+  --c-line:          52 52 63;
+  --c-line-soft:     36 36 45;
 
-  --c-info:          92 116 255;
+  --c-info:          96 141 255;
   --c-info-tint:     18 24 60;
 
-  --c-danger:        255 120 80;
+  --c-danger:        248 113 113;
   --c-danger-tint:   48 18 12;
 
-  --c-magenta:       234 102 238;
-  --c-magenta-dark:  200 90 200;
+  --c-magenta:       244 114 182;
+  --c-magenta-dark:  219 39 119;
 }
 
 @layer base {

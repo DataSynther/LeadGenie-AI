@@ -17,7 +17,7 @@ export function PipelinePage() {
         breadcrumb="Workspace / Pipeline"
         title={
           <>
-            Active <em className="text-brand italic">Pipeline</em>
+            Active <span className="text-brand">Pipeline</span>
           </>
         }
         right={
