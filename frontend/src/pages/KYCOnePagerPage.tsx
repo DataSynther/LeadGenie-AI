@@ -3,11 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   FileText, Loader2, Building2, Landmark, TrendingUp, MessageSquareText, Bot, Search,
-  Target, Mail, PhoneCall, BarChart3, Users, Rocket, Handshake, DollarSign,
-  Send, Calendar, Briefcase, Megaphone, Filter, LineChart, ClipboardList, Award,
 } from "lucide-react";
 import { Topbar } from "../components/layout/Topbar";
 import { CompanyLogo } from "../components/CompanyLogo";
+import { SDRWallpaperLayer } from "../components/kyc/SDRWallpaperLayer";
 import { api } from "../lib/api";
 import { cn } from "../lib/utils";
 import type { DetailTab, HighlightSection } from "../components/kyc/OnePagerDetail";
@@ -33,52 +32,6 @@ function useInView<T extends HTMLElement>(): [React.RefObject<T | null>, boolean
   return [ref, inView];
 }
 
-// ── Page wallpaper — a faint, WhatsApp-style tiled pattern of SDR tools
-// (CRM, outreach, calendar, funnel…) behind the cards, not just the hero ──────
-
-const WALLPAPER_ICONS = [
-  Building2, Mail, PhoneCall, Target, Handshake, BarChart3, Users, DollarSign,
-  Send, Calendar, Briefcase, Megaphone, Filter, LineChart, ClipboardList, Award, Rocket,
-];
-
-function seededRandom(seed: number): number {
-  const x = Math.sin(seed) * 10000;
-  return x - Math.floor(x);
-}
-
-function SDRWallpaper() {
-  const cols = 12;
-  const rows = 18;
-  const cells = Array.from({ length: cols * rows }, (_, i) => {
-    const seed = i * 13.37 + 7;
-    const Icon = WALLPAPER_ICONS[Math.floor(seededRandom(seed) * WALLPAPER_ICONS.length)];
-    const jitterX = (seededRandom(seed + 1) - 0.5) * 60;
-    const jitterY = (seededRandom(seed + 2) - 0.5) * 60;
-    const rotate = (seededRandom(seed + 3) - 0.5) * 50;
-    const size = 18 + seededRandom(seed + 4) * 12;
-    return { key: i, Icon, jitterX, jitterY, rotate, size };
-  });
-
-  return (
-    <div
-      className="absolute inset-0 -z-10 overflow-hidden pointer-events-none"
-      style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gridTemplateRows: `repeat(${rows}, 1fr)` }}
-      aria-hidden
-    >
-      {cells.map(({ key, Icon, jitterX, jitterY, rotate, size }) => (
-        <div key={key} className="flex items-center justify-center">
-          <Icon
-            size={size}
-            strokeWidth={1.5}
-            className="text-ink-mute/[0.055]"
-            style={{ transform: `translate(${jitterX}px, ${jitterY}px) rotate(${rotate}deg)` }}
-          />
-        </div>
-      ))}
-    </div>
-  );
-}
-
 // ── Creative hero — circular AI-agent diagram ──────────────────────────────────
 
 interface HeroNode {
@@ -100,24 +53,6 @@ const HERO_NODES: HeroNode[] = [
   { id: "market",   label: "Market Context",    sub: "Cited funding trends", icon: TrendingUp,        angle: 300, tab: "overview",       highlight: "Market Context" },
 ];
 
-// ── Faint background decoration — sales/marketing motifs spread uniformly
-// behind the diagram so the card doesn't read as an empty white void ──────
-
-const HERO_DECOR_COLS = 8;
-const HERO_DECOR_ROWS = 7;
-
-const HERO_DECOR_CELLS = Array.from({ length: HERO_DECOR_COLS * HERO_DECOR_ROWS }, (_, i) => {
-  const seed = i * 9.11 + 101; // distinct offset from the page wallpaper's seed
-  const Icon = WALLPAPER_ICONS[Math.floor(seededRandom(seed) * WALLPAPER_ICONS.length)];
-  const jitterX = (seededRandom(seed + 1) - 0.5) * 34;
-  const jitterY = (seededRandom(seed + 2) - 0.5) * 34;
-  const rotate = (seededRandom(seed + 3) - 0.5) * 50;
-  const size = 15 + seededRandom(seed + 4) * 9;
-  const delay = seededRandom(seed + 5) * 2.5;
-  const duration = 5 + seededRandom(seed + 6) * 3;
-  return { key: i, Icon, jitterX, jitterY, rotate, size, delay, duration };
-});
-
 function KYCHero({ onNodeClick }: { onNodeClick: (node: HeroNode) => void }) {
   const [ref, inView] = useInView<HTMLDivElement>();
   const R = 38;
@@ -134,29 +69,7 @@ function KYCHero({ onNodeClick }: { onNodeClick: (node: HeroNode) => void }) {
         <div className="absolute -top-16 -left-16 w-64 h-64 rounded-full bg-brand/10 blur-3xl" />
         <div className="absolute -bottom-16 -right-16 w-72 h-72 rounded-full bg-gold/10 blur-3xl" />
         <div className="absolute top-1/3 right-0 w-48 h-48 rounded-full bg-brand/5 blur-3xl" />
-        <div
-          className="absolute inset-0"
-          style={{
-            display: "grid",
-            gridTemplateColumns: `repeat(${HERO_DECOR_COLS}, 1fr)`,
-            gridTemplateRows: `repeat(${HERO_DECOR_ROWS}, 1fr)`,
-          }}
-        >
-          {HERO_DECOR_CELLS.map(({ key, Icon, jitterX, jitterY, rotate, size, delay, duration }) => (
-            <div key={key} className="flex items-center justify-center">
-              <Icon
-                size={size}
-                strokeWidth={1.5}
-                className="text-ink-mute/[0.09] animate-float"
-                style={{
-                  transform: `translate(${jitterX}px, ${jitterY}px) rotate(${rotate}deg)`,
-                  animationDelay: `${delay}s`,
-                  animationDuration: `${duration}s`,
-                }}
-              />
-            </div>
-          ))}
-        </div>
+        <SDRWallpaperLayer tileSize={220} />
       </div>
 
       <div className="relative mx-auto aspect-square" style={{ width: "100%", maxWidth: 480 }}>
@@ -279,7 +192,7 @@ export function KYCOnePagerPage() {
 
   return (
     <div className="relative min-h-full">
-      <SDRWallpaper />
+      <SDRWallpaperLayer tileSize={260} className="-z-10" />
 
       <Topbar
         breadcrumb="Sales / Know Your Customer"
