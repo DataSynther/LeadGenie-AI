@@ -38,7 +38,7 @@ function useInView<T extends HTMLElement>(): [React.RefObject<T | null>, boolean
 
 const WALLPAPER_ICONS = [
   Building2, Mail, PhoneCall, Target, Handshake, BarChart3, Users, DollarSign,
-  Send, Calendar, Briefcase, Megaphone, Filter, LineChart, ClipboardList, Award,
+  Send, Calendar, Briefcase, Megaphone, Filter, LineChart, ClipboardList, Award, Rocket,
 ];
 
 function seededRandom(seed: number): number {
@@ -100,19 +100,23 @@ const HERO_NODES: HeroNode[] = [
   { id: "market",   label: "Market Context",    sub: "Cited funding trends", icon: TrendingUp,        angle: 300, tab: "overview",       highlight: "Market Context" },
 ];
 
-// ── Faint background decoration — sales/marketing motifs drifting behind
-// the diagram so the card doesn't read as an empty white void ─────────────
+// ── Faint background decoration — sales/marketing motifs spread uniformly
+// behind the diagram so the card doesn't read as an empty white void ──────
 
-const DECOR_ICONS: { icon: typeof Target; x: number; y: number; size: number; delay: number; duration: number }[] = [
-  { icon: Target,      x: 6,  y: 12, size: 34, delay: 0,    duration: 6 },
-  { icon: Mail,        x: 90, y: 8,  size: 30, delay: 0.6,  duration: 7 },
-  { icon: PhoneCall,   x: 4,  y: 48, size: 26, delay: 1.2,  duration: 5.5 },
-  { icon: BarChart3,   x: 93, y: 42, size: 36, delay: 0.3,  duration: 6.5 },
-  { icon: Users,       x: 10, y: 84, size: 30, delay: 0.9,  duration: 6 },
-  { icon: Rocket,      x: 88, y: 88, size: 32, delay: 1.5,  duration: 5.8 },
-  { icon: Handshake,   x: 50, y: 4,  size: 26, delay: 0.4,  duration: 6.2 },
-  { icon: DollarSign,  x: 50, y: 95, size: 28, delay: 1.1,  duration: 5.6 },
-];
+const HERO_DECOR_COLS = 8;
+const HERO_DECOR_ROWS = 7;
+
+const HERO_DECOR_CELLS = Array.from({ length: HERO_DECOR_COLS * HERO_DECOR_ROWS }, (_, i) => {
+  const seed = i * 9.11 + 101; // distinct offset from the page wallpaper's seed
+  const Icon = WALLPAPER_ICONS[Math.floor(seededRandom(seed) * WALLPAPER_ICONS.length)];
+  const jitterX = (seededRandom(seed + 1) - 0.5) * 34;
+  const jitterY = (seededRandom(seed + 2) - 0.5) * 34;
+  const rotate = (seededRandom(seed + 3) - 0.5) * 50;
+  const size = 15 + seededRandom(seed + 4) * 9;
+  const delay = seededRandom(seed + 5) * 2.5;
+  const duration = 5 + seededRandom(seed + 6) * 3;
+  return { key: i, Icon, jitterX, jitterY, rotate, size, delay, duration };
+});
 
 function KYCHero({ onNodeClick }: { onNodeClick: (node: HeroNode) => void }) {
   const [ref, inView] = useInView<HTMLDivElement>();
@@ -130,15 +134,29 @@ function KYCHero({ onNodeClick }: { onNodeClick: (node: HeroNode) => void }) {
         <div className="absolute -top-16 -left-16 w-64 h-64 rounded-full bg-brand/10 blur-3xl" />
         <div className="absolute -bottom-16 -right-16 w-72 h-72 rounded-full bg-gold/10 blur-3xl" />
         <div className="absolute top-1/3 right-0 w-48 h-48 rounded-full bg-brand/5 blur-3xl" />
-        {DECOR_ICONS.map(({ icon: Icon, x, y, size, delay, duration }, i) => (
-          <Icon
-            key={i}
-            size={size}
-            strokeWidth={1.5}
-            className="absolute text-ink-mute/[0.09] animate-float"
-            style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${delay}s`, animationDuration: `${duration}s` }}
-          />
-        ))}
+        <div
+          className="absolute inset-0"
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${HERO_DECOR_COLS}, 1fr)`,
+            gridTemplateRows: `repeat(${HERO_DECOR_ROWS}, 1fr)`,
+          }}
+        >
+          {HERO_DECOR_CELLS.map(({ key, Icon, jitterX, jitterY, rotate, size, delay, duration }) => (
+            <div key={key} className="flex items-center justify-center">
+              <Icon
+                size={size}
+                strokeWidth={1.5}
+                className="text-ink-mute/[0.09] animate-float"
+                style={{
+                  transform: `translate(${jitterX}px, ${jitterY}px) rotate(${rotate}deg)`,
+                  animationDelay: `${delay}s`,
+                  animationDuration: `${duration}s`,
+                }}
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="relative mx-auto aspect-square" style={{ width: "100%", maxWidth: 480 }}>
