@@ -61,7 +61,7 @@ def upsert_visitor(visitor: dict) -> None:
     now = datetime.now(timezone.utc).isoformat()
     first_seen = existing.get("first_seen") if existing else now
 
-    merged_visits = {v.get("started_at"): v for v in (existing.get("recent_visits") or []) if existing}
+    merged_visits = {v.get("started_at"): v for v in ((existing or {}).get("recent_visits") or [])}
     for v in (visitor.get("recent_visits") or []):
         merged_visits[v.get("started_at")] = v
     recent_visits = sorted(
