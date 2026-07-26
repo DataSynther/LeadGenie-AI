@@ -31,12 +31,12 @@ function CitationBadge({
 function SourceReveal({ source }: { source: OnePagerSource | undefined }) {
   if (!source) return null;
   return (
-    <div className="mt-1 mb-1.5 ml-4 px-2.5 py-1.5 rounded-md bg-surface-2 border border-line-soft text-[10px] text-ink-2">
+    <div className="mt-1 mb-1.5 ml-4 px-2.5 py-1.5 rounded-md bg-surface-2 border border-line-soft text-[11.5px] text-ink-2">
       <span className="font-mono text-ink-mute">[{source.id}]</span> {source.label}
       {source.url && (
         <a href={source.url} target="_blank" rel="noopener noreferrer"
           className="flex items-center gap-1 text-brand hover:underline mt-0.5">
-          <ExternalLink size={9} /> {source.url}
+          <ExternalLink size={10} /> {source.url}
         </a>
       )}
     </div>
@@ -60,12 +60,12 @@ function SourcesPanel({ sources, label = "Sources" }: { sources: OnePagerSource[
       {open && (
         <div className="px-3 pb-3 space-y-1.5 border-t border-line-soft pt-2">
           {sources.map(s => (
-            <div key={s.id} className="text-[11px] text-ink-2">
+            <div key={s.id} className="text-[12px] text-ink-2">
               <span className="font-mono text-ink-mute">[{s.id}]</span> {s.label}
               {s.url && (
                 <a href={s.url} target="_blank" rel="noopener noreferrer"
                   className="flex items-center gap-1 text-brand hover:underline mt-0.5">
-                  <ExternalLink size={9} /> {s.url}
+                  <ExternalLink size={10} /> {s.url}
                 </a>
               )}
             </div>
@@ -77,37 +77,57 @@ function SourcesPanel({ sources, label = "Sources" }: { sources: OnePagerSource[
 }
 
 function BulletList({
-  sections, sourceById,
-}: { sections: OnePagerSection[]; sourceById: Record<number, OnePagerSource> }) {
+  sections, sourceById, highlightTitle,
+}: { sections: OnePagerSection[]; sourceById: Record<number, OnePagerSource>; highlightTitle?: string | null }) {
   const [expanded, setExpanded] = useState<string | null>(null);
+  const highlightRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (highlightTitle) {
+      highlightRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [highlightTitle]);
+
   return (
     <>
-      {sections.map((section, si) => (
-        <section key={si} className="mb-5">
-          <div className="label-mono text-ink mb-2">{section.title}</div>
-          <ul className="space-y-1.5">
-            {section.bullets.map((bullet, bi) => {
-              const key = `${si}-${bi}`;
-              return (
-                <li key={bi}>
-                  <div className="text-[12px] text-ink leading-relaxed flex items-start gap-1.5">
-                    <span className="text-brand shrink-0 mt-0.5">•</span>
-                    <span>
-                      {bullet.text}
-                      <CitationBadge
-                        sourceId={bullet.source_id}
-                        expanded={expanded === key}
-                        onToggle={() => setExpanded(expanded === key ? null : key)}
-                      />
-                    </span>
-                  </div>
-                  {expanded === key && <SourceReveal source={sourceById[bullet.source_id]} />}
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      ))}
+      {sections.map((section, si) => {
+        const isHighlighted = !!highlightTitle && section.title === highlightTitle;
+        const isFaded = !!highlightTitle && !isHighlighted;
+        return (
+          <section
+            key={si}
+            ref={isHighlighted ? highlightRef : undefined}
+            className={cn(
+              "mb-5 rounded-lg transition-all duration-500",
+              isHighlighted && "ring-2 ring-brand/40 bg-brand-soft/30 -mx-3 px-3 py-3",
+              isFaded && "opacity-35",
+            )}
+          >
+            <div className="label-mono text-ink mb-2">{section.title}</div>
+            <ul className="space-y-2">
+              {section.bullets.map((bullet, bi) => {
+                const key = `${si}-${bi}`;
+                return (
+                  <li key={bi}>
+                    <div className="text-[14px] text-ink leading-relaxed flex items-start gap-1.5">
+                      <span className="text-brand shrink-0 mt-0.5">•</span>
+                      <span>
+                        {bullet.text}
+                        <CitationBadge
+                          sourceId={bullet.source_id}
+                          expanded={expanded === key}
+                          onToggle={() => setExpanded(expanded === key ? null : key)}
+                        />
+                      </span>
+                    </div>
+                    {expanded === key && <SourceReveal source={sourceById[bullet.source_id]} />}
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        );
+      })}
     </>
   );
 }
@@ -142,7 +162,7 @@ function KYCChatPanel({ record }: { record: KYCOnePagerRecord }) {
     <div className="flex flex-col h-[60vh]">
       <div className="flex-1 overflow-y-auto space-y-3 pr-1 mb-3">
         {messages.length === 0 && (
-          <div className="text-[11px] text-ink-mute text-center py-10">
+          <div className="text-[12.5px] text-ink-mute text-center py-10">
             Ask anything about {record.company_name} — answers are grounded strictly in this
             briefing's cited facts. If something isn't covered, it'll say so instead of guessing.
           </div>
@@ -155,7 +175,7 @@ function KYCChatPanel({ record }: { record: KYCOnePagerRecord }) {
               </div>
             )}
             <div className={cn(
-              "max-w-[80%] px-3 py-2 rounded-lg text-[12px] leading-relaxed whitespace-pre-wrap",
+              "max-w-[80%] px-3 py-2 rounded-lg text-[13.5px] leading-relaxed whitespace-pre-wrap",
               m.role === "user" ? "bg-brand text-white" : "bg-surface-2 text-ink border border-line-soft"
             )}>
               {m.content}
@@ -185,7 +205,7 @@ function KYCChatPanel({ record }: { record: KYCOnePagerRecord }) {
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === "Enter" && handleSend()}
           placeholder={`Ask about ${record.company_name}…`}
-          className="flex-1 text-[12px] px-3 py-2 rounded-lg border border-line-soft bg-surface-2 text-ink placeholder:text-ink-mute focus:outline-none focus:border-brand transition-colors"
+          className="flex-1 text-[13px] px-3 py-2 rounded-lg border border-line-soft bg-surface-2 text-ink placeholder:text-ink-mute focus:outline-none focus:border-brand transition-colors"
         />
         <button
           onClick={handleSend}
@@ -202,12 +222,32 @@ function KYCChatPanel({ record }: { record: KYCOnePagerRecord }) {
 // ── Detail (tabbed) ──────────────────────────────────────────────────────────
 
 export type DetailTab = "overview" | "talking-points" | "chat";
+export type HighlightSection = "Company Overview" | "Financial Performance" | "Market Context" | null;
 
 export function OnePagerDetail({
-  record, initialTab = "overview",
-}: { record: KYCOnePagerRecord; initialTab?: DetailTab }) {
+  record, initialTab = "overview", initialHighlight = null,
+}: { record: KYCOnePagerRecord; initialTab?: DetailTab; initialHighlight?: HighlightSection }) {
   const [tab, setTab] = useState<DetailTab>(initialTab);
   const [downloading, setDownloading] = useState(false);
+  const [highlight, setHighlight] = useState<HighlightSection>(initialHighlight);
+  const [syncedHighlight, setSyncedHighlight] = useState<HighlightSection>(initialHighlight);
+
+  // Adjust state during render when the incoming prop changes (e.g. clicking
+  // a different hero node while already on this page) — the React-recommended
+  // alternative to calling setState synchronously inside an effect.
+  if (initialHighlight !== syncedHighlight) {
+    setSyncedHighlight(initialHighlight);
+    setHighlight(initialHighlight);
+  }
+
+  // Spotlight fades back to the full, untouched view on its own after a
+  // few seconds — it's there to confirm what you clicked from the hero
+  // diagram, not to permanently bury the rest of the briefing.
+  useEffect(() => {
+    if (!initialHighlight) return;
+    const timer = setTimeout(() => setHighlight(null), 3200);
+    return () => clearTimeout(timer);
+  }, [initialHighlight]);
   const { onepager } = record;
   const sourceById = Object.fromEntries(onepager.sources.map(s => [s.id, s]));
 
@@ -236,7 +276,7 @@ export function OnePagerDetail({
             <div className="font-mono text-[10px] uppercase tracking-widest text-brand mb-1.5">
               {record.company_name} · {new Date(record.created_at).toLocaleDateString()}
             </div>
-            <div className="font-sans font-semibold text-[19px] text-ink leading-snug">{onepager.headline}</div>
+            <div className="font-sans font-semibold text-[21px] text-ink leading-snug">{onepager.headline}</div>
           </div>
         </div>
         <button
@@ -257,27 +297,27 @@ export function OnePagerDetail({
         ] as const).map(([id, label, Icon]) => (
           <button
             key={id}
-            onClick={() => setTab(id)}
+            onClick={() => { setTab(id); setHighlight(null); }}
             className={cn(
-              "flex items-center gap-1.5 px-3 py-2 text-[11px] font-medium border-b-2 -mb-px transition-colors",
+              "flex items-center gap-1.5 px-3 py-2 text-[12.5px] font-medium border-b-2 -mb-px transition-colors",
               tab === id ? "border-brand text-brand" : "border-transparent text-ink-mute hover:text-ink"
             )}
           >
-            <Icon size={12} /> {label}
+            <Icon size={13} /> {label}
           </button>
         ))}
       </div>
 
       {tab === "overview" && (
         <div>
-          <BulletList sections={overviewSections} sourceById={sourceById} />
+          <BulletList sections={overviewSections} sourceById={sourceById} highlightTitle={highlight} />
           <SourcesPanel sources={overviewSources} label="Sources" />
         </div>
       )}
 
       {tab === "talking-points" && talkingSection && (
         <div>
-          <div className="text-[11px] text-ink-mute mb-3">
+          <div className="text-[13px] text-ink-mute mb-3">
             Blends what {record.company_name} appears to need with what Ganit has actually done for
             similar organizations — each point cites which side of that it's drawing from.
           </div>

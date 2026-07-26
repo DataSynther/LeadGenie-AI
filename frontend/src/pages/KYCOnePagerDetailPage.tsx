@@ -2,7 +2,7 @@ import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Loader2, AlertTriangle } from "lucide-react";
 import { Topbar } from "../components/layout/Topbar";
-import { OnePagerDetail, type DetailTab } from "../components/kyc/OnePagerDetail";
+import { OnePagerDetail, type DetailTab, type HighlightSection } from "../components/kyc/OnePagerDetail";
 import { api } from "../lib/api";
 
 export function KYCOnePagerDetailPage() {
@@ -10,6 +10,7 @@ export function KYCOnePagerDetailPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const tabParam = searchParams.get("tab") as DetailTab | null;
+  const highlightParam = searchParams.get("highlight") as HighlightSection;
 
   const { data: record, isLoading, isError } = useQuery({
     queryKey: ["kycOnepager", onepagerId],
@@ -54,7 +55,13 @@ export function KYCOnePagerDetailPage() {
           </div>
         )}
 
-        {record && <OnePagerDetail record={record} initialTab={tabParam ?? "overview"} />}
+        {record && (
+          <OnePagerDetail
+            record={record}
+            initialTab={tabParam ?? "overview"}
+            initialHighlight={highlightParam}
+          />
+        )}
       </div>
     </div>
   );

@@ -3,12 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   FileText, Loader2, Building2, Landmark, TrendingUp, MessageSquareText, Bot, Search,
+  Target, Mail, PhoneCall, BarChart3, Users, Rocket, Handshake, DollarSign,
 } from "lucide-react";
 import { Topbar } from "../components/layout/Topbar";
 import { CompanyLogo } from "../components/CompanyLogo";
 import { api } from "../lib/api";
 import { cn } from "../lib/utils";
-import type { DetailTab } from "../components/kyc/OnePagerDetail";
+import type { DetailTab, HighlightSection } from "../components/kyc/OnePagerDetail";
 
 // ── Reveal-on-scroll hook — fires once, never re-collapses ────────────────────
 
@@ -40,15 +41,30 @@ interface HeroNode {
   icon: typeof Building2;
   angle: number;
   tab: DetailTab | null;
+  highlight: HighlightSection;
 }
 
 const HERO_NODES: HeroNode[] = [
-  { id: "facts",    label: "Company Facts",    sub: "Apollo-sourced",       icon: Building2,         angle: 0,   tab: "overview" },
-  { id: "finance",  label: "Financial Filings", sub: "Real SEC EDGAR data",  icon: Landmark,          angle: 60,  tab: "overview" },
-  { id: "talking",  label: "Talking Points",    sub: "Ganit KB matched",     icon: MessageSquareText, angle: 120, tab: "talking-points" },
-  { id: "chat",     label: "Ask Anything",      sub: "Grounded chat",        icon: Bot,               angle: 180, tab: "chat" },
-  { id: "discover", label: "Discover Leads",    sub: "Find new accounts",    icon: Search,            angle: 240, tab: null },
-  { id: "market",   label: "Market Context",    sub: "Cited funding trends", icon: TrendingUp,        angle: 300, tab: "overview" },
+  { id: "facts",    label: "Company Facts",    sub: "Apollo-sourced",       icon: Building2,         angle: 0,   tab: "overview",       highlight: "Company Overview" },
+  { id: "finance",  label: "Financial Filings", sub: "Real SEC EDGAR data",  icon: Landmark,          angle: 60,  tab: "overview",       highlight: "Financial Performance" },
+  { id: "talking",  label: "Talking Points",    sub: "Ganit KB matched",     icon: MessageSquareText, angle: 120, tab: "talking-points", highlight: null },
+  { id: "chat",     label: "Ask Anything",      sub: "Grounded chat",        icon: Bot,               angle: 180, tab: "chat",           highlight: null },
+  { id: "discover", label: "Discover Leads",    sub: "Find new accounts",    icon: Search,            angle: 240, tab: null,              highlight: null },
+  { id: "market",   label: "Market Context",    sub: "Cited funding trends", icon: TrendingUp,        angle: 300, tab: "overview",       highlight: "Market Context" },
+];
+
+// ── Faint background decoration — sales/marketing motifs drifting behind
+// the diagram so the card doesn't read as an empty white void ─────────────
+
+const DECOR_ICONS: { icon: typeof Target; x: number; y: number; size: number; delay: number; duration: number }[] = [
+  { icon: Target,      x: 6,  y: 12, size: 34, delay: 0,    duration: 6 },
+  { icon: Mail,        x: 90, y: 8,  size: 30, delay: 0.6,  duration: 7 },
+  { icon: PhoneCall,   x: 4,  y: 48, size: 26, delay: 1.2,  duration: 5.5 },
+  { icon: BarChart3,   x: 93, y: 42, size: 36, delay: 0.3,  duration: 6.5 },
+  { icon: Users,       x: 10, y: 84, size: 30, delay: 0.9,  duration: 6 },
+  { icon: Rocket,      x: 88, y: 88, size: 32, delay: 1.5,  duration: 5.8 },
+  { icon: Handshake,   x: 50, y: 4,  size: 26, delay: 0.4,  duration: 6.2 },
+  { icon: DollarSign,  x: 50, y: 95, size: 28, delay: 1.1,  duration: 5.6 },
 ];
 
 function KYCHero({ onNodeClick }: { onNodeClick: (node: HeroNode) => void }) {
@@ -60,6 +76,24 @@ function KYCHero({ onNodeClick }: { onNodeClick: (node: HeroNode) => void }) {
       ref={ref}
       className="bg-surface border border-line-soft rounded-[10px] shadow-card p-6 sm:p-10 mb-6 relative"
     >
+      {/* Decorative backdrop — gradient wash + faint sales/marketing motifs.
+          Clipped to its own layer (not the card) so the node labels outside
+          it are never cut off. */}
+      <div className="absolute inset-0 rounded-[10px] overflow-hidden pointer-events-none" aria-hidden>
+        <div className="absolute -top-16 -left-16 w-64 h-64 rounded-full bg-brand/10 blur-3xl" />
+        <div className="absolute -bottom-16 -right-16 w-72 h-72 rounded-full bg-gold/10 blur-3xl" />
+        <div className="absolute top-1/3 right-0 w-48 h-48 rounded-full bg-brand/5 blur-3xl" />
+        {DECOR_ICONS.map(({ icon: Icon, x, y, size, delay, duration }, i) => (
+          <Icon
+            key={i}
+            size={size}
+            strokeWidth={1.5}
+            className="absolute text-ink-mute/[0.09] animate-float"
+            style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${delay}s`, animationDuration: `${duration}s` }}
+          />
+        ))}
+      </div>
+
       <div className="relative mx-auto aspect-square" style={{ width: "100%", maxWidth: 480 }}>
         <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full animate-spin-slow" aria-hidden>
           <circle
@@ -130,7 +164,7 @@ function KYCHero({ onNodeClick }: { onNodeClick: (node: HeroNode) => void }) {
           );
         })}
       </div>
-      <div className="text-center text-[11px] text-ink-mute mt-3">
+      <div className="relative text-center text-[11px] text-ink-mute mt-3">
         One AI agent, six grounded angles — click any to jump in.
       </div>
     </div>
@@ -167,7 +201,11 @@ export function KYCOnePagerPage() {
     }
     const mostRecent = onepagers[0];
     if (mostRecent) {
-      navigate(`/kyc/${mostRecent.onepager_id}${node.tab ? `?tab=${node.tab}` : ""}`);
+      const params = new URLSearchParams();
+      if (node.tab) params.set("tab", node.tab);
+      if (node.highlight) params.set("highlight", node.highlight);
+      const qs = params.toString();
+      navigate(`/kyc/${mostRecent.onepager_id}${qs ? `?${qs}` : ""}`);
     } else {
       formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       formRef.current?.querySelector("input")?.focus();
