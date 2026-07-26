@@ -212,6 +212,10 @@ def list_recent_visiting_companies(limit: int = 50) -> list[dict]:
 
     start_date, end_date = _date_range()
     entries = _fetch_company_locations(account_id, start_date, end_date, page_size=min(limit, 100))
+    logger.warning(
+        "Leadfeeder list_recent_visiting_companies: account_id=%s env_account_id=%r date_range=%s..%s entries=%d",
+        account_id, _ACCOUNT_ID, start_date, end_date, len(entries),
+    )
 
     companies: list[dict] = []
     seen_ids: set[str] = set()
