@@ -11,11 +11,14 @@ below — this is no longer a docs-only guess.
 """
 from __future__ import annotations
 
+import logging
 import os
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse
 
 import requests
+
+logger = logging.getLogger(__name__)
 
 _API_KEY = os.getenv("LEADFEEDER_API_KEY", "")
 _ACCOUNT_ID = os.getenv("LEADFEEDER_ACCOUNT_ID", "")
@@ -35,12 +38,14 @@ def _resolve_account_id() -> str | None:
     try:
         resp = requests.get(f"{_BASE_URL}/accounts", headers=_headers(), timeout=_TIMEOUT_S)
         if resp.status_code != 200:
+            logger.warning("Leadfeeder /accounts returned %s: %s", resp.status_code, resp.text[:300])
             return None
         accounts = resp.json().get("data") or []
         if accounts:
             return accounts[0].get("id")
-    except Exception:
-        pass
+        logger.warning("Leadfeeder /accounts returned no accounts")
+    except Exception as exc:
+        logger.warning("Leadfeeder /accounts request failed: %s", exc)
     return None
 
 
@@ -92,9 +97,11 @@ def _fetch_company_locations(account_id: str, start_date: str, end_date: str, pa
             timeout=_TIMEOUT_S,
         )
         if resp.status_code != 200:
+            logger.warning("Leadfeeder /web-visits/companies returned %s: %s", resp.status_code, resp.text[:300])
             return []
         return resp.json().get("data") or []
-    except Exception:
+    except Exception as exc:
+        logger.warning("Leadfeeder /web-visits/companies request failed: %s", exc)
         return []
 
 
@@ -110,10 +117,12 @@ def _fetch_visit_detail(account_id: str, company_id: str, start_date: str, end_d
             timeout=_TIMEOUT_S,
         )
         if resp.status_code != 200:
+            logger.warning("Leadfeeder /web-visits returned %s: %s", resp.status_code, resp.text[:300])
             return None
         payload = resp.json()
         visits = payload.get("data") or []
-    except Exception:
+    except Exception as exc:
+        logger.warning("Leadfeeder /web-visits request failed: %s", exc)
         return None
 
     if not visits:
