@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   FileText, Loader2, Building2, Landmark, TrendingUp, MessageSquareText, Bot, Search,
   Target, Mail, PhoneCall, BarChart3, Users, Rocket, Handshake, DollarSign,
+  Send, Calendar, Briefcase, Megaphone, Filter, LineChart, ClipboardList, Award,
 } from "lucide-react";
 import { Topbar } from "../components/layout/Topbar";
 import { CompanyLogo } from "../components/CompanyLogo";
@@ -30,6 +31,52 @@ function useInView<T extends HTMLElement>(): [React.RefObject<T | null>, boolean
   }, [inView]);
 
   return [ref, inView];
+}
+
+// ── Page wallpaper — a faint, WhatsApp-style tiled pattern of SDR tools
+// (CRM, outreach, calendar, funnel…) behind the cards, not just the hero ──────
+
+const WALLPAPER_ICONS = [
+  Building2, Mail, PhoneCall, Target, Handshake, BarChart3, Users, DollarSign,
+  Send, Calendar, Briefcase, Megaphone, Filter, LineChart, ClipboardList, Award,
+];
+
+function seededRandom(seed: number): number {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
+
+function SDRWallpaper() {
+  const cols = 12;
+  const rows = 18;
+  const cells = Array.from({ length: cols * rows }, (_, i) => {
+    const seed = i * 13.37 + 7;
+    const Icon = WALLPAPER_ICONS[Math.floor(seededRandom(seed) * WALLPAPER_ICONS.length)];
+    const jitterX = (seededRandom(seed + 1) - 0.5) * 60;
+    const jitterY = (seededRandom(seed + 2) - 0.5) * 60;
+    const rotate = (seededRandom(seed + 3) - 0.5) * 50;
+    const size = 18 + seededRandom(seed + 4) * 12;
+    return { key: i, Icon, jitterX, jitterY, rotate, size };
+  });
+
+  return (
+    <div
+      className="absolute inset-0 -z-10 overflow-hidden pointer-events-none"
+      style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gridTemplateRows: `repeat(${rows}, 1fr)` }}
+      aria-hidden
+    >
+      {cells.map(({ key, Icon, jitterX, jitterY, rotate, size }) => (
+        <div key={key} className="flex items-center justify-center">
+          <Icon
+            size={size}
+            strokeWidth={1.5}
+            className="text-ink-mute/[0.055]"
+            style={{ transform: `translate(${jitterX}px, ${jitterY}px) rotate(${rotate}deg)` }}
+          />
+        </div>
+      ))}
+    </div>
+  );
 }
 
 // ── Creative hero — circular AI-agent diagram ──────────────────────────────────
@@ -213,7 +260,9 @@ export function KYCOnePagerPage() {
   }
 
   return (
-    <>
+    <div className="relative min-h-full">
+      <SDRWallpaper />
+
       <Topbar
         breadcrumb="Sales / Know Your Customer"
         title={<>KYC <span className="text-brand">One-Pager</span></>}
@@ -290,6 +339,6 @@ export function KYCOnePagerPage() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
