@@ -1294,8 +1294,16 @@ async def sent_emails():
             approved_by_lead.setdefault(lead_id, []).append((ts, item))
     for lead_items in approved_by_lead.values():
         lead_items.sort(key=lambda row: row[0])
+    thread_end_by_event_id = {}
+    for lead_items in approved_by_lead.values():
+        for index, (_, approved_item) in enumerate(lead_items):
+            event_id = approved_item.get("event_id")
+            if event_id:
+                thread_end_by_event_id[event_id] = (
+                    lead_items[index + 1][0] if index + 1 < len(lead_items) else None
+                )
 
-    replies_by_event_id: dict[str, dict] = {}
+    replies_by_event_id: dict[str, list[dict]] = {}
     for event in stats_store.get_raw_conversations(limit=10000):
         lead_id = event.get("lead_id")
         reply_ts = _parse_ts(event.get("timestamp"))
@@ -1309,17 +1317,52 @@ async def sent_emails():
                 break
         if matched_item:
             event_id = matched_item.get("event_id")
-            if event_id and event_id not in replies_by_event_id:
-                replies_by_event_id[event_id] = event
+            if event_id:
+                replies_by_event_id.setdefault(event_id, []).append(event)
 
     for item in items:
         lead_id = item.get("lead_id")
         if not lead_id:
             continue
-        reply_event = replies_by_event_id.get(item.get("event_id"))
-        if reply_event:
-            item["trigger"] = reply_event.get("intent") or "reply"
+        reply_events = replies_by_event_id.get(item.get("event_id")) or []
+        if reply_events:
+            item["trigger"] = reply_events[0].get("intent") or "reply"
             item["policy"] = "replied"
+            item_ts = _parse_ts(item.get("timestamp"))
+            thread_end = thread_end_by_event_id.get(item.get("event_id"))
+            thread_messages = []
+            for message in conversation_agent.memory.get_history(lead_id):
+                message_ts = _parse_ts(message.get("timestamp"))
+                if (
+                    message.get("channel") != "email"
+                    or not message_ts
+                    or (item_ts and message_ts < item_ts)
+                    or (thread_end and message_ts >= thread_end)
+                    or (
+                        message.get("direction") == "outbound"
+                        and message.get("delivery_status") != "sent"
+                    )
+                ):
+                    continue
+                direction = message.get("direction")
+                if direction not in {"inbound", "outbound"}:
+                    continue
+                thread_messages.append({
+                    "direction": direction,
+                    "sender": message.get("sender") or (
+                        item.get("lead_email") if direction == "inbound" else "LeadGenie AI"
+                    ),
+                    "recipient": message.get("recipient") or (
+                        "LeadGenie AI" if direction == "inbound" else item.get("lead_email")
+                    ),
+                    "subject": message.get("subject") or "",
+                    "body": message.get("content") or "",
+                    "timestamp": message.get("timestamp") or "",
+                })
+            item["conversation_messages"] = sorted(
+                thread_messages,
+                key=lambda message: _parse_ts(message["timestamp"]) or datetime.min.replace(tzinfo=timezone.utc),
+            )
         sched_record = followup_scheduler.get(lead_id)
         if not sched_record:
             continue

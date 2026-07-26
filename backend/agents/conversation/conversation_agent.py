@@ -37,9 +37,23 @@ class ConversationAgent:
         self.memory = MemoryManager()
         self.intent_detector = IntentDetector()
 
-    def handle_reply(self, lead_id: str, reply: str, context: dict, lead_email: str = None) -> dict:
+    def handle_reply(
+        self,
+        lead_id: str,
+        reply: str,
+        context: dict,
+        lead_email: str = None,
+        reply_metadata: dict | None = None,
+    ) -> dict:
         """Process an inbound reply end-to-end: classify intent → generate response → (optionally) send email."""
-        self.memory.store_message(lead_id, "prospect", reply)
+        metadata = reply_metadata or {}
+        self.memory.store_message(
+            lead_id,
+            "prospect",
+            reply,
+            required=metadata.get("channel") == "email",
+            **metadata,
+        )
 
         intent_result = self.intent_detector.classify(reply, lead_id=lead_id, context=context)
         intent = intent_result.get("intent", "neutral")
@@ -215,12 +229,14 @@ class ConversationAgent:
     def _send_email(self, lead_email: str, original_reply: str, response_text: str, context: dict) -> dict:
         from services.email_sender import EmailSender
         company_name = context.get("company", {}).get("name", "")
+        subject = f"Re: {company_name} — following up"
         email_result = EmailSender().send(
             to_email=lead_email,
-            subject=f"Re: {company_name} — following up",
+            subject=subject,
             body=response_text,
         )
         return {
             "email_sent": email_result.get("sent", False),
             "email_error": email_result.get("error"),
+            "email_subject": subject,
         }

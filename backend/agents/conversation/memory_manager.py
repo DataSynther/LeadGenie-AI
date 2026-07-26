@@ -45,26 +45,47 @@ class EpisodicMemory:
         "archive_count": N }
     """
 
-    def append(self, lead_id: str, role: str, content: str, meta: dict | None = None) -> bool:
+    def append(
+        self,
+        lead_id: str,
+        role: str,
+        content: str,
+        meta: dict | None = None,
+        required: bool = False,
+    ) -> bool:
         """Write a message through governance, then append to episodic store."""
         result = governance.governed_write(content, "episodic", lead_id)
-        if not result["written"]:
+        if not result["written"] and not required:
             return False
 
+        metadata = dict(meta or {})
+        timestamp = metadata.pop("timestamp", None) or datetime.now(timezone.utc).isoformat()
         store = self._read(lead_id)
         entry = {
             "role":       role,
             "content":    content,
-            "ts":         datetime.now(timezone.utc).isoformat(),
+            "ts":         timestamp,
             "confidence": result["relevance_score"],
-            **(meta or {}),
+            **metadata,
         }
         store["raw"].append(entry)
 
-        # Slide window — summarise if raw exceeds _RAW_WINDOW
+        # Keep real email exchanges intact; slide only non-email prompt memory.
         if len(store["raw"]) > _RAW_WINDOW:
-            overflow = store["raw"][: len(store["raw"]) - _RAW_WINDOW]
-            store["raw"] = store["raw"][-_RAW_WINDOW:]
+            remove_count = len(store["raw"]) - _RAW_WINDOW
+            removable = [
+                index for index, message in enumerate(store["raw"])
+                if message.get("channel") != "email"
+            ][:remove_count]
+            removable_set = set(removable)
+            overflow = [
+                message for index, message in enumerate(store["raw"])
+                if index in removable_set
+            ]
+            store["raw"] = [
+                message for index, message in enumerate(store["raw"])
+                if index not in removable_set
+            ]
             store["archive_count"] += len(overflow)
             # Simple extractive summary (no LLM call — avoids recursive cost)
             new_lines = [f"{m['role'].upper()}: {m['content'][:120]}" for m in overflow]
@@ -94,6 +115,16 @@ class EpisodicMemory:
             )
 
         return memories
+
+    def update_latest(self, lead_id: str, role: str, meta: dict, content: str | None = None) -> bool:
+        """Attach delivery metadata to the most recent message for a role."""
+        store = self._read(lead_id)
+        for message in reversed(store["raw"]):
+            if message.get("role") == role and (content is None or message.get("content") == content):
+                message.update(meta)
+                self._write(lead_id, store)
+                return True
+        return False
 
     def recent(self, lead_id: str, n: int = 6) -> str:
         """Plain-text summary of last n messages for prompt injection."""
@@ -485,8 +516,8 @@ class MemoryManager:
 
     # ── episodic ──────────────────────────────────────────────────────────────
 
-    def store_message(self, lead_id: str, role: str, content: str, **meta) -> None:
-        self.episodic.append(lead_id, role, content, meta=meta or None)
+    def store_message(self, lead_id: str, role: str, content: str, required: bool = False, **meta) -> bool:
+        return self.episodic.append(lead_id, role, content, meta=meta or None, required=required)
 
     def get_history(self, lead_id: str) -> list[dict]:
         """Return governed episodic history (relevance-filtered)."""
@@ -501,6 +532,9 @@ class MemoryManager:
             }
             for m in raw
         ]
+
+    def update_latest_message(self, lead_id: str, role: str, content: str | None = None, **meta) -> bool:
+        return self.episodic.update_latest(lead_id, role, meta, content=content)
 
     def summarize_history(self, lead_id: str) -> str:
         return self.episodic.recent(lead_id, n=6)

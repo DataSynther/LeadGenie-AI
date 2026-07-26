@@ -259,6 +259,14 @@ export type ApprovalItem = {
   confidence: number;
   email?: { subject: string; body: string; reasoning?: string };
   followup_sequence?: FollowupDraft[];
+  conversation_messages?: {
+    direction: "inbound" | "outbound";
+    sender: string;
+    recipient: string;
+    subject: string;
+    body: string;
+    timestamp: string;
+  }[];
   status_updated_at?: string;
   checkpoints?: ValidatorCheckpoints;
   citations?: Record<string, CitationEntry2>;

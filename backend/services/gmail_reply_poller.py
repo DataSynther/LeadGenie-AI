@@ -4,6 +4,7 @@ import os
 import time
 import logging
 from email.header import decode_header
+from email.utils import parsedate_to_datetime
 from datetime import datetime, timezone
 
 from services.lead_context_store import LeadContextStore
@@ -103,6 +104,10 @@ class GmailReplyPoller:
             sender = self._decode_header_value(msg.get("From", ""))
             subject = self._decode_header_value(msg.get("Subject", ""))
             body = self._extract_body(msg)
+            try:
+                received_at = parsedate_to_datetime(msg.get("Date", "")).astimezone(timezone.utc).isoformat()
+            except (TypeError, ValueError):
+                received_at = datetime.now(timezone.utc).isoformat()
 
             sender_email = sender
             if "<" in sender and ">" in sender:
@@ -113,6 +118,8 @@ class GmailReplyPoller:
                 "from": sender_email,
                 "subject": subject,
                 "body": body,
+                "timestamp": received_at,
+                "message_id": msg.get("Message-ID", ""),
             })
         return messages
 
@@ -150,7 +157,38 @@ class GmailReplyPoller:
                 reply=body,
                 context=context,
                 lead_email=sender_email,
+                reply_metadata={
+                    "channel": "email",
+                    "direction": "inbound",
+                    "sender": sender_email,
+                    "subject": msg.get("subject", ""),
+                    "timestamp": msg.get("timestamp", ""),
+                    "message_id": msg.get("message_id", ""),
+                },
             )
+            if result.get("email_sent"):
+                outbound_metadata = {
+                    "channel": "email",
+                    "direction": "outbound",
+                    "sender": self.user,
+                    "recipient": sender_email,
+                    "subject": result.get("email_subject", ""),
+                    "delivery_status": "sent",
+                }
+                updated = self.agent.memory.update_latest_message(
+                    lead_id,
+                    "sdr",
+                    content=result.get("response", ""),
+                    **outbound_metadata,
+                )
+                if not updated:
+                    self.agent.memory.store_message(
+                        lead_id,
+                        "sdr",
+                        result.get("response", ""),
+                        required=True,
+                        **outbound_metadata,
+                    )
             try:
                 stats_store.record_conversation(
                     lead_id=lead_id,

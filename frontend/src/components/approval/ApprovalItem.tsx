@@ -616,7 +616,10 @@ export function ApprovalItem({ item, initialExpanded = false, initialTab, highli
 
   const approveMutation = useMutation({
     mutationFn: () => api.approveOutreach(item.event_id, localSequence.length > 0 ? localSequence : undefined),
-    onSuccess: removeFromCache,
+    onSuccess: () => {
+      removeFromCache();
+      queryClient.invalidateQueries({ queryKey: ["sentEmails"] });
+    },
   });
 
   const saveSequenceMutation = useMutation({

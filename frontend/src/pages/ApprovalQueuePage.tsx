@@ -31,7 +31,7 @@ const RISK_C: Record<string, { text: string; bg: string }> = {
 // ── Individual email message (collapsible) ────────────────────────────────────
 
 function EmailMessage({
-  from, to, subject, body, date, isInitial, followupNumber, isSent,
+  from, to, subject, body, date, isInitial, followupNumber, isSent, isInbound,
 }: {
   from: string;
   to?: string;
@@ -41,13 +41,15 @@ function EmailMessage({
   isInitial?: boolean;
   followupNumber?: number;
   isSent?: boolean;
+  isInbound?: boolean;
 }) {
-  const [expanded, setExpanded] = useState(isInitial ?? false);
+  const [expanded, setExpanded] = useState(Boolean(isInitial || isInbound));
   const scheduled = followupNumber != null && !isSent;
 
   return (
     <div className={cn(
       "border rounded-lg mb-3 overflow-hidden transition-opacity",
+      isInbound ? "bg-emerald-500/5 border-emerald-500/20" :
       isInitial ? "bg-surface shadow-sm border-line-soft" :
       scheduled  ? "bg-surface-2/10 border-line-soft/40 opacity-50" :
                    "bg-surface-2/30 border-line-soft",
@@ -58,7 +60,9 @@ function EmailMessage({
       >
         <div className={cn(
           "w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 mt-0.5 border",
-          isInitial
+          isInbound
+            ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+            : isInitial
             ? "bg-brand/10 text-brand border-brand/20"
             : scheduled
               ? "bg-surface-2/50 text-ink-mute border-line-soft/40"
@@ -78,6 +82,11 @@ function EmailMessage({
             {isInitial && (
               <span className="text-[9px] font-mono px-1.5 py-px rounded-full bg-brand/10 text-brand font-semibold border border-brand/20">
                 Initial
+              </span>
+            )}
+            {isInbound && (
+              <span className="text-[9px] font-mono px-1.5 py-px rounded-full bg-emerald-500/10 text-emerald-500 font-semibold border border-emerald-500/20">
+                Prospect reply
               </span>
             )}
             {followupNumber != null && (
@@ -133,10 +142,62 @@ function EmailMessage({
 
 // ── Full email thread (initial + follow-ups) ──────────────────────────────────
 
+type ThreadEmailMessage = {
+  key: string;
+  from: string;
+  to?: string;
+  subject: string;
+  body: string;
+  timestamp: string;
+  scheduledLabel?: string;
+  isInitial?: boolean;
+  followupNumber?: number;
+  isSent?: boolean;
+  isInbound?: boolean;
+};
+
 function EmailThread({ item }: { item: ApprovalItemType }) {
   const senderName = "LeadGenie AI";
   const recipientEmail = item.lead_email ?? item.lead_name ?? "Lead";
   const sequence: FollowupDraft[] = item.followup_sequence ?? [];
+  const isReplied = item.policy === "replied";
+  const messages: ThreadEmailMessage[] = [
+    {
+      key: "initial",
+      from: senderName,
+      to: recipientEmail,
+      subject: item.email?.subject ?? "(No subject)",
+      body: item.email?.body ?? "",
+      timestamp: item.timestamp,
+      isInitial: true,
+    },
+    ...sequence
+      .filter((fu) => !isReplied || fu.sent_at != null)
+      .map((fu) => ({
+        key: `followup-${fu.number}`,
+        from: senderName,
+        to: recipientEmail,
+        subject: fu.subject ?? `Re: ${item.email?.subject ?? ""}`,
+        body: fu.body ?? "",
+        timestamp: fu.sent_at ?? "",
+        followupNumber: fu.number,
+        isSent: fu.sent_at != null,
+        scheduledLabel: fu.delay_seconds != null ? `In ${fu.delay_seconds}s` : `Day +${fu.delay_days ?? fu.number * 3}`,
+      })),
+    ...(item.conversation_messages ?? []).map((message, index) => ({
+      key: `${message.direction}-${message.timestamp}-${index}`,
+      from: message.sender || (message.direction === "inbound" ? recipientEmail : senderName),
+      to: message.recipient,
+      subject: message.subject || "(No subject)",
+      body: message.body,
+      timestamp: message.timestamp,
+      isInbound: message.direction === "inbound",
+    })),
+  ].sort((a, b) => {
+    if (!a.timestamp) return 1;
+    if (!b.timestamp) return -1;
+    return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+  });
 
   return (
     <div className="flex flex-col h-full">
@@ -156,35 +217,20 @@ function EmailThread({ item }: { item: ApprovalItemType }) {
 
       {/* Scrollable email messages */}
       <div className="flex-1 overflow-y-auto p-5 min-h-0">
-        <EmailMessage
-          from={senderName}
-          to={recipientEmail}
-          subject={item.email?.subject ?? "(No subject)"}
-          body={item.email?.body ?? ""}
-          date={fmtDate(item.timestamp)}
-          isInitial
-        />
-
-        {sequence.map((fu) => {
-          const sent = fu.sent_at != null;
-          return (
-            <EmailMessage
-              key={fu.number}
-              from={senderName}
-              to={recipientEmail}
-              subject={fu.subject ?? `Re: ${item.email?.subject ?? ""}`}
-              body={fu.body ?? ""}
-              date={sent
-                ? fmtDate(fu.sent_at!)
-                : fu.delay_seconds != null
-                  ? `In ${fu.delay_seconds}s`
-                  : `Day +${fu.delay_days ?? fu.number * 3}`
-              }
-              followupNumber={fu.number}
-              isSent={sent}
-            />
-          );
-        })}
+        {messages.map((message) => (
+          <EmailMessage
+            key={message.key}
+            from={message.from}
+            to={message.to}
+            subject={message.subject}
+            body={message.body}
+            date={message.timestamp ? fmtDate(message.timestamp) : message.scheduledLabel!}
+            isInitial={message.isInitial}
+            followupNumber={message.followupNumber}
+            isSent={message.isSent}
+            isInbound={message.isInbound}
+          />
+        ))}
 
         {sequence.length === 0 && (
           <div className="text-center text-[11px] text-ink-mute py-5 border border-dashed border-line-soft rounded-lg mt-2">
@@ -353,12 +399,11 @@ export function ApprovalQueuePage() {
     [sentItems, search],
   );
 
-  // Follow Up: sent items where at least the 1st follow-up has been sent, no reply yet
+  // Follow Up: every approved send awaiting a prospect reply.
   const repliedEventIds = useMemo(() => new Set(repliedItems.map(i => i.event_id)), [repliedItems]);
   const followupItems = useMemo(
     () => sentItems.filter(i =>
-      (i.followup_sequence ?? []).some(fu => fu.sent_at != null) &&  // at least 1 sent
-      !repliedEventIds.has(i.event_id) &&                              // remove once this conversation replied
+      !repliedEventIds.has(i.event_id) && // remove once this conversation replied
       filterFn(i)
     ),
     [sentItems, repliedEventIds, search],
@@ -376,7 +421,7 @@ export function ApprovalQueuePage() {
   const TABS: { id: QueueTab; label: string; count: number; desc: string }[] = [
     { id: "outreach", label: "Outreach",     count: queueItems.length,   desc: "Queued for first send" },
     { id: "replied",  label: "Replied Back", count: repliedItems.length, desc: "Prospect replied"       },
-    { id: "followup", label: "Follow Up",    count: followupItems.length, desc: "Auto follow-ups sent"  },
+    { id: "followup", label: "Follow Up",    count: followupItems.length, desc: "Awaiting reply"  },
   ];
 
   const handleTabChange = (tab: QueueTab) => {
