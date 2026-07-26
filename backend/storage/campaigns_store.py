@@ -32,7 +32,8 @@ def _read_all() -> list[dict]:
 
 
 def save_campaign(
-    subject: str, body: str, groups: list[str], results: list[dict], created_by: str
+    subject: str, body: str, groups: list[str], results: list[dict], created_by: str,
+    attachments: list[str] | None = None,
 ) -> dict:
     sent = sum(1 for r in results if r.get("sent"))
     record = {
@@ -40,6 +41,7 @@ def save_campaign(
         "subject":         subject,
         "body":            body,
         "groups":          groups,
+        "attachments":     attachments or [],
         "recipient_count": len(results),
         "sent_count":      sent,
         "failed_count":    len(results) - sent,

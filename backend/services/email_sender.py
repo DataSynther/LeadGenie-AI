@@ -2,6 +2,7 @@ import os
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
 
 
 class EmailSender:
@@ -22,22 +23,32 @@ class EmailSender:
             or os.getenv("GMAIL_APP_PASSWORD", "")
         )
 
-    def send(self, to_email: str, subject: str, body: str, reply_to: str = None) -> dict:
+    def send(
+        self, to_email: str, subject: str, body: str, reply_to: str = None,
+        attachments: list[tuple[str, bytes]] | None = None,
+    ) -> dict:
         if not self.gmail_user or not self.gmail_pass:
             return {
                 "sent": False,
                 "to": to_email,
                 "error": "No email credentials — set LEADGENIE_GMAIL + LEADGENIE_GMAIL_PASSWORD",
             }
-        return self._send_smtp(to_email, subject, body, reply_to)
+        return self._send_smtp(to_email, subject, body, reply_to, attachments)
 
-    def _send_smtp(self, to_email: str, subject: str, body: str, reply_to: str = None) -> dict:
+    def _send_smtp(
+        self, to_email: str, subject: str, body: str, reply_to: str = None,
+        attachments: list[tuple[str, bytes]] | None = None,
+    ) -> dict:
         msg = MIMEMultipart()
         msg["From"]     = self.gmail_user
         msg["To"]       = to_email
         msg["Subject"]  = subject
         msg["Reply-To"] = reply_to or self.gmail_user
         msg.attach(MIMEText(body, "plain"))
+        for filename, data in (attachments or []):
+            part = MIMEApplication(data, Name=filename)
+            part["Content-Disposition"] = f'attachment; filename="{filename}"'
+            msg.attach(part)
 
         last_error = ""
 

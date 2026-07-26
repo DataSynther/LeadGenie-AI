@@ -1362,6 +1362,7 @@ export interface CampaignRecord {
   subject: string;
   body: string;
   groups: string[];
+  attachments?: string[];
   recipient_count: number;
   sent_count: number;
   failed_count: number;
@@ -1382,8 +1383,23 @@ export const addCampaignSubscriber = (email: string, name: string, groups: strin
 export const suggestCampaignDraft = (group: string) =>
   get<{ subject: string; body: string }>(`/campaigns/suggest-draft?group=${encodeURIComponent(group)}`);
 
-export const sendCampaign = (subject: string, body: string, groups: string[]) =>
-  post<CampaignRecord>("/campaigns/send", { subject, body, groups });
+export async function sendCampaign(
+  subject: string, body: string, groups: string[], files: File[] = [],
+): Promise<CampaignRecord> {
+  const form = new FormData();
+  form.append("subject", subject);
+  form.append("body", body);
+  groups.forEach(g => form.append("groups", g));
+  files.forEach(f => form.append("files", f));
+
+  const res = await fetch(`${BASE_URL}/campaigns/send`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: form,
+  });
+  handleStatus(res, "POST /campaigns/send");
+  return res.json();
+}
 
 export const campaignHistory = () =>
   get<{ campaigns: CampaignRecord[] }>("/campaigns/history");

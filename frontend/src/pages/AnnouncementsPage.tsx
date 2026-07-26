@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Sparkles, Send, Loader2, Users, Plus, CheckCircle2, XCircle, ChevronDown, ChevronRight } from "lucide-react";
+import { Sparkles, Send, Loader2, Users, Plus, CheckCircle2, XCircle, ChevronDown, ChevronRight, Paperclip, X, FileText } from "lucide-react";
 import { Topbar } from "../components/layout/Topbar";
 import { api, type CampaignRecord } from "../lib/api";
 import { cn } from "../lib/utils";
@@ -33,6 +33,9 @@ function CampaignHistoryItem({ campaign }: { campaign: CampaignRecord }) {
           <div className="text-[10px] text-ink-mute font-mono mt-0.5">
             {new Date(campaign.created_at).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
             {" · "}{campaign.groups.map(g => GROUP_LABELS[g] ?? g).join(", ")}
+            {(campaign.attachments?.length ?? 0) > 0 && (
+              <> {" · "}<Paperclip size={9} className="inline -mt-0.5" /> {campaign.attachments!.length}</>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0 ml-2">
@@ -64,7 +67,9 @@ export function AnnouncementsPage() {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
   const [lastResult, setLastResult] = useState<CampaignRecord | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [newEmail, setNewEmail] = useState("");
   const [newName, setNewName] = useState("");
@@ -80,13 +85,22 @@ export function AnnouncementsPage() {
   });
 
   const sendMutation = useMutation({
-    mutationFn: () => api.sendCampaign(subject.trim(), body.trim(), selectedGroups),
+    mutationFn: () => api.sendCampaign(subject.trim(), body.trim(), selectedGroups, files),
     onSuccess: (record) => {
       setLastResult(record);
       queryClient.invalidateQueries({ queryKey: ["campaignHistory"] });
-      setSubject(""); setBody(""); setSelectedGroups([]);
+      setSubject(""); setBody(""); setSelectedGroups([]); setFiles([]);
     },
   });
+
+  function addFiles(list: FileList | null) {
+    if (!list) return;
+    setFiles(prev => [...prev, ...Array.from(list)]);
+  }
+
+  function removeFile(index: number) {
+    setFiles(prev => prev.filter((_, i) => i !== index));
+  }
 
   const addSubMutation = useMutation({
     mutationFn: () => api.addCampaignSubscriber(newEmail.trim(), newName.trim(), newGroups),
@@ -144,6 +158,34 @@ export function AnnouncementsPage() {
             placeholder="Write the announcement…"
             className="w-full mb-3 text-[12px] leading-relaxed px-3 py-2.5 rounded-lg border border-line-soft bg-surface-2 text-ink placeholder:text-ink-mute focus:outline-none focus:border-brand transition-colors resize-none"
           />
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            className="hidden"
+            onChange={e => { addFiles(e.target.files); e.target.value = ""; }}
+          />
+          <div className="flex flex-wrap items-center gap-1.5 mb-4">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border border-line text-ink-2 hover:border-brand hover:text-brand transition-colors"
+            >
+              <Paperclip size={11} /> Attach files
+            </button>
+            {files.map((f, i) => (
+              <span
+                key={`${f.name}-${i}`}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] bg-surface-2 border border-line-soft text-ink-2"
+              >
+                <FileText size={11} className="text-ink-mute" />
+                <span className="max-w-[160px] truncate">{f.name}</span>
+                <button onClick={() => removeFile(i)} className="text-ink-mute hover:text-danger">
+                  <X size={11} />
+                </button>
+              </span>
+            ))}
+          </div>
 
           <div className="font-mono text-[10px] uppercase tracking-widest text-ink-mute mb-2">
             Target Groups

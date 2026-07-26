@@ -11,7 +11,7 @@ import os
 import secrets
 import time
 from datetime import datetime, timedelta, timezone
-from fastapi import FastAPI, HTTPException, Request, Depends, Query, BackgroundTasks
+from fastapi import FastAPI, HTTPException, Request, Depends, Query, BackgroundTasks, Form, UploadFile, File
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from middleware.activity_tracker import ActivityTrackerMiddleware
@@ -318,12 +318,6 @@ class KYCChatRequest(BaseModel):
     onepager: dict
     message: str
     history: list[dict] = []
-
-
-class CampaignSendRequest(BaseModel):
-    subject: str
-    body: str
-    groups: list[str]
 
 
 class SubscriberAddRequest(BaseModel):
@@ -2686,30 +2680,45 @@ async def suggest_campaign_draft(
     return draft
 
 
+_MAX_ATTACHMENT_MB = 10
+
 @app.post("/campaigns/send")
 async def send_campaign(
-    req: CampaignSendRequest,
+    subject: str = Form(...),
+    body: str = Form(...),
+    groups: list[str] = Form(...),
+    files: list[UploadFile] = File(default=[]),
     session: dict = Depends(_require_role("manager")),
 ):
-    if not req.subject.strip() or not req.body.strip():
+    if not subject.strip() or not body.strip():
         raise HTTPException(status_code=400, detail="subject and body are required")
-    if not req.groups:
+    if not groups:
         raise HTTPException(status_code=400, detail="select at least one group")
 
-    recipients = subscribers_store.resolve_recipients(req.groups)
+    attachments: list[tuple[str, bytes]] = []
+    for f in files:
+        if not f.filename:
+            continue
+        data = await f.read()
+        if len(data) > _MAX_ATTACHMENT_MB * 1024 * 1024:
+            raise HTTPException(status_code=400, detail=f"{f.filename} exceeds {_MAX_ATTACHMENT_MB}MB limit")
+        attachments.append((f.filename, data))
+
+    recipients = subscribers_store.resolve_recipients(groups)
     results = []
     for r in recipients:
         outcome = await asyncio.to_thread(
-            campaign_email_sender.send, r["email"], req.subject, req.body
+            campaign_email_sender.send, r["email"], subject, body, None, attachments
         )
         results.append({"email": r["email"], "name": r.get("name"), **outcome})
 
     record = campaigns_store.save_campaign(
-        subject=req.subject,
-        body=req.body,
-        groups=req.groups,
+        subject=subject,
+        body=body,
+        groups=groups,
         results=results,
         created_by=session["username"],
+        attachments=[name for name, _ in attachments],
     )
     return record
 
