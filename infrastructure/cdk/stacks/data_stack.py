@@ -33,6 +33,8 @@ class DataStack(Stack):
                 "NEO4J_URI":               SecretValue.unsafe_plain_text(os.environ.get("NEO4J_URI", "")),
                 "NEO4J_USERNAME":          SecretValue.unsafe_plain_text(os.environ.get("NEO4J_USERNAME", "")),
                 "NEO4J_PASSWORD":          SecretValue.unsafe_plain_text(os.environ.get("NEO4J_PASSWORD", "")),
+                "LEADFEEDER_API_KEY":      SecretValue.unsafe_plain_text(os.environ.get("LEADFEEDER_API_KEY", "")),
+                "LEADFEEDER_ACCOUNT_ID":   SecretValue.unsafe_plain_text(os.environ.get("LEADFEEDER_ACCOUNT_ID", "")),
             },
         )
 

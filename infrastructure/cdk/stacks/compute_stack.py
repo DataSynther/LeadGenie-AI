@@ -93,6 +93,8 @@ class ComputeStack(Stack):
             "NEO4J_URI":              ecs.Secret.from_secrets_manager(secret, "NEO4J_URI"),
             "NEO4J_USERNAME":         ecs.Secret.from_secrets_manager(secret, "NEO4J_USERNAME"),
             "NEO4J_PASSWORD":         ecs.Secret.from_secrets_manager(secret, "NEO4J_PASSWORD"),
+            "LEADFEEDER_API_KEY":     ecs.Secret.from_secrets_manager(secret, "LEADFEEDER_API_KEY"),
+            "LEADFEEDER_ACCOUNT_ID":  ecs.Secret.from_secrets_manager(secret, "LEADFEEDER_ACCOUNT_ID"),
         }
 
         log_group = logs.LogGroup(self, "LogGroup",

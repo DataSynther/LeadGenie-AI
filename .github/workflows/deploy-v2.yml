@@ -355,6 +355,8 @@ jobs:
           NEO4J_URI:         ${{ secrets.NEO4J_URI }}
           NEO4J_USERNAME:    ${{ secrets.NEO4J_USERNAME }}
           NEO4J_PASSWORD:    ${{ secrets.NEO4J_PASSWORD }}
+          LEADFEEDER_API_KEY:    ${{ secrets.LEADFEEDER_API_KEY }}
+          LEADFEEDER_ACCOUNT_ID: ${{ secrets.LEADFEEDER_ACCOUNT_ID }}
         run: |
           set -euo pipefail
           echo "=== Stage 1: VpcStack + DataStack ===" | tee -a /tmp/cdk.log
