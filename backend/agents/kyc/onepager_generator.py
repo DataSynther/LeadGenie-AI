@@ -75,7 +75,8 @@ class OnePagerGenerator:
             return sid
 
         ai_label = _ai_source_label(company, signals)
-        apollo_id = add_source(_SRC_APOLLO)
+        apollo_url = company.get("linkedin_url") or (f"https://{company['domain']}" if company.get("domain") else None)
+        apollo_id = add_source(_SRC_APOLLO, apollo_url)
         ai_id = add_source(ai_label)
 
         # ── Company Overview — built directly from real data, no LLM ────────
