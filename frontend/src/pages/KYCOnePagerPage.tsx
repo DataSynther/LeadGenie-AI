@@ -62,16 +62,25 @@ function KYCHero({ onNodeClick }: { onNodeClick: (node: HeroNode) => void }) {
       ref={ref}
       className="bg-surface border border-line-soft rounded-[10px] shadow-card p-6 sm:p-10 mb-6 relative"
     >
-      {/* Decorative backdrop — soft gradient wash only; kept clear of icon
-          clutter so it doesn't compete with the diagram itself. Clipped to
-          its own layer (not the card) so the node labels are never cut off. */}
+      {/* Decorative backdrop — gradient wash + the SDR wallpaper, covering
+          the whole card. The diagram square (below) paints on top and
+          carries its own opaque "shield" circle, so the wallpaper stays
+          visible around the diagram but never shows through inside it. */}
       <div className="absolute inset-0 rounded-[10px] overflow-hidden pointer-events-none" aria-hidden>
         <div className="absolute -top-16 -left-16 w-64 h-64 rounded-full bg-brand/10 blur-3xl" />
         <div className="absolute -bottom-16 -right-16 w-72 h-72 rounded-full bg-gold/10 blur-3xl" />
         <div className="absolute top-1/3 right-0 w-48 h-48 rounded-full bg-brand/5 blur-3xl" />
+        <SDRWallpaperLayer tileSize={220} />
       </div>
 
       <div className="relative mx-auto aspect-square" style={{ width: "100%", maxWidth: 520 }}>
+        {/* Shield — opaque, card-colored circle that blocks the wallpaper
+            from showing through behind the ring/nodes/labels. */}
+        <div
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-surface"
+          style={{ width: "98%", height: "98%" }}
+          aria-hidden
+        />
         <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full animate-spin-slow" aria-hidden>
           <circle
             cx="50" cy="50" r={R}
