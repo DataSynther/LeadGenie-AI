@@ -354,14 +354,14 @@ export function ApprovalQueuePage() {
   );
 
   // Follow Up: sent items where at least the 1st follow-up has been sent, no reply yet
-  const repliedLeadIds = useMemo(() => new Set(repliedItems.map(i => i.lead_id)), [repliedItems]);
+  const repliedEventIds = useMemo(() => new Set(repliedItems.map(i => i.event_id)), [repliedItems]);
   const followupItems = useMemo(
     () => sentItems.filter(i =>
       (i.followup_sequence ?? []).some(fu => fu.sent_at != null) &&  // at least 1 sent
-      !repliedLeadIds.has(i.lead_id) &&                               // remove once replied
+      !repliedEventIds.has(i.event_id) &&                              // remove once this conversation replied
       filterFn(i)
     ),
-    [sentItems, repliedLeadIds, search],
+    [sentItems, repliedEventIds, search],
   );
 
   const activeItems =

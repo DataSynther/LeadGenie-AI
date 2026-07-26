@@ -27,8 +27,9 @@ STORE_DIR = Path(__file__).parent.parent / "storage" / "followups"
 STORE_DIR.mkdir(parents=True, exist_ok=True)
 WHATSAPP_SENDER_INTRO = "I am Prasant from Ganit."
 
-# Default delay (days) between each follow-up when no custom schedule is set
-DEFAULT_FOLLOWUP_DELAYS = {2: 3, 3: 5, 4: 7, 5: 10}
+# Default absolute delay from outreach send time for email follow-ups.
+# Set to 2 minutes between each follow-up in this temporary test mode.
+DEFAULT_FOLLOWUP_DELAYS_SECONDS = {2: 120, 3: 240, 4: 360, 5: 480}
 
 
 class FollowupScheduler:
@@ -61,13 +62,14 @@ class FollowupScheduler:
                         "kb_ids_used": email.get("kb_ids_used", []),
                     })
                 sequence.append({
-                    "number":       n,
-                    "subject":      email.get("subject", ""),
-                    "body":         email.get("body", ""),
-                    "reasoning":    email.get("reasoning", ""),
+                    "number":        n,
+                    "subject":       email.get("subject", ""),
+                    "body":          email.get("body", ""),
+                    "reasoning":     email.get("reasoning", ""),
                     "followup_type": email.get("followup_type", ""),
-                    "kb_ids_used":  email.get("kb_ids_used", []),
-                    "delay_days":   DEFAULT_FOLLOWUP_DELAYS.get(n, 3),
+                    "kb_ids_used":   email.get("kb_ids_used", []),
+                    "delay_seconds": DEFAULT_FOLLOWUP_DELAYS_SECONDS.get(n, 120),
+                    "delay_days":    0,
                 })
             except Exception as exc:
                 logger.warning("Failed to pre-generate follow-up #%d: %s", n, exc)
@@ -85,8 +87,8 @@ class FollowupScheduler:
         """Schedule follow-ups after outreach is sent.
 
         If followup_sequence is provided (pre-approved by sender), email follow-ups
-        are sent on the custom delay schedule. WhatsApp fallback fires first via
-        WHATSAPP_FOLLOWUP_WAIT_MINUTES, then email follow-ups start from sequence[0].
+        are sent on the custom delay schedule. WhatsApp fallback is synchronized
+        with follow-up #2.
         """
         wait = wait_minutes or int(os.getenv("WHATSAPP_FOLLOWUP_WAIT_MINUTES", "2"))
         now = datetime.utcnow()
@@ -99,7 +101,7 @@ class FollowupScheduler:
                 if delay_secs is not None:
                     due = now + timedelta(seconds=int(delay_secs))
                 else:
-                    delay_days = int(item.get("delay_days") or DEFAULT_FOLLOWUP_DELAYS.get(item["number"], 3))
+                    delay_days = int(item.get("delay_days") or 0)
                     due = now + timedelta(days=delay_days)
                 email_schedule.append({
                     **item,
@@ -108,13 +110,23 @@ class FollowupScheduler:
                     "sent_at": None,
                 })
 
+        first_followup = next(
+            (item for item in email_schedule if item.get("number") == 2),
+            email_schedule[0] if email_schedule else None,
+        )
+        whatsapp_due_at = (
+            first_followup.get("due_at")
+            if first_followup
+            else (now + timedelta(minutes=wait)).isoformat()
+        )
+
         record = {
             "lead_id":         lead_id,
             "phone":           phone,
             "context":         context,
             "outreach":        outreach or context.get("outreach") or {},
             "email_sent_at":   now.isoformat(),
-            "due_at":          (now + timedelta(minutes=wait)).isoformat(),
+            "due_at":          whatsapp_due_at,
             "status":          "waiting",
             "whatsapp_sent_at": None,
             "whatsapp_error":  None,
@@ -207,14 +219,24 @@ class FollowupScheduler:
         )
         record["status"] = "replied"
         record["replied_at"] = datetime.utcnow().isoformat()
+        cancelled = 0
+        for item in record.get("email_schedule") or []:
+            if item.get("status") == "scheduled":
+                item["status"] = "cancelled"
+                item["cancelled_reason"] = "lead_replied"
+                cancelled += 1
+        if old_status == "waiting" and not record.get("whatsapp_sent_at"):
+            record["whatsapp_cancelled_at"] = record["replied_at"]
+            record["whatsapp_cancelled_reason"] = "lead_replied"
         self._write(lead_id, record)
         updated = self.get(lead_id) or {}
         logger.info(
-            "mark_replied after update lead_id=%s old_status=%s current_status=%s replied_at=%s path=%s",
+            "mark_replied after update lead_id=%s old_status=%s current_status=%s replied_at=%s cancelled_email_followups=%s path=%s",
             lead_id,
             old_status,
             updated.get("status"),
             updated.get("replied_at"),
+            cancelled,
             path,
         )
         logger.info(

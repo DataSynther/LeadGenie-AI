@@ -158,6 +158,10 @@ def _mask_phone(phone: str | None) -> str | None:
     return phone[:2] + "•" * max(0, len(phone) - 5) + phone[-3:]
 
 
+def _is_masked_contact_value(value: str | None) -> bool:
+    return bool(value and any(ord(ch) > 127 for ch in value))
+
+
 def _mask_contact(person: dict) -> dict:
     """Return person dict with PII masked. Originals stored in _contact_vault."""
     lead_id = person.get("id") or person.get("lead_id", "")
@@ -1019,55 +1023,80 @@ async def generate_outreach_stream(req: OutreachRequest):
 @app.post("/outreach/send")
 async def send_outreach(req: SendOutreachRequest):
     """Send a reviewed outreach email and schedule WhatsApp follow-up if phone is available."""
-    lead = apollo_people.get_person_details(req.lead_id)
-    if not lead:
-        raise HTTPException(status_code=404, detail="Lead not found")
-    if not req.to_email:
-        raise HTTPException(status_code=400, detail="Lead email is required")
+    step = "start"
+    try:
+        step = "loading lead"
+        lead = apollo_people.get_person_details(req.lead_id)
+        if not lead:
+            raise HTTPException(status_code=404, detail="Lead not found")
+        if not req.to_email:
+            raise HTTPException(status_code=400, detail="Lead email is required")
 
-    result = EmailSender().send(to_email=req.to_email, subject=req.subject, body=req.body)
-    if not result.get("sent"):
-        raise HTTPException(status_code=502, detail=result.get("error"))
+        step = "resolving recipient"
+        to_email = req.to_email
+        if _is_masked_contact_value(to_email):
+            vault_email = (_contact_vault.get(req.lead_id) or {}).get("email")
+            if not vault_email:
+                raise HTTPException(status_code=400, detail="Original lead email is required before sending")
+            to_email = vault_email
 
-    req_lead = req.context.get("lead", {}) if isinstance(req.context, dict) else {}
-    req_company = req.context.get("company", {}) if isinstance(req.context, dict) else {}
-    lead_phone = req.phone or lead.get("phone") or req_lead.get("phone") or req_company.get("phone")
-    enriched_context = {
-        **req.context,
-        "lead": {**req.context.get("lead", {}), "email": req.to_email, "phone": lead_phone},
-        "outreach": {"subject": req.subject, "body": req.body, "reasoning": req.reasoning},
-    }
-    lead_context_store.save(req.to_email, req.lead_id, enriched_context)
+        step = "building email context"
+        req_context = req.context if isinstance(req.context, dict) else {}
+        req_lead = req_context.get("lead", {}) if isinstance(req_context.get("lead", {}), dict) else {}
+        req_company = req_context.get("company", {}) if isinstance(req_context.get("company", {}), dict) else {}
+        lead_phone = req.phone or lead.get("phone") or req_lead.get("phone") or req_company.get("phone")
+        enriched_context = {
+            **req_context,
+            "lead": {**req_lead, "email": to_email, "phone": lead_phone},
+            "outreach": {"subject": req.subject, "body": req.body, "reasoning": req.reasoning},
+        }
 
-    # Mark the queue item as approved. Use event_id directly if provided (avoids DynamoDB
-    # GSI eventual-consistency issue where a just-inserted item may not appear in a scan).
-    if req.event_id:
-        outreach_queue.update_status(req.event_id, "approved")
-        try:
-            stats_store.update_outreach_status(req.event_id, "approved")
-        except Exception as _e:
-            logger.warning("stats_store.update_outreach_status failed: %s", _e)
-    else:
-        pending = outreach_queue.get_queue(status="pending")
-        for item in pending:
-            if item.get("lead_id") == req.lead_id:
-                outreach_queue.update_status(item["event_id"], "approved")
-                try:
-                    stats_store.update_outreach_status(item["event_id"], "approved")
-                except Exception as _e:
-                    logger.warning("stats_store.update_outreach_status failed: %s", _e)
-                break
+        step = "smtp send"
+        result = EmailSender().send(to_email=to_email, subject=req.subject, body=req.body)
+        if not result.get("sent"):
+            raise HTTPException(status_code=502, detail=result.get("error") or "Email send failed")
 
-    followup = None
-    if lead_phone:
-        followup = followup_scheduler.schedule_followup(
-            lead_id=req.lead_id,
-            phone=lead_phone,
-            context=enriched_context,
-            outreach={"subject": req.subject, "body": req.body, "reasoning": req.reasoning},
-        )
+        step = "saving lead context"
+        lead_context_store.save(to_email, req.lead_id, enriched_context)
 
-    return {"sent": True, "to": req.to_email, "lead_id": req.lead_id, "followup": followup}
+        # Mark the queue item as approved. Use event_id directly if provided (avoids DynamoDB
+        # GSI eventual-consistency issue where a just-inserted item may not appear in a scan).
+        step = "updating approval status"
+        if req.event_id:
+            outreach_queue.update_status(req.event_id, "approved")
+            try:
+                stats_store.update_outreach_status(req.event_id, "approved")
+            except Exception as _e:
+                logger.warning("stats_store.update_outreach_status failed: %s", _e)
+        else:
+            pending = outreach_queue.get_queue(status="pending")
+            for item in pending:
+                if item.get("lead_id") == req.lead_id:
+                    outreach_queue.update_status(item["event_id"], "approved")
+                    try:
+                        stats_store.update_outreach_status(item["event_id"], "approved")
+                    except Exception as _e:
+                        logger.warning("stats_store.update_outreach_status failed: %s", _e)
+                    break
+
+        step = "follow-up scheduling"
+        followup = None
+        if lead_phone:
+            followup = followup_scheduler.schedule_followup(
+                lead_id=req.lead_id,
+                phone=lead_phone,
+                context=enriched_context,
+                outreach={"subject": req.subject, "body": req.body, "reasoning": req.reasoning},
+            )
+
+        return {"sent": True, "to": to_email, "lead_id": req.lead_id, "followup": followup}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"POST /outreach/send failed at {step}: {type(exc).__name__}: {exc}",
+        ) from exc
 
 
 @app.post("/conversation/reply")
@@ -1247,23 +1276,66 @@ async def sent_emails():
     so the frontend can distinguish sent vs scheduled follow-ups.
     """
     items = outreach_queue.get_queue(status="approved")
+
+    def _parse_ts(value: str | None):
+        if not value:
+            return None
+        try:
+            dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+            return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+        except ValueError:
+            return None
+
+    approved_by_lead: dict[str, list[tuple[datetime, dict]]] = {}
+    for item in items:
+        lead_id = item.get("lead_id")
+        ts = _parse_ts(item.get("timestamp"))
+        if lead_id and ts:
+            approved_by_lead.setdefault(lead_id, []).append((ts, item))
+    for lead_items in approved_by_lead.values():
+        lead_items.sort(key=lambda row: row[0])
+
+    replies_by_event_id: dict[str, dict] = {}
+    for event in stats_store.get_raw_conversations(limit=10000):
+        lead_id = event.get("lead_id")
+        reply_ts = _parse_ts(event.get("timestamp"))
+        if not lead_id or not reply_ts:
+            continue
+        matched_item = None
+        for approved_ts, approved_item in approved_by_lead.get(lead_id, []):
+            if approved_ts <= reply_ts:
+                matched_item = approved_item
+            else:
+                break
+        if matched_item:
+            event_id = matched_item.get("event_id")
+            if event_id and event_id not in replies_by_event_id:
+                replies_by_event_id[event_id] = event
+
     for item in items:
         lead_id = item.get("lead_id")
         if not lead_id:
             continue
+        reply_event = replies_by_event_id.get(item.get("event_id"))
+        if reply_event:
+            item["trigger"] = reply_event.get("intent") or "reply"
+            item["policy"] = "replied"
         sched_record = followup_scheduler.get(lead_id)
         if not sched_record:
             continue
         sched_map = {
-            e["number"]: e.get("sent_at")
+            e["number"]: e
             for e in (sched_record.get("email_schedule") or [])
         }
         if not sched_map:
             continue
         seq = item.get("followup_sequence") or []
         for fu in seq:
-            if fu.get("number") in sched_map and sched_map[fu["number"]]:
-                fu["sent_at"] = sched_map[fu["number"]]
+            sched = sched_map.get(fu.get("number"))
+            if not sched:
+                continue
+            if sched.get("sent_at"):
+                fu["sent_at"] = sched.get("sent_at")
     return items
 
 

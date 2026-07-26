@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from services.lead_context_store import LeadContextStore
 from agents.conversation.conversation_agent import ConversationAgent
 from scheduling.followup_scheduler import FollowupScheduler
+from storage import stats_store
 
 logger = logging.getLogger(__name__)
 
@@ -23,10 +24,18 @@ class GmailReplyPoller:
     """
 
     def __init__(self):
-        self.user     = os.getenv("LEADGENIE_GMAIL", "")
-        self.password = os.getenv("LEADGENIE_GMAIL_PASSWORD", "")
+        self.user     = os.getenv("LEADGENIE_GMAIL", "") or os.getenv("GMAIL_USER", "")
+        self.password = (
+            os.getenv("LEADGENIE_GMAIL_PASSWORD", "")
+            or os.getenv("GMAIL_APP_PASSWORD", "")
+        )
+        self.password = "".join(self.password.split())
         self.store    = LeadContextStore()
         self.agent    = ConversationAgent()
+        try:
+            stats_store.init()
+        except Exception as stats_err:
+            logger.warning("stats_store.init failed: %s", stats_err)
 
     def _connect(self) -> imaplib.IMAP4_SSL:
         mail = imaplib.IMAP4_SSL("imap.gmail.com", 993)
@@ -142,6 +151,19 @@ class GmailReplyPoller:
                 context=context,
                 lead_email=sender_email,
             )
+            try:
+                stats_store.record_conversation(
+                    lead_id=lead_id,
+                    intent=result.get("intent", "neutral"),
+                    confidence=result.get("intent_confidence"),
+                )
+                stats_store.record_agent_event(
+                    agent="conversation",
+                    message=f"Replied to {lead_id} (intent: {result.get('intent', 'neutral')})",
+                    lead_id=lead_id,
+                )
+            except Exception as stats_err:
+                logger.warning("stats_store.record_conversation failed: %s", stats_err)
 
             self._mark_seen(mail, msg["id"])
             results.append({
