@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   FileText, Loader2, Building2, Landmark, TrendingUp, MessageSquareText, Bot, Search,
@@ -7,6 +7,7 @@ import {
 import { Topbar } from "../components/layout/Topbar";
 import { CompanyLogo } from "../components/CompanyLogo";
 import { SDRWallpaperLayer } from "../components/kyc/SDRWallpaperLayer";
+import { WebsiteVisitorsPanel } from "../components/visitors/WebsiteVisitorsPanel";
 import { api } from "../lib/api";
 import { cn } from "../lib/utils";
 import type { DetailTab, HighlightSection } from "../components/kyc/OnePagerDetail";
@@ -169,9 +170,10 @@ function KYCHero({ onNodeClick }: { onNodeClick: (node: HeroNode) => void }) {
 
 export function KYCOnePagerPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
-  const [domain, setDomain] = useState("");
-  const [name, setName] = useState("");
+  const [domain, setDomain] = useState(() => searchParams.get("domain") ?? "");
+  const [name, setName] = useState(() => searchParams.get("name") ?? "");
   const formRef = useRef<HTMLDivElement>(null);
 
   const listQuery = useQuery({
@@ -254,6 +256,8 @@ export function KYCOnePagerPage() {
         </div>
 
         <KYCHero onNodeClick={handleHeroClick} />
+
+        <WebsiteVisitorsPanel className="max-w-4xl mx-auto mb-6" />
 
         <div className="card-base overflow-hidden max-w-4xl mx-auto">
           <div className="font-mono text-[10px] uppercase tracking-widest text-ink-mute px-4 py-3 border-b border-line-soft">

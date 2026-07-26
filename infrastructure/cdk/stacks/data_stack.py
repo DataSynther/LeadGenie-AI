@@ -96,6 +96,20 @@ class DataStack(Stack):
             projection_type=dynamodb.ProjectionType.ALL,
         )
 
+        # ── DynamoDB — website visitor tracking (Leadfeeder sync) ──────────
+        self.visits_table = dynamodb.Table(self, "VisitsTable",
+            table_name="leadgenie-visits",
+            partition_key=dynamodb.Attribute(name="pk", type=dynamodb.AttributeType.STRING),
+            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
+            removal_policy=RemovalPolicy.DESTROY,
+        )
+        self.visits_table.add_global_secondary_index(
+            index_name="recent-index",
+            partition_key=dynamodb.Attribute(name="gsi_pk", type=dynamodb.AttributeType.STRING),
+            sort_key=dynamodb.Attribute(name="last_visit", type=dynamodb.AttributeType.STRING),
+            projection_type=dynamodb.ProjectionType.ALL,
+        )
+
         # ── S3 — templates, KB docs, exports ─────────────────────────────
         self.assets_bucket = s3.Bucket(self, "AssetsBucket",
             bucket_name=f"leadgenie-assets-{self.account}",

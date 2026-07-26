@@ -1298,8 +1298,41 @@ export interface KycChatMessage {
   content: string;
 }
 
-export const kycChat = (companyName: string, onepager: OnePagerContent, message: string, history: KycChatMessage[]) =>
-  post<{ response: string }>("/kyc/chat", { company_name: companyName, onepager, message, history });
+export const kycChat = (
+  companyName: string, companyDomain: string, onepager: OnePagerContent, message: string, history: KycChatMessage[]
+) =>
+  post<{ response: string }>("/kyc/chat", {
+    company_name: companyName, company_domain: companyDomain, onepager, message, history,
+  });
+
+// ── Website Visitors (Leadfeeder sync) ─────────────────────────────────────────
+
+export interface WebsiteVisit {
+  started_at: string | null;
+  visit_length_seconds: number | null;
+  source: string | null;
+  landing_page_path: string | null;
+  pages: string[];
+}
+
+export interface WebsiteVisitor {
+  company_id: string;
+  name: string;
+  domain: string;
+  industry?: string | null;
+  city?: string | null;
+  country?: string | null;
+  employee_count?: number | null;
+  logo_url?: string | null;
+  visit_count?: number;
+  pageviews?: number;
+  last_visit?: string | null;
+  first_seen?: string | null;
+  recent_visits?: WebsiteVisit[];
+}
+
+export const listWebsiteVisitors = () =>
+  get<{ visitors: WebsiteVisitor[]; leadfeeder_configured: boolean }>("/visitors");
 
 // ── Achievement Campaigns (manager/admin) ─────────────────────────────────────
 
@@ -1422,6 +1455,7 @@ export const api = {
   getKycOnepager,
   downloadKycOnepagerDocx,
   kycChat,
+  listWebsiteVisitors,
   campaignGroups,
   campaignSubscribers,
   addCampaignSubscriber,

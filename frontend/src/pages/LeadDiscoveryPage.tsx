@@ -5,6 +5,7 @@ import { Topbar } from "../components/layout/Topbar";
 import { ResearchPanel } from "../components/research/ResearchPanel";
 import { KnowYourCustomerRow } from "../components/discovery/KnowYourCustomer";
 import { CompanyLogo } from "../components/CompanyLogo";
+import { WebsiteVisitorsPanel } from "../components/visitors/WebsiteVisitorsPanel";
 import { api } from "../lib/api";
 import type { Lead, RevealResult } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
@@ -218,6 +219,8 @@ export function LeadDiscoveryPage() {
             </div>
           )}
         </div>
+
+        <WebsiteVisitorsPanel className="mb-5" />
 
         {/* Search parameters */}
         <div className="card-base mb-5">

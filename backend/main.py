@@ -233,7 +233,7 @@ campaign_draft_suggester = DraftSuggester(sender_kb)
 campaign_email_sender = EmailSender()
 
 from agents.kyc.onepager_generator import OnePagerGenerator
-from storage import kyc_onepagers_store
+from storage import kyc_onepagers_store, visits_store
 
 kyc_onepager_generator = OnePagerGenerator()
 _followup_task = None
@@ -314,6 +314,7 @@ class KYCOnePagerRequest(BaseModel):
 
 class KYCChatRequest(BaseModel):
     company_name: str
+    company_domain: str = ""
     onepager: dict
     message: str
     history: list[dict] = []
@@ -2851,7 +2852,50 @@ async def kyc_chat(req: KYCChatRequest, session: dict = Depends(_require_role("s
     briefing — no new data is fetched, so answers outside the briefing say so
     rather than guessing."""
     from agents.kyc.chat_agent import answer
+    visitor = None
+    if req.company_domain:
+        try:
+            visitor = visits_store.get_visitor(req.company_domain)
+        except Exception as exc:
+            logger.warning("Visitor lookup for chat context failed: %s", exc)
     response_text = await asyncio.to_thread(
-        answer, req.company_name, req.onepager, req.message, req.history
+        answer, req.company_name, req.onepager, req.message, req.history, visitor
     )
     return {"response": response_text}
+
+
+# ── Website Visitors (Leadfeeder sync) ─────────────────────────────────────────
+
+@app.get("/visitors")
+async def list_website_visitors(session: dict = Depends(_require_role("sdr"))):
+    """Companies that have visited our site recently. Does a best-effort live
+    sync from Leadfeeder on each call and merges it into our own durable
+    store, so the list still reflects real history even if a given sync
+    fails or Leadfeeder's own retention window is shorter than ours."""
+    from services import leadfeeder
+
+    fresh: list[dict] = []
+    if leadfeeder.is_configured():
+        try:
+            fresh = await asyncio.to_thread(leadfeeder.list_recent_visiting_companies)
+        except Exception as exc:
+            logger.warning("Leadfeeder visitor sync failed: %s", exc)
+
+    if visits_store.is_configured():
+        for visitor in fresh:
+            try:
+                visits_store.upsert_visitor(visitor)
+            except Exception as exc:
+                logger.warning("Visitor store upsert failed for %s: %s", visitor.get("domain"), exc)
+        try:
+            visitors = await asyncio.to_thread(visits_store.list_recent_visitors)
+        except Exception as exc:
+            logger.warning("Visitor store read failed: %s", exc)
+            visitors = fresh
+    else:
+        visitors = fresh
+
+    return {
+        "visitors": visitors,
+        "leadfeeder_configured": leadfeeder.is_configured(),
+    }

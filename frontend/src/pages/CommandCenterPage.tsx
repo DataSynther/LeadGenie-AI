@@ -5,6 +5,7 @@ import { RefreshCw, Clock, ExternalLink, ChevronDown } from "lucide-react";
 import { cn } from "../lib/utils";
 import { api } from "../lib/api";
 import { Topbar } from "../components/layout/Topbar";
+import { WebsiteVisitorsPanel } from "../components/visitors/WebsiteVisitorsPanel";
 
 // ── Semantic colour helpers ───────────────────────────────────────────────────
 const riskLabel = (s: number) => s >= 0.7 ? "HIGH RISK" : s >= 0.4 ? "MED RISK" : "LOW RISK";
@@ -378,6 +379,8 @@ export function CommandCenterPage() {
             </Panel>
           ))}
         </div>
+
+        <WebsiteVisitorsPanel limit={4} />
 
         {/* ── Row 1: Diagnostic metric cards — from real diagnostics.by_category ── */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">

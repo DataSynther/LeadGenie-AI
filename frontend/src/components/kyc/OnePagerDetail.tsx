@@ -141,7 +141,13 @@ function KYCChatPanel({ record }: { record: KYCOnePagerRecord }) {
 
   const chatMutation = useMutation({
     mutationFn: (message: string) =>
-      api.kycChat(record.onepager.company_name || record.company_name, record.onepager, message, messages),
+      api.kycChat(
+        record.onepager.company_name || record.company_name,
+        record.company_domain,
+        record.onepager,
+        message,
+        messages,
+      ),
     onSuccess: (res, message) => {
       setMessages(prev => [...prev, { role: "user", content: message }, { role: "assistant", content: res.response }]);
     },
