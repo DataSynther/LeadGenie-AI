@@ -15,7 +15,38 @@ client = Anthropic()
 MODEL = os.getenv("CLAUDE_MODEL_KYC", "claude-haiku-4-5-20251001")
 
 _SRC_APOLLO = "Apollo Company API"
-_SRC_AI = "AI Analysis (Claude) — inferred from company profile & hiring signals, not independently verified"
+
+
+def _ai_source_label(company: dict, signals: dict | None) -> str:
+    """Build a citation that names the exact inputs Claude reasoned over for
+    this company, instead of a generic boilerplate disclaimer — so a rep can
+    see precisely which facts underpin the inference, not just that one exists."""
+    facts = []
+    if company.get("industry"):
+        facts.append(f"industry ({company['industry']})")
+    if company.get("employee_count"):
+        facts.append(f"headcount ({company['employee_count']:,} employees)")
+    if company.get("revenue"):
+        facts.append(f"revenue (${company['revenue']})")
+    if company.get("funding_stage"):
+        facts.append(f"funding stage ({company['funding_stage']})")
+    if company.get("headcount_growth_12m") is not None:
+        facts.append(f"12mo headcount growth ({company['headcount_growth_12m']})")
+    profile_part = "Apollo company profile — " + ", ".join(facts) if facts else "Apollo company profile"
+
+    signal_bits = []
+    signals = signals or {}
+    if signals.get("total_open_roles") is not None:
+        signal_bits.append(f"{signals['total_open_roles']} est. new hires (6mo)")
+    if signals.get("engineering_expansion") is not None:
+        signal_bits.append(f"{signals['engineering_expansion']} engineering tech signals")
+    if signals.get("ai_hiring") is not None:
+        signal_bits.append(f"{signals['ai_hiring']} AI tech signals")
+    if signals.get("scaling_signal"):
+        signal_bits.append("actively scaling")
+    signals_part = f"hiring signals ({', '.join(signal_bits)})" if signal_bits else "hiring signals"
+
+    return f"AI Analysis (Claude) — inferred from {profile_part} & {signals_part}, not independently verified"
 
 
 class OnePagerGenerator:
@@ -28,6 +59,7 @@ class OnePagerGenerator:
         sec_revenue: list[dict] | None = None,
         website_pages: list[dict] | None = None,
         website_visit: dict | None = None,
+        signals: dict | None = None,
     ) -> dict:
         sources: list[dict] = []
 
@@ -42,8 +74,9 @@ class OnePagerGenerator:
             sources.append(entry)
             return sid
 
+        ai_label = _ai_source_label(company, signals)
         apollo_id = add_source(_SRC_APOLLO)
-        ai_id = add_source(_SRC_AI)
+        ai_id = add_source(ai_label)
 
         # ── Company Overview — built directly from real data, no LLM ────────
         overview_bullets = []
@@ -103,7 +136,7 @@ class OnePagerGenerator:
         ]
 
         # ── Talking points — Claude blends pain points with Ganit's real KB ──
-        talking_points, kb_source_ids = self._build_talking_points(company, research, kb_matches, add_source)
+        talking_points, kb_source_ids = self._build_talking_points(company, research, kb_matches, add_source, ai_id)
 
         headline = research.get("summary") or f"{company.get('name', 'This company')} — briefing"
 
@@ -166,9 +199,8 @@ If nothing notable is present, respond with an empty array []."""
         return bullets
 
     def _build_talking_points(
-        self, company: dict, research: dict, kb_matches: list[dict], add_source
+        self, company: dict, research: dict, kb_matches: list[dict], add_source, ai_id: int
     ) -> tuple[list[dict], list[int]]:
-        ai_id = add_source(_SRC_AI)
         kb_text = "\n".join(
             f"- [{m.get('id')}] {m.get('claim')}" for m in kb_matches
         ) or "No closely matching past work available."

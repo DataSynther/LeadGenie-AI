@@ -2806,7 +2806,7 @@ async def generate_kyc_onepager(
 
     onepager = await asyncio.to_thread(
         kyc_onepager_generator.generate, company, research, matches, funding_trend,
-        sec_revenue, website_pages, website_visit,
+        sec_revenue, website_pages, website_visit, signals,
     )
     record = kyc_onepagers_store.save_onepager(
         company_name=company.get("name") or req.company_name or req.company_domain,
