@@ -62,17 +62,16 @@ function KYCHero({ onNodeClick }: { onNodeClick: (node: HeroNode) => void }) {
       ref={ref}
       className="bg-surface border border-line-soft rounded-[10px] shadow-card p-6 sm:p-10 mb-6 relative"
     >
-      {/* Decorative backdrop — gradient wash + faint sales/marketing motifs.
-          Clipped to its own layer (not the card) so the node labels outside
-          it are never cut off. */}
+      {/* Decorative backdrop — soft gradient wash only; kept clear of icon
+          clutter so it doesn't compete with the diagram itself. Clipped to
+          its own layer (not the card) so the node labels are never cut off. */}
       <div className="absolute inset-0 rounded-[10px] overflow-hidden pointer-events-none" aria-hidden>
         <div className="absolute -top-16 -left-16 w-64 h-64 rounded-full bg-brand/10 blur-3xl" />
         <div className="absolute -bottom-16 -right-16 w-72 h-72 rounded-full bg-gold/10 blur-3xl" />
         <div className="absolute top-1/3 right-0 w-48 h-48 rounded-full bg-brand/5 blur-3xl" />
-        <SDRWallpaperLayer tileSize={220} />
       </div>
 
-      <div className="relative mx-auto aspect-square" style={{ width: "100%", maxWidth: 480 }}>
+      <div className="relative mx-auto aspect-square" style={{ width: "100%", maxWidth: 520 }}>
         <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full animate-spin-slow" aria-hidden>
           <circle
             cx="50" cy="50" r={R}
@@ -83,15 +82,25 @@ function KYCHero({ onNodeClick }: { onNodeClick: (node: HeroNode) => void }) {
           />
         </svg>
 
-        {/* Center mascot */}
+        {/* Center mascot — enlarged, gently floating, standing on a glowing dais */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center z-10">
-          <div className="absolute w-28 h-28 rounded-full bg-brand/20 blur-2xl" aria-hidden />
-          <img
-            src="/bot-logo.png"
-            alt="LeadGenie AI"
-            className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover ring-4 ring-brand/30 shadow-[0_0_24px_rgba(109,40,217,0.35)]"
+          <div className="absolute w-44 h-44 rounded-full bg-brand/25 blur-3xl animate-soft-pulse" aria-hidden />
+          <div className="animate-float">
+            <img
+              src="/bot-logo.png"
+              alt="LeadGenie AI"
+              className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover ring-4 ring-brand/30 shadow-[0_0_36px_rgba(109,40,217,0.4)]"
+            />
+          </div>
+          {/* Dais — a glowing elliptical platform under the mascot's feet */}
+          <div
+            className="relative w-32 h-6 sm:w-40 sm:h-7 rounded-[50%] -mt-1"
+            style={{
+              background: "radial-gradient(ellipse at center, rgb(var(--c-brand) / 0.55) 0%, rgb(var(--c-brand) / 0.18) 55%, transparent 75%)",
+            }}
+            aria-hidden
           />
-          <div className="relative font-mono text-[8px] uppercase tracking-widest text-ink-mute mt-2 whitespace-nowrap">
+          <div className="relative font-mono text-[9px] uppercase tracking-widest text-ink-mute mt-2 whitespace-nowrap">
             AI Agent
           </div>
         </div>
@@ -115,14 +124,14 @@ function KYCHero({ onNodeClick }: { onNodeClick: (node: HeroNode) => void }) {
               <div className="animate-float" style={{ animationDelay: `${i * 0.35}s` }}>
                 <div
                   className={cn(
-                    "w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shadow-sm border transition-all duration-300 group-hover:scale-115 group-hover:shadow-btn-brand",
+                    "w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-full flex items-center justify-center shadow-sm border transition-all duration-300 group-hover:scale-115 group-hover:shadow-btn-brand",
                     isDiscover
                       ? "bg-gold-tint border-gold/30 group-hover:bg-gold group-hover:border-gold"
                       : "bg-brand-soft border-brand/20 group-hover:bg-brand group-hover:border-brand",
                   )}
                 >
                   <Icon
-                    size={17}
+                    size={24}
                     className={cn(
                       "transition-colors",
                       isDiscover ? "text-gold-dark group-hover:text-white" : "text-brand group-hover:text-white"
@@ -131,10 +140,10 @@ function KYCHero({ onNodeClick }: { onNodeClick: (node: HeroNode) => void }) {
                 </div>
               </div>
               <div className="text-center">
-                <div className="text-[10px] font-medium text-ink whitespace-nowrap group-hover:text-brand transition-colors">
+                <div className="text-[12px] font-medium text-ink whitespace-nowrap group-hover:text-brand transition-colors">
                   {node.label}
                 </div>
-                <div className="text-[8px] text-ink-mute font-mono whitespace-nowrap hidden sm:block">
+                <div className="text-[9.5px] text-ink-mute font-mono whitespace-nowrap hidden sm:block">
                   {node.sub}
                 </div>
               </div>
