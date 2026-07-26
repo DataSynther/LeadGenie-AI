@@ -12,7 +12,7 @@ export function Topbar({ breadcrumb, title, right }: TopbarProps) {
   const { toggle } = useSidebar();
 
   return (
-    <div className="sticky top-0 z-10 bg-surface border-b border-line-soft px-4 sm:px-8 py-5 flex items-center gap-3 justify-between shadow-[0_1px_0_rgba(0,0,0,0.02)]">
+    <div className="sticky top-0 z-10 bg-brand-soft border-b border-brand/15 px-4 sm:px-8 py-5 flex items-center gap-3 justify-between shadow-[0_1px_0_rgba(0,0,0,0.04)]">
       <div className="flex items-center gap-3 min-w-0">
         <button
           className="md:hidden flex-shrink-0 text-ink-2 hover:text-ink"
@@ -22,7 +22,7 @@ export function Topbar({ breadcrumb, title, right }: TopbarProps) {
           <Menu size={20} strokeWidth={2} />
         </button>
         <div className="flex flex-col gap-1 min-w-0">
-          <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-mute hidden sm:block font-medium">
+          <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-brand-dark hidden sm:block font-semibold">
             {breadcrumb}
           </div>
           <div className="font-sans text-display-lg text-ink">{title}</div>
