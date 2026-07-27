@@ -13,11 +13,12 @@ from agents.conversation.memory_manager import MemoryManager
 from scheduling.followup_scheduler import FollowupScheduler
 from services.lead_context_store import LeadContextStore
 from services.whatsapp_conversation_store import WhatsAppConversationStore
+from storage.base import storage_root
 
 STORE_DIR = Path(
     os.getenv(
         "WHATSAPP_LOCAL_MAILBOX_DIR",
-        Path(__file__).parent.parent / "storage" / "render_mailbox",
+        storage_root() / "render_mailbox",
     )
 ).resolve()
 PENDING_PATH = STORE_DIR / "pending_messages.json"

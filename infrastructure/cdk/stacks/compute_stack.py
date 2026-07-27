@@ -3,6 +3,7 @@ from aws_cdk import (
     aws_ec2 as ec2,
     aws_ecs as ecs,
     aws_ecr as ecr,
+    aws_efs as efs,
     aws_elasticloadbalancingv2 as elbv2,
     aws_iam as iam,
     aws_logs as logs,
@@ -12,6 +13,13 @@ from aws_cdk import (
     aws_elasticache as elasticache,
 )
 from constructs import Construct
+
+# Container path where the app's local storage (Mission Control/FinOps
+# SQLite db, campaigns, KYC one-pagers, intent analytics, grounding memory,
+# etc.) lives — mounted onto the EFS filesystem below so it survives ECS
+# task replacement on every deploy instead of living on ephemeral disk.
+STORAGE_MOUNT_PATH = "/app/persistent_storage"
+STORAGE_VOLUME_NAME = "app-storage"
 
 
 class ComputeStack(Stack):
@@ -24,6 +32,7 @@ class ComputeStack(Stack):
                  budget_table: dynamodb.Table,
                  queue_table: dynamodb.Table,
                  visits_table: dynamodb.Table,
+                 app_efs: efs.FileSystem,
                  secret: secretsmanager.Secret,
                  api_image: str,
                  worker_image: str,
@@ -82,6 +91,7 @@ class ComputeStack(Stack):
             "BUDGET_TABLE":          budget_table.table_name,
             "QUEUE_TABLE":           queue_table.table_name,
             "VISITS_TABLE":          visits_table.table_name,
+            "APP_STORAGE_DIR":       STORAGE_MOUNT_PATH,
             "AWS_REGION":            self.region,
             "WHATSAPP_TEST_PHONE":   "+918056498879",
         }
@@ -113,7 +123,14 @@ class ComputeStack(Stack):
             execution_role=exec_role,
             task_role=task_role,
         )
-        api_task_def.add_container("leadgenie-api",
+        api_task_def.add_volume(
+            name=STORAGE_VOLUME_NAME,
+            efs_volume_configuration=ecs.EfsVolumeConfiguration(
+                file_system_id=app_efs.file_system_id,
+                transit_encryption="ENABLED",
+            ),
+        )
+        api_container = api_task_def.add_container("leadgenie-api",
             image=ecs.ContainerImage.from_ecr_repository(api_repo, tag="latest")
                   if not api_image else ecs.ContainerImage.from_registry(api_image),
             port_mappings=[ecs.PortMapping(container_port=8000)],
@@ -130,6 +147,11 @@ class ComputeStack(Stack):
                 retries=3,
             ),
         )
+        api_container.add_mount_points(ecs.MountPoint(
+            container_path=STORAGE_MOUNT_PATH,
+            source_volume=STORAGE_VOLUME_NAME,
+            read_only=False,
+        ))
 
         # ── Worker Task Definition ─────────────────────────────────────────────
         worker_task_def = ecs.FargateTaskDefinition(self, "WorkerTaskDef",
@@ -139,7 +161,14 @@ class ComputeStack(Stack):
             execution_role=exec_role,
             task_role=task_role,
         )
-        worker_task_def.add_container("leadgenie-worker",
+        worker_task_def.add_volume(
+            name=STORAGE_VOLUME_NAME,
+            efs_volume_configuration=ecs.EfsVolumeConfiguration(
+                file_system_id=app_efs.file_system_id,
+                transit_encryption="ENABLED",
+            ),
+        )
+        worker_container = worker_task_def.add_container("leadgenie-worker",
             image=ecs.ContainerImage.from_ecr_repository(worker_repo, tag="latest")
                   if not worker_image else ecs.ContainerImage.from_registry(worker_image),
             environment={**common_env, "WORKER_MODE": "true"},
@@ -149,6 +178,11 @@ class ComputeStack(Stack):
                 log_group=log_group,
             ),
         )
+        worker_container.add_mount_points(ecs.MountPoint(
+            container_path=STORAGE_MOUNT_PATH,
+            source_volume=STORAGE_VOLUME_NAME,
+            read_only=False,
+        ))
 
         # ── ALB ────────────────────────────────────────────────────────────────
         alb_sg = self._alb_sg

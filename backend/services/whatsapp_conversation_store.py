@@ -5,7 +5,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-STORE_DIR = Path(__file__).parent.parent / "storage" / "whatsapp_conversations"
+from storage.base import storage_root
+
+STORE_DIR = storage_root() / "whatsapp_conversations"
 STORE_DIR.mkdir(parents=True, exist_ok=True)
 
 logger = logging.getLogger(__name__)

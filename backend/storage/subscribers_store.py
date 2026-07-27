@@ -9,9 +9,10 @@ from __future__ import annotations
 import json
 import uuid
 from datetime import datetime, timezone
-from pathlib import Path
 
-STORE_DIR = Path(__file__).parent / "campaigns"
+from storage.base import storage_root
+
+STORE_DIR = storage_root() / "campaigns"
 SUBSCRIBERS_FILE = STORE_DIR / "subscribers.jsonl"
 STORE_DIR.mkdir(parents=True, exist_ok=True)
 

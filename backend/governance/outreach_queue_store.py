@@ -8,10 +8,11 @@ from __future__ import annotations
 import json
 import uuid
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Optional, Dict
 
-STORE_DIR = Path(__file__).parent.parent / "storage" / "outreach_queue"
+from storage.base import storage_root
+
+STORE_DIR = storage_root() / "outreach_queue"
 QUEUE_FILE = STORE_DIR / "queue.jsonl"
 STORE_DIR.mkdir(parents=True, exist_ok=True)
 

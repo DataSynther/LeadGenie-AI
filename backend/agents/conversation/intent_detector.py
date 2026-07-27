@@ -2,19 +2,19 @@ import json
 import os
 import re
 from datetime import datetime
-from pathlib import Path
 from collections import defaultdict
 from anthropic import Anthropic
 
 from observability.agent_tracer import AgentTracer
 from observability.validator import Validator
 from observability.self_evaluator import self_evaluate, context_to_summary
+from storage.base import storage_root
 
 client = Anthropic()
 MODEL = os.getenv("CLAUDE_MODEL_INTENT") or os.getenv("CLAUDE_MODEL", "claude-haiku-4-5-20251001")
 
 VALID_INTENTS = {"interested", "objection", "fact_question", "neutral", "meeting_request", "unsubscribe"}
-ANALYTICS_FILE = Path(__file__).parent.parent.parent / "storage" / "intent_analytics" / "events.jsonl"
+ANALYTICS_FILE = storage_root() / "intent_analytics" / "events.jsonl"
 ANALYTICS_FILE.parent.mkdir(parents=True, exist_ok=True)
 
 

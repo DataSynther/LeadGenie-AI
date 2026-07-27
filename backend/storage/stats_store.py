@@ -15,10 +15,11 @@ import json
 import sqlite3
 import threading
 from datetime import datetime, timezone, timedelta
-from pathlib import Path
 from typing import Optional
 
-STORAGE_DIR = Path(__file__).parent
+from storage.base import storage_root
+
+STORAGE_DIR = storage_root()
 DB_PATH = STORAGE_DIR / "stats.db"
 
 _QUEUE_FILE      = STORAGE_DIR / "outreach_queue" / "queue.jsonl"

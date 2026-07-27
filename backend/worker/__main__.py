@@ -81,7 +81,8 @@ def _sqs_loop() -> None:
 
 def _local_loop() -> None:
     """Poll the file-based outreach queue for pending items (local dev / Docker smoke-test)."""
-    queue_file = Path(__file__).parent.parent / "storage" / "outreach_queue" / "queue.jsonl"
+    from storage.base import storage_root
+    queue_file = storage_root() / "outreach_queue" / "queue.jsonl"
     log.info("Worker started in LOCAL mode (no SQS_QUEUE_URL). Watching: %s", queue_file)
     log.info("Poll interval: %ds", POLL_INTERVAL)
 

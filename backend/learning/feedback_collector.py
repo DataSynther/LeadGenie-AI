@@ -1,8 +1,9 @@
 import json
 from datetime import datetime
-from pathlib import Path
 
-FEEDBACK_DIR = Path(__file__).parent.parent / "storage" / "feedback"
+from storage.base import storage_root
+
+FEEDBACK_DIR = storage_root() / "feedback"
 FEEDBACK_DIR.mkdir(parents=True, exist_ok=True)
 
 

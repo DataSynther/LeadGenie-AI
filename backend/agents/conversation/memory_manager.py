@@ -12,13 +12,13 @@ and observability event recording.
 from __future__ import annotations
 import json
 from datetime import datetime, timezone
-from pathlib import Path
 
 from memory.memory_governance import governance
+from storage.base import storage_root
 
 # ── Storage paths ─────────────────────────────────────────────────────────────
 
-_STORAGE     = Path(__file__).parent.parent.parent / "storage"
+_STORAGE     = storage_root()
 _EPISODIC    = _STORAGE / "memory" / "episodic"
 _SEMANTIC    = _STORAGE / "memory" / "semantic"
 _ENTITY      = _STORAGE / "memory" / "entity"

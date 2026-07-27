@@ -9,9 +9,10 @@ and persisted in storage/credits.json so they survive restarts.
 import json
 import os
 from datetime import datetime, timezone
-from pathlib import Path
 
-CREDITS_FILE = Path(__file__).parent.parent / "storage" / "credits.json"
+from storage.base import storage_root
+
+CREDITS_FILE = storage_root() / "credits.json"
 DEFAULT_CREDITS = int(os.getenv("HALLUCINATION_CHECK_CREDITS", "50"))
 
 

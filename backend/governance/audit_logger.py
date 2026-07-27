@@ -1,13 +1,14 @@
 import json
 import os
 from datetime import datetime
-from pathlib import Path
 from uuid import uuid4
 
 import boto3
 from boto3.dynamodb.conditions import Attr
 
-AUDIT_DIR = Path(__file__).parent.parent / "storage" / "audit_logs"
+from storage.base import storage_root
+
+AUDIT_DIR = storage_root() / "audit_logs"
 AUDIT_DIR.mkdir(parents=True, exist_ok=True)
 
 _ACTIVITY_TABLE = os.environ.get("ACTIVITY_TABLE", "")

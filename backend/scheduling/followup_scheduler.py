@@ -20,10 +20,11 @@ from agents.outreach.prompt_templates import (
 from memory.sender_kb import SenderKnowledgeBase
 from services.twilio_whatsapp import TwilioWhatsApp
 from services.whatsapp_conversation_store import WhatsAppConversationStore
+from storage.base import storage_root
 
 logger = logging.getLogger(__name__)
 
-STORE_DIR = Path(__file__).parent.parent / "storage" / "followups"
+STORE_DIR = storage_root() / "followups"
 STORE_DIR.mkdir(parents=True, exist_ok=True)
 WHATSAPP_SENDER_INTRO = "I am Prasant from Ganit."
 

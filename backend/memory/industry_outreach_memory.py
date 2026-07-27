@@ -7,7 +7,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
-STORE_DIR = Path(__file__).parent.parent / "storage" / "industry_memory"
+from storage.base import storage_root
+
+STORE_DIR = storage_root() / "industry_memory"
 STORE_DIR.mkdir(parents=True, exist_ok=True)
 
 

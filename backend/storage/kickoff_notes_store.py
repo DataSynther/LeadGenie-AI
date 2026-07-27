@@ -7,9 +7,10 @@ from __future__ import annotations
 import json
 import uuid
 from datetime import datetime, timezone
-from pathlib import Path
 
-STORE_DIR = Path(__file__).parent / "kickoff_notes"
+from storage.base import storage_root
+
+STORE_DIR = storage_root() / "kickoff_notes"
 NOTES_FILE = STORE_DIR / "notes.jsonl"
 STORE_DIR.mkdir(parents=True, exist_ok=True)
 

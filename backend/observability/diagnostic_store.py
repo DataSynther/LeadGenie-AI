@@ -2,14 +2,16 @@
 import json
 import os
 from datetime import datetime, timezone
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
 from typing import Optional
 
 import boto3
 from boto3.dynamodb.conditions import Attr
 
-STORE_DIR = Path(__file__).parent.parent / "storage" / "diagnostics"
+from storage.base import storage_root
+
+STORE_DIR = storage_root() / "diagnostics"
 TRACES_FILE       = STORE_DIR / "traces.jsonl"
 VALIDATIONS_FILE  = STORE_DIR / "validations.jsonl"
 GOVERNANCE_RUNS_FILE = STORE_DIR / "governance_runs.jsonl"

@@ -60,9 +60,8 @@ class GmailReplyPoller:
 
     def _known_lead_emails(self) -> list[str]:
         """Return all email addresses that have stored contexts."""
-        import os
-        from pathlib import Path
-        store_dir = Path(__file__).parent.parent / "storage" / "lead_contexts"
+        from storage.base import storage_root
+        store_dir = storage_root() / "lead_contexts"
         if not store_dir.exists():
             return []
         emails = []

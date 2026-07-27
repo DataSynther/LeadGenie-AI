@@ -21,12 +21,13 @@ import logging
 import re
 from collections import defaultdict
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Optional
+
+from storage.base import storage_root
 
 logger = logging.getLogger(__name__)
 
-_STORE = Path(__file__).parent.parent / "storage" / "diagnostics" / "interpretations.jsonl"
+_STORE = storage_root() / "diagnostics" / "interpretations.jsonl"
 _STORE.parent.mkdir(parents=True, exist_ok=True)
 
 NEW_INTERP_THRESHOLD = 0.25   # Jaccard < this → genuinely new interpretation

@@ -12,9 +12,10 @@ from __future__ import annotations
 import json
 import sqlite3
 from collections import defaultdict
-from pathlib import Path
 
-STORAGE_DIR = Path(__file__).parent
+from storage.base import storage_root
+
+STORAGE_DIR = storage_root()
 DB_PATH     = STORAGE_DIR / "stats.db"
 TRACES_FILE = STORAGE_DIR / "diagnostics" / "traces.jsonl"
 

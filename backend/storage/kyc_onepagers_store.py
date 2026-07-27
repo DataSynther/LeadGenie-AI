@@ -4,9 +4,10 @@ from __future__ import annotations
 import json
 import uuid
 from datetime import datetime, timezone
-from pathlib import Path
 
-STORE_DIR = Path(__file__).parent / "kyc_onepagers"
+from storage.base import storage_root
+
+STORE_DIR = storage_root() / "kyc_onepagers"
 ONEPAGERS_FILE = STORE_DIR / "onepagers.jsonl"
 STORE_DIR.mkdir(parents=True, exist_ok=True)
 

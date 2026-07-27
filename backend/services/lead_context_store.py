@@ -1,8 +1,9 @@
 import json
-from pathlib import Path
 from typing import Optional
 
-STORE_DIR = Path(__file__).parent.parent / "storage" / "lead_contexts"
+from storage.base import storage_root
+
+STORE_DIR = storage_root() / "lead_contexts"
 STORE_DIR.mkdir(parents=True, exist_ok=True)
 
 
