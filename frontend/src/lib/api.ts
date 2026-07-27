@@ -238,6 +238,30 @@ export type FollowupDraft = {
   delay_days: number;
   delay_seconds?: number | null;
   sent_at?: string | null;
+  status?: "scheduled" | "sent" | "cancelled" | "error" | null;
+  due_at?: string | null;
+};
+
+export type WhatsAppStepStatus = "sent" | "failed" | "skipped_replied" | "scheduled";
+
+export type SequenceStatus = {
+  status: "waiting" | "whatsapp_sent" | "replied" | "failed";
+  email_sent_at?: string | null;
+  whatsapp: {
+    phone?: string | null;
+    due_at?: string | null;
+    sent_at?: string | null;
+    error?: string | null;
+    status: WhatsAppStepStatus;
+  };
+  email_schedule: {
+    number: number;
+    status?: string | null;
+    due_at?: string | null;
+    sent_at?: string | null;
+    error?: string | null;
+    followup_type?: string | null;
+  }[];
 };
 
 export type ApprovalItem = {
@@ -259,6 +283,7 @@ export type ApprovalItem = {
   confidence: number;
   email?: { subject: string; body: string; reasoning?: string };
   followup_sequence?: FollowupDraft[];
+  sequence_status?: SequenceStatus;
   status_updated_at?: string;
   checkpoints?: ValidatorCheckpoints;
   citations?: Record<string, CitationEntry2>;

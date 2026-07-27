@@ -1,7 +1,10 @@
 import json
+import logging
 from typing import Optional
 
 from storage.base import storage_root
+
+logger = logging.getLogger(__name__)
 
 STORE_DIR = storage_root() / "lead_contexts"
 STORE_DIR.mkdir(parents=True, exist_ok=True)
@@ -33,8 +36,12 @@ class LeadContextStore:
             return None
 
         for path in STORE_DIR.glob("*.json"):
-            with open(path) as f:
-                record = json.load(f)
+            try:
+                with open(path, encoding="utf-8") as f:
+                    record = json.load(f)
+            except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+                logger.warning("Skipping unreadable lead context file %s: %s", path, exc)
+                continue
             context = record.get("context") or {}
             lead = context.get("lead") or {}
             candidate = lead.get("phone")

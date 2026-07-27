@@ -136,8 +136,8 @@ class FollowupScheduler:
 
         for path in STORE_DIR.glob("*.json"):
             try:
-                record = json.loads(path.read_text())
-            except (json.JSONDecodeError, OSError):
+                record = json.loads(path.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError, UnicodeDecodeError):
                 continue
 
             if record.get("status") == "replied":
@@ -237,11 +237,57 @@ class FollowupScheduler:
         with open(path) as f:
             return json.load(f)
 
+    def get_sequence_status(self, lead_id: str) -> Optional[dict]:
+        """Full sequence status for the UI: overall status, the WhatsApp step
+        (which the raw record only stores as loose top-level fields), and each
+        scheduled email's real status/due_at — not just sent_at. The raw
+        record's top-level `status` is the single source of truth for whether
+        this lead has replied ("replied" cancels everything downstream)."""
+        record = self.get(lead_id)
+        if not record:
+            return None
+
+        if record.get("whatsapp_sent_at"):
+            whatsapp_status = "sent"
+        elif record.get("status") == "failed":
+            whatsapp_status = "failed"
+        elif record.get("status") == "replied":
+            whatsapp_status = "skipped_replied"
+        else:
+            whatsapp_status = "scheduled"
+
+        return {
+            "status": record.get("status"),  # waiting | whatsapp_sent | replied | failed
+            "email_sent_at": record.get("email_sent_at"),
+            "whatsapp": {
+                "phone": record.get("phone"),
+                "due_at": record.get("due_at"),
+                "sent_at": record.get("whatsapp_sent_at"),
+                "error": record.get("whatsapp_error"),
+                "status": whatsapp_status,
+            },
+            "email_schedule": [
+                {
+                    "number":       item.get("number"),
+                    "status":       item.get("status"),
+                    "due_at":       item.get("due_at"),
+                    "sent_at":      item.get("sent_at"),
+                    "error":        item.get("error"),
+                    "followup_type": item.get("followup_type"),
+                }
+                for item in (record.get("email_schedule") or [])
+            ],
+        }
+
     def get_by_phone(self, phone: str) -> Optional[dict]:
         normalized = self._normalize_phone(phone)
         for path in STORE_DIR.glob("*.json"):
-            with open(path) as f:
-                record = json.load(f)
+            try:
+                with open(path, encoding="utf-8") as f:
+                    record = json.load(f)
+            except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+                logger.warning("Skipping unreadable follow-up file %s: %s", path, exc)
+                continue
             if self._normalize_phone(record.get("phone", "")) == normalized:
                 return record
         return None
@@ -250,8 +296,12 @@ class FollowupScheduler:
         now = datetime.utcnow()
         results = []
         for path in STORE_DIR.glob("*.json"):
-            with open(path) as f:
-                record = json.load(f)
+            try:
+                with open(path, encoding="utf-8") as f:
+                    record = json.load(f)
+            except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+                logger.warning("Skipping unreadable follow-up file %s: %s", path, exc)
+                continue
 
             logger.info(
                 "Scheduler inspecting follow-up path=%s lead_id=%s status=%s due_at=%s now=%s",

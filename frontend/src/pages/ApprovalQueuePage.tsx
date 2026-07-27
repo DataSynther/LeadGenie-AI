@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { MessageCircle, CheckCircle2, Clock, XCircle } from "lucide-react";
 import { Topbar } from "../components/layout/Topbar";
 import { StatusPill } from "../components/StatusPill";
 import { ApprovalItem as ApprovalItemComponent } from "../components/approval/ApprovalItem";
@@ -31,7 +32,7 @@ const RISK_C: Record<string, { text: string; bg: string }> = {
 // ── Individual email message (collapsible) ────────────────────────────────────
 
 function EmailMessage({
-  from, to, subject, body, date, isInitial, followupNumber, isSent,
+  from, to, subject, body, date, isInitial, followupNumber, isSent, badgeLabel,
 }: {
   from: string;
   to?: string;
@@ -41,6 +42,7 @@ function EmailMessage({
   isInitial?: boolean;
   followupNumber?: number;
   isSent?: boolean;
+  badgeLabel?: string;
 }) {
   const [expanded, setExpanded] = useState(isInitial ?? false);
   const scheduled = followupNumber != null && !isSent;
@@ -87,7 +89,7 @@ function EmailMessage({
                   ? "bg-surface-2/30 text-ink-mute border-line-soft/40"
                   : "bg-violet-500/10 text-violet-400 border-violet-500/20",
               )}>
-                {scheduled ? `Scheduled: Follow-up #${followupNumber}` : `Follow-up #${followupNumber}`}
+                {badgeLabel ?? (scheduled ? `Scheduled: Follow-up #${followupNumber}` : `Follow-up #${followupNumber}`)}
               </span>
             )}
             <span className={cn(
@@ -131,12 +133,50 @@ function EmailMessage({
   );
 }
 
+// ── WhatsApp fallback step — sits between the initial email and the follow-up
+// emails in the timeline, matching how the scheduler actually sequences things.
+
+function WhatsAppStep({ whatsapp }: { whatsapp: NonNullable<ApprovalItemType["sequence_status"]>["whatsapp"] }) {
+  const { status, phone, sent_at, due_at, error } = whatsapp;
+
+  const config = {
+    sent:            { icon: CheckCircle2, color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/20", label: "WhatsApp sent" },
+    failed:          { icon: XCircle,      color: "text-red-400",     bg: "bg-red-500/10",      border: "border-red-500/20",     label: "WhatsApp failed" },
+    skipped_replied: { icon: CheckCircle2, color: "text-ink-mute",    bg: "bg-surface-2/40",     border: "border-line-soft/40",   label: "Skipped — lead replied first" },
+    scheduled:       { icon: Clock,        color: "text-ink-mute",    bg: "bg-surface-2/40",     border: "border-line-soft/40",   label: "WhatsApp scheduled" },
+  }[status];
+
+  return (
+    <div className={cn("border rounded-lg mb-3 px-4 py-3 flex items-start gap-3", config.bg, config.border)}>
+      <div className={cn("w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border", config.bg, config.border)}>
+        <MessageCircle size={14} className={config.color} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <config.icon size={12} className={config.color} />
+          <span className={cn("text-[12px] font-semibold", config.color)}>{config.label}</span>
+          <span className="ml-auto text-[10px] font-mono text-ink-mute">
+            {sent_at ? fmtDate(sent_at) : due_at ? `due ${fmtDate(due_at)}` : ""}
+          </span>
+        </div>
+        <div className="text-[10px] text-ink-mute font-mono mt-1">
+          {phone ? `to ${phone}` : "no phone number on file"}
+        </div>
+        {error && (
+          <div className="text-[10px] text-red-400 font-mono mt-1">{error}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Full email thread (initial + follow-ups) ──────────────────────────────────
 
 function EmailThread({ item }: { item: ApprovalItemType }) {
   const senderName = "LeadGenie AI";
   const recipientEmail = item.lead_email ?? item.lead_name ?? "Lead";
   const sequence: FollowupDraft[] = item.followup_sequence ?? [];
+  const whatsapp = item.sequence_status?.whatsapp;
 
   return (
     <div className="flex flex-col h-full">
@@ -165,8 +205,15 @@ function EmailThread({ item }: { item: ApprovalItemType }) {
           isInitial
         />
 
+        {whatsapp && <WhatsAppStep whatsapp={whatsapp} />}
+
         {sequence.map((fu) => {
-          const sent = fu.sent_at != null;
+          const status = fu.status ?? (fu.sent_at != null ? "sent" : "scheduled");
+          const sent = status === "sent";
+          const badgeLabel =
+            status === "cancelled" ? `Cancelled: Follow-up #${fu.number} — lead replied` :
+            status === "error"     ? `Failed: Follow-up #${fu.number}` :
+            undefined;
           return (
             <EmailMessage
               key={fu.number}
@@ -176,12 +223,15 @@ function EmailThread({ item }: { item: ApprovalItemType }) {
               body={fu.body ?? ""}
               date={sent
                 ? fmtDate(fu.sent_at!)
-                : fu.delay_seconds != null
-                  ? `In ${fu.delay_seconds}s`
-                  : `Day +${fu.delay_days ?? fu.number * 3}`
+                : fu.due_at
+                  ? `due ${fmtDate(fu.due_at)}`
+                  : fu.delay_seconds != null
+                    ? `In ${fu.delay_seconds}s`
+                    : `Day +${fu.delay_days ?? fu.number * 3}`
               }
               followupNumber={fu.number}
               isSent={sent}
+              badgeLabel={badgeLabel}
             />
           );
         })}
@@ -339,26 +389,22 @@ export function ApprovalQueuePage() {
   // Outreach: pending items awaiting first send approval
   const outreachItems = useMemo(() => queueItems.filter(filterFn), [queueItems, search]);
 
-  // Replied Back: sent emails where a reply was detected (trigger/policy indicates engagement)
-  const REPLY_SIGNALS = new Set([
-    "intent_detected", "replied", "reply", "meeting_request", "pricing_inquiry",
-    "interested", "positive_reply", "not_interested", "out_of_office",
-  ]);
+  // Replied Back: the scheduler's own real status is the source of truth — set
+  // by mark_replied() when an inbound reply arrives on either email or WhatsApp,
+  // which is also what cancels every remaining scheduled follow-up.
   const repliedItems = useMemo(
-    () => sentItems.filter(i =>
-      (REPLY_SIGNALS.has(i.trigger?.toLowerCase() ?? "") ||
-       REPLY_SIGNALS.has(i.policy?.toLowerCase() ?? "")) &&
-      filterFn(i)
-    ),
+    () => sentItems.filter(i => i.sequence_status?.status === "replied" && filterFn(i)),
     [sentItems, search],
   );
 
-  // Follow Up: sent items where at least the 1st follow-up has been sent, no reply yet
+  // Follow Up: anything actively being sequenced (WhatsApp scheduled/sent, emails
+  // scheduled/sent) that hasn't replied yet — real status, not a sent_at guess.
   const repliedLeadIds = useMemo(() => new Set(repliedItems.map(i => i.lead_id)), [repliedItems]);
   const followupItems = useMemo(
     () => sentItems.filter(i =>
-      (i.followup_sequence ?? []).some(fu => fu.sent_at != null) &&  // at least 1 sent
-      !repliedLeadIds.has(i.lead_id) &&                               // remove once replied
+      i.sequence_status != null &&
+      i.sequence_status.status !== "replied" &&
+      !repliedLeadIds.has(i.lead_id) &&
       filterFn(i)
     ),
     [sentItems, repliedLeadIds, search],

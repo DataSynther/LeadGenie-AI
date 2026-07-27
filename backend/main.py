@@ -1238,27 +1238,28 @@ async def approval_queue():
 async def sent_emails():
     """Return approved/sent outreach emails sorted by recency.
 
-    Enriches followup_sequence items with sent_at from the scheduler store
-    so the frontend can distinguish sent vs scheduled follow-ups.
+    Enriches each item with the real sequence status from the scheduler store
+    (followup_scheduler.get_sequence_status) — the WhatsApp step, and each
+    follow-up email's real status/due_at, not just sent_at — so the frontend
+    can render actual state instead of guessing from trigger/policy text.
     """
     items = outreach_queue.get_queue(status="approved")
     for item in items:
         lead_id = item.get("lead_id")
         if not lead_id:
             continue
-        sched_record = followup_scheduler.get(lead_id)
-        if not sched_record:
+        seq_status = followup_scheduler.get_sequence_status(lead_id)
+        if not seq_status:
             continue
-        sched_map = {
-            e["number"]: e.get("sent_at")
-            for e in (sched_record.get("email_schedule") or [])
-        }
-        if not sched_map:
-            continue
-        seq = item.get("followup_sequence") or []
-        for fu in seq:
-            if fu.get("number") in sched_map and sched_map[fu["number"]]:
-                fu["sent_at"] = sched_map[fu["number"]]
+        item["sequence_status"] = seq_status
+        due_map = {e["number"]: e for e in seq_status["email_schedule"]}
+        for fu in (item.get("followup_sequence") or []):
+            match = due_map.get(fu.get("number"))
+            if not match:
+                continue
+            fu["sent_at"] = match.get("sent_at")
+            fu["status"]  = match.get("status")
+            fu["due_at"]  = match.get("due_at")
     return items
 
 

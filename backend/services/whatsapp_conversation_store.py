@@ -70,8 +70,12 @@ class WhatsAppConversationStore:
     def list_active(self) -> list[dict]:
         conversations = []
         for path in STORE_DIR.glob("*.json"):
-            with open(path) as f:
-                record = json.load(f)
+            try:
+                with open(path, encoding="utf-8") as f:
+                    record = json.load(f)
+            except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+                logger.warning("Skipping unreadable WhatsApp conversation file %s: %s", path, exc)
+                continue
             if record.get("status") in {"awaiting_human", "human_responded"}:
                 conversations.append(self._summary(record))
         return sorted(conversations, key=lambda c: c.get("updated_at") or "", reverse=True)
@@ -151,12 +155,16 @@ class WhatsAppConversationStore:
     def _find(self, conversation_id: str) -> Optional[tuple[str, dict]]:
         path = self._path(conversation_id)
         if path.exists():
-            with open(path) as f:
+            with open(path, encoding="utf-8") as f:
                 return conversation_id, json.load(f)
 
         for path in STORE_DIR.glob("*.json"):
-            with open(path) as f:
-                record = json.load(f)
+            try:
+                with open(path, encoding="utf-8") as f:
+                    record = json.load(f)
+            except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+                logger.warning("Skipping unreadable WhatsApp conversation file %s: %s", path, exc)
+                continue
             phone = self._normalize_phone(record.get("phone") or record.get("context", {}).get("lead", {}).get("phone"))
             record_conversation_id = record.get("conversation_id") or self._conversation_id(phone)
             if record_conversation_id == conversation_id or record.get("lead_id") == conversation_id:
