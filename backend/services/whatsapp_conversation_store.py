@@ -28,8 +28,9 @@ class WhatsAppConversationStore:
         record = found[1] if found else self._new_record(lead_id, context, normalized_phone)
 
         record["conversation_id"] = conversation_id
-        record["lead_id"] = lead_id
-        if context:
+        if not found:
+            record["lead_id"] = lead_id
+        if context and not record.get("context"):
             record["context"] = context
         if normalized_phone:
             record["phone"] = normalized_phone
