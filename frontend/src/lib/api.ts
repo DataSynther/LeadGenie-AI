@@ -253,6 +253,7 @@ export type SequenceStatus = {
     sent_at?: string | null;
     error?: string | null;
     status: WhatsAppStepStatus;
+    messages?: WhatsAppMessage[];
   };
   email_schedule: {
     number: number;
@@ -311,12 +312,20 @@ async function action<T>(path: string): Promise<T> {
   return res.json();
 }
 
-export const approveOutreach = async (eventId: string, followupSequence?: FollowupDraft[]) => {
-  const body = followupSequence ? JSON.stringify({ followup_sequence: followupSequence }) : "{}";
+export const approveOutreach = async (
+  eventId: string,
+  followupSequence?: FollowupDraft[],
+  whatsappWaitMinutes?: number,
+  whatsappWaitSeconds?: number,
+) => {
+  const payload: Record<string, unknown> = {};
+  if (followupSequence) payload.followup_sequence = followupSequence;
+  if (whatsappWaitSeconds != null) payload.whatsapp_wait_seconds = whatsappWaitSeconds;
+  else if (whatsappWaitMinutes != null) payload.whatsapp_wait_minutes = whatsappWaitMinutes;
   const r = await fetch(`${BASE_URL}/approval-queue/${eventId}/approve`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body,
+    body: JSON.stringify(payload),
   });
   if (!r.ok) throw new Error(`approve → ${r.status}`);
   return r.json();

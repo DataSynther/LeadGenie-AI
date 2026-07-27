@@ -137,7 +137,7 @@ function EmailMessage({
 // emails in the timeline, matching how the scheduler actually sequences things.
 
 function WhatsAppStep({ whatsapp }: { whatsapp: NonNullable<ApprovalItemType["sequence_status"]>["whatsapp"] }) {
-  const { status, phone, sent_at, due_at, error } = whatsapp;
+  const { status, phone, sent_at, due_at, error, messages } = whatsapp;
 
   const config = {
     sent:            { icon: CheckCircle2, color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/20", label: "WhatsApp sent" },
@@ -164,6 +164,24 @@ function WhatsAppStep({ whatsapp }: { whatsapp: NonNullable<ApprovalItemType["se
         </div>
         {error && (
           <div className="text-[10px] text-red-400 font-mono mt-1">{error}</div>
+        )}
+        {messages && messages.length > 0 && (
+          <div className="mt-2.5 space-y-1.5 border-t border-line-soft/40 pt-2.5">
+            {messages.map((m, i) => (
+              <div
+                key={i}
+                className={cn(
+                  "max-w-[85%] rounded-lg px-2.5 py-1.5 text-[11px]",
+                  m.direction === "outbound"
+                    ? "ml-auto bg-emerald-500/10 text-ink"
+                    : "bg-surface-2 text-ink border border-line-soft/40"
+                )}
+              >
+                <div>{m.message}</div>
+                <div className="text-[9px] text-ink-mute font-mono mt-0.5">{fmtDate(m.timestamp)}</div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>

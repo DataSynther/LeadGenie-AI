@@ -608,6 +608,8 @@ export function ApprovalItem({ item, initialExpanded = false, initialTab, highli
   const [localCheckpoints, setLocalCheckpoints] = useState(item.checkpoints);
   const [localSequence, setLocalSequence] = useState<FollowupDraft[]>(item.followup_sequence ?? []);
   const sequenceDirty = JSON.stringify(localSequence) !== JSON.stringify(item.followup_sequence ?? []);
+  const [whatsappWaitUnit, setWhatsappWaitUnit] = useState<"minutes" | "seconds">("minutes");
+  const [whatsappWaitValue, setWhatsappWaitValue] = useState(2);
 
   const removeFromCache = () =>
     queryClient.setQueryData(["approvalQueue"], (old: ApprovalItemType[] = []) =>
@@ -615,7 +617,12 @@ export function ApprovalItem({ item, initialExpanded = false, initialTab, highli
     );
 
   const approveMutation = useMutation({
-    mutationFn: () => api.approveOutreach(item.event_id, localSequence.length > 0 ? localSequence : undefined),
+    mutationFn: () => api.approveOutreach(
+      item.event_id,
+      localSequence.length > 0 ? localSequence : undefined,
+      whatsappWaitUnit === "minutes" ? whatsappWaitValue : undefined,
+      whatsappWaitUnit === "seconds" ? whatsappWaitValue : undefined,
+    ),
     onSuccess: removeFromCache,
   });
 
@@ -802,6 +809,27 @@ export function ApprovalItem({ item, initialExpanded = false, initialTab, highli
                 <p className="text-[11px] text-ink-mute">
                   Review and edit all follow-up emails before approving. Adjust the delay between each one.
                 </p>
+                <div className="flex items-center gap-2 border border-line-soft rounded-md bg-surface-2 px-3 py-2.5">
+                  <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 shrink-0">
+                    WhatsApp
+                  </span>
+                  <span className="text-[10px] text-ink-mute font-mono">fallback if no reply after</span>
+                  <input
+                    type="number"
+                    min={1}
+                    value={whatsappWaitValue}
+                    onChange={e => setWhatsappWaitValue(Math.max(1, Number(e.target.value)))}
+                    className="w-14 text-center text-[10px] font-mono bg-surface border border-line-soft rounded px-1 py-0.5 text-ink"
+                  />
+                  <select
+                    value={whatsappWaitUnit}
+                    onChange={e => setWhatsappWaitUnit(e.target.value as "minutes" | "seconds")}
+                    className="text-[10px] font-mono bg-surface border border-line-soft rounded px-1 py-0.5 text-ink"
+                  >
+                    <option value="minutes">min</option>
+                    <option value="seconds">sec</option>
+                  </select>
+                </div>
                 <SequenceTab sequence={localSequence} onChange={setLocalSequence} />
                 {sequenceDirty && (
                   <div className="flex items-center gap-2">

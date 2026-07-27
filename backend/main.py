@@ -253,22 +253,58 @@ async def _followup_scheduler_loop():
         await asyncio.sleep(interval)
 
 
+_gmail_poller_task = None
+
+
+async def _gmail_reply_poller_loop():
+    from services.gmail_reply_poller import GmailReplyPoller, POLL_INTERVAL
+    poller = GmailReplyPoller()
+    logger.info("Gmail reply poller loop started; interval=%ss user=%s", POLL_INTERVAL, poller.user)
+    while True:
+        try:
+            results = await asyncio.to_thread(poller.process_once)
+            if results:
+                logger.info("Gmail reply poller processed %d repl(ies)", len(results))
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception("Gmail reply poller loop failed")
+        await asyncio.sleep(POLL_INTERVAL)
+
+
 @app.on_event("startup")
 async def start_followup_scheduler():
-    global _followup_task
+    global _followup_task, _gmail_poller_task
     enabled = os.getenv("FOLLOWUP_SCHEDULER_AUTOSTART", "true").lower() not in {"0", "false", "no"}
     if enabled and _followup_task is None:
         _followup_task = asyncio.create_task(_followup_scheduler_loop())
 
+    # Detecting inbound EMAIL replies (so a reply correctly stops the
+    # follow-up sequence and shows in "Replied Back") requires actively
+    # polling the Gmail inbox — this was built (gmail_reply_poller.py) but
+    # never started anywhere, so email replies were never detected at all
+    # (only inbound WhatsApp replies were, via a separate webhook).
+    gmail_enabled = os.getenv("GMAIL_REPLY_POLLER_AUTOSTART", "true").lower() not in {"0", "false", "no"}
+    gmail_configured = bool(os.getenv("LEADGENIE_GMAIL")) and bool(os.getenv("LEADGENIE_GMAIL_PASSWORD"))
+    if gmail_enabled and gmail_configured and _gmail_poller_task is None:
+        _gmail_poller_task = asyncio.create_task(_gmail_reply_poller_loop())
+    elif gmail_enabled and not gmail_configured:
+        logger.warning("Gmail reply poller not started — LEADGENIE_GMAIL/LEADGENIE_GMAIL_PASSWORD not configured")
+
 
 @app.on_event("shutdown")
 async def stop_followup_scheduler():
-    global _followup_task
+    global _followup_task, _gmail_poller_task
     if _followup_task:
         _followup_task.cancel()
         with contextlib.suppress(asyncio.CancelledError):
             await _followup_task
         _followup_task = None
+    if _gmail_poller_task:
+        _gmail_poller_task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await _gmail_poller_task
+        _gmail_poller_task = None
 
 
 class LoginRequest(BaseModel):
@@ -1277,6 +1313,8 @@ async def update_followup_sequence(event_id: str, req: SequenceUpdateRequest):
 
 class ApproveWithSequenceRequest(BaseModel):
     followup_sequence: Optional[list[dict]] = None
+    whatsapp_wait_minutes: Optional[float] = None
+    whatsapp_wait_seconds: Optional[int] = None
 
 @app.post("/approval-queue/{event_id}/approve")
 async def approve_outreach(event_id: str, req: ApproveWithSequenceRequest = ApproveWithSequenceRequest()):
@@ -1319,6 +1357,8 @@ async def approve_outreach(event_id: str, req: ApproveWithSequenceRequest = Appr
         context=context,
         outreach={"subject": subject, "body": body},
         followup_sequence=approved_sequence,
+        wait_minutes=req.whatsapp_wait_minutes,
+        wait_seconds=req.whatsapp_wait_seconds,
     )
 
     return {

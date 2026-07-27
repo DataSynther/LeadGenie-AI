@@ -80,17 +80,23 @@ class FollowupScheduler:
         phone: str,
         context: dict,
         outreach: Optional[dict] = None,
-        wait_minutes: Optional[int] = None,
+        wait_minutes: Optional[float] = None,
+        wait_seconds: Optional[int] = None,
         followup_sequence: Optional[list] = None,
     ) -> dict:
         """Schedule follow-ups after outreach is sent.
 
         If followup_sequence is provided (pre-approved by sender), email follow-ups
-        are sent on the custom delay schedule. WhatsApp fallback fires first via
-        WHATSAPP_FOLLOWUP_WAIT_MINUTES, then email follow-ups start from sequence[0].
+        are sent on the custom delay schedule. WhatsApp fallback fires first — after
+        wait_seconds if given (testing), else wait_minutes, else
+        WHATSAPP_FOLLOWUP_WAIT_MINUTES — then email follow-ups start from sequence[0].
         """
-        wait = wait_minutes or int(os.getenv("WHATSAPP_FOLLOWUP_WAIT_MINUTES", "2"))
         now = datetime.utcnow()
+        if wait_seconds is not None:
+            whatsapp_due = now + timedelta(seconds=int(wait_seconds))
+        else:
+            wait = wait_minutes if wait_minutes is not None else int(os.getenv("WHATSAPP_FOLLOWUP_WAIT_MINUTES", "2"))
+            whatsapp_due = now + timedelta(minutes=wait)
 
         # Compute due_at for each email follow-up from the approved sequence
         email_schedule: list[dict] = []
@@ -115,7 +121,7 @@ class FollowupScheduler:
             "context":         context,
             "outreach":        outreach or context.get("outreach") or {},
             "email_sent_at":   now.isoformat(),
-            "due_at":          (now + timedelta(minutes=wait)).isoformat(),
+            "due_at":          whatsapp_due.isoformat(),
             "status":          "waiting",
             "whatsapp_sent_at": None,
             "whatsapp_error":  None,
@@ -256,6 +262,15 @@ class FollowupScheduler:
         else:
             whatsapp_status = "scheduled"
 
+        messages = []
+        try:
+            from services.whatsapp_conversation_store import WhatsAppConversationStore
+            conversation = WhatsAppConversationStore().get(lead_id)
+            if conversation:
+                messages = conversation.get("messages") or []
+        except Exception:
+            logger.exception("Failed to attach WhatsApp conversation to sequence status lead_id=%s", lead_id)
+
         return {
             "status": record.get("status"),  # waiting | whatsapp_sent | replied | failed
             "email_sent_at": record.get("email_sent_at"),
@@ -265,6 +280,7 @@ class FollowupScheduler:
                 "sent_at": record.get("whatsapp_sent_at"),
                 "error": record.get("whatsapp_error"),
                 "status": whatsapp_status,
+                "messages": messages,
             },
             "email_schedule": [
                 {
