@@ -120,6 +120,7 @@ from learning.learning_engine import LearningEngine
 from scheduling.scheduler import Scheduler
 from scheduling.followup_scheduler import FollowupScheduler
 from services.lead_context_store import LeadContextStore
+from services.company_resolver import resolve_company
 from services.email_sender import EmailSender
 from services.twilio_whatsapp import TwilioWhatsApp
 from services.whatsapp_conversation_store import WhatsAppConversationStore
@@ -1454,11 +1455,15 @@ def _compute_signals(company: dict) -> list[dict]:
 
 @app.get("/company/research/{company_name}")
 async def company_research(company_name: str):
-    """Return deep research data for a company by name."""
+    """Return deep research data for a company by name. Falls back to a
+    keyless public-website lookup for any company outside our demo/Apollo
+    data, so this works for any company, not just the ones we've seeded."""
     match = next(
         (c for c in _SAMPLE_COMPANIES if c["name"].lower() == company_name.lower()),
         None,
     )
+    if not match:
+        match = await asyncio.to_thread(resolve_company, company_name)
     if not match:
         raise HTTPException(status_code=404, detail="Company not found")
     return {**match, "signals": _compute_signals(match)}
@@ -1476,6 +1481,8 @@ async def company_research_brief(
         (c for c in _SAMPLE_COMPANIES if c["name"].lower() == company_name.lower()),
         None,
     )
+    if not match:
+        match = await asyncio.to_thread(resolve_company, company_name)
     if not match:
         raise HTTPException(status_code=404, detail="Company not found")
     signals = await asyncio.to_thread(
@@ -2785,6 +2792,8 @@ async def generate_kyc_onepager(
     company = await asyncio.to_thread(apollo_company.enrich_company, req.company_domain)
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
+    if company.get("source") == "web_fallback" and req.company_name:
+        company["name"] = req.company_name
 
     signals = await asyncio.to_thread(
         apollo_signals.detect_hiring_trends, company.get("id", "") or "", company

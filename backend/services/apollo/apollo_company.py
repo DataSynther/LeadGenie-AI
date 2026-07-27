@@ -4,6 +4,8 @@ import requests
 from pathlib import Path
 from typing import Optional
 
+from services.company_resolver import resolve_company
+
 APOLLO_BASE_URL = "https://api.apollo.io/api/v1"
 _SAMPLE_PATH = Path(__file__).parent.parent.parent.parent / "sample_data" / "demo_companies.json"
 
@@ -33,9 +35,11 @@ class ApolloCompanyService:
         return None
 
     def enrich_company(self, domain: str) -> Optional[dict]:
-        """Enrich company — uses cached demo data when APOLLO_DEMO_MODE=true or no API key."""
+        """Enrich company — uses cached demo data when APOLLO_DEMO_MODE=true or no
+        API key, then falls back to a keyless public-website lookup for any
+        company outside our demo/Apollo data (see services/company_resolver.py)."""
         if os.getenv("APOLLO_DEMO_MODE", "true").lower() == "true" or not self.headers.get("X-Api-Key"):
-            return self._search_sample(domain)
+            return self._search_sample(domain) or resolve_company(domain)
         try:
             response = requests.get(
                 f"{APOLLO_BASE_URL}/organizations/enrich",
@@ -44,11 +48,11 @@ class ApolloCompanyService:
                 timeout=10,
             )
             if response.status_code == 404:
-                return self._search_sample(domain)
+                return self._search_sample(domain) or resolve_company(domain)
             response.raise_for_status()
             return self._normalize_company(response.json().get("organization", {}))
         except Exception:
-            return self._search_sample(domain)
+            return self._search_sample(domain) or resolve_company(domain)
 
     def get_company_by_id(self, org_id: str) -> Optional[dict]:
         """Fetch company by Apollo org ID — falls back to sample on any error."""
