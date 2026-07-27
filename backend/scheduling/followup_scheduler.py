@@ -378,7 +378,13 @@ class FollowupScheduler:
         return self._build_cta_email(record, followup_number)
 
     def _build_trust_email(self, record: dict, followup_number: int) -> dict:
-        """Trust-building email: relevant case study via Claude Haiku.
+        """Trust-building email: picks the one best-matching case study from a
+        short KB shortlist and writes a fixed-structure email around it.
+
+        Uses a small model when USE_SLM_FOR_FOLLOWUP=true and SLM_BASE_URL is
+        configured (validated against Haiku on 6/6 real-shaped scenarios —
+        this task is constrained enough that a 3B model holds up, unlike more
+        open-ended generation); falls back to Claude Haiku on any failure.
 
         Tracks used KB IDs across the sequence so #2 and #4 cite different case studies.
         """
@@ -430,15 +436,55 @@ class FollowupScheduler:
             case_studies=cs_text or "(no case studies available — write a general value-based follow-up)",
         )
 
-        response = Anthropic().messages.create(
-            model=os.getenv("CLAUDE_MODEL_FOLLOWUP", "claude-haiku-4-5-20251001"),
-            max_tokens=600,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        text = re.sub(r"^```(?:json)?\s*", "", response.content[0].text.strip())
-        text = re.sub(r"\s*```$", "", text)
-        result = json.loads(text)
+        result = None
+        if os.getenv("USE_SLM_FOR_FOLLOWUP", "false").lower() == "true":
+            result = self._try_slm(prompt, candidates)
+            if result is None:
+                logger.warning("SLM trust-email generation unavailable/invalid — falling back to Claude")
+
+        if result is None:
+            response = Anthropic().messages.create(
+                model=os.getenv("CLAUDE_MODEL_FOLLOWUP", "claude-haiku-4-5-20251001"),
+                max_tokens=600,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            raw = response.content[0].text.strip()
+            match = re.search(r"\{[\s\S]*\}", raw)
+            result = json.loads(match.group()) if match else json.loads(raw)
+
         result["followup_type"] = f"trust_building_{followup_number}"
+        return result
+
+    @staticmethod
+    def _try_slm(prompt: str, candidates: list[dict]) -> Optional[dict]:
+        """Behind USE_SLM_FOR_FOLLOWUP — validated against Haiku on 6/6 real-shaped
+        case-study-selection scenarios before enabling. Returns None on any
+        failure (unconfigured, bad response, invalid kb_ids_used) so the caller
+        falls back to Claude; never raises."""
+        from services import slm_client
+        if not slm_client.is_configured():
+            return None
+
+        raw = slm_client.chat(prompt, max_tokens=600)
+        if not raw:
+            return None
+        text = re.sub(r"^```(?:json)?\s*", "", raw.strip())
+        text = re.sub(r"\s*```$", "", text)
+        try:
+            result = json.loads(text)
+        except json.JSONDecodeError:
+            return None
+
+        if not result.get("subject") or not result.get("body"):
+            return None
+
+        # The small model occasionally echoes instruction text into kb_ids_used
+        # instead of a real ID — drop anything that isn't an actual candidate.
+        valid_ids = {c["id"] for c in candidates}
+        kb_ids_used = [k for k in (result.get("kb_ids_used") or []) if k in valid_ids]
+        if not kb_ids_used:
+            return None
+        result["kb_ids_used"] = kb_ids_used
         return result
 
     def _build_cta_email(self, record: dict, followup_number: int) -> dict:
