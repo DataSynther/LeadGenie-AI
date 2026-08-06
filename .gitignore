@@ -45,6 +45,8 @@ backend/storage/kyc_onepagers/
 backend/storage/credits.json
 # SQLite stats database (binary, regenerated from JSONL on startup)
 backend/storage/stats.db
+backups/
+share_export/
 
 # IDE
 .vscode/
